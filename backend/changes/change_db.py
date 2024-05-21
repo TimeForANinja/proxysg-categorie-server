@@ -1,7 +1,7 @@
 class AuditlogDB:
     def __init__(self, conn):
         self.conn = conn
-        self.create_Table()
+        self.create_table()
 
     def create_table(self):
         cursor = self.conn.cursor()

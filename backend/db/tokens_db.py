@@ -1,6 +1,6 @@
-import sqlite3
 import base64
 import secrets
+
 
 class TokensDB:
     def __init__(self, conn):

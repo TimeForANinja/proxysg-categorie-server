@@ -1,17 +1,14 @@
 from flask import Blueprint, jsonify, request
-from mydb import MyDB
-from tokens_db import TokensDB
+from db.mydb import DatabaseHolder
+from db.tokens_db import TokensDB
 
 tokens_bp = Blueprint('tokens', __name__)
-
-# Initialize MyDB with SQLite filename
-mydb = MyDB('mydatabase.db')
 
 
 # Route to fetch all Tokens
 @tokens_bp.route('/tokens', methods=['GET'])
 def get_tokens():
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     tokens_db = TokensDB(conn)
     tokens = tokens_db.get_all_tokens()
     return jsonify(tokens)
@@ -20,7 +17,7 @@ def get_tokens():
 # Route to update Token name
 @tokens_bp.route('/tokens/<int:id>', methods=['PUT'])
 def update_token(id):
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     tokens_db = TokensDB(conn)
     token = tokens_db.get_token(id)
 
@@ -45,7 +42,7 @@ def update_token(id):
 # Route to delete a Token
 @tokens_bp.route('/tokens/<int:id>', methods=['DELETE'])
 def delete_token(id):
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     tokens_db = TokensDB(conn)
     token = tokens_db.get_token(id)
 
@@ -65,7 +62,7 @@ def create_token():
     if not name:
         return jsonify({"error": "Name is required"}), 400
 
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     tokens_db = TokensDB(conn)
     new_id = tokens_db.add_token(name)
 
@@ -79,7 +76,7 @@ def create_token():
 # Route to fetch all Tokens with associated categories
 @tokens_bp.route('/tokens-with-categories', methods=['GET'])
 def get_tokens_with_categories():
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     cursor = conn.cursor()
 
     # Join tokens, token_categories, and categories tables to fetch the required data

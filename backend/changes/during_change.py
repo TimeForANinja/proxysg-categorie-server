@@ -1,6 +1,4 @@
 class CategoriesDB:
-    # Existing methods...
-
     def add_category(self, name):
         cursor = self.conn.cursor()
         cursor.execute('INSERT INTO categories (name) VALUES (?)', (name,))

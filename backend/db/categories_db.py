@@ -1,5 +1,6 @@
 import sqlite3
 
+
 class CategoriesDB:
     def __init__(self, conn):
         self.conn = conn

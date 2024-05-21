@@ -1,5 +1,3 @@
-import sqlite3
-
 class UrlCategoriesDB:
     def __init__(self, conn):
         self.conn = conn

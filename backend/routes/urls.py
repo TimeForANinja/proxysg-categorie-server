@@ -1,17 +1,14 @@
 from flask import Blueprint, jsonify, request
-from mydb import MyDB
-from urls_db import UrlsDB
+from db.mydb import DatabaseHolder
+from db.urls_db import UrlsDB
 
 urls_bp = Blueprint('urls', __name__)
-
-# Initialize MyDB with SQLite filename
-mydb = MyDB('mydatabase.db')
 
 
 # Route to fetch all URLs
 @urls_bp.route('/urls', methods=['GET'])
 def get_urls():
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     urls_db = UrlsDB(conn)
     urls = urls_db.get_all_urls()
     return jsonify(urls)
@@ -20,7 +17,7 @@ def get_urls():
 # Route to update URL name
 @urls_bp.route('/urls/<int:id>', methods=['PUT'])
 def update_url(id):
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     urls_db = UrlsDB(conn)
     url = urls_db.get_url(id)
 
@@ -45,7 +42,7 @@ def update_url(id):
 # Route to delete a URL
 @urls_bp.route('/urls/<int:id>', methods=['DELETE'])
 def delete_url(id):
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     urls_db = UrlsDB(conn)
     url = urls_db.get_url(id)
 
@@ -65,7 +62,7 @@ def create_url():
     if not name:
         return jsonify({"error": "Name is required"}), 400
 
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     urls_db = UrlsDB(conn)
     new_id = urls_db.add_url(name)
     
@@ -79,7 +76,7 @@ def create_url():
 # Route to fetch all URLs with associated categories
 @urls_bp.route('/urls-with-categories', methods=['GET'])
 def get_urls_with_categories():
-    conn = mydb.conn
+    conn = DatabaseHolder().mydb.conn
     cursor = conn.cursor()
 
     # Join urls, url_categories, and categories tables to fetch the required data
