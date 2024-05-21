@@ -12,7 +12,8 @@ class TokensDB:
         cursor.execute('''CREATE TABLE IF NOT EXISTS tokens (
                             id INTEGER PRIMARY KEY,
                             name TEXT NOT NULL,
-                            token TEXT NOT NULL UNIQUE
+                            token TEXT NOT NULL UNIQUE,
+                            is_deleted INTEGER DEFAULT 0
                         )''')
         self.conn.commit()
 
@@ -28,15 +29,15 @@ class TokensDB:
 
     def get_token(self, token_id):
         cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM tokens WHERE id = ?', (token_id,))
+        cursor.execute('SELECT * FROM tokens WHERE id = ? AND is_deleted = 0', (token_id,))
         return cursor.fetchone()
 
     def delete_token(self, token_id):
         cursor = self.conn.cursor()
-        cursor.execute('DELETE FROM tokens WHERE id = ?', (token_id,))
+        cursor.execute('UPDATE tokens SET is_deleted = 1 WHERE id = ?', (token_id,))
         self.conn.commit()
 
     def get_all_tokens(self):
         cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM tokens')
+        cursor.execute('SELECT * FROM tokens WHERE is_deleted = 0')
         return cursor.fetchall()

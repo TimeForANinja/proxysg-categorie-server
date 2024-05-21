@@ -10,8 +10,9 @@ class CategoriesDB:
         cursor = self.conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS categories (
                             id INTEGER PRIMARY KEY,
-                            name TEXT NOT NULL
-                        )''')
+                            name TEXT NOT NULL,
+                            is_deleted INTEGER DEFAULT 0
+        )''')
         self.conn.commit()
 
     def add_category(self, name):
@@ -22,20 +23,20 @@ class CategoriesDB:
 
     def get_category(self, category_id):
         cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM categories WHERE id = ?', (category_id,))
+        cursor.execute('SELECT * FROM categories WHERE id = ? AND is_deleted = 0', (category_id,))
         return cursor.fetchone()
 
     def update_category(self, category_id, new_name):
         cursor = self.conn.cursor()
-        cursor.execute('UPDATE categories SET name = ? WHERE id = ?', (new_name, category_id))
+        cursor.execute('UPDATE categories SET name = ? WHERE id = ? AND is_deleted = 0', (new_name, category_id))
         self.conn.commit()
 
     def delete_category(self, category_id):
         cursor = self.conn.cursor()
-        cursor.execute('DELETE FROM categories WHERE id = ?', (category_id,))
+        cursor.execute('UPDATE categories SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', (category_id,))
         self.conn.commit()
 
     def get_all_categories(self):
         cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM categories')
+        cursor.execute('SELECT * FROM categories WHERE is_deleted = 0')
         return cursor.fetchall()
