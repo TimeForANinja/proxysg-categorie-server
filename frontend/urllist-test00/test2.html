@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Select Element</title>
+</head>
+<body>
+<!-- Use the custom element -->
+<my-select
+        label="Choose an option:"
+        options='[{"value":"option1","label":"Option 1"},{"value":"option2","label":"Option 2"},{"value":"option3","label":"Option 3"}]'>
+</my-select>
+
+<!-- Import the JavaScript file -->
+<script src="test2.js"></script>
+
+<script>
+    document.querySelector('my-select').addEventListener('change', (event) => {
+        console.log('Selected value:', event.detail.value);
+    });
+</script>
+</body>
+</html>
