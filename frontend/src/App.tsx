@@ -1,86 +1,74 @@
 import React from 'react';
 import './App.css';
-import Select from 'react-select';
-
-interface IURL {
-    id: number;
-    hostname: string;
-    memberOf: number[];
-}
-
-interface ICategory {
-    value: number;
-    label: string;
-}
+import {
+    createBrowserRouter, Navigate,
+    RouterProvider
+} from "react-router-dom";
+import MatchingListPage from "./pages/matching";
+import LoginPage from "./pages/login";
+import ApiTokenPage from "./pages/api-tokens";
+import CategoriesPage from "./pages/categories";
+import HistoryPage from "./pages/history";
+import ProtectedRoute from "./login-protected";
+import HomePage from "./pages/home";
 
 function App() {
-    const [urls, setURLs] = React.useState<IURL[]>([]);
-    const [categories, setCategory] = React.useState<ICategory[]>([]);
-    const [expandedId, setExpandedId] = React.useState<number | null>(null);
+    const [loggedIn, setLoggedIn] = React.useState<boolean>(false)
+    const [email, setEmail] = React.useState<string>('')
 
-    const handleExpand = (id: number) => {
-        setExpandedId(prevId => prevId === id ? null : id);
-    }
+    const router = createBrowserRouter([
+        {
+            path: "/apitokens",
+            element: <ApiTokenPage />,
+        },
+        {
+            path: "/categories",
+            element: <CategoriesPage />,
+        },
+        {
+            path: "/history",
+            element: <HistoryPage />,
+        },
+        {
+            path: "/login",
+            element: <LoginPage setLoggedIn={setLoggedIn} setEmail={setEmail} />,
+        },
+        {
+            path: "/matching",
+            element: <MatchingListPage />,
+        },
+        {
+            path: "/",
+            element: <HomePage email={email} loggedIn={loggedIn} setLoggedIn={setLoggedIn} />,
+        },
+    ]);
 
     React.useEffect(() => {
-        const getURLs = async () => {
-            const response = await fetch('/api/urls');
-            const data = await response.json();
-            return data;
+        // Fetch the user email and token from local storage
+        const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+
+        // If the token/email does not exist, mark the user as logged out
+        if (!user || !user.token) {
+            setLoggedIn(false)
+            return
         }
 
-        const getCategories = async () => {
-            const response = await fetch('/api/categories');
-            const data = await response.json();
-            return data;
-        }
-
-        Promise.all([getURLs(), getCategories()])
-            .then(([urlsData, categoriesData]) => {
-                setURLs(urlsData);
-                setCategory(categoriesData);
+        // If the token exists, verify it with the auth server to see if it is valid
+        fetch('http://localhost:3080/verify', {
+            method: 'POST',
+            headers: {
+                'jwt-token': user.token,
+            },
+        })
+            .then((r) => r.json())
+            .then((r) => {
+                setLoggedIn('success' === r.message)
+                setEmail(user.email || '')
             })
-            .catch((error) => console.error("Error:", error));
-    }, []);
+    }, [])
 
     return (
-        <div className="App">
-            <div className="App-body">
-                <table className="table" style={{width: '100%'}}>
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Hostname</th>
-                        <th>Categories</th>
-                        <th>Details</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {urls.map(url => (
-                        <React.Fragment key={url.id}>
-                            <tr key={url.id}>
-                                <td>{url.id}</td>
-                                <td>{url.hostname}</td>
-                                <td>
-                                    <Select
-                                        defaultValue={categories.filter(category => url.memberOf.includes(category.value))}
-                                        isMulti
-                                        options={categories}
-                                    />
-                                </td>
-                                <td>
-                                    <button onClick={() => handleExpand(url.id)}>{"<"}</button>
-                                </td>
-                            </tr>
-                            <tr key={url.id + '-expand'} style={{display: expandedId === url.id ? '' : 'none'}}>
-                                <td colSpan={99}>Hello there</td>
-                            </tr>
-                        </React.Fragment>
-                    ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <RouterProvider router={router} />
     );
 }
 
