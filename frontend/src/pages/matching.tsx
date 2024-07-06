@@ -1,16 +1,9 @@
 import React from 'react';
 import Select from 'react-select';
+import {getCategories, ICategory} from "../api/categories";
+import {getURLs, IURL} from "../api/urls";
 
-interface IURL {
-    id: number;
-    hostname: string;
-    memberOf: number[];
-}
 
-interface ICategory {
-    value: number;
-    label: string;
-}
 
 function MatchingListPage() {
     const [urls, setURLs] = React.useState<IURL[]>([]);
@@ -22,17 +15,7 @@ function MatchingListPage() {
     }
 
     React.useEffect(() => {
-        const getURLs = async () => {
-            const response = await fetch('/api/urls');
-            const data = await response.json();
-            return data;
-        }
 
-        const getCategories = async () => {
-            const response = await fetch('/api/categories');
-            const data = await response.json();
-            return data;
-        }
 
         Promise.all([getURLs(), getCategories()])
             .then(([urlsData, categoriesData]) => {
@@ -60,9 +43,9 @@ function MatchingListPage() {
                         <td>{url.hostname}</td>
                         <td>
                             <Select
-                                defaultValue={categories.filter(category => url.memberOf.includes(category.value))}
+                                defaultValue={categories.filter(category => url.categories.includes(category.id)).map(c => ({ value: c.id, label: c.name }))}
                                 isMulti
-                                options={categories}
+                                options={categories.map(c => ({ value: c.id, label: c.name }))}
                             />
                         </td>
                         <td>

@@ -1,8 +1,8 @@
 import React from 'react';
 import './App.css';
 import {
-    createBrowserRouter, Navigate,
-    RouterProvider
+    createBrowserRouter, Navigate, Link,
+    RouterProvider, BrowserRouter
 } from "react-router-dom";
 import MatchingListPage from "./pages/matching";
 import LoginPage from "./pages/login";
@@ -11,6 +11,7 @@ import CategoriesPage from "./pages/categories";
 import HistoryPage from "./pages/history";
 import ProtectedRoute from "./login-protected";
 import HomePage from "./pages/home";
+import BaseLayout from "./pages/BaseLayout";
 
 function App() {
     const [loggedIn, setLoggedIn] = React.useState<boolean>(false)
@@ -18,28 +19,34 @@ function App() {
 
     const router = createBrowserRouter([
         {
-            path: "/apitokens",
-            element: <ApiTokenPage />,
+            element: <BaseLayout />,
+            children: [
+                {
+                    path: "/apitokens",
+                    element: <ApiTokenPage/>,
+                },
+                {
+                    path: "/categories",
+                    element: <CategoriesPage/>,
+                },
+                {
+                    path: "/history",
+                    element: <HistoryPage/>,
+                },
+                {
+                    path: "/matching",
+                    element: <MatchingListPage/>,
+                },
+            ],
         },
-        {
-            path: "/categories",
-            element: <CategoriesPage />,
-        },
-        {
-            path: "/history",
-            element: <HistoryPage />,
-        },
+
         {
             path: "/login",
-            element: <LoginPage setLoggedIn={setLoggedIn} setEmail={setEmail} />,
-        },
-        {
-            path: "/matching",
-            element: <MatchingListPage />,
+            element: <LoginPage setLoggedIn={setLoggedIn} setEmail={setEmail}/>,
         },
         {
             path: "/",
-            element: <HomePage email={email} loggedIn={loggedIn} setLoggedIn={setLoggedIn} />,
+            element: <HomePage email={email} loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>,
         },
     ]);
 
@@ -68,7 +75,7 @@ function App() {
     }, [])
 
     return (
-        <RouterProvider router={router} />
+        <RouterProvider router={router}/>
     );
 }
 
