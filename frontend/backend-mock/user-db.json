@@ -1,8 +1,12 @@
 {
   "users": [
     {
-      "email": "asdf@asdf.asdf",
+      "username": "asdf@asdf.asdf",
       "password": "$2b$10$eR3rS6B3AK.QY2o5oM/O2.GjZD2NIgz4IEHGY7sygNZGuPHjGNvDe"
+    },
+    {
+      "username": "admin",
+      "password": "$2b$10$azLqrMNSG1JyUwGlJlZHtenew67tlsZU8lG8nSEuJqW0i5rio.YZq"
     }
   ]
 }

@@ -1,5 +1,3 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { JSONFilePreset  } from 'lowdb/node';
 
 // init low db
@@ -13,11 +11,11 @@ const addDataRoutes = (app) => {
         res.status(200).json({
             message: 'success',
             data: [
-                {id: 0, name: 'Alphabet'},
-                {id: 1, name: 'Social Media'},
-                {id: 2, name: 'Meta'},
-                {id: 3, name: 'Video Content'},
-                {id: 4, name: 'Audio Content'},
+                {id: 0, name: 'Alphabet', color: 1},
+                {id: 1, name: 'Social Media', color: 2},
+                {id: 2, name: 'Meta', color: 3},
+                {id: 3, name: 'Video Content', color: 4},
+                {id: 4, name: 'Audio Content', color: 5},
             ]
         })
     })

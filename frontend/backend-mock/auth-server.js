@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { JSONFilePreset  } from 'lowdb/node';
+import {JSONFilePreset} from 'lowdb/node';
 
 // init low db
 let db;
@@ -16,39 +16,39 @@ const addAuthRoutes = (app, jwtSecretKey) => {
 
     // The auth endpoint that creates a new user record or logs a user based on an existing record
     app.post('/auth', (req, res) => {
-        const { email, password } = req.body
+        const {username, password} = req.body
 
         // Look up the user entry in the database
-        const user = db.data.users.filter((user) => email === user.email)
+        const user = db.data.users.filter((user) => username === user.username)
 
         // If found, compare the hashed passwords and generate the JWT token for the user
         if (user.length === 1) {
             bcrypt.compare(password, user[0].password, function (_err, result) {
                 if (!result) {
-                    return res.status(401).json({ message: 'Invalid password' })
+                    return res.status(401).json({message: 'Invalid password'})
                 } else {
                     let loginData = {
-                        email,
+                        username,
                         signInTime: Date.now(),
                     }
 
                     const token = jwt.sign(loginData, jwtSecretKey)
-                    res.status(200).json({ message: 'success', token })
+                    res.status(200).json({message: 'success', token})
                 }
             })
-            // If no user is found, hash the given password and create a new entry in the auth db with the email and hashed password
+            // If no user is found, hash the given password and create a new entry in the auth db with the username and hashed password
         } else if (user.length === 0) {
             bcrypt.hash(password, 10, function (_err, hash) {
-                console.log({ email, password: hash })
-                db.update(({users}) => users.push({ email, password: hash }));
+                console.log({username, password: hash})
+                db.update(({users}) => users.push({username, password: hash}));
 
                 let loginData = {
-                    email,
+                    username,
                     signInTime: Date.now(),
                 }
 
                 const token = jwt.sign(loginData, jwtSecretKey)
-                res.status(200).json({ message: 'success', token })
+                res.status(200).json({message: 'success', token})
             })
         }
     })
@@ -60,24 +60,24 @@ const addAuthRoutes = (app, jwtSecretKey) => {
         try {
             const verified = jwt.verify(authToken, jwtSecretKey)
             if (verified) {
-                return res.status(200).json({ status: 'logged in', message: 'success' })
+                return res.status(200).json({status: 'logged in', message: 'success'})
             } else {
                 // Access Denied
-                return res.status(401).json({ status: 'invalid auth', message: 'error' })
+                return res.status(401).json({status: 'invalid auth', message: 'error'})
             }
         } catch (error) {
             // Access Denied
-            return res.status(401).json({ status: 'invalid auth', message: 'error' })
+            return res.status(401).json({status: 'invalid auth', message: 'error'})
         }
     })
 
-    // An endpoint to see if there's an existing account for a given email address
+    // An endpoint to see if there's an existing account for a given username
     app.post('/check-account', (req, res) => {
-        const { email } = req.body
+        const {username} = req.body
 
         console.log(req.body)
 
-        const user = db.data.users.filter((user) => email === user.email)
+        const user = db.data.users.filter((user) => username === user.username)
 
         console.log(user)
 

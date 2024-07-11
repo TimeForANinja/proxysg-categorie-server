@@ -1,16 +1,16 @@
 import React from 'react';
 import './login.css';
-import { useNavigate } from 'react-router-dom'
+import {useNavigate} from 'react-router-dom'
 
 interface Props {
-    setEmail: React.Dispatch<React.SetStateAction<string>>,
+    setUsername: React.Dispatch<React.SetStateAction<string>>,
     setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 function LoginPage(props: Props) {
-    const [email, setEmail] = React.useState<string>('')
+    const [username, setUsername] = React.useState<string>('')
     const [password, setPassword] = React.useState<string>('')
-    const [emailError, setEmailError] = React.useState<string>('')
+    const [usernameError, setUsernameError] = React.useState<string>('')
     const [passwordError, setPasswordError] = React.useState<string>('')
 
     const navigate = useNavigate()
@@ -19,17 +19,17 @@ function LoginPage(props: Props) {
         // Validate Data
         {
             // Set initial error values to empty
-            setEmailError('')
+            setUsernameError('')
             setPasswordError('')
 
             // Check if the user has entered both fields correctly
-            if ('' === email) {
-                setEmailError('Please enter your email')
+            if ('' === username) {
+                setUsernameError('Please enter your username')
                 return
             }
 
-            if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-                setEmailError('Please enter a valid email')
+            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                setUsernameError('Please enter a valid username')
                 return
             }
 
@@ -38,23 +38,23 @@ function LoginPage(props: Props) {
                 return
             }
 
-            if (password.length < 7) {
-                setPasswordError('The password must be 8 characters or longer')
+            if (password.length < 4) {
+                setPasswordError('The password must be 4 characters or longer')
                 return
             }
         }
 
         // Authentication calls
         {
-            // Check if email has an account associated with it
+            // Check if username has an account associated with it
             checkAccountExists((accountExists: boolean) => {
                 // If yes, log in
                 if (accountExists) logIn()
                 // Else, ask user if they want to create a new account and if yes, then log in
                 else if (
                     window.confirm(
-                        'An account does not exist with this email address: ' +
-                        email +
+                        'An account does not exist with this username: ' +
+                        username +
                         '. Do you want to create a new account?',
                     )
                 ) {
@@ -64,14 +64,14 @@ function LoginPage(props: Props) {
         }
     }
 
-    // Call the server API to check if the given email ID already exists
+    // Call the server API to check if the given username ID already exists
     const checkAccountExists = (callback: (accountExists: boolean) => void) => {
         fetch('http://localhost:3080/check-account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({username}),
         })
             .then((r) => r.json())
             .then((r) => {
@@ -79,24 +79,24 @@ function LoginPage(props: Props) {
             })
     }
 
-    // Log in a user using email and password
+    // Log in a user using username and password
     const logIn = () => {
         fetch('http://localhost:3080/auth', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({username, password}),
         })
             .then((r) => r.json())
             .then((r) => {
                 if ('success' === r.message) {
-                    localStorage.setItem('user', JSON.stringify({ email, token: r.token }))
+                    localStorage.setItem('user', JSON.stringify({username, token: r.token}))
                     props.setLoggedIn(true)
-                    props.setEmail(email)
+                    props.setUsername(username)
                     navigate('/')
                 } else {
-                    window.alert('Wrong email or password')
+                    window.alert('Wrong username or password')
                 }
             })
     }
@@ -106,19 +106,20 @@ function LoginPage(props: Props) {
             <div className={'titleContainer'}>
                 <div>Login</div>
             </div>
-            <br />
+            <br/>
             <div className={'inputContainer'}>
                 <input
-                    value={email}
-                    placeholder="Enter your email here"
-                    onChange={(ev) => setEmail(ev.target.value)}
+                    value={username}
+                    placeholder="Enter your username here"
+                    onChange={(ev) => setUsername(ev.target.value)}
                     className={'inputBox'}
                 />
-                <label className="errorLabel">{emailError}</label>
+                <label className="errorLabel">{usernameError}</label>
             </div>
-            <br />
+            <br/>
             <div className={'inputContainer'}>
                 <input
+                    type="password"
                     value={password}
                     placeholder="Enter your password here"
                     onChange={(ev) => setPassword(ev.target.value)}
@@ -126,9 +127,9 @@ function LoginPage(props: Props) {
                 />
                 <label className="errorLabel">{passwordError}</label>
             </div>
-            <br />
+            <br/>
             <div className={'inputContainer'}>
-                <input className={'inputButton'} type="button" onClick={onButtonClick} value={'Log in'} />
+                <input className={'inputButton'} type="button" onClick={onButtonClick} value={'Log in'}/>
             </div>
         </div>
     );

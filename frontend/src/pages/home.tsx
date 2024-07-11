@@ -2,13 +2,13 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface Props {
-    email: string,
+    username: string,
     loggedIn: boolean,
     setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const HomePage = (props: Props) => {
-    const { loggedIn, email } = props
+    const { loggedIn, username } = props
     const navigate = useNavigate()
 
     const onButtonClick = () => {
@@ -33,7 +33,7 @@ const HomePage = (props: Props) => {
                     onClick={onButtonClick}
                     value={loggedIn ? 'Log out' : 'Log in'}
                 />
-                {loggedIn ? <div>Your email address is {email}</div> : <div />}
+                {loggedIn ? <div>Your username is {username}</div> : <div />}
             </div>
         </div>
     )

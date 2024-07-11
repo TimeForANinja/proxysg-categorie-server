@@ -15,7 +15,7 @@ import BaseLayout from "./pages/BaseLayout";
 
 function App() {
     const [loggedIn, setLoggedIn] = React.useState<boolean>(false)
-    const [email, setEmail] = React.useState<string>('')
+    const [username, setUsername] = React.useState<string>('')
 
     const router = createBrowserRouter([
         {
@@ -42,19 +42,19 @@ function App() {
 
         {
             path: "/login",
-            element: <LoginPage setLoggedIn={setLoggedIn} setEmail={setEmail}/>,
+            element: <LoginPage setLoggedIn={setLoggedIn} setUsername={setUsername}/>,
         },
         {
             path: "/",
-            element: <HomePage email={email} loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>,
+            element: <HomePage username={username} loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>,
         },
     ]);
 
     React.useEffect(() => {
-        // Fetch the user email and token from local storage
+        // Fetch the user username and token from local storage
         const user = JSON.parse(localStorage.getItem('user') ?? '{}')
 
-        // If the token/email does not exist, mark the user as logged out
+        // If the token/username does not exist, mark the user as logged out
         if (!user || !user.token) {
             setLoggedIn(false)
             return
@@ -70,7 +70,7 @@ function App() {
             .then((r) => r.json())
             .then((r) => {
                 setLoggedIn('success' === r.message)
-                setEmail(user.email || '')
+                setUsername(user.username || '')
             })
     }, [])
 
