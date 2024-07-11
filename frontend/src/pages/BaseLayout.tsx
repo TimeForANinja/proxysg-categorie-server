@@ -1,11 +1,11 @@
 import React from 'react';
 import {Link, Outlet} from "react-router-dom";
+import './BaseLayout.css';
 
 function BaseLayout() {
-
     return (
         <>
-            <header>
+            <header className="header-navbar">
                 <nav>
                     <ul>
                         <li><Link to="/">Home</Link></li>
@@ -17,7 +17,7 @@ function BaseLayout() {
                 </nav>
             </header>
 
-            <Outlet />
+            <Outlet/>
         </>
     );
 }

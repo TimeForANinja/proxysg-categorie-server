@@ -1,0 +1,27 @@
+/* For header element across the page with full width */
+header {
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+
+/* For the nav element */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+}
+
+/* For unordered list */
+ul {
+    padding: 5px;
+    list-style-type: none;
+    display: flex;
+    margin-bottom: 5px;
+}
+
+/* For list items */
+li {
+    margin: 0 10px; /* Adjust margin as needed */
+}
