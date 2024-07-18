@@ -25,7 +25,7 @@ const addAuthRoutes = (app, jwtSecretKey) => {
         if (user.length === 1) {
             bcrypt.compare(password, user[0].password, function (_err, result) {
                 if (!result) {
-                    return res.status(401).json({message: 'Invalid password'})
+                    return res.status(401).json({message: 'Invalid password or unknown user'})
                 } else {
                     let loginData = {
                         username,
@@ -36,20 +36,13 @@ const addAuthRoutes = (app, jwtSecretKey) => {
                     res.status(200).json({message: 'success', token})
                 }
             })
-            // If no user is found, hash the given password and create a new entry in the auth db with the username and hashed password
-        } else if (user.length === 0) {
-            bcrypt.hash(password, 10, function (_err, hash) {
-                console.log({username, password: hash})
-                db.update(({users}) => users.push({username, password: hash}));
-
-                let loginData = {
-                    username,
-                    signInTime: Date.now(),
-                }
-
-                const token = jwt.sign(loginData, jwtSecretKey)
+        } else {
+            /* old version that creates a new user
+            createNewUserInDB(username, password, jwtSecretKey).then(token => {
                 res.status(200).json({message: 'success', token})
-            })
+            });
+            */
+            return res.status(401).json({message: 'Invalid password or unknown user'})
         }
     })
 
@@ -70,22 +63,22 @@ const addAuthRoutes = (app, jwtSecretKey) => {
             return res.status(401).json({status: 'invalid auth', message: 'error'})
         }
     })
-
-    // An endpoint to see if there's an existing account for a given username
-    app.post('/check-account', (req, res) => {
-        const {username} = req.body
-
-        console.log(req.body)
-
-        const user = db.data.users.filter((user) => username === user.username)
-
-        console.log(user)
-
-        res.status(200).json({
-            status: user.length === 1 ? 'User exists' : 'User does not exist',
-            userExists: user.length === 1,
-        })
-    })
 }
+
+const createNewUserInDB = (username, password, jwtSecretKey) => new Promise(resolve => {
+    // hash the given password and create a new entry in the auth db with the username and hashed password
+    bcrypt.hash(password, 10, function (_err, hash) {
+        console.log({username, password: hash})
+        db.update(({users}) => users.push({username, password: hash}));
+
+        let loginData = {
+            username,
+            signInTime: Date.now(),
+        }
+
+        const token = jwt.sign(loginData, jwtSecretKey)
+        resolve(token);
+    })
+});
 
 export default addAuthRoutes;
