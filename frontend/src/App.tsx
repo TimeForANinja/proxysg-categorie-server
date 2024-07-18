@@ -19,7 +19,7 @@ function App() {
 
     const router = createBrowserRouter([
         {
-            element: <BaseLayout />,
+            element: <BaseLayout username={username} loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>,
             children: [
                 {
                     path: "/apitokens",
@@ -37,17 +37,17 @@ function App() {
                     path: "/matching",
                     element: <MatchingListPage/>,
                 },
+                {
+                    path: "/",
+                    element: <HomePage/>,
+                },
             ],
         },
 
         {
             path: "/login",
             element: <LoginPage setLoggedIn={setLoggedIn} setUsername={setUsername}/>,
-        },
-        {
-            path: "/",
-            element: <HomePage username={username} loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>,
-        },
+        }
     ]);
 
     React.useEffect(() => {
