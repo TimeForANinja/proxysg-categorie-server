@@ -9,12 +9,15 @@ import LoginPage from "./pages/login";
 import ApiTokenPage from "./pages/api-tokens";
 import CategoriesPage from "./pages/categories";
 import HistoryPage from "./pages/history";
-import ProtectedRoute from "./login-protected";
 import HomePage from "./pages/home";
 import BaseLayout from "./pages/BaseLayout";
+import {checkLogin, readLoginToken} from "./model/loginHandler";
+import {OptBoolean} from "./model/OptionalBool";
 
 function App() {
-    const [loggedIn, setLoggedIn] = React.useState<boolean>(false)
+
+
+    const [loggedIn, setLoggedIn] = React.useState<OptBoolean>(OptBoolean.Unknown)
     const [username, setUsername] = React.useState<string>('')
 
     const router = createBrowserRouter([
@@ -52,27 +55,20 @@ function App() {
 
     React.useEffect(() => {
         // Fetch the user username and token from local storage
-        const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+        const user = readLoginToken();
 
         // If the token/username does not exist, mark the user as logged out
         if (!user || !user.token) {
-            setLoggedIn(false)
+            setLoggedIn(OptBoolean.No)
             return
         }
 
-        // If the token exists, verify it with the auth server to see if it is valid
-        fetch('http://localhost:3080/verify', {
-            method: 'POST',
-            headers: {
-                'jwt-token': user.token,
-            },
+        checkLogin(user.token).then(valid => {
+            console.log('App, checkLogin', { user, valid });
+            setLoggedIn(valid ? OptBoolean.Yes : OptBoolean.No)
+            setUsername(user.username || '')
         })
-            .then((r) => r.json())
-            .then((r) => {
-                setLoggedIn('success' === r.message)
-                setUsername(user.username || '')
-            })
-    }, [])
+    }, [loggedIn])
 
     return (
         <RouterProvider router={router}/>

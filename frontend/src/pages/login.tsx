@@ -1,10 +1,12 @@
 import React from 'react';
 import './login.css';
 import {useNavigate} from 'react-router-dom'
+import {OptBoolean} from "../model/OptionalBool";
+import {doLogin} from "../model/loginHandler";
 
 interface Props {
     setUsername: React.Dispatch<React.SetStateAction<string>>,
-    setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>
+    setLoggedIn: React.Dispatch<React.SetStateAction<OptBoolean>>
 }
 
 function LoginPage(props: Props) {
@@ -15,7 +17,7 @@ function LoginPage(props: Props) {
 
     const navigate = useNavigate()
 
-    const onButtonClick = () => {
+    const onSendLogin = () => {
         // Validate Data
         {
             // Set initial error values to empty
@@ -44,61 +46,21 @@ function LoginPage(props: Props) {
             }
         }
 
-        // Authentication calls
-        {
-            // Check if username has an account associated with it
-            checkAccountExists((accountExists: boolean) => {
-                // If yes, log in
-                if (accountExists) logIn()
-                // Else, ask user if they want to create a new account and if yes, then log in
-                else if (
-                    window.confirm(
-                        'An account does not exist with this username: ' +
-                        username +
-                        '. Do you want to create a new account?',
-                    )
-                ) {
-                    logIn()
-                }
-            })
+        // Authentication call
+        doLogin(username, password).then((user) => {
+            localStorage.setItem('user', JSON.stringify(user))
+            props.setLoggedIn(OptBoolean.Yes)
+            props.setUsername(user.username)
+            navigate('/')
+        }).catch((err) => {
+            setUsernameError(err.message)
+        });
+    }
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter') {
+            onSendLogin();
         }
-    }
-
-    // Call the server API to check if the given username ID already exists
-    const checkAccountExists = (callback: (accountExists: boolean) => void) => {
-        fetch('http://localhost:3080/check-account', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({username}),
-        })
-            .then((r) => r.json())
-            .then((r) => {
-                callback(r?.userExists)
-            })
-    }
-
-    // Log in a user using username and password
-    const logIn = () => {
-        fetch('http://localhost:3080/auth', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({username, password}),
-        })
-            .then((r) => r.json())
-            .then((r) => {
-                if ('success' === r.message) {
-                    localStorage.setItem('user', JSON.stringify({username, token: r.token}))
-                    props.setLoggedIn(true)
-                    props.setUsername(username)
-                    navigate('/')
-                } else {
-                    window.alert('Wrong username or password')
-                }
-            })
     }
 
     return (
@@ -112,6 +74,7 @@ function LoginPage(props: Props) {
                     value={username}
                     placeholder="Enter your username here"
                     onChange={(ev) => setUsername(ev.target.value)}
+                    onKeyDown={handleKeyDown}
                     className={'inputBox'}
                 />
                 <label className="errorLabel">{usernameError}</label>
@@ -123,13 +86,14 @@ function LoginPage(props: Props) {
                     value={password}
                     placeholder="Enter your password here"
                     onChange={(ev) => setPassword(ev.target.value)}
+                    onKeyDown={handleKeyDown}
                     className={'inputBox'}
                 />
                 <label className="errorLabel">{passwordError}</label>
             </div>
             <br/>
             <div className={'inputContainer'}>
-                <input className={'inputButton'} type="button" onClick={onButtonClick} value={'Log in'}/>
+                <input className={'inputButton'} type="button" onClick={onSendLogin} value={'Log in'}/>
             </div>
         </div>
     );
