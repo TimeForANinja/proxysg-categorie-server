@@ -64,7 +64,6 @@ function App() {
         }
 
         checkLogin(user.token).then(valid => {
-            console.log('App, checkLogin', { user, valid });
             setLoggedIn(valid ? OptBoolean.Yes : OptBoolean.No)
             setUsername(user.username || '')
         })

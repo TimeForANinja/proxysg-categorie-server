@@ -5,6 +5,19 @@ import chroma from 'chroma-js';
 import {getCategories, ICategory} from "../api/categories";
 import {getURLs, IURL} from "../api/urls";
 import {colors} from "../api/colormixer";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import IconButton from "@mui/material/IconButton";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import Paper from '@mui/material/Paper';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
 
 
 type ColorOPT = {
@@ -20,18 +33,54 @@ const mapCategoryToSelectProps = (category: ICategory): ColorOPT => ({
 });
 
 
+function BuildRow(props: { url: IURL, categories: ICategory[]}) {
+    const { url, categories } = props;
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    return (
+        <React.Fragment>
+            <TableRow key={url.id}>
+                <TableCell>
+                    <IconButton
+                        aria-label="expand row"
+                        size="small"
+                        onClick={() => setIsOpen(!isOpen)}
+                    >
+                        {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                    </IconButton>
+                </TableCell>
+                <TableCell>{url.id}</TableCell>
+                <TableCell>{url.hostname}</TableCell>
+                <TableCell>
+                    <Select
+                        defaultValue={categories.filter(category => url.categories.includes(category.id)).map(mapCategoryToSelectProps)}
+                        isMulti
+                        options={categories.map(mapCategoryToSelectProps)}
+                        styles={colourStyles}
+                    />
+                </TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={4}>
+                    <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 1}} >
+                            <Typography variant="h6" gutterBottom component="div">
+                                History
+                            </Typography>
+                        </Box>
+                    </Collapse>
+                </TableCell>
+            </TableRow>
+            </React.Fragment>
+    )
+}
+
+
 function MatchingListPage() {
     const [urls, setURLs] = React.useState<IURL[]>([]);
     const [categories, setCategory] = React.useState<ICategory[]>([]);
-    const [expandedId, setExpandedId] = React.useState<number | null>(null);
-
-    const handleExpand = (id: number) => {
-        setExpandedId(prevId => prevId === id ? null : id);
-    }
 
     React.useEffect(() => {
-
-
         Promise.all([getURLs(), getCategories()])
             .then(([urlsData, categoriesData]) => {
                 setURLs(urlsData);
@@ -41,40 +90,23 @@ function MatchingListPage() {
     }, []);
 
     return (
-        <table className="table" style={{width: '100%'}}>
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Hostname</th>
-                <th>Categories</th>
-                <th>Details</th>
-            </tr>
-            </thead>
-            <tbody>
-            {urls.map(url => (
-                <React.Fragment key={url.id}>
-                    <tr key={url.id}>
-                        <td>{url.id}</td>
-                        <td>{url.hostname}</td>
-                        <td>
-                            <Select
-                                defaultValue={categories.filter(category => url.categories.includes(category.id)).map(mapCategoryToSelectProps)}
-                                isMulti
-                                options={categories.map(mapCategoryToSelectProps)}
-                                styles={colourStyles}
-                            />
-                        </td>
-                        <td>
-                            <button onClick={() => handleExpand(url.id)}>{"<"}</button>
-                        </td>
-                    </tr>
-                    <tr key={url.id + '-expand'} style={{display: expandedId === url.id ? '' : 'none'}}>
-                        <td colSpan={99}>Hello there</td>
-                    </tr>
-                </React.Fragment>
-            ))}
-            </tbody>
-        </table>
+        <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+            <TableHead>
+            <TableRow>
+                <TableCell />
+                <TableCell>ID</TableCell>
+                <TableCell>Hostname</TableCell>
+                <TableCell>Categories</TableCell>
+            </TableRow>
+            </TableHead>
+            <TableBody>
+            {urls.map(url =>
+                <BuildRow key={url.id} url={url} categories={categories}></BuildRow>
+            )}
+            </TableBody>
+        </Table>
+        </TableContainer>
     );
 }
 

@@ -1,6 +1,13 @@
 import React from 'react';
 import {getCategories, ICategory} from "../api/categories";
 import {getHistory, ICommits} from "../api/history";
+import Paper from "@mui/material/Paper";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 function HistoryPage() {
     const [commits, setCommits] = React.useState<ICommits[]>([]);
@@ -14,38 +21,37 @@ function HistoryPage() {
     }, []);
 
     return (
-        <div>
-            HistoryPage
-            <table>
-                <thead>
-                <tr>
-                    <th>Commit-ID</th>
-                    <th>Atomic-ID</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
+        <TableContainer component={Paper}>
+            <Table>
+                <TableHead>
+                <TableRow>
+                    <TableCell component="th" scope="row">Commit-ID</TableCell>
+                    <TableCell>Atomic-ID</TableCell>
+                    <TableCell>Action</TableCell>
+                </TableRow>
+                </TableHead>
+                <TableBody>
                 {commits.map(commit => (
                     <React.Fragment key={commit.id}>
-                        <tr>
-                            <td>{commit.id}</td>
-                            <td>{commit.time}</td>
-                            <td>{commit.name}</td>
-                        </tr>
+                        <TableRow>
+                            <TableCell>{commit.id}</TableCell>
+                            <TableCell>{commit.time}</TableCell>
+                            <TableCell>{commit.name}</TableCell>
+                        </TableRow>
                         {
                             commit.atomics.map(atomic => (
-                                <tr key={atomic.id}>
-                                    <td></td>
-                                    <td>{atomic.id}</td>
-                                    <td>{atomic.action}</td>
-                                </tr>
+                                <TableRow key={atomic.id}>
+                                    <TableCell></TableCell>
+                                    <TableCell>{atomic.id}</TableCell>
+                                    <TableCell>{atomic.action}</TableCell>
+                                </TableRow>
                             ))
                         }
                     </React.Fragment>
                 ))}
-                </tbody>
-            </table>
-        </div>
+                </TableBody>
+            </Table>
+        </TableContainer>
     );
 }
 
