@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Commit Graph</title>
+
+    <style>
+        .commit {
+            width: 10px;
+            height: 10px;
+            background-color: blue;
+            border-radius: 50%;
+            display: inline-block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2; /* Modify the z-index here */
+        }
+
+        td {
+            position: relative;
+        }
+
+        .graph {
+            width: 25px;
+        }
+
+        .verticalLine:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: calc(50% - 1px);
+            height: calc(100% + 2px);
+            border-left: 2px solid black;
+            z-index: 1; /* above .commit */
+        }
+
+        .closing:before {
+            position: absolute;
+            height: 35px;
+            width: 1px;
+            content: '';
+            display: block;
+            background-color: black;
+            transform: rotate(-52deg);
+            left: -3px;
+            bottom: 100%;
+            margin-bottom: -15px;
+            z-index: 1; /* above .commit */
+        }
+
+        .opening:after {
+            position: absolute;
+            height: 35px;
+            width: 1px;
+            content: '';
+            display: block;
+            background-color: black;
+            transform: rotate(52deg);
+            left: -3px;
+            top: 100%;
+            margin-top: -15px;
+            z-index: 1; /* above .commit */
+        }
+    </style>
+</head>
+<body>
+<table>
+    <thead>
+    <tr>
+        <th class="graph"></th>
+        <th class="graph"></th>
+        <th>ID</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td class="graph"><div class="commit"></div></td>
+        <td class="graph"></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"></td>
+        <td class="graph closing opening"><div class="commit"></div></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"><div class="commit"></div></td>
+        <td class="graph"></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"></td>
+        <td class="graph closing"><div class="commit"></div></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"></td>
+        <td class="graph opening"><div class="commit"></div><div class="verticalLine"></div></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"><div class="commit"></div></td>
+        <td class="graph"></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"></td>
+        <td class="graph closing"><div class="commit"></div></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"></td>
+        <td class="graph opening"><div class="commit"></div><div class="verticalLine"></div></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="graph verticalLine"><div class="commit"></div></td>
+        <td class="graph"></td>
+        <td>asdf</td>
+        <td></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
