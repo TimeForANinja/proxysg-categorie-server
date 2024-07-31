@@ -1,0 +1,62 @@
+.commit {
+    width: 10px;
+    height: 10px;
+    background-color: blue;
+    border-radius: 50%;
+    display: inline-block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2; /* Modify the z-index here */
+}
+
+.atomic {
+    background-color: green;
+}
+
+td {
+    position: relative;
+}
+
+.graph {
+    width: 25px;
+}
+
+.verticalLine:after {
+    content: '';
+    position: absolute;
+    top: calc(-50% - 5px);
+    left: calc(50% - 1px);
+    height: calc(100% + 2px);
+    border-left: 2px solid black;
+    z-index: 1; /* above .commit */
+}
+
+.closing:before {
+    position: absolute;
+    height: 60px;
+    width: 1px;
+    content: '';
+    display: block;
+    background-color: black;
+    transform: rotate(-28deg);
+    left: -0px;
+    bottom: 100%;
+    margin-bottom: -25px;
+    z-index: 1; /* above .commit */
+}
+
+.opening:after {
+    position: absolute;
+    height: 60px;
+    width: 1px;
+    content: '';
+    display: block;
+    background-color: black;
+    transform: rotate(28deg);
+    left: -0px;
+    top: 100%;
+    margin-top: -25px;
+    z-index: 1; /* above .commit */
+}
