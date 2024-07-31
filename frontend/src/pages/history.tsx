@@ -1,4 +1,5 @@
 import React from 'react';
+import './history.css';
 import {getHistory, ICommits} from "../api/history";
 import Paper from "@mui/material/Paper";
 import Table from '@mui/material/Table';
@@ -11,8 +12,8 @@ import IconButton from "@mui/material/IconButton";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
-function BuildRow(props: { commit: ICommits}) {
-    const { commit} = props;
+function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
+    const { commit, isFirstCommit} = props;
     const [isOpen, setIsOpen] = React.useState(false);
 
     return (
@@ -27,19 +28,32 @@ function BuildRow(props: { commit: ICommits}) {
                         {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                     </IconButton>
                 </TableCell>
+                <TableCell className={ isFirstCommit ? "graph" : "graph verticalLine"}><div className="commit"></div></TableCell>
+                <TableCell />
                 <TableCell>{commit.id}</TableCell>
                 <TableCell>{commit.time}</TableCell>
                 <TableCell>{commit.name}</TableCell>
             </TableRow>
             {
-                isOpen ? commit.atomics.map(atomic => (
-                    <TableRow key={atomic.id}>
-                        <TableCell />
-                        <TableCell />
-                        <TableCell>{atomic.id}</TableCell>
-                        <TableCell>{atomic.action}</TableCell>
-                    </TableRow>
-                )) : <></>
+                isOpen ? commit.atomics.map((atomic, idx, items) => {
+                    const isFirstAtomic = idx === 0;
+                    const isLastAtomic = idx === items.length-1;
+                    return (
+                        <TableRow key={atomic.id}>
+                            <TableCell />
+                            <TableCell className="graph verticalLine" />
+                            <TableCell className={
+                                "graph" + (isFirstAtomic ? " closing" : "") + (isLastAtomic ? " opening" : "")
+                            } >
+                                <div className="commit atomic" />
+                                {isFirstAtomic ? (<></>) : (<div className="verticalLine"/>) }
+                            </TableCell>
+                            <TableCell>{atomic.id}</TableCell>
+                            <TableCell>{Date.now()}</TableCell>
+                            <TableCell>{atomic.action}</TableCell>
+                        </TableRow>
+                    )
+                }) : <></>
             }
         </React.Fragment>
     )
@@ -62,14 +76,16 @@ function HistoryPage() {
                 <TableHead>
                 <TableRow>
                     <TableCell />
+                    <TableCell />
+                    <TableCell />
                     <TableCell component="th" scope="row">Commit-ID</TableCell>
-                    <TableCell>Atomic-ID</TableCell>
-                    <TableCell>Action</TableCell>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Description</TableCell>
                 </TableRow>
                 </TableHead>
                 <TableBody>
-                {commits.map(commit => (
-                    <BuildRow key={commit.id} commit={commit}></BuildRow>
+                {commits.map((commit, idx) => (
+                    <BuildRow key={commit.id} commit={commit} isFirstCommit={idx === 0} />
                 ))}
                 </TableBody>
             </Table>

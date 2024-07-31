@@ -48,17 +48,15 @@ const addDataRoutes = (app) => {
         res.status(200).json({
             message: 'success',
             data: [
-                { id: 0, time: 1e5, name: "first commit", atomics: [
-                        {id: 4, action: "create"},
-                ]},
-                { id: 1, time: 2e5, name: "second commit", atomics: [
-                        {id: 5, action: "add-category", data: 4},
-                ]},
                 { id: 2, time: 3e5, name: "third commit", atomics: [
                         {id: 6, action: "add-category", data: 5},
                         {id: 7, action: "del-category", data: 5},
                         {id: 8, action: "add-category", data: 3},
                 ]},
+                { id: 1, time: 2e5, name: "second commit", atomics: [
+                        {id: 5, action: "add-category", data: 4},
+                    ]},
+                { id: 0, time: 1e5, name: "first commit", atomics: []},
             ]
         })
     })
