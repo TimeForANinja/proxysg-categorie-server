@@ -36,12 +36,12 @@ td {
 .closing:before {
     position: absolute;
     height: 60px;
-    width: 1px;
+    width: 2px;
     content: '';
     display: block;
     background-color: black;
-    transform: rotate(-28deg);
-    left: -0px;
+    transform: rotate(-27deg);
+    left: -1px;
     bottom: 100%;
     margin-bottom: -25px;
     z-index: 1; /* above .commit */
@@ -50,12 +50,12 @@ td {
 .opening:after {
     position: absolute;
     height: 60px;
-    width: 1px;
+    width: 2px;
     content: '';
     display: block;
     background-color: black;
-    transform: rotate(28deg);
-    left: -0px;
+    transform: rotate(27deg);
+    left: -1px;
     top: 100%;
     margin-top: -25px;
     z-index: 1; /* above .commit */

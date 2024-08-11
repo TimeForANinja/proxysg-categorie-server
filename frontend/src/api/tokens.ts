@@ -2,6 +2,7 @@
 export interface IApiToken {
     id: number;
     token: string;
+    description: string;
     categories: number[];
 }
 

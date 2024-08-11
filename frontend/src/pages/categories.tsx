@@ -8,6 +8,43 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+
+function BuildRow(props: { category: ICategory }) {
+    const { category } = props;
+    const [isColor, setColor] = React.useState(category.color);
+
+    const handleChange = (event: SelectChangeEvent) => {
+        setColor(Number(event.target.value));
+        // setAge(event.target.value as string);
+    };
+
+    return (
+        <TableRow key={category.id}>
+            <TableCell>{category.id}</TableCell>
+            <TableCell>{category.name}</TableCell>
+            <TableCell>
+                <Select
+                    value={isColor.toString()}
+                    label="Color"
+                    onChange={handleChange}
+                >
+                    {
+                        Array.from(Object.values(colors)).map((color, colorIDX) => {
+                            return (
+                                <MenuItem value={colorIDX}>
+                                    <div style={{backgroundColor: color}}>{color}</div>
+                                </MenuItem>
+                            )
+                        })
+                    }
+                </Select>
+            </TableCell>
+            <TableCell>{category.description}</TableCell>
+        </TableRow>
+    )
+}
 
 function CategoriesPage() {
     const [categories, setCategory] = React.useState<ICategory[]>([]);
@@ -28,18 +65,11 @@ function CategoriesPage() {
                     <TableCell component="th" scope="row">ID</TableCell>
                     <TableCell>Name</TableCell>
                     <TableCell>Color</TableCell>
+                    <TableCell>Description</TableCell>
                 </TableRow>
                 </TableHead>
                 <TableBody>
-                {categories.map(category => (
-                    <TableRow key={category.id}>
-                        <TableCell>{category.id}</TableCell>
-                        <TableCell>{category.name}</TableCell>
-                        <TableCell style={{
-                            backgroundColor: colors[category.color],
-                        }}>{colors[category.color]}</TableCell>
-                    </TableRow>
-                ))}
+                {categories.map(cat => <BuildRow category={cat}/>)}
                 </TableBody>
             </Table>
         </TableContainer>

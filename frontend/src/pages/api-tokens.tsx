@@ -32,6 +32,7 @@ function BuildRow(props: { token: IApiToken, categories: ICategory[]}) {
                 sx={{ '&:last-child td, &:last-child th': {border: 0 }}}
             >
                 <TableCell component="th" scope="row">{token.id}</TableCell>
+                <TableCell>{token.description}</TableCell>
                 <TableCell align="right">
                     {hideToken ? token.token : token.token.replace(/[a-zA-Z0-9]/g, '*')}
                     <IconButton onClick={() => setHideToken(!hideToken)}>
@@ -71,6 +72,7 @@ function ApiTokenPage() {
                 <TableHead>
                     <TableRow>
                         <TableCell>ID</TableCell>
+                        <TableCell>Description</TableCell>
                         <TableCell align="right">Token</TableCell>
                         <TableCell align="right">Categories</TableCell>
                     </TableRow>

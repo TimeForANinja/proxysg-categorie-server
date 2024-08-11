@@ -1,21 +1,13 @@
-import { JSONFilePreset  } from 'lowdb/node';
-
-// init low db
-let db;
-JSONFilePreset('./user-db.json', {users: []}).then(x => {
-    db = x;
-})
-
 const addDataRoutes = (app) => {
     app.get('/api/categories', (_req, res) => {
         res.status(200).json({
             message: 'success',
             data: [
-                {id: 0, name: 'Alphabet', color: 1},
-                {id: 1, name: 'Social Media', color: 2},
-                {id: 2, name: 'Meta', color: 3},
-                {id: 3, name: 'Video Content', color: 4},
-                {id: 4, name: 'Audio Content', color: 5},
+                {id: 0, name: 'Alphabet', color: 1, description: 'Google Services'},
+                {id: 1, name: 'Social Media', color: 2, description: 'Name says it all'},
+                {id: 2, name: 'Meta', color: 3, description: 'aka Facebook'},
+                {id: 3, name: 'Video Content', color: 4, description: ''},
+                {id: 4, name: 'Audio Content', color: 5, description: ''},
             ]
         })
     })
@@ -36,10 +28,10 @@ const addDataRoutes = (app) => {
         res.status(200).json({
             message: 'success',
             data: [
-                { id: 0, token: "aaaa", categories: [1, 2, 3]},
-                { id: 1, token: "bbbb", categories: [1, 2]},
-                { id: 2, token: "cccc", categories: [3]},
-                { id: 3, token: "dddd", categories: []},
+                { id: 0, token: "aaaa", categories: [1, 2, 3], description: "Side level"},
+                { id: 1, token: "bbbb", categories: [1, 2], description: "INet"},
+                { id: 2, token: "cccc", categories: [3], description: "Shared 2 DIV"},
+                { id: 3, token: "dddd", categories: [], description: "None"},
             ]
         })
     })
