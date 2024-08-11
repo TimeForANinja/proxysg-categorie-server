@@ -20,6 +20,7 @@ const addDataRoutes = (app) => {
                 {id: 1, hostname: 'youtube.com', categories: [0, 3]},
                 {id: 2, hostname: 'gmail.com', categories: [0,1]},
                 {id: 3, hostname: 'facebook.com', categories: [2]},
+                ...new Array(500).fill(0).map((_, idx) => ({ id: idx + 100, hostname: idx+'.cdn.test.com', categories: []})),
             ]
         })
     })
