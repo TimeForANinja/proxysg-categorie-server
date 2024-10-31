@@ -39,7 +39,7 @@ const BaseLayout = (props: Props) => {
 
     const doLogout = () => {
         removeLoginToken();
-        props.setLoggedIn(OptBoolean.No)
+        setLoggedIn(OptBoolean.No)
     }
 
 
@@ -60,10 +60,10 @@ const BaseLayout = (props: Props) => {
                     </Typography>
 
                     <Box sx={{ flexGrow: 1 }} />
+                    <Button color="inherit" onClick={() => navigate("/matching")}>Matching</Button>
                     <Button color="inherit" onClick={() => navigate("/apitokens")}>Api Tokens</Button>
                     <Button color="inherit" onClick={() => navigate("/categories")}>Categories</Button>
                     <Button color="inherit" onClick={() => navigate("/history")}>History</Button>
-                    <Button color="inherit" onClick={() => navigate("/matching")}>Matching</Button>
                     <Box sx={{ flexGrow: 1 }} />
 
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
