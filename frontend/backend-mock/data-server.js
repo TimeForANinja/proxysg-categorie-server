@@ -29,10 +29,10 @@ const addDataRoutes = (app) => {
         res.status(200).json({
             message: 'success',
             data: [
-                { id: 0, token: "aaaa", categories: [1, 2, 3], description: "Side level"},
-                { id: 1, token: "bbbb", categories: [1, 2], description: "INet"},
-                { id: 2, token: "cccc", categories: [3], description: "Shared 2 DIV"},
-                { id: 3, token: "dddd", categories: [], description: "None"},
+                { id: 0, token: "aaaa", categories: [1, 2, 3], description: "Side level", lastUse: "2024-10-02"},
+                { id: 1, token: "bbbb", categories: [1, 2], description: "INet", lastUse: "2024-10-02"},
+                { id: 2, token: "cccc", categories: [3], description: "Shared 2 DIV", lastUse: "2024-10-02"},
+                { id: 3, token: "dddd", categories: [], description: "None", lastUse: "2024-10-02"},
             ]
         })
     })

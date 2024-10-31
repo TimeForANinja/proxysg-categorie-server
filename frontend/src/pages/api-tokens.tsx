@@ -52,6 +52,7 @@ function BuildRow(props: { token: IApiToken, categories: ICategory[]}) {
                         {isCopied ? <CheckIcon/> : <ContentCopyIcon/>}
                     </IconButton>
                 </TableCell>
+                <TableCell>{ token.lastUse }</TableCell>
                 <TableCell align="right">
                     <Select
                         multiple
@@ -98,6 +99,7 @@ function ApiTokenPage() {
                         <TableCell>ID</TableCell>
                         <TableCell>Description</TableCell>
                         <TableCell align="right">Token</TableCell>
+                        <TableCell>Last Used</TableCell>
                         <TableCell align="right">Categories</TableCell>
                         <TableCell></TableCell>
                     </TableRow>

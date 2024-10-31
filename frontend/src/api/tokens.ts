@@ -4,6 +4,7 @@ export interface IApiToken {
     token: string;
     description: string;
     categories: number[];
+    lastUse: string;
 }
 
 
