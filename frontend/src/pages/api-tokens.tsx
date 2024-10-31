@@ -13,6 +13,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
+import DeleteIcon from '@mui/icons-material/Delete'
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {colors} from "../api/colormixer";
 import MenuItem from "@mui/material/MenuItem";
@@ -71,6 +72,7 @@ function BuildRow(props: { token: IApiToken, categories: ICategory[]}) {
                         }
                     </Select>
                 </TableCell>
+                <TableCell><DeleteIcon/></TableCell>
             </TableRow>
     )
 }
@@ -97,6 +99,7 @@ function ApiTokenPage() {
                         <TableCell>Description</TableCell>
                         <TableCell align="right">Token</TableCell>
                         <TableCell align="right">Categories</TableCell>
+                        <TableCell></TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>

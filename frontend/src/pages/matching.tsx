@@ -23,6 +23,7 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import {colors} from "../api/colormixer";
 import TablePagination from '@mui/material/TablePagination';
 import {buildLUTFromID, LUT} from "../api/LookUpTable";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id - b.id
@@ -116,6 +117,7 @@ function BuildRow(props: { url: IURL, categories: LUT<ICategory>}) {
                         )}
                     />
                 </TableCell>
+                <TableCell><DeleteIcon/></TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={4}>
@@ -203,6 +205,7 @@ function MatchingListPage() {
                     <TableCell><Stack direction="row"><Typography>ID</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
                     <TableCell><Stack direction="row"><Typography>Hostname</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
                     <TableCell><Stack direction="row"><Typography>Categories</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
+                    <TableCell></TableCell>
                 </TableRow>
                 </TableHead>
                 <TableBody>

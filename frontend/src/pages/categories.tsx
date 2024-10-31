@@ -10,6 +10,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import DeleteIcon from "@mui/icons-material/Delete";
 
 function BuildRow(props: { category: ICategory }) {
     const { category } = props;
@@ -42,6 +43,7 @@ function BuildRow(props: { category: ICategory }) {
                 </Select>
             </TableCell>
             <TableCell>{category.description}</TableCell>
+            <TableCell><DeleteIcon/></TableCell>
         </TableRow>
     )
 }
@@ -66,6 +68,7 @@ function CategoriesPage() {
                     <TableCell>Name</TableCell>
                     <TableCell>Color</TableCell>
                     <TableCell>Description</TableCell>
+                    <TableCell></TableCell>
                 </TableRow>
                 </TableHead>
                 <TableBody>
