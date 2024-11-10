@@ -19,6 +19,109 @@ const bracesFunctions: BracesFunc[] = [
 ];
 
 /**
+ * Normalizes a given string by trimming whitespace, removing extra spaces
+ * outside quoted sections, and removing spaces around mathematical symbols
+ * (`<`, `=`, `>`), except when inside quoted sections.
+ *
+ * This function preserves quoted content by building an index of all quoted blocks,
+ * allowing it to skip modification of any content within these blocks.
+ *
+ * @param {string} baseStr - The input string to normalize.
+ * @returns {string} - The normalized string, with unnecessary whitespace removed
+ *                     while preserving quoted sections.
+ *
+ * @example
+ * // returns 'a = "quoted text with  spaces" < b'
+ * normalize('  a   =   "quoted text with  spaces"   <   b  ');
+ */
+export const normalize = (baseStr: string) :string => {
+  // remove leading and trailing spaces
+  let escaped = baseStr.trim();
+
+  // build an index of all parts that are in quotes and should therefore not be altered
+  const quoteBlocks = [];
+  for (let i = 0; i < escaped.length; i++) {
+    if (escaped[i] == "\"") {
+      const end = getQuoteEnd(escaped, i)
+      quoteBlocks.push({ start: i, end});
+      i = end;
+    }
+  }
+
+  // get all cases of multiple spaces
+  const matches01 = Array.from(escaped.matchAll(/\s+/g));
+  for (const match of matches01.reverse()) {
+    // create vars to make our live easier
+    const MultiSpace_start = match.index!;
+    const MultiSpace_end = match.index! + match[0].length
+    const MultiSpace_length = match[0].length;
+    // it is "escaped" if it falls within a quoted block
+    let isEscaped = quoteBlocks.some(q => q.start <= MultiSpace_start && q.end >= MultiSpace_end);
+    if (!isEscaped) {
+      // replace the multiple whitespaces with a single space
+      escaped = escaped.substring(0, MultiSpace_start) + " " + escaped.substring(MultiSpace_end)
+      // offset quoted blocks that are after the just edited space to account for the removed characters
+      for (const q of quoteBlocks) {
+        if (q.start > MultiSpace_start) {
+          q.start -= MultiSpace_length - 1;
+          q.end -= MultiSpace_length - 1;
+        }
+      }
+    }
+  }
+
+  // get all cases of spaces around math actions (<, =, >)
+  const matches02 = Array.from(escaped.matchAll(/\s+([=<>])\s+/g));
+  for (const match of matches02.reverse()) {
+    // create vars to make our live easier
+    const math_start = match.index!;
+    const math_end = match.index! + match[0].length
+    const math_action = match[1];
+    // it is "escaped" if it falls within a quoted block
+    let isEscaped = quoteBlocks.some(q => q.start <= math_start && q.end >= math_end);
+    if (!isEscaped) {
+      // replace the math + whitespaces with just the math action and no whitespaces
+      escaped = escaped.substring(0, math_start) + math_action + escaped.substring(math_end)
+      // offset quoted blocks that are after the just edited space to account for the removed characters
+      for (const q of quoteBlocks) {
+        if (q.start > math_start) {
+          q.start -= math_action.length - 1;
+          q.end -= math_action.length - 1;
+        }
+      }
+    }
+  }
+
+  return escaped;
+}
+
+/**
+ * Get the closing position based of a string start.
+ *
+ * This method respects escaped characters (e.g. \")
+ *
+ * @param baseStr The input string.
+ * @param startIDX The index at which the string starts
+ * @returns The index of the closing character (or end of the string)
+ */
+const getQuoteEnd = (baseStr: string, startIDX: number): number => {
+  let end = startIDX + 1;
+  while (++end < baseStr.length) {
+    // Skip escaped characters (e.g., \")
+    if (baseStr[end] === '\\' && baseStr[end + 1] === "\"") {
+      end++; // Skip the next character
+      continue;
+    }
+    if (baseStr[end] === "\"") {
+      break;
+    }
+  }
+  return end;
+};
+
+// --------------------------------------------------------------------------------
+
+/**
  * Get the closing bracket or character to match an opening one.
  *
  * Uses a stack-based algorithm to track opening and closing characters,
