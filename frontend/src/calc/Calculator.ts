@@ -122,31 +122,29 @@ const getQuoteEnd = (baseStr: string, startIDX: number): number => {
 // --------------------------------------------------------------------------------
 
 /**
- * Get the closing bracket or character to match an opening one.
+ * Get the closing of a brace.
  *
  * Uses a stack-based algorithm to track opening and closing characters,
- * allowing for nested braces, brackets, and quotes.
+ * allowing for nested braces and quotes.
  *
  * @param baseStr The input string.
  * @param prefix The prefix before the opening character.
- * @param openChar The opening character to track (e.g., '(', '[', '{', or '"').
- * @param closeChar The closing character to track (e.g., ')', ']', '}', or '"').
  * @returns The index of the closing character or -1 if not found.
  */
-const getEnd = (baseStr: string, prefix: string, openChar: string, closeChar: string): number => {
-  const start = baseStr.indexOf(prefix + openChar) + prefix.length;
+const getBracketEnd = (baseStr: string, prefix: string): number => {
+  const start = baseStr.indexOf(prefix + "(") + prefix.length;
   let stack = 1;
   let end = start;
   while (++end < baseStr.length) {
     // Skip escaped characters (e.g., \")
-    if (baseStr[end] === '\\' && baseStr[end + 1] === closeChar) {
+    if (baseStr[end] === '\\' && baseStr[end + 1] === ")") {
       end++; // Skip the next character
       continue;
     }
     // Update stack for nested structures
-    if (baseStr[end] === openChar) {
+    if (baseStr[end] === "(") {
       stack++;
-    } else if (baseStr[end] === closeChar) {
+    } else if (baseStr[end] === ")") {
       stack--;
     }
     // Check for end of stack
@@ -186,16 +184,7 @@ const getArgs = (baseStr: string): string[] => {
   return splits;
 };
 
-/**
- * The Subterm class is used to replace brace-Functions
- * The type is the braces prefix - later required to calculate the value of the braces-Function
- * the substring is the string part inside the braces
- */
-type Subterm = {
-  type: string;
-  substrings: string[];
-}
-
+type OperandChild = TreeNode | string;
 /**
  * Operand is an interaction between one / multiple parameters
  */
@@ -204,15 +193,38 @@ type Operand = {
   name: string;
   // Returns true if a string requires the Operator to be applied
   matches: (baseStr: string) => boolean;
-  // Returns a List of subterms to be evaluated recursively
-  getChildren: (baseStr: string, subterms: Map<string, Subterm>) => string[];
+  getChildren: (baseStr: string) => OperandChild[];
+  calc: (children: OperandChild[]) => string;
 }
 // Definition aller bekannten Operanden
 const OPERANTS: Operand[] = [
   {
+    name: 'empty',
+    matches: (baseStr) => baseStr.length === 0,
+    getChildren: () => [],
+    calc: () => "",
+  },
+  {
+    name: "or",
+    matches: (baseStr) => baseStr.includes("OR"),
+    getChildren: () => [],
+    calc: () => "",
+  },
+  {
     name: 'bracesFunc',
-    matches: (baseStr) => bracesFunctions.some(bf => baseStr.includes(bf.key + '(') && getEnd(baseStr, bf.key, "(", ")") >= 0),
-    getChildren: (baseStr, subterms) => {
+    matches: (baseStr) => bracesFunctions.some(bf => baseStr.includes(bf.key + '(') && getBracketEnd(baseStr, bf.key) >= 0),
+    getChildren: (baseStr) => {
+      const braceFunc = bracesFunctions.find(bf => baseStr.includes(bf.key + '(') && getBracketEnd(baseStr, bf.key) >= 0)!;
+      const func_start = baseStr.indexOf(braceFunc.key + "(");
+      const func_end = baseStr.indexOf(")", func_start);
+
+      return [
+          new TreeNode(baseStr.substring(0, func_start)),
+          braceFunc.key,
+          new TreeNode(baseStr.substring(func_start +1, func_end)),
+          new TreeNode(baseStr.substring(func_end +2)),
+      ];
+      /*
       // Check if any of the Braces-Functions does apply
       for (const bf of bracesFunctions) {
         if (baseStr.includes(bf.key + '(')) {
@@ -228,24 +240,35 @@ const OPERANTS: Operand[] = [
         }
       }
       throw new Error('how did you get here?');
+       */
     },
+    calc: (children) => `(${(children[0] as TreeNode).calc()}) AND func("${children[1]}", "${(children[2] as TreeNode).calc()}") AND (${(children[3] as TreeNode).calc()})`,
   },
   {
     name: 'key-val-pair',
-    matches: str => /(\s|^)([^ \n]+)\s*([=><])\s*([^ \n]+)(\s|$)/.test(str),
-    getChildren: (baseStr) => [
-      baseStr.match(/(\s|^)([^ \n]+)\s*([=><])\s*([^ \n]+)(\s|$)/)![4],
-    ],
+    matches: str => /(.*\s|^)([^ \n]+)([=><])([^ \n]+)(\s.*|$)/.test(str),
+    getChildren: (baseStr) => {
+      const match = baseStr.match(/((.*)\s|^)([^ \n]+)([=><])([^ \n]+)(\s(.*)|$)/)!
+      return [
+        new TreeNode(match[2] || ""),
+        match[3],
+        new TreeNode(match[5]),
+        new TreeNode(match[7] || ""),
+      ]
+    },
+    calc: (children) => `(${(children[0] as TreeNode).calc()}) AND keyval("${children[1]}", "${(children[2] as TreeNode).calc()}") AND (${(children[3] as TreeNode).calc()})`,
   },
   {
     name: 'quoted-text',
     matches: str => /^"([^"\\]+\\(\\\\)*")*[^"]*"$/.test(str),
-    getChildren: () => [],
+    getChildren: (baseStr) => [baseStr.substring(1, baseStr.length - 1)],
+    calc: (children) => `txt("${children[0]}")`,
   },
   {
     name: 'raw-text',
     matches: str => /(\s|^)\S+(\s|$)/.test(str),
-    getChildren: () => [],
+    getChildren: (baseStr) => [baseStr],
+    calc: (children) => `txt("${children[0]}")`,
   },
 ];
 
@@ -254,19 +277,12 @@ const OPERANTS: Operand[] = [
  */
 export class TreeNode {
   baseStr: string;
-  childs: TreeNode[];
-  operand: Operand | null;
-  // Subterms is a map allowing for replacements that are later evaluated as Operand
-  // This makes stuff like Braces way easier
-  subterms: Map<string, Subterm>;
+  children: OperandChild[] = [];
+  operand: Operand | null = null;
 
-  private constructor(baseStr: string, subterms: Map<string, Subterm> = new Map()) {
-    console.log('new TreeNode', { baseStr, subterms });
+  constructor(baseStr: string) {
+    console.log('new TreeNode()', { baseStr });
     this.baseStr = baseStr;
-    this.childs = [];
-    this.operand = null;
-    this.subterms = subterms;
-
     this.build();
   }
 
@@ -277,9 +293,9 @@ export class TreeNode {
    * @returns the Root-TreeNode
    */
   static buildTree(baseStr: string): TreeNode {
-    // remove multiple whitespaces
-    baseStr = baseStr.toLowerCase().replace(/\s+/g, ' ')
-    return new TreeNode(baseStr);
+    // normalize first input
+    const norm = normalize(baseStr);
+    return new TreeNode(norm);
   }
 
   /**
@@ -290,14 +306,17 @@ export class TreeNode {
   private build(): void {
     for (const op of OPERANTS) {
       const testOP = op.matches(this.baseStr);
-      console.log("build", op.name, testOP);
+      console.log('TreeNode#build', { name: op.name, testOP });
       if (testOP) {
         this.operand = op;
-        const childStrs = op.getChildren(this.baseStr, this.subterms);
-        this.childs = childStrs.map(str => new TreeNode(str, this.subterms));
+        this.children = op.getChildren(this.baseStr);
         return;
       }
     }
-    throw new Error('invalid expression');
+    // throw new Error('invalid expression');
+  }
+
+  calc(): string {
+    return this.operand ? this.operand.calc(this.children) : "INVALID";
   }
 }

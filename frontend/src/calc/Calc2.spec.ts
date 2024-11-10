@@ -3,29 +3,31 @@ import { TreeNode, normalize } from './Calculator';
 type TestParserObject = {
   description: string;
   in: string;
-  out: number;
+  out: string;
 };
 const parserTests: TestParserObject[] = [
-{ description: 'only text', in: 'asdf', out: 2 },
-{ description: 'key-val-pair', in: 'key=val', out: 5 },
-{ description: 'key-val-pair with spaces', in: 'key = val', out: 5 },
-{ description: 'mixed use of text and key = Val', in: 'asdf key = val', out: 14 },
-{ description: 'mixed use of text and key = Val', in: 'key = val asdf', out: 14 },
-{ description: 'handles braces', in: '(asdf) key = val', out: 20 },
-{ description: 'handles quotes', in: '"asdf yey"', out: 10 },
-{ description: 'handles qoted and key=val', in: '"asdf yey" OR key = val', out: 10 },
-{ description: 'handles AND and OR', in: 'a AND b OR c', out: 3 },
+  { description: 'only text', in: 'asdf', out: 'txt("asdf")' },
+  { description: 'key-val-pair', in: 'key=val', out: '() AND keyval("key", "txt("val")") AND ()' },
+  { description: 'key-val-pair with spaces', in: 'key = val', out: '() AND keyval("key", "txt("val")") AND ()' },
+  { description: 'mixed use of text and key = Val', in: 'asdf key = val', out: '(txt("asdf")) AND keyval("key", "txt("val")") AND ()' },
+  { description: 'mixed use of text and key = Val', in: 'key = val asdf', out: '() AND keyval("key", "txt("val")") AND (txt("asdf"))' },
+  { description: 'handles braces', in: '(asdf) key = val', out: '() AND func("", "txt("asdf")") AND (() AND keyval("key", "txt("val")") AND ())' },
+  { description: 'handles quotes', in: '"asdf yey"', out: 'txt("asdf yey")' },
+  { description: 'handles quoted and key=val', in: '"asdf yey" OR key = val', out: '' },
+  { description: 'handles AND and OR', in: 'a AND b OR c', out: '' },
 ];
 
 describe('Parser', () => {
   for (const test of parserTests) {
     it(test.description, () => {
-      const calc = TreeNode.buildTree(test.in);
-      console.log(calc);
+      const tree = TreeNode.buildTree(test.in);
+      const calc = tree.calc();
+      expect(calc).toBe(test.out);
     });
   }
 });
 
+/*
 type TestNormalizeObject = {
   description: string;
   in: string;
@@ -52,3 +54,4 @@ describe('Normalize', () => {
     });
   }
 });
+*/
