@@ -104,11 +104,11 @@ export const normalize = (baseStr: string) :string => {
  * @param startIDX The index at which the string starts
  * @returns The index of the closing character (or end of the string)
  */
-const getQuoteEnd = (baseStr: string, startIDX: number): number => {
-  let end = startIDX + 1;
+export const getQuoteEnd = (baseStr: string, startIDX: number): number => {
+  let end = startIDX;
   while (++end < baseStr.length) {
-    // Skip escaped characters (e.g., \")
-    if (baseStr[end] === '\\' && baseStr[end + 1] === "\"") {
+    // Skip escaped characters (e.g., \" but also \\)
+    if (baseStr[end] === '\\') {
       end++; // Skip the next character
       continue;
     }
@@ -116,10 +116,10 @@ const getQuoteEnd = (baseStr: string, startIDX: number): number => {
       break;
     }
   }
-  return end;
+  // return -1 if last found char is not end of quote
+  return baseStr[end] === "\"" ? end : -1;
 };
 
-// --------------------------------------------------------------------------------
 
 /**
  * Get the closing of a brace.
@@ -128,19 +128,28 @@ const getQuoteEnd = (baseStr: string, startIDX: number): number => {
  * allowing for nested braces and quotes.
  *
  * @param baseStr The input string.
- * @param prefix The prefix before the opening character.
+ * @param startIDX The length of the prefix before the opening character.
  * @returns The index of the closing character or -1 if not found.
  */
-const getBracketEnd = (baseStr: string, prefix: string): number => {
-  const start = baseStr.indexOf(prefix + "(") + prefix.length;
+export const getParenthesisEnd = (baseStr: string, startIDX: number): number => {
   let stack = 1;
-  let end = start;
+  let end = startIDX;
   while (++end < baseStr.length) {
-    // Skip escaped characters (e.g., \")
-    if (baseStr[end] === '\\' && baseStr[end + 1] === ")") {
-      end++; // Skip the next character
+    // Skip escaped closing characters (e.g., \))
+    if (baseStr[end] === '\\') {
+      console.log("escaped", end, baseStr[end]);
+      // Skip the next character
+      end++;
       continue;
     }
+
+    if (baseStr[end] === "\"") {
+      console.log("string", end, baseStr[end]);
+      // skip to end of string
+      end = getQuoteEnd(baseStr, end);
+      continue;
+    }
+
     // Update stack for nested structures
     if (baseStr[end] === "(") {
       stack++;
@@ -155,6 +164,7 @@ const getBracketEnd = (baseStr: string, prefix: string): number => {
   return stack === 0 ? end : -1; // Return -1 if not properly closed
 };
 
+// --------------------------------------------------------------------------------
 
 /**
  * Cut the inside of braces into arguments based on ARG_SEPERATOR.
@@ -212,9 +222,9 @@ const OPERANTS: Operand[] = [
   },
   {
     name: 'bracesFunc',
-    matches: (baseStr) => bracesFunctions.some(bf => baseStr.includes(bf.key + '(') && getBracketEnd(baseStr, bf.key) >= 0),
+    matches: (baseStr) => bracesFunctions.some(bf => baseStr.includes(bf.key + '(') && getParenthesisEnd(baseStr, bf.key.length) >= 0),
     getChildren: (baseStr) => {
-      const braceFunc = bracesFunctions.find(bf => baseStr.includes(bf.key + '(') && getBracketEnd(baseStr, bf.key) >= 0)!;
+      const braceFunc = bracesFunctions.find(bf => baseStr.includes(bf.key + '(') && getParenthesisEnd(baseStr, bf.key.length) >= 0)!;
       const func_start = baseStr.indexOf(braceFunc.key + "(");
       const func_end = baseStr.indexOf(")", func_start);
 

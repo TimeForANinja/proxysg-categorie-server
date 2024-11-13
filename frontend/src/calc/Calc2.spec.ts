@@ -1,4 +1,4 @@
-import { TreeNode, normalize } from './Calculator';
+import {TreeNode, normalize, getQuoteEnd, getParenthesisEnd} from './Calculator';
 
 type TestParserObject = {
   description: string;
@@ -27,7 +27,6 @@ describe('Parser', () => {
   }
 });
 
-/*
 type TestNormalizeObject = {
   description: string;
   in: string;
@@ -54,4 +53,169 @@ describe('Normalize', () => {
     });
   }
 });
-*/
+
+type TestGetQuoteEndObject = {
+  description: string;
+  in: string;
+  start: number;
+  end: number;
+}
+const getQuoteEndTests: TestGetQuoteEndObject[] = [
+  {
+    description: "Should return the index of the ending quote for a simple string",
+    in: 'This is a "test" string.',
+    start: 10,
+    end: 15
+  },
+  {
+    description: "Should return the index of the ending quote for a string with escaped quote inside",
+    in: 'This is a "test \\"escaped\\" quote" string.',
+    start: 10,
+    end: 33
+  },
+  {
+    description: "Should handle multiple escaped backslashes",
+    in: 'This is a "test string\\\\"escaped\\" string.',
+    start: 10,
+    end: 24
+  },
+  {
+    description: "Should return -1 for an uninterrupted quote",
+    in: 'This is a "test with no end',
+    start: 10,
+    end: -1
+  },
+  {
+    description: "Should handle quotes next to each other",
+    in: 'This is a ""test"" string.',
+    start: 10,
+    end: 11
+  },
+  {
+    description: "Should handle single character string with quote",
+    in: '"',
+    start: 0,
+    end: -1
+  },
+  {
+    description: "Should return the correct ending index for nested quotes",
+    in: 'This is a "nested \\"quote\\"" example',
+    start: 10,
+    end: 27
+  },
+  {
+    description: "Should handle quotes at the beginning of the string",
+    in: '"This is at the beginning"',
+    start: 0,
+    end: 25
+  },
+  {
+    description: "Should handle multi-quote sections in string",
+    in: '"First section" and "second section"',
+    start: 0,
+    end: 14
+  },
+]
+describe("getQuoteEnd", () => {
+  for (const test of getQuoteEndTests) {
+    it(test.description, () => {
+      const result = getQuoteEnd(test.in, test.start);
+      expect(result).toBe(test.end);
+    });
+  }
+})
+
+type TestGetParenthesisEndObject = {
+  description: string;
+  in: string;
+  start: number;
+  end: number;
+}
+const getParenthesisEndTests: TestGetParenthesisEndObject[] = [
+  {
+    description: "Simple case with no nesting",
+    in: "(abc)",
+    start: 0,
+    end: 4
+  },
+  {
+    description: "Nested parenthesis",
+    in: "(a(b)c)",
+    start: 0,
+    end: 6
+  },
+  {
+    description: "Parenthesis with strings that contain parenthesis",
+    in: "(a(\"(\")b)",
+    start: 0,
+    end: 8
+  },
+  {
+    description: "Parenthesis inside a string should be ignored",
+    in: "(\"a)b\")",
+    start: 0,
+    end: 6
+  },
+  {
+    description: "Complex nested parenthesis",
+    in: "(a(b(c)d)e)",
+    start: 0,
+    end: 10
+  },
+  {
+    description: "Multiple nested parenthesis groups",
+    in: "(a(b)c(d)e)",
+    start: 0,
+    end: 10
+  },
+  {
+    description: "Parenthesis inside strings inside parenthesis",
+    in: "(a(b\"c(d)e\"f)g)",
+    start: 0,
+    end: 14
+  },
+  {
+    description: "Parenthesis with no closing",
+    in: "(a(b)c",
+    start: 0,
+    end: -1
+  },
+  {
+    description: "Empty parenthesis",
+    in: "()",
+    start: 0,
+    end: 1
+  },
+  {
+    description: "Single level parenthesis in the middle of a string",
+    in: "text(a)text",
+    start: 4,
+    end: 6
+  },
+  {
+    description: "Nested empty parenthesis",
+    in: "(a()b)",
+    start: 0,
+    end: 5
+  },
+  {
+    description: "Multiple parenthesis with strings and nesting",
+    in: "((a)\"b(c)\"(d)e(f)g)",
+    start: 0,
+    end: 18
+  }
+]
+describe("getBracketEnd", () => {
+  for (const test of getParenthesisEndTests) {
+    it(test.description, () => {
+      const result = getParenthesisEnd(test.in, test.start);
+      console.log('getBracketEnd', {
+        in: test.in,
+        start: [test.start, test.in[test.start]],
+        result: [result, test.in[result]],
+        end: [test.end, test.in[test.end]],
+      })
+      expect(result).toBe(test.end);
+    });
+  }
+})
