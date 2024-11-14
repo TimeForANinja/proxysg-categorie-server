@@ -1,6 +1,38 @@
-// The Character splitting Function Parameters
-const ARG_SEPERATOR = Object.freeze(',');
+/**
+ * This file contains various utilities and definitions for handling and processing mathematical
+ * expressions embedded within strings. It includes constants, types, functions, and classes aimed
+ * at parsing, normalizing, and evaluating such expressions with proper handling of nested structures
+ * and quoted sections.
+ *
+ * Here are the main components defined in this file:
+ *
+ * Constants:
+ * - `FUNC_ARG_SEPERATOR`: A comma used to separate function arguments in strings.
+ *
+ * Types:
+ * - `BracesFunc`: Represents a function that is enclosed within braces, such as "sin(2 + 2)".
+ *
+ * Functions:
+ * - `normalize(baseStr: string)`: Normalizes a string by trimming and adjusting spaces while preserving quoted content.
+ * - `getQuoteEnd(baseStr: string, startIDX: number)`: Finds the end of a quoted section in a string.
+ * - `getParenthesisEnd(baseStr: string, startIDX: number)`: Finds the end of a parenthesized section in a string.
+ * - `splitArgs(baseStr: string, separator: string)`: Splits a string into arguments based on a specified separator while handling nested braces and quotes.
+ *
+ * Classes:
+ * - `TreeNode`: Represents a node in a custom language tree used for parsing and calculating expressions.
+ *
+ * Types:
+ * - `OperandChild`: A union type representing a child node, which can be either a string or another `TreeNode`.
+ * - `Operand`: Defines an interaction between multiple parameters, including methods to match and calculate expressions.
+ *
+ * Constants:
+ * - `OPERANTS`: A list of all known operands that can be used in expressions, each with methods to match, get children, and calculate the result of the operand.
+ */
 
+/**
+ * The Character splitting Function Parameters
+ */
+const FUNC_ARG_SEPARATOR = Object.freeze(',');
 /**
  * The Structure used to store a braces-based function
  * e.g. "sin(2 + 2)"
@@ -12,7 +44,9 @@ type BracesFunc = {
   // The method used to resolve the function from the value(s) inside
   calc: (...args: string[]) => string;
 }
-// List of all known Braces Functions
+/**
+ * List of all known Braces Functions
+ */
 const bracesFunctions: BracesFunc[] = [
   { key: 'abs', calc: (n: string): string => Math.abs(Number(n)).toString() },
   { key: '', calc: (n: string): string => n },
@@ -120,7 +154,6 @@ export const getQuoteEnd = (baseStr: string, startIDX: number): number => {
   return baseStr[end] === "\"" ? end : -1;
 };
 
-
 /**
  * Get the closing of a brace.
  *
@@ -164,35 +197,67 @@ export const getParenthesisEnd = (baseStr: string, startIDX: number): number => 
   return stack === 0 ? end : -1; // Return -1 if not properly closed
 };
 
-// --------------------------------------------------------------------------------
-
 /**
- * Cut the inside of braces into arguments based on ARG_SEPERATOR.
+ * Cut the inside of braces into arguments based on the provided separator.
  *
  * Allows for another nested braces func with multiple arguments
- * by using the same stack-approach as getEnd().
+ * by using the same stack-approach as getParenthesisEnd().
  *
  * @param baseStr the string inside the braces
+ * @param separator the character(s) used to split the baseStr
  * @returns an array of arguments
  */
-const getArgs = (baseStr: string): string[] => {
-  let splitStart = 0;
+export const splitArgs = (baseStr: string, separator: string): string[] => {
+  console.assert(separator.length === 1, 'separator must be a single character');
+
+  // Custom trim to remove leading and trailing spaces and separators
+  const baseStrTrimmed = baseStr.replace(new RegExp(`^[\\s${separator}]*(.*?)[\\s${separator}]*$`), '$1');
+
+  // Holds the indices where the current split starts
+  let startIndex = 0;
+
+  // Collect the split substrings
   const splits = [];
-  let stack = 0;
-  for (let i = 0 ; i < baseStr.length; i++) {
-    // update stack
-    if (baseStr[i] === '(') {stack++;}
-    else if (baseStr[i] === ')') {stack--;}
-    // cut args
-    if (stack === 0 && baseStr[i] === ARG_SEPERATOR) {
-      splits.push(baseStr.substring(splitStart, i));
-      splitStart = i + 1;
+
+  // Initialize loop counter
+  let currentIndex = 0;
+
+  // Convert separator to regex
+  let separatorRegex = new RegExp(`[${separator}]`);
+
+  while (currentIndex < baseStrTrimmed.length) {
+    // Handle nested parentheses
+    if (baseStrTrimmed[currentIndex] === '(') {
+      currentIndex = getParenthesisEnd(baseStrTrimmed, currentIndex);
+      if (currentIndex === -1) throw new Error('Mismatched parentheses');
     }
+    // Handle quoted strings
+    else if (baseStrTrimmed[currentIndex] === '"') {
+      currentIndex = getQuoteEnd(baseStrTrimmed, currentIndex);
+      if (currentIndex === -1) throw new Error('Mismatched quotes');
+    }
+
+    if (currentIndex === -1) break;
+
+    // Check for the separator match
+    if (separatorRegex.test(baseStrTrimmed[currentIndex])) {
+      splits.push(baseStrTrimmed.substring(startIndex, currentIndex));
+      startIndex = currentIndex + 1;
+    }
+
+    currentIndex++;
   }
-  // one last arg has to be cut manually
-  splits.push(baseStr.substring(splitStart));
-  return splits;
+
+  // Add the last segment if it exists
+  if (startIndex < baseStrTrimmed.length) {
+    splits.push(baseStrTrimmed.substring(startIndex));
+  }
+
+  // Trim each split segment
+  return splits.map(segment => segment.trim());
 };
+
+// --------------------------------------------------------------------------------
 
 type OperandChild = TreeNode | string;
 /**

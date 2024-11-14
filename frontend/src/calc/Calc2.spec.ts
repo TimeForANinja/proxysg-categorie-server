@@ -1,4 +1,10 @@
-import {TreeNode, normalize, getQuoteEnd, getParenthesisEnd} from './Calculator';
+import {
+  TreeNode,
+  normalize,
+  getQuoteEnd,
+  getParenthesisEnd,
+  splitArgs,
+} from './Calculator';
 
 type TestParserObject = {
   description: string;
@@ -16,7 +22,6 @@ const parserTests: TestParserObject[] = [
   { description: 'handles quoted and key=val', in: '"asdf yey" OR key = val', out: '' },
   { description: 'handles AND and OR', in: 'a AND b OR c', out: '' },
 ];
-
 describe('Parser', () => {
   for (const test of parserTests) {
     it(test.description, () => {
@@ -209,13 +214,102 @@ describe("getBracketEnd", () => {
   for (const test of getParenthesisEndTests) {
     it(test.description, () => {
       const result = getParenthesisEnd(test.in, test.start);
-      console.log('getBracketEnd', {
-        in: test.in,
-        start: [test.start, test.in[test.start]],
-        result: [result, test.in[result]],
-        end: [test.end, test.in[test.end]],
-      })
       expect(result).toBe(test.end);
     });
   }
 })
+
+type TestSplitArgsObject = {
+  description: string;
+  in: string;
+  separator: string;
+  out: string[];
+};
+const getArgsTests: TestSplitArgsObject[] = [
+  {
+    description: 'Simple case with commas',
+    in: '1,2,3',
+    separator: ',',
+    out: ['1', '2', '3']
+  },
+  {
+    description: 'Simple case with spaces',
+    in: '1 2 3',
+    separator: ' ',
+    out: ['1', '2', '3']
+  },
+  {
+    description: 'Nested parentheses with commas',
+    in: 'func(1,2),3',
+    separator: ',',
+    out: ['func(1,2)', '3']
+  },
+  {
+    description: 'Quotes inside arguments with commas',
+    in: '"text,arg1","text,arg2"',
+    separator: ',',
+    out: ['"text,arg1"', '"text,arg2"']
+  },
+  {
+    description: 'Parentheses and quotes combined with commas',
+    in: 'func("text,arg1", (x,y)), 3',
+    separator: ',',
+    out: ['func("text,arg1", (x,y))', '3']
+  },
+  {
+    description: 'Escaped quotes within arguments with commas',
+    in: '"arg\\",test1","arg2"',
+    separator: ',',
+    out: ['"arg\\",test1"', '"arg2"']
+  },
+  {
+    description: 'Multiple nested structures with commas',
+    in: 'func1(func2(1,2),"text,arg3"),4',
+    separator: ',',
+    out: ['func1(func2(1,2),"text,arg3")', '4']
+  },
+  {
+    description: 'Lone quote in argument with commas',
+    in: 'arg1,"arg2"',
+    separator: ',',
+    out: ['arg1', '"arg2"']
+  },
+  {
+    description: 'Trailing comma',
+    in: 'arg1,arg2,',
+    separator: ',',
+    out: ['arg1', 'arg2']
+  },
+  {
+    description: 'Trailing comma with space',
+    in: 'arg1,arg2, ',
+    separator: ',',
+    out: ['arg1', 'arg2']
+  },
+  {
+    description: 'Empty input',
+    in: '',
+    separator: ',',
+    out: []
+  },
+  {
+    description: 'Single argument with parentheses',
+    in: 'func(arg)',
+    separator: ',',
+    out: ['func(arg)']
+  },
+  {
+    description: 'Single argument with quotes',
+    in: '"arg"',
+    separator: ',',
+    out: ['"arg"']
+  },
+];
+describe('splitArgs', () => {
+  for (const test of getArgsTests) {
+    it(test.description, () => {
+      const result = splitArgs(test.in, test.separator);
+      expect(result).toEqual(test.out);
+    });
+  }
+});
