@@ -198,10 +198,10 @@ export const getParenthesisEnd = (baseStr: string, startIDX: number): number => 
 };
 
 /**
- * Cut the inside of braces into arguments based on the provided separator.
+ * Cut into arguments based on the provided separator.
  *
- * Allows for another nested braces func with multiple arguments
- * by using the same stack-approach as getParenthesisEnd().
+ * Supports both braces (and nested braces) as well as explicit strings in quotations,
+ * by using the getQuoteEnd() and ParenthesisEnd() functions
  *
  * @param baseStr the string inside the braces
  * @param separator the character(s) used to split the baseStr
@@ -257,141 +257,205 @@ export const splitArgs = (baseStr: string, separator: string): string[] => {
   return splits.map(segment => segment.trim());
 };
 
-// --------------------------------------------------------------------------------
-
-type OperandChild = TreeNode | string;
 /**
- * Operand is an interaction between one / multiple parameters
+ * ArgType represents any recognised syntax expression of a parseable search query
  */
-type Operand = {
-  // Name for debugging purpose
+type ArgType = {
+  /**
+   * A name to reference this by
+   */
   name: string;
-  // Returns true if a string requires the Operator to be applied
+  /**
+   * Function to determine if the argument type matches a given string.
+   * The strings are always individual arguments, so split by (" " and "," depending on context)
+   *
+   * @param baseStr - The input string to match against.
+   * @returns {boolean} - Returns true if the type matches the string, otherwise false.
+   */
   matches: (baseStr: string) => boolean;
-  getChildren: (baseStr: string) => OperandChild[];
-  calc: (children: OperandChild[]) => string;
+  /**
+   * Function to initialize the argument type.
+   * This mainly populates the "children" and "parts" Property of the TreeNode
+   *
+   * @param self - The TreeNode instance to initialize.
+   */
+  init: (self: TreeNode) => void;
+  /**
+   * Function to nest the argument type within other TreeNodes.
+   *
+   * this allows to transform e.g. [A, OR, C] into a nested [OR(A, B)]
+   * by moving arguments from a higher level to the children level of the current (self) instance
+   *
+   * @param self - The TreeNode instance to nest.
+   * @param all - An array of TreeNode instances of the next higher level.
+   * @returns {TreeNode[]} - The nested array of TreeNode instances.
+   */
+  nest: (self: TreeNode, all: TreeNode[]) => TreeNode[];
+  /**
+   * Function to print the argument type for debugging.
+   *
+   * @param self - The TreeNode instance to print.
+   * @returns {string} - The string representation of the TreeNode.
+   */
+  print: (self: TreeNode) => string;
+};
+const ROOT_TYPE: ArgType = {
+  name: 'root',
+  matches: () => false,
+  init: self => {
+    // normalize inputs of ROOT-Nodes
+    self.baseStr = normalize(self.baseStr);
+
+    // split into args on spaces
+    const arg_strings = splitArgs(self.baseStr, " ");
+
+    // for each part, try to identify the arg type and append as children
+    for (const arg of arg_strings) {
+      const type = ARG_TYPES.find(at => at.matches(arg));
+      if (type) {
+        self.children.push(new TreeNode(arg, type));
+      } else {
+        throw new Error(`Unable to find a Type for "${arg}"`)
+      }
+    }
+  },
+  nest: (_, all) => all,
+  print: self => `root([${self.children.map(c => c.print()).join(', ')}])`,
 }
-// Definition aller bekannten Operanden
-const OPERANTS: Operand[] = [
+const ARG_TYPES: ArgType[] = [
+  ROOT_TYPE,
   {
     name: 'empty',
-    matches: (baseStr) => baseStr.length === 0,
-    getChildren: () => [],
-    calc: () => "",
+    matches: str => str.length === 0,
+    init: () => null,
+    nest: (_, all) => all,
+    print: () => `null()`,
   },
   {
-    name: "or",
-    matches: (baseStr) => baseStr.includes("OR"),
-    getChildren: () => [],
-    calc: () => "",
-  },
-  {
-    name: 'bracesFunc',
-    matches: (baseStr) => bracesFunctions.some(bf => baseStr.includes(bf.key + '(') && getParenthesisEnd(baseStr, bf.key.length) >= 0),
-    getChildren: (baseStr) => {
-      const braceFunc = bracesFunctions.find(bf => baseStr.includes(bf.key + '(') && getParenthesisEnd(baseStr, bf.key.length) >= 0)!;
-      const func_start = baseStr.indexOf(braceFunc.key + "(");
-      const func_end = baseStr.indexOf(")", func_start);
-
-      return [
-          new TreeNode(baseStr.substring(0, func_start)),
-          braceFunc.key,
-          new TreeNode(baseStr.substring(func_start +1, func_end)),
-          new TreeNode(baseStr.substring(func_end +2)),
-      ];
-      /*
-      // Check if any of the Braces-Functions does apply
-      for (const bf of bracesFunctions) {
-        if (baseStr.includes(bf.key + '(')) {
-          const end = getEnd(baseStr, bf.key, "(", ")");
-          // The end should be after the start
-          if (end >= 0) {
-            const start = baseStr.indexOf(bf.key + '(');
-            // save subterm & return newly composed string
-            const id = `s${subterms.size}`;
-            subterms.set(id, { type: bf.key, substrings: getArgs(baseStr.substring(start + 1 + bf.key.length, end)) });
-            return [baseStr.substr(0, start) + id + baseStr.substr(end + 1)];
-          }
-        }
-      }
-      throw new Error('how did you get here?');
-       */
+    name: 'logic',
+    matches: str => ['OR', 'AND'].includes(str),
+    init: () => null,
+    nest: (self, all) => {
+      const idx = all.indexOf(self);
+      // remove the next and prev element from the "all" array since they are combined bis this logic
+      // add the parts as children under this logic element
+      const next = all.splice(idx+1, 1)[0];
+      const prev = all.splice(idx-1, 1)[0];
+      // no typecast required, since they are already TreeNode's
+      self.children = [prev, next];
+      return all;
     },
-    calc: (children) => `(${(children[0] as TreeNode).calc()}) AND func("${children[1]}", "${(children[2] as TreeNode).calc()}") AND (${(children[3] as TreeNode).calc()})`,
+    print: self => `logic(${self.baseStr}, [${self.children.map(c => c.print()).join(', ')}])`,
   },
   {
     name: 'key-val-pair',
-    matches: str => /(.*\s|^)([^ \n]+)([=><])([^ \n]+)(\s.*|$)/.test(str),
-    getChildren: (baseStr) => {
-      const match = baseStr.match(/((.*)\s|^)([^ \n]+)([=><])([^ \n]+)(\s(.*)|$)/)!
-      return [
-        new TreeNode(match[2] || ""),
-        match[3],
-        new TreeNode(match[5]),
-        new TreeNode(match[7] || ""),
-      ]
+    matches: str => /^([^ \n]+)([=><])([^ \n]+)$/.test(str),
+    init: self => {
+      // split into (key, operation, val) using a regex
+      // store all of them inside parts
+      self.parts = [
+          ...self.baseStr.match(/^([^ \n]+)([=><])([^ \n]+)$/)!,
+      ];
+      // then create children based of the "val" part
+      self.children = [new TreeNode(self.parts[3], ROOT_TYPE)];
     },
-    calc: (children) => `(${(children[0] as TreeNode).calc()}) AND keyval("${children[1]}", "${(children[2] as TreeNode).calc()}") AND (${(children[3] as TreeNode).calc()})`,
+    nest: (_, all)  => all,
+    print: self => `key-val("${self.parts[1]}", ${self.children[0].print()})`,
+  },
+  {
+    name: 'bracesFunc',
+    matches:str => str.endsWith(")") && bracesFunctions.some(bf => str.startsWith(bf.key + '(')),
+    init: self => {
+      // find func by name and store in parts
+      const func_name = bracesFunctions.find(bf => self.baseStr.startsWith(bf.key + '('))!.key
+      self.parts = [func_name];
+
+      // then build "args" and later "children" from the stuff inside the func brackets
+      const raw_inner = self.baseStr.substring(func_name.length + 1, self.baseStr.length - 1);
+      const inner = splitArgs(raw_inner, FUNC_ARG_SEPARATOR);
+      self.children = inner.map(i => new TreeNode(i, ROOT_TYPE));
+    },
+    nest: (_, all) => all,
+    print: self => `func(${self.parts[0]}, [${self.children.map(c => c.print()).join(', ')}])`,
   },
   {
     name: 'quoted-text',
-    matches: str => /^"([^"\\]+\\(\\\\)*")*[^"]*"$/.test(str),
-    getChildren: (baseStr) => [baseStr.substring(1, baseStr.length - 1)],
-    calc: (children) => `txt("${children[0]}")`,
+    matches: str => str.startsWith('"') && str.endsWith('"'),
+    init: self => {
+      self.parts = [
+        self.baseStr.substring(1, self.baseStr.length - 1)
+      ];
+    },
+    nest: (_, all) => all,
+    print: self => `text("${self.parts[0]}")`,
   },
   {
     name: 'raw-text',
-    matches: str => /(\s|^)\S+(\s|$)/.test(str),
-    getChildren: (baseStr) => [baseStr],
-    calc: (children) => `txt("${children[0]}")`,
+    init: () => null,
+    matches: str => /^\S+$/.test(str),
+    nest: (_, all) => all,
+    print: self => `text("${self.baseStr}")`,
   },
 ];
 
 /**
  * A TreeNode is a Node in the Custom Language Tree used to calculate the values
  */
-export class TreeNode {
+class TreeNode {
   baseStr: string;
-  children: OperandChild[] = [];
-  operand: Operand | null = null;
+  /**
+   * An array of TreeNode objects representing larger, nested Syntax Structures.
+   */
+  children: TreeNode[] = [];
+  /**
+   * Storage for Variables required for the ArgType
+   * Allows to reuse values instead of calculating them multiple times (init, matches, print, calc...)
+   */
+  parts: string[] = [];
+  type: ArgType;
 
-  constructor(baseStr: string) {
-    console.log('new TreeNode()', { baseStr });
+  constructor(baseStr: string, type: ArgType) {
     this.baseStr = baseStr;
-    this.build();
+    this.type = type;
+
+    // Parse TXT based on Child
+    this.type.init(this);
+
+    // try to adjust the hierarchy (e.g. changing [A, OR, B] to [OR(A, B)])
+    this.buildHierarchy();
   }
 
   /**
-   * Build a new Tree, ready to be calculated
-   *
-   * @param baseStr the calculation
-   * @returns the Root-TreeNode
+   * Builds a hierarchical structure from the children elements.
+   * Iterates through each child element, applying a nesting operation
+   * that may modify the list of children by putting them "under" another child of the array.
+   * @return {void}
    */
-  static buildTree(baseStr: string): TreeNode {
-    // normalize first input
-    const norm = normalize(baseStr);
-    return new TreeNode(norm);
-  }
+  private buildHierarchy(): void {
+    let idx = 0;
+    while (idx < this.children.length - 1) {
+      const child = this.children[idx];
+      console.log(`buildHierarchy(${idx}, ${this.children.length})`, child.baseStr, '->', '[', this.children.map(a => a.baseStr).join(', '), ']');
 
-  /**
-   * Recursively build the Tree structure
-   *
-   * @returns
-   */
-  private build(): void {
-    for (const op of OPERANTS) {
-      const testOP = op.matches(this.baseStr);
-      console.log('TreeNode#build', { name: op.name, testOP });
-      if (testOP) {
-        this.operand = op;
-        this.children = op.getChildren(this.baseStr);
-        return;
-      }
+      this.children = child.type.nest(child, this.children);
+      // some weird trickery
+      // since .nest can remove items from this.children we need to recalculate where we're at
+      // or rather what's the next idx to check
+      idx = this.children.indexOf(child) + 1;
     }
-    // throw new Error('invalid expression');
   }
 
-  calc(): string {
-    return this.operand ? this.operand.calc(this.children) : "INVALID";
+  print(): string {
+    return this.type.print(this);
   }
 }
+
+/**
+ * Build a new Tree, ready to be calculated
+ *
+ * @param baseStr the calculation
+ * @returns the Root-TreeNode
+ */
+export const BuildSyntaxTree = (baseStr: string): TreeNode => {
+  return new TreeNode(baseStr, ROOT_TYPE);
+};
