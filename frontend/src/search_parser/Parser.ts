@@ -170,14 +170,12 @@ export const getParenthesisEnd = (baseStr: string, startIDX: number): number => 
   while (++end < baseStr.length) {
     // Skip escaped closing characters (e.g., \))
     if (baseStr[end] === '\\') {
-      console.log("escaped", end, baseStr[end]);
       // Skip the next character
       end++;
       continue;
     }
 
     if (baseStr[end] === "\"") {
-      console.log("string", end, baseStr[end]);
       // skip to end of string
       end = getQuoteEnd(baseStr, end);
       continue;
@@ -435,7 +433,6 @@ class TreeNode {
     let idx = 0;
     while (idx < this.children.length - 1) {
       const child = this.children[idx];
-      console.log(`buildHierarchy(${idx}, ${this.children.length})`, child.baseStr, '->', '[', this.children.map(a => a.baseStr).join(', '), ']');
 
       this.children = child.type.nest(child, this.children);
       // some weird trickery

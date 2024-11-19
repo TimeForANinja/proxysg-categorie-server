@@ -3,7 +3,7 @@ import {
   getQuoteEnd,
   getParenthesisEnd,
   splitArgs, BuildSyntaxTree,
-} from './Calculator';
+} from './Parser';
 
 type TestParserObject = {
   description: string;
