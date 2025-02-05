@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, TextField} from '@mui/material';
+import React from 'react';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField} from '@mui/material';
 import {getAPITokens, IApiToken} from "../api/tokens";
 import {getCategories, ICategory} from "../api/categories";
 import Table from '@mui/material/Table';
@@ -16,12 +15,19 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from "@mui/icons-material/Edit"
+import ShuffleIcon from "@mui/icons-material/Shuffle";
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import {colors} from "../api/colormixer";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
+import { v4 as uuidv4 } from 'uuid';
 
-function BuildRow(props: { token: IApiToken, categories: ICategory[]}) {
+function BuildRow(props: {
+    token: IApiToken,
+    categories: ICategory[],
+    onEdit: (token: IApiToken) => void,
+    onShuffle: (token: IApiToken) => void,
+}) {
     const { token, categories } = props;
     const [isCopied, setIsCopied] = React.useState(false);
     const [hideToken, setHideToken] = React.useState(false);
@@ -39,6 +45,14 @@ function BuildRow(props: { token: IApiToken, categories: ICategory[]}) {
         }
     };
 
+    const handleEdit = () => {
+        props.onEdit(token);
+    };
+
+    const handleShuffle = () => {
+        props.onShuffle(token);
+    }
+
     return (
             <TableRow
                 key={token.id}
@@ -51,8 +65,11 @@ function BuildRow(props: { token: IApiToken, categories: ICategory[]}) {
                     <IconButton onClick={() => setHideToken(!hideToken)}>
                         { hideToken ? <VisibilityIcon /> : <VisibilityOffIcon /> }
                     </IconButton>
+                    <IconButton onClick={() => handleShuffle()}>
+                        <ShuffleIcon />
+                    </IconButton>
                     <IconButton onClick={() => handleCopy()}>
-                        {isCopied ? <CheckIcon/> : <ContentCopyIcon/>}
+                        {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
                     </IconButton>
                 </TableCell>
                 <TableCell>{ token.lastUse }</TableCell>
@@ -76,7 +93,10 @@ function BuildRow(props: { token: IApiToken, categories: ICategory[]}) {
                         }
                     </Select>
                 </TableCell>
-                <TableCell><DeleteIcon/></TableCell>
+                <TableCell>
+                    <EditIcon onClick={() => handleEdit()} />
+                    <DeleteIcon/>
+                </TableCell>
             </TableRow>
     )
 }
@@ -109,6 +129,7 @@ function ApiTokenPage() {
         if (token.id === -1) {
             // add new token
             token.id = Math.max(...tokens.map(t => t.id)) + 1;
+            token.token = uuidv4();
             setTokens([...tokens, token]);
         } else {
             // "replace" existing token if id matches
@@ -116,6 +137,11 @@ function ApiTokenPage() {
         }
         setDialogOpen(false);
     };
+
+    const handleOnShuffle = (token: IApiToken) => {
+        token.token = uuidv4();
+        setTokens(tokens.map(t => t.id === token.id ? token : t));
+    }
 
     return (
         <>
@@ -133,7 +159,7 @@ function ApiTokenPage() {
                     </TableHead>
                     <TableBody>
                         {tokens.map(token =>
-                            <BuildRow key={token.id} token={token} categories={categories}></BuildRow>
+                            <BuildRow key={token.id} token={token} categories={categories} onEdit={handleEditOpen} onShuffle={handleOnShuffle}/>
                         )}
                         <TableRow>
                             <TableCell colSpan={5} align="center">
@@ -165,17 +191,15 @@ function EditDialog(props: {
 }) {
     const { isOpen, token, onClose, onSave } = props;
     const [description, setDescription] = React.useState(token.description);
-    const [tokenStr, setTokenStr] = React.useState(token.token);
 
     React.useEffect(() => {
         if (token) {
             setDescription(token.description);
-            setTokenStr(token.token);
         }
     }, [token]);
 
     const handleSave = () => {
-        onSave({ ...token, description, token: tokenStr });
+        onSave({ ...token, description });
     };
 
     return (
@@ -184,7 +208,6 @@ function EditDialog(props: {
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>
                     <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-                    <TextField label="Token" value={tokenStr} onChange={(e) => setTokenStr(e.target.value)} />
                 </Box>
             </DialogContent>
             <DialogActions>

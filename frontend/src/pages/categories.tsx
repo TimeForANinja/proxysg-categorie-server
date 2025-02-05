@@ -8,39 +8,24 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit"
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-
-const ModalStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-};
-
 
 function BuildRow(props: {
     category: ICategory,
     onEdit: (category: ICategory) => void,
 }) {
     const { category } = props;
-    const handleEdit = (category: ICategory) => {
+    const handleEdit = () => {
         props.onEdit(category);
     };
 
@@ -53,7 +38,7 @@ function BuildRow(props: {
             </TableCell>
             <TableCell>{category.description}</TableCell>
             <TableCell>
-                <EditIcon onClick={() => handleEdit(category)} />
+                <EditIcon onClick={() => handleEdit()} />
                 <DeleteIcon />
             </TableCell>
         </TableRow>
@@ -107,10 +92,12 @@ function CategoriesPage() {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {categories.map(cat => <BuildRow category={cat} onEdit={handleEditOpen} />)}
+                    {categories.map(cat =>
+                        <BuildRow key={cat.id} category={cat} onEdit={handleEditOpen} />
+                    )}
                     <TableRow>
                         <TableCell colSpan={5} align="center">
-                            <Button onClick={() => handleEditOpen({ id: -1, name: '', description: '', color: 0 })}>
+                            <Button onClick={() => handleEditOpen({ id: -1, name: '', description: '', color: 1 })}>
                                 + Add Category
                             </Button>
                         </TableCell>
@@ -167,9 +154,9 @@ function EditDialog(props: {
                         onChange={(e) => setColor(Number(e.target.value))}
                     >
                         {
-                            Array.from(Object.values(colors)).map((color, colorIDX) => (
-                                <MenuItem key={colorIDX} value={colorIDX}>
-                                    <div style={{ backgroundColor: color, width: '20px', height: '20px' }} />
+                            Object.keys(colors).map(c => Number(c)).map((key) => (
+                                <MenuItem key={key} value={key.toString()}>
+                                    <div style={{ backgroundColor: colors[key], width: '20px', height: '20px' }} />
                                 </MenuItem>
                             ))
                         }
