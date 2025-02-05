@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- Material Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <!-- bootstrap-select -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+
+    <style>
+        .md-11 {
+            font-size: 11px !important;
+        }
+        .pad-0 {
+            padding-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+    </style>
+
+    <title>Multi-Select Example</title>
+</head>
+<body>
+<div class="container mt-4">
+    <table class="table table-striped" id="dynamic-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Options</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows will be dynamically added here -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<!-- bootstrap-select -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+
+<script>
+    const rows = [
+        {id: 1, name: 'John', age: 20, options: ["1"]},
+        {id: 2, name: 'Jane', age: 24, options: ["2"]},
+        {id: 3, name: 'Joe', age: 25, options: ["3"]},
+        {id: 4, name: 'Jill', age: 22, options: ["1", "2"]},
+    ]
+
+    const optionsData = [
+        {value: '1', label: 'Option 1', badge: 'Option 1'},
+        {value: '2', label: 'Option 2', badge: 'Option 2'},
+        {value: '3', label: 'Option 3', badge: 'Option 3'},
+    ];
+
+    const newSelect = () => {
+        const selectElement = document.createElement('select');
+        selectElement.setAttribute('class', 'selectpicker');
+        selectElement.setAttribute('data-live-search', 'true');
+        selectElement.setAttribute('data-selected-text-format', 'count > 3');
+        selectElement.setAttribute('multiple', 'true');
+        optionsData.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option.value;
+            // optionElement.setAttribute('data-content', `<span class='badge badge-success'>${option.badge}</span>`);
+            const innerButton = `<div class="btn-group btn-group-sm" data-toggle="buttons">
+                <span class="btn btn-secondary btn-sm pad-0">
+                    <input type="radio" name="options-${option.value}" autocomplete="off" checked>${option.label}
+                </span>
+                <span class="btn btn-secondary btn-sm pad-0">
+                    <input type="radio" name="options-${option.value}" autocomplete="off">
+                    <span class="material-icons md-11">close</span>
+                </span>
+            </div>`;
+            optionElement.setAttribute('data-content', innerButton);
+            selectElement.appendChild(optionElement);
+        });
+        return selectElement;
+    }
+
+    const tableBody = document.querySelector('#dynamic-table tbody');
+
+    rows.forEach(row => {
+        const tr = document.createElement('tr');
+
+        const idTd = document.createElement('td');
+        idTd.textContent = row.id;
+        tr.appendChild(idTd);
+
+        const nameTd = document.createElement('td');
+        nameTd.textContent = row.name;
+        tr.appendChild(nameTd);
+
+        const ageTd = document.createElement('td');
+        ageTd.textContent = row.age;
+        tr.appendChild(ageTd);
+
+        const optionsTd = document.createElement('td');
+        const selectElement = newSelect();
+        optionsTd.appendChild(selectElement)
+        $(selectElement).selectpicker()
+        $(selectElement).selectpicker('val', row.options);
+        tr.appendChild(optionsTd);
+
+        tableBody.appendChild(tr);
+    });
+</script>
+</body>
+</html>
+
