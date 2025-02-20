@@ -187,7 +187,7 @@ function EditDialog(props: {
     isOpen: boolean,
     token: IApiToken,
     onClose: () => void,
-    onSave: (category: IApiToken) => void
+    onSave: (token: IApiToken) => void
 }) {
     const { isOpen, token, onClose, onSave } = props;
     const [description, setDescription] = React.useState(token.description);
@@ -204,7 +204,7 @@ function EditDialog(props: {
 
     return (
         <Dialog open={isOpen} onClose={onClose}>
-            <DialogTitle>Edit Category</DialogTitle>
+            <DialogTitle>Edit API Token</DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>
                     <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />

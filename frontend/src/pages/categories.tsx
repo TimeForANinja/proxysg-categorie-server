@@ -1,5 +1,5 @@
 import React from 'react';
-import {getCategories, ICategory} from "../api/categories";
+import {getCategories, ICategory, deleteCategory} from "../api/categories";
 import {colors} from "../api/colormixer";
 import Paper from "@mui/material/Paper";
 import Table from '@mui/material/Table';
@@ -19,14 +19,19 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import {DialogContentText} from "@mui/material";
 
 function BuildRow(props: {
     category: ICategory,
     onEdit: (category: ICategory) => void,
+    onDelete: (category: ICategory) => void,
 }) {
     const { category } = props;
     const handleEdit = () => {
         props.onEdit(category);
+    };
+    const handleDelete = () => {
+        props.onDelete(category);
     };
 
     return (
@@ -39,7 +44,7 @@ function BuildRow(props: {
             <TableCell>{category.description}</TableCell>
             <TableCell>
                 <EditIcon onClick={() => handleEdit()} />
-                <DeleteIcon />
+                <DeleteIcon onClick={() => handleDelete()}/>
             </TableCell>
         </TableRow>
     );
@@ -49,6 +54,7 @@ function CategoriesPage() {
     const [categories, setCategory] = React.useState<ICategory[]>([]);
     const [selectedCategory, setSelectedCategory] = React.useState<ICategory | null>(null);
     const [isDialogOpen, setDialogOpen] = React.useState(false);
+    const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<ICategory | null>(null);
 
     React.useEffect(() => {
         Promise.all([getCategories()])
@@ -78,41 +84,76 @@ function CategoriesPage() {
         setDialogOpen(false);
     };
 
+    const handleDelete = (category: ICategory) => {
+        setDeleteDialogOpen(category);
+    }
+
+    const handleDeleteClose = (del: boolean) => {
+        if (del && isDeleteDialogOpen != null) {
+            deleteCategory(isDeleteDialogOpen);
+        }
+        setDeleteDialogOpen(null);
+    }
+
     return (
         <>
-        <TableContainer component={Paper}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell component="th" scope="row">ID</TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Color</TableCell>
-                        <TableCell>Description</TableCell>
-                        <TableCell></TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {categories.map(cat =>
-                        <BuildRow key={cat.id} category={cat} onEdit={handleEditOpen} />
-                    )}
-                    <TableRow>
-                        <TableCell colSpan={5} align="center">
-                            <Button onClick={() => handleEditOpen({ id: -1, name: '', description: '', color: 1 })}>
-                                + Add Category
-                            </Button>
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </TableContainer>
-        {selectedCategory && (
-            <EditDialog
-                isOpen={isDialogOpen}
-                category={selectedCategory}
-                onClose={handleDialogClose}
-                onSave={handleSave}
-            />
-        )}
+            <React.Fragment>
+                <Dialog
+                    open={isDeleteDialogOpen != null}
+                    onClose={() => handleDeleteClose(false)}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                >
+                    <DialogTitle id="alert-dialog-title">
+                        {"Delete Category?"}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                            Are you sure you want to Delete the Category?
+                            This will also unassign the Category from all URLs.
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => handleDeleteClose(false)}>Disagree</Button>
+                        <Button onClick={() => handleDeleteClose(true)} autoFocus>
+                            Agree
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell component="th" scope="row">ID</TableCell>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Color</TableCell>
+                            <TableCell>Description</TableCell>
+                            <TableCell></TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {categories.map(cat =>
+                            <BuildRow key={cat.id} category={cat} onEdit={handleEditOpen} onDelete={handleDelete}/>
+                        )}
+                        <TableRow>
+                            <TableCell colSpan={5} align="center">
+                                <Button onClick={() => handleEditOpen({ id: -1, name: '', description: '', color: 1 })}>
+                                    + Add Category
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            {selectedCategory && (
+                <EditDialog
+                    isOpen={isDialogOpen}
+                    category={selectedCategory}
+                    onClose={handleDialogClose}
+                    onSave={handleSave}
+                />
+            )}
         </>
     );
 }
