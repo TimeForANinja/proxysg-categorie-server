@@ -1,99 +1,143 @@
-from flask import Blueprint, jsonify, request
-from db.mydb import DatabaseHolder
-from db.urls_db import UrlsDB
+from apiflask import APIBlueprint
+from marshmallow.fields import Integer
 
-urls_bp = Blueprint('urls', __name__)
+from db.db_singleton import get_db
+from marshmallow_dataclass import class_schema
+from apiflask.fields import List, Nested
+from typing import List as tList
+from dataclasses import field, dataclass
+
+from db.urls import MutableURL, URL
+from routes.schemas.generic_output import GenericOutput
+
+urls_bp = APIBlueprint('urls', __name__)
+
+
+@dataclass
+class SetCategoriesInput:
+    """Class for input schema for set categories"""
+    categories: tList[int] = field(default_factory=list)
+
+class CreateOrUpdateOutput(GenericOutput):
+    """Output schema for create/update url"""
+    data = Nested(class_schema(URL)(), required=True, description="URL")
+
+class ListResponseOutput(GenericOutput):
+    """Output schema for list of URL"""
+    data = List(Nested(class_schema(URL)()), required=True, description="List of URLs")
+
+class ListCategoriesOutput(GenericOutput):
+    """Output schema for listing Categories of a URL"""
+    data = List(Integer, required=True, description="List of Categories")
 
 
 # Route to fetch all URLs
-@urls_bp.route('/urls', methods=['GET'])
+@urls_bp.get('/api/urls')
+@urls_bp.doc(summary='List all URLs', description='List all URLs in the database')
+@urls_bp.output(ListResponseOutput)
 def get_urls():
-    conn = DatabaseHolder().mydb.conn
-    urls_db = UrlsDB(conn)
-    urls = urls_db.get_all_urls()
-    return jsonify(urls)
+    db_if = get_db()
+    urls = db_if.urls.get_all_urls()
+    return {
+        "status": "success",
+        "message": "URLs fetched successfully",
+        "data": urls,
+    }
 
 
 # Route to update URL name
-@urls_bp.route('/urls/<int:id>', methods=['PUT'])
-def update_url(id):
-    conn = DatabaseHolder().mydb.conn
-    urls_db = UrlsDB(conn)
-    url = urls_db.get_url(id)
-
-    if not url:
-        return jsonify({"error": "URL not found"}), 404
-    
-    data = request.json
-    new_name = data.get('name')
-
-    if not new_name:
-        return jsonify({"error": "Name is required"}), 400
-
-    urls_db.update_url(id, new_name)
-
-    new_url = urls_db.get_url(id)
-    return jsonify({
+@urls_bp.put('/api/urls/<int:url_id>')
+@urls_bp.doc(summary='Update URL name', description='Update the name of a URL')
+@urls_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
+@urls_bp.output(CreateOrUpdateOutput)
+def update_url(url_id: int, mut_url: MutableURL):
+    db_if = get_db()
+    new_url = db_if.urls.update_url(url_id, mut_url)
+    db_if.history.add_history_event(f"URL {url_id} updated")
+    return {
+        "status": "success",
         "message": "URL updated successfully",
-        "obj": new_url,
-    })
+        "data": new_url
+    }
 
 
 # Route to delete a URL
-@urls_bp.route('/urls/<int:id>', methods=['DELETE'])
-def delete_url(id):
-    conn = DatabaseHolder().mydb.conn
-    urls_db = UrlsDB(conn)
-    url = urls_db.get_url(id)
-
-    if not url:
-        return jsonify({"error": "URL not found"}), 404
-
-    urls_db.delete_url(id)
-    return jsonify({"message": "URL deleted successfully"})
+@urls_bp.delete('/api/urls/<int:url_id>')
+@urls_bp.doc(summary="Delete a URL", description="Delete a URL using its ID")
+@urls_bp.output(GenericOutput)
+def delete_url(url_id: int):
+    db_if = get_db()
+    db_if.urls.delete_url(url_id)
+    db_if.history.add_history_event(f"URL {url_id} deleted")
+    return {
+        "status": "success",
+        "message": "url_id deleted successfully"
+    }
 
 
 # Route to create a new URL
-@urls_bp.route('/urls', methods=['POST'])
-def create_url():
-    data = request.json
-    name = data.get('name')
+@urls_bp.post('/api/urls')
+@urls_bp.doc(summary="Create a new URL", description="Create a new URL with a given name")
+@urls_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
+@urls_bp.output(CreateOrUpdateOutput)
+def create_url(mut_url: MutableURL):
+    db_if = get_db()
+    new_url = db_if.urls.add_url(mut_url)
+    db_if.history.add_history_event(f"URL {new_url.id} created")
 
-    if not name:
-        return jsonify({"error": "Name is required"}), 400
-
-    conn = DatabaseHolder().mydb.conn
-    urls_db = UrlsDB(conn)
-    new_id = urls_db.add_url(name)
-    
-    new_url = urls_db.get_url(new_id)
-    return jsonify({
-        "message": "URL created successfully",
-        "obj": new_url,
-    })
+    return {
+        "status": "success",
+        "message": "URL successfully created",
+        "data": new_url
+    }
 
 
-# Route to fetch all URLs with associated categories
-@urls_bp.route('/urls-with-categories', methods=['GET'])
-def get_urls_with_categories():
-    conn = DatabaseHolder().mydb.conn
-    cursor = conn.cursor()
+# Route to add a Category to a URL
+@urls_bp.post('/api/urls/<int:url_id>/category/<int:cat_id>')
+@urls_bp.doc(summary="add cat to url", description="Add the provided Category ID to the URL.Category List")
+def add_token_category(url_id: int, cat_id: int):
+    db_if = get_db()
+    db_if.url_categories.add_url_category(url_id, cat_id)
+    db_if.history.add_history_event(f"Added cat {cat_id} to url {url_id}")
+    return {
+        "status": "success",
+        "message": "Category successfully added to URL"
+    }
 
-    # Join urls, url_categories, and categories tables to fetch the required data
-    cursor.execute('''SELECT urls.id AS url_id, urls.name AS url_name,
-                              categories.id AS category_id, categories.name AS category_name
-                      FROM urls
-                      LEFT JOIN url_categories ON urls.id = url_categories.url_id
-                      LEFT JOIN categories ON url_categories.category_id = categories.id''')
 
-    urls_with_categories = {}
-    for row in cursor.fetchall():
-        url_id, url_name, category_id, category_name = row
-        if url_id not in urls_with_categories:
-            urls_with_categories[url_id] = {"id": url_id, "name": url_name, "categories": []}
+# Route to delete a Category from a URL
+@urls_bp.delete('/api/urls/<int:url_id>/category/<int:cat_id>')
+@urls_bp.doc(summary="remove cat from url", description="Remove the provided Category ID from the URL.Category List")
+def delete_token_category(url_id: int, cat_id: int):
+    db_if = get_db()
+    db_if.url_categories.delete_url_category(url_id, cat_id)
+    db_if.history.add_history_event(f"Removed cat {cat_id} from url {url_id} deleted")
+    return {
+        "status": "success",
+        "message": "Category successfully removed from URL"
+    }
 
-        # Check if category_id is None (no category assigned)
-        if category_id is not None:
-            urls_with_categories[url_id]["categories"].append({"id": category_id, "name": category_name})
 
-    return jsonify(list(urls_with_categories.values()))
+# Route to set Categories to a given List
+@urls_bp.post('/api/urls/<int:url_id>/categories')
+@urls_bp.doc(summary="overwrite url categories", description="Set the Categories of a URL to the provided list")
+@urls_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
+@urls_bp.output(ListCategoriesOutput)
+def set_url_categories(url_id: int, set_cats: SetCategoriesInput):
+    db_if = get_db()
+    is_cats = db_if.url_categories.get_url_categories_by_url(url_id)
+
+    added = list(set(set_cats.categories) - set(is_cats))
+    removed = list(set(is_cats) - set(set_cats.categories))
+
+    for cat in added:
+        db_if.url_categories.add_url_category(url_id, cat)
+    for cat in removed:
+        db_if.url_categories.delete_url_category(url_id, cat)
+
+    db_if.history.add_history_event(f"Updated Cats for URL {url_id} from {','.join([str(c) for c in is_cats])} to {','.join([str(c) for c in set_cats.categories])}")
+    return {
+        "status": "success",
+        "message": "URL Categories successfully updated",
+        "data": set_cats.categories,
+    }
