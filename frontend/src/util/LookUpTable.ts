@@ -9,3 +9,5 @@ export const buildLUTFromID = <T extends { id: number }>(objects: Array<T>): LUT
     }
     return lut;
 };
+
+export const getLUTValues = <T>(lut: LUT<T>): Array<T> => Array.from(Object.values(lut));

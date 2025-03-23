@@ -1,6 +1,16 @@
 import React from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField} from '@mui/material';
-import {getAPITokens, IApiToken} from "../api/tokens";
+import {Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, DialogContentText} from '@mui/material';
+import {
+    createToken,
+    getAPITokens,
+    updateToken,
+    rotateToken,
+    deleteToken,
+    IApiToken,
+    IMutableApiToken,
+    addTokenCategory,
+    deleteTokenCategory, setTokenCategory
+} from "../api/tokens";
 import {getCategories, ICategory} from "../api/categories";
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -20,38 +30,61 @@ import ShuffleIcon from "@mui/icons-material/Shuffle";
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
-import { v4 as uuidv4 } from 'uuid';
+import {CompareLists} from "../util/ArrayDiff";
+
+const TIME_SECONDS = 1000;
 
 function BuildRow(props: {
     token: IApiToken,
     categories: ICategory[],
-    onEdit: (token: IApiToken) => void,
-    onShuffle: (token: IApiToken) => void,
+    onEdit: () => void,
+    onShuffle: () => void,
+    onDelete: () => void,
 }) {
-    const { token, categories } = props;
+    const {
+        token,
+        categories,
+        onEdit,
+        onDelete,
+        onShuffle,
+    } = props;
+    // tracks state for the copy icon, which slightly changes for a few seconds after being pressed
     const [isCopied, setIsCopied] = React.useState(false);
+    // toggle the visibility of the token
     const [hideToken, setHideToken] = React.useState(false);
-    const [isCategories, setCategories] = React.useState(categories.filter(category => token.categories.includes(category.id)).map(c => c.id));
 
+    const [isCategories, setCategories] = React.useState(token.categories);
+
+    // helper function, triggered when the "copy" button is pressed
     const handleCopy = async () => {
+        // copy ID to clipboard
         await navigator.clipboard.writeText(token.token);
+
+        // Change the look of the icon for a few seconds
         setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 1500);  // Change back after 3 seconds
+        setTimeout(() => setIsCopied(false), 1.5 * TIME_SECONDS);
     };
 
+    // helper function, triggered when category selector changes
     const handleChange = (event: SelectChangeEvent<number[]>) => {
         if (Array.isArray(event.target.value)) {
+            // update api
+            setTokenCategory(token.id, event.target.value).then(newCats => {
+                // save new version
+                setCategories(newCats);
+            });
+            /* old version
+            const { added, removed } = CompareLists(isCategories, event.target.value);
+
+            added.forEach(cat => addTokenCategory(token.id, cat));
+            removed.forEach(cat => deleteTokenCategory(token.id, cat));
+
             setCategories(event.target.value);
+            */
         }
     };
 
-    const handleEdit = () => {
-        props.onEdit(token);
-    };
-
-    const handleShuffle = () => {
-        props.onShuffle(token);
-    }
+    const last_use_time = token.last_use === 0 ? 'never' : new Date(token.last_use * 1000).toLocaleString();
 
     return (
             <TableRow
@@ -65,14 +98,14 @@ function BuildRow(props: {
                     <IconButton onClick={() => setHideToken(!hideToken)}>
                         { hideToken ? <VisibilityIcon /> : <VisibilityOffIcon /> }
                     </IconButton>
-                    <IconButton onClick={() => handleShuffle()}>
+                    <IconButton onClick={onShuffle}>
                         <ShuffleIcon />
                     </IconButton>
-                    <IconButton onClick={() => handleCopy()}>
+                    <IconButton onClick={handleCopy}>
                         {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
                     </IconButton>
                 </TableCell>
-                <TableCell>{ token.lastUse }</TableCell>
+                <TableCell>{ last_use_time }</TableCell>
                 <TableCell align="right">
                     <Select
                         multiple
@@ -94,8 +127,8 @@ function BuildRow(props: {
                     </Select>
                 </TableCell>
                 <TableCell>
-                    <EditIcon onClick={() => handleEdit()} />
-                    <DeleteIcon/>
+                    <EditIcon onClick={onEdit} />
+                    <DeleteIcon onClick={onDelete}/>
                 </TableCell>
             </TableRow>
     )
@@ -104,9 +137,11 @@ function BuildRow(props: {
 function ApiTokenPage() {
     const [tokens, setTokens] = React.useState<IApiToken[]>([]);
     const [categories, setCategory] = React.useState<ICategory[]>([]);
-    const [selectedToken, setSelectedToken] = React.useState<IApiToken | null>(null);
-    const [isDialogOpen, setDialogOpen] = React.useState(false);
+    const [editToken, setEditToken] = React.useState<IApiToken | null>(null);
+    const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
+    const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<IApiToken | null>(null);
 
+    // Load tokens (& Categories) From backend
     React.useEffect(() => {
         Promise.all([ getCategories(), getAPITokens()])
             .then(([categoryData, tokenData]) => {
@@ -116,40 +151,83 @@ function ApiTokenPage() {
             .catch((error) => console.error("Error:", error));
     }, []);
 
-    const handleEditOpen = (token: IApiToken) => {
-        setSelectedToken(token);
-        setDialogOpen(true);
+    const handleEditOpen = (token: IApiToken | null) => {
+        setEditToken(token);
+        setEditDialogOpen(true);
     };
 
-    const handleDialogClose = () => {
-        setDialogOpen(false);
+    const handleEditDialogClose = () => {
+        setEditDialogOpen(false);
     };
 
-    const handleSave = (token: IApiToken) => {
-        if (token.id === -1) {
+    const handleSave = (tokenID: number|null, token: IMutableApiToken) => {
+        if (tokenID == null) {
             // add new token
-            token.id = Math.max(...tokens.map(t => t.id)) + 1;
-            token.token = uuidv4();
-            setTokens([...tokens, token]);
-        } else {
-            // "replace" existing token if id matches
-            setTokens(tokens.map(t => t.id === token.id ? token : t));
+            createToken(token).then(newTok => {
+                setTokens([...tokens, newTok]);
+            });
+         } else {
+            updateToken(tokenID, token).then(newTok => {
+                // "replace" existing token if id matches
+                setTokens(tokens.map(tok => tok.id === tokenID ? newTok : tok));
+            })
         }
-        setDialogOpen(false);
+        handleEditDialogClose();
     };
+
+    const handleDelete = (token: IApiToken) => {
+        // show the dialogue to confirm the deletion
+        setDeleteDialogOpen(token);
+    }
+
+    const handleDeleteConfirmation = (del: boolean) => {
+        // del == true means the user confirmed the popup
+        if (del && isDeleteDialogOpen != null) {
+            deleteToken(isDeleteDialogOpen.id).then(() => {
+                // remove token with ID from store
+                setTokens(tokens.filter(tok => tok.id !== isDeleteDialogOpen.id));
+            });
+        }
+        setDeleteDialogOpen(null);
+    }
 
     const handleOnShuffle = (token: IApiToken) => {
-        token.token = uuidv4();
-        setTokens(tokens.map(t => t.id === token.id ? token : t));
+        rotateToken(token.id).then(newTok => {
+            // "replace" existing token if id matches
+            setTokens(tokens.map(tok => tok.id === token.id ? newTok : tok));
+        })
     }
 
     return (
         <>
+            <React.Fragment>
+                <Dialog
+                    open={isDeleteDialogOpen != null}
+                    onClose={() => handleDeleteConfirmation(false)}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                >
+                    <DialogTitle id="alert-dialog-title">
+                        {"Delete API Token?"}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                            Are you sure you want to Delete the API Token?
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => handleDeleteConfirmation(false)}>Disagree</Button>
+                        <Button onClick={() => handleDeleteConfirmation(true)} autoFocus>
+                            Agree
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
             <TableContainer component={Paper}>
                 <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
                     <TableHead>
                         <TableRow>
-                            <TableCell>ID</TableCell>
+                            <TableCell component="th" scope="row">ID</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell align="right">Token</TableCell>
                             <TableCell>Last Used</TableCell>
@@ -159,11 +237,18 @@ function ApiTokenPage() {
                     </TableHead>
                     <TableBody>
                         {tokens.map(token =>
-                            <BuildRow key={token.id} token={token} categories={categories} onEdit={handleEditOpen} onShuffle={handleOnShuffle}/>
+                            <BuildRow
+                                key={token.id}
+                                token={token}
+                                categories={categories}
+                                onEdit={() => handleEditOpen(token)}
+                                onShuffle={() => handleOnShuffle(token)}
+                                onDelete={() => handleDelete(token)}
+                            />
                         )}
                         <TableRow>
                             <TableCell colSpan={5} align="center">
-                                <Button onClick={() => handleEditOpen({ id: -1, token: '', description: '', categories: [], lastUse: 'never' })}>
+                                <Button onClick={() => handleEditOpen(null)}>
                                     + Add Token
                                 </Button>
                             </TableCell>
@@ -171,35 +256,36 @@ function ApiTokenPage() {
                     </TableBody>
                 </Table>
             </TableContainer>
-                {selectedToken && (
-                <EditDialog
-                    isOpen={isDialogOpen}
-                    token={selectedToken}
-                    onClose={handleDialogClose}
-                    onSave={handleSave}
-                />
-            )}
+            <EditDialog
+                isOpen={isEditDialogOpen}
+                token={editToken}
+                onClose={handleEditDialogClose}
+                onSave={handleSave}
+            />
         </>
     );
 }
 
 function EditDialog(props: {
     isOpen: boolean,
-    token: IApiToken,
+    token: IApiToken | null,
     onClose: () => void,
-    onSave: (token: IApiToken) => void
+    onSave: (id: number | null, token: IMutableApiToken) => void
 }) {
     const { isOpen, token, onClose, onSave } = props;
-    const [description, setDescription] = React.useState(token.description);
+
+    const [description, setDescription] = React.useState('');
 
     React.useEffect(() => {
         if (token) {
             setDescription(token.description);
+        } else {
+            setDescription("");
         }
     }, [token]);
 
     const handleSave = () => {
-        onSave({ ...token, description });
+        onSave(token?.id ?? null, { description });
     };
 
     return (

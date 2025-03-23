@@ -1,6 +1,15 @@
 import React from 'react';
 import {getCategories, ICategory} from "../api/categories";
-import {getURLs, IURL} from "../api/urls";
+import {
+    getURLs,
+    IURL,
+    IMutableURL,
+    deleteURL,
+    createURL,
+    updateURL,
+    addURLCategory,
+    deleteURLCategory, setURLCategory
+} from "../api/urls"
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import IconButton from "@mui/material/IconButton";
@@ -20,10 +29,19 @@ import TextField from '@mui/material/TextField'
 import Modal from '@mui/material/Modal'
 import Chip from '@mui/material/Chip'
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import {colors} from "../api/colormixer";
+import {colors} from "../model/colormixer";
 import TablePagination from '@mui/material/TablePagination';
-import {buildLUTFromID, LUT} from "../api/LookUpTable";
+import {buildLUTFromID, getLUTValues, LUT} from "../util/LookUpTable";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import Select, {SelectChangeEvent} from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import {CompareLists} from "../util/ArrayDiff";
+import {addTokenCategory, deleteTokenCategory} from "../api/tokens";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id - b.id
@@ -41,9 +59,40 @@ const ModalStyle = {
     p: 4,
 };
 
-function BuildRow(props: { url: IURL, categories: LUT<ICategory>}) {
-    const { url, categories } = props;
+function BuildRow(props: {
+    url: IURL,
+    categories: LUT<ICategory>,
+    onDelete: () => void,
+}) {
+    const {
+        url,
+        categories,
+        onDelete,
+    } = props;
+
+    // (un)fold a row into multiple rows
     const [isOpen, setIsOpen] = React.useState(false);
+
+    const [isCategories, setCategories] = React.useState(url.categories);
+
+    // helper function, triggered when category selector changes
+    const handleChange = (event: React.SyntheticEvent, cats: ICategory[]) => {
+        if (Array.isArray(cats)) {
+            // update api
+            setURLCategory(url.id, cats.map(c => c.id)).then(newCats => {
+                // save new version
+                setCategories(newCats);
+            });
+            /* old version
+            const { added, removed } = CompareLists(isCategories, cats.map(c => c.id));
+
+            added.forEach(cat => addURLCategory(url.id, cat));
+            removed.forEach(cat => deleteURLCategory(url.id, cat));
+
+            setCategories(cats.map(c => c.id));
+             */
+        }
+    };
 
     return (
         <React.Fragment>
@@ -64,9 +113,10 @@ function BuildRow(props: { url: IURL, categories: LUT<ICategory>}) {
                         multiple
                         disableCloseOnSelect
                         size="small"
-                        options={Array.from(Object.values(categories))}
+                        options={getLUTValues(categories)}
                         getOptionLabel={(cat) => cat.name}
-                        defaultValue={url.categories.map(c => categories[c])}
+                        defaultValue={isCategories.map(c => categories[c])}
+                        onChange={handleChange}
                         renderTags={(values, getTagProps) =>
                             values.map((val, index: number) => {
                                 const { key, ...tagProps } = getTagProps({ index });
@@ -117,7 +167,7 @@ function BuildRow(props: { url: IURL, categories: LUT<ICategory>}) {
                         )}
                     />
                 </TableCell>
-                <TableCell><DeleteIcon/></TableCell>
+                <TableCell><DeleteIcon onClick={onDelete}/></TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={4}>
@@ -137,6 +187,8 @@ function BuildRow(props: { url: IURL, categories: LUT<ICategory>}) {
 function MatchingListPage() {
     const [urls, setURLs] = React.useState<IURL[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>([]);
+    const [editURL, setEditURL] = React.useState<IURL | null>(null);
+    const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
     const [isModalOpen, setModalOpen] = React.useState<boolean>(false);
 
     const [page, setPage] = React.useState(0);
@@ -156,7 +208,7 @@ function MatchingListPage() {
                 // not sure if switching to sth. like "levenshtein distance" makes more sense?
                 return `${x.id} ${x.hostname} ${x.categories.map(c => categories[c].name).join(' ')}`.toLowerCase().includes(quickSearch.toLowerCase())
             }),
-        [quickSearch, urls],
+        [quickSearch, urls, categories],
     );
     const visibleRows = React.useMemo(
         () =>
@@ -176,56 +228,140 @@ function MatchingListPage() {
             .catch((error) => console.error("Error:", error));
     }, []);
 
+    const handleDelete = (remove_url: IURL) => {
+        deleteURL(remove_url.id).then(() => {
+            // remove URL with ID from store
+            setURLs(urls.filter(uri => uri.id !== remove_url.id));
+        });
+    }
+
+    const handleEditOpen = (uri: IURL | null) => {
+        setEditURL(uri);
+        setEditDialogOpen(true);
+    };
+
+    const handleEditDialogClose = () => {
+        setEditDialogOpen(false);
+    };
+
+    const handleSave = (urlID: number|null, uri: IMutableURL) => {
+        if (urlID == null) {
+            // add new URL
+            createURL(uri).then(newURI => {
+                setURLs([...urls, newURI]);
+            });
+        } else {
+            updateURL(urlID, uri).then(newURI => {
+                // "replace" existing URL if id matches
+                setURLs(urls.map(u => u.id === urlID ? newURI : u));
+            })
+        }
+        handleEditDialogClose();
+    };
+
     return (
         <>
             <Paper sx={{ width: '100%', mb: 2 }}>
             <div>
-            <TextField label="Quick Search" size="small" variant="standard" onChange={event => setQuickSearch(event.target.value)}/>
-        </div>
-        <TableContainer component={Paper} style={{maxHeight: '100%'}}>
-            <Modal
-                open={isModalOpen}
-                    onClose={() => setModalOpen(false)}
-                    aria-labelledby="modal-modal-title"
-                    aria-describedby="modal-modal-description"
-                >
-                    <Box sx={ModalStyle}>
-                        <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Text in a modal
-                        </Typography>
-                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-                        </Typography>
-                    </Box>
-                </Modal>
-            <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table" stickyHeader>
-                <TableHead>
-                <TableRow>
-                    <TableCell />
-                    <TableCell><Stack direction="row"><Typography>ID</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
-                    <TableCell><Stack direction="row"><Typography>Hostname</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
-                    <TableCell><Stack direction="row"><Typography>Categories</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
-                    <TableCell></TableCell>
-                </TableRow>
-                </TableHead>
-                <TableBody>
-                {visibleRows.map(url =>
-                    <BuildRow key={url.id} url={url} categories={categories}></BuildRow>
-                )}
-                </TableBody>
-            </Table>
-            </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[20, 50, 100]}
-                component="div"
-                count={filteredRows.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+                <TextField label="Quick Search" size="small" variant="standard" onChange={event => setQuickSearch(event.target.value)}/>
+            </div>
+            <Button onClick={() => handleEditOpen(null)}>
+                + Add Category
+            </Button>
+            <TableContainer component={Paper} style={{maxHeight: '100%'}}>
+                <Modal
+                    open={isModalOpen}
+                        onClose={() => setModalOpen(false)}
+                        aria-labelledby="modal-modal-title"
+                        aria-describedby="modal-modal-description"
+                    >
+                        <Box sx={ModalStyle}>
+                            <Typography id="modal-modal-title" variant="h6" component="h2">
+                                Text in a modal
+                            </Typography>
+                            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                                Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+                            </Typography>
+                        </Box>
+                    </Modal>
+                <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table" stickyHeader>
+                    <TableHead>
+                    <TableRow>
+                        <TableCell />
+                        <TableCell><Stack direction="row"><Typography>ID</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
+                        <TableCell><Stack direction="row"><Typography>Hostname</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
+                        <TableCell><Stack direction="row"><Typography>Categories</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
+                        <TableCell></TableCell>
+                    </TableRow>
+                    </TableHead>
+                    <TableBody>
+                    {visibleRows.map(url =>
+                        <BuildRow
+                            key={url.id}
+                            url={url}
+                            categories={categories}
+                            onDelete={() => handleDelete(url)}
+                        />
+                    )}
+                    </TableBody>
+                </Table>
+                </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[20, 50, 100]}
+                    component="div"
+                    count={filteredRows.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+            </Paper>
+            <EditDialog
+                isOpen={isEditDialogOpen}
+                uri={editURL}
+                onClose={handleEditDialogClose}
+                onSave={handleSave}
             />
-        </Paper>
-</>
+        </>
+    );
+}
+
+function EditDialog(props: {
+    isOpen: boolean,
+    uri: IURL | null,
+    onClose: () => void,
+    onSave: (id: number | null, uri: IMutableURL) => void
+}) {
+    let {isOpen, uri, onClose, onSave} = props;
+
+    const [hostname, setHostname] = React.useState('');
+
+    React.useEffect(() => {
+        if (uri) {
+            setHostname(uri.hostname);
+        } else {
+            setHostname("")
+        }
+    }, [uri]);
+
+    const handleSave = () => {
+        onSave(uri?.id ?? null, {hostname});
+        setHostname("")
+    };
+
+    return (
+        <Dialog open={isOpen} onClose={onClose}>
+            <DialogTitle>Edit URL</DialogTitle>
+            <DialogContent>
+                <Box display="flex" flexDirection="column" gap={2}>
+                    <TextField label="Hostname (FQDN)" value={hostname} onChange={(e) => setHostname(e.target.value)}/>
+                </Box>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleSave}>Save</Button>
+                <Button onClick={onClose}>Cancel</Button>
+            </DialogActions>
+        </Dialog>
     );
 }
 

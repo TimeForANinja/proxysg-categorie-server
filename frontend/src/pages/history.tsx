@@ -16,6 +16,8 @@ function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
     const { commit, isFirstCommit} = props;
     const [isOpen, setIsOpen] = React.useState(false);
 
+    const event_time = new Date(commit.time * 1000).toLocaleString();
+
     return (
         <React.Fragment key={commit.id}>
             <TableRow>
@@ -31,8 +33,8 @@ function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
                 <TableCell className={ isFirstCommit ? "graph" : "graph verticalLine"}><div className="commit"></div></TableCell>
                 <TableCell />
                 <TableCell>{commit.id}</TableCell>
-                <TableCell>{commit.time}</TableCell>
-                <TableCell>{commit.name}</TableCell>
+                <TableCell>{event_time}</TableCell>
+                <TableCell>{commit.description}</TableCell>
             </TableRow>
             {
                 isOpen ? commit.atomics.map((atomic, idx, items) => {
@@ -63,7 +65,7 @@ function HistoryPage() {
     const [commits, setCommits] = React.useState<ICommits[]>([]);
 
     React.useEffect(() => {
-        Promise.all([ getHistory(0)])
+        Promise.all([getHistory()])
             .then(([commitData]) => {
                 setCommits(commitData);
             })

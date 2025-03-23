@@ -1,6 +1,13 @@
 import React from 'react';
-import {getCategories, ICategory, deleteCategory} from "../api/categories";
-import {colors} from "../api/colormixer";
+import {
+    getCategories,
+    ICategory,
+    deleteCategory,
+    createCategory,
+    updateCategory,
+    IMutableCategory
+} from "../api/categories";
+import {colors} from "../model/colormixer";
 import Paper from "@mui/material/Paper";
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -23,28 +30,26 @@ import {DialogContentText} from "@mui/material";
 
 function BuildRow(props: {
     category: ICategory,
-    onEdit: (category: ICategory) => void,
-    onDelete: (category: ICategory) => void,
+    onEdit: () => void,
+    onDelete: () => void,
 }) {
-    const { category } = props;
-    const handleEdit = () => {
-        props.onEdit(category);
-    };
-    const handleDelete = () => {
-        props.onDelete(category);
-    };
+    const {
+        category,
+        onEdit,
+        onDelete,
+    } = props;
 
     return (
         <TableRow key={category.id}>
             <TableCell>{category.id}</TableCell>
             <TableCell>{category.name}</TableCell>
             <TableCell>
-                <div style={{ backgroundColor: colors[category.color], width: '20px', height: '20px' }} />
+                <div style={{backgroundColor: colors[category.color], width: '20px', height: '20px'}}/>
             </TableCell>
             <TableCell>{category.description}</TableCell>
             <TableCell>
-                <EditIcon onClick={() => handleEdit()} />
-                <DeleteIcon onClick={() => handleDelete()}/>
+                <EditIcon onClick={onEdit}/>
+                <DeleteIcon onClick={onDelete}/>
             </TableCell>
         </TableRow>
     );
@@ -52,10 +57,11 @@ function BuildRow(props: {
 
 function CategoriesPage() {
     const [categories, setCategory] = React.useState<ICategory[]>([]);
-    const [selectedCategory, setSelectedCategory] = React.useState<ICategory | null>(null);
-    const [isDialogOpen, setDialogOpen] = React.useState(false);
+    const [editCategory, setEditCategory] = React.useState<ICategory | null>(null);
+    const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
     const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<ICategory | null>(null);
 
+    // load categories from backend
     React.useEffect(() => {
         Promise.all([getCategories()])
             .then(([categoriesData]) => {
@@ -63,34 +69,43 @@ function CategoriesPage() {
             })
             .catch((error) => console.error("Error:", error));
     }, []);
-    const handleEditOpen = (category: ICategory) => {
-        setSelectedCategory(category);
-        setDialogOpen(true);
+
+    const handleEditOpen = (category: ICategory | null) => {
+        setEditCategory(category);
+        setEditDialogOpen(true);
     };
 
-    const handleDialogClose = () => {
-        setDialogOpen(false);
+    const handleEditDialogClose = () => {
+        setEditDialogOpen(false);
     };
 
-    const handleSave = (category: ICategory) => {
-        if (category.id === -1) {
+    const handleSave = (catID: number|null, category: IMutableCategory) => {
+        if (catID == null) {
             // add new category
-            category.id = Math.max(...categories.map(cat => cat.id)) + 1;
-            setCategory([...categories, category]);
+            createCategory(category).then(newCat => {
+                setCategory([...categories, newCat]);
+            });
         } else {
-            // "replace" existing category if id matches
-            setCategory(categories.map(cat => cat.id === category.id ? category : cat));
+            updateCategory(catID, category).then(newCat => {
+                // "replace" existing category if id matches
+                setCategory(categories.map(cat => cat.id === catID ? newCat : cat));
+            })
         }
-        setDialogOpen(false);
+        handleEditDialogClose();
     };
 
     const handleDelete = (category: ICategory) => {
+        // show the dialogue to confirm the deletion
         setDeleteDialogOpen(category);
     }
 
-    const handleDeleteClose = (del: boolean) => {
+    const handleDeleteConfirmation = (del: boolean) => {
+        // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteCategory(isDeleteDialogOpen);
+            deleteCategory(isDeleteDialogOpen.id).then(() => {
+                // remove category with ID from store
+                setCategory(categories.filter(cat => cat.id !== isDeleteDialogOpen.id));
+            });
         }
         setDeleteDialogOpen(null);
     }
@@ -100,7 +115,7 @@ function CategoriesPage() {
             <React.Fragment>
                 <Dialog
                     open={isDeleteDialogOpen != null}
-                    onClose={() => handleDeleteClose(false)}
+                    onClose={() => handleDeleteConfirmation(false)}
                     aria-labelledby="alert-dialog-title"
                     aria-describedby="alert-dialog-description"
                 >
@@ -114,8 +129,8 @@ function CategoriesPage() {
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => handleDeleteClose(false)}>Disagree</Button>
-                        <Button onClick={() => handleDeleteClose(true)} autoFocus>
+                        <Button onClick={() => handleDeleteConfirmation(false)}>Disagree</Button>
+                        <Button onClick={() => handleDeleteConfirmation(true)} autoFocus>
                             Agree
                         </Button>
                     </DialogActions>
@@ -134,11 +149,16 @@ function CategoriesPage() {
                     </TableHead>
                     <TableBody>
                         {categories.map(cat =>
-                            <BuildRow key={cat.id} category={cat} onEdit={handleEditOpen} onDelete={handleDelete}/>
+                            <BuildRow
+                                key={cat.id}
+                                category={cat}
+                                onEdit={() => handleEditOpen(cat)}
+                                onDelete={() => handleDelete(cat)}
+                            />
                         )}
                         <TableRow>
                             <TableCell colSpan={5} align="center">
-                                <Button onClick={() => handleEditOpen({ id: -1, name: '', description: '', color: 1 })}>
+                                <Button onClick={() => handleEditOpen(null)}>
                                     + Add Category
                                 </Button>
                             </TableCell>
@@ -146,40 +166,45 @@ function CategoriesPage() {
                     </TableBody>
                 </Table>
             </TableContainer>
-            {selectedCategory && (
-                <EditDialog
-                    isOpen={isDialogOpen}
-                    category={selectedCategory}
-                    onClose={handleDialogClose}
-                    onSave={handleSave}
-                />
-            )}
+            <EditDialog
+                isOpen={isEditDialogOpen}
+                category={editCategory}
+                onClose={handleEditDialogClose}
+                onSave={handleSave}
+            />
         </>
     );
 }
 
 function EditDialog(props: {
     isOpen: boolean,
-    category: ICategory,
+    category: ICategory | null,
     onClose: () => void,
-    onSave: (category: ICategory) => void
+    onSave: (id: number | null, category: IMutableCategory) => void
 }) {
-    const { isOpen, category, onClose, onSave } = props;
-    const [name, setName] = React.useState(category.name);
-    const [description, setDescription] = React.useState(category.description);
-    const [color, setColor] = React.useState(category.color);
+    let {isOpen, category, onClose, onSave} = props;
+
+    const [name, setName] = React.useState('');
+    const [description, setDescription] = React.useState('');
+    const [color, setColor] = React.useState(1);
 
     React.useEffect(() => {
         if (category) {
             setName(category.name);
             setDescription(category.description);
             setColor(category.color);
+        } else {
+            setName("")
+            setDescription("")
+            setColor(1)
         }
     }, [category]);
 
     const handleSave = () => {
-        // TODO: when changing color it's for some reason shifted by one
-        onSave({ ...category, name, description, color });
+        onSave(category?.id ?? null, {name, description, color});
+        setName("")
+        setDescription("")
+        setColor(1)
     };
 
     return (
@@ -187,8 +212,9 @@ function EditDialog(props: {
             <DialogTitle>Edit Category</DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>
-                    <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-                    <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                    <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)}/>
+                    <TextField label="Description" value={description}
+                               onChange={(e) => setDescription(e.target.value)}/>
                     <Select
                         value={color.toString()}
                         label="Color"
@@ -197,7 +223,7 @@ function EditDialog(props: {
                         {
                             Object.keys(colors).map(c => Number(c)).map((key) => (
                                 <MenuItem key={key} value={key.toString()}>
-                                    <div style={{ backgroundColor: colors[key], width: '20px', height: '20px' }} />
+                                    <div style={{backgroundColor: colors[key], width: '20px', height: '20px'}}/>
                                 </MenuItem>
                             ))
                         }

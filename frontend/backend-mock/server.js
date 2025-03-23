@@ -26,4 +26,4 @@ app.use(express.urlencoded({ extended: true }))
 addAuthRoutes(app, jwtSecretKey);
 addDataRoutes(app);
 
-app.listen(3080)
+app.listen(8080)

@@ -1,18 +1,21 @@
-export interface ICategory {
-    id: number;
+export interface IMutableCategory {
     name: string;
     color: number;
     description: string;
 }
 
+export interface ICategory extends IMutableCategory {
+    id: number;
+}
+
 export const getCategories = async (): Promise<ICategory[]> => {
-    const response = await fetch('http://127.0.0.1:3080/api/categories');
+    const response = await fetch('/api/categories');
     const data = await response.json();
     return data.data;
 }
 
-export const updateCategory = async (updatedCategory: ICategory): Promise<ICategory> => {
-    const response = await fetch(`http://127.0.0.1:3080/api/categories/${updatedCategory.id}`, {
+export const updateCategory = async (id: Number, updatedCategory: IMutableCategory): Promise<ICategory> => {
+    const response = await fetch(`/api/categories/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -21,15 +24,15 @@ export const updateCategory = async (updatedCategory: ICategory): Promise<ICateg
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to update category with id: ${updatedCategory.id}`);
+        throw new Error(`Failed to update category with id: ${id}`);
     }
 
     const data = await response.json();
     return data.data;
 };
 
-export const createCategory = async (partialCategory: ICategory): Promise<ICategory> => {
-    const response = await fetch(`http://127.0.0.1:3080/api/categories`, {
+export const createCategory = async (partialCategory: IMutableCategory): Promise<ICategory> => {
+    const response = await fetch(`/api/categories`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -46,15 +49,12 @@ export const createCategory = async (partialCategory: ICategory): Promise<ICateg
 };
 
 
-export const deleteCategory = async (category: ICategory): Promise<ICategory> => {
-    const response = await fetch(`http://127.0.0.1:3080/api/categories/${category.id}`, {
+export const deleteCategory = async (id: number): Promise<void> => {
+    const response = await fetch(`/api/categories/${id}`, {
         method: 'DELETE',
     });
 
     if (!response.ok) {
         throw new Error(`Failed to delete category.`);
     }
-
-    const data = await response.json();
-    return data.data;
 };

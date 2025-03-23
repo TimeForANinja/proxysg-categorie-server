@@ -9,7 +9,7 @@ export const readLoginToken = (): IUser => {
 
 export const checkLogin = (userToken: string): Promise<boolean> => new Promise((resolve) => {
     // If the token exists, verify it with the auth server to see if it is valid
-    fetch('http://localhost:3080/verify', {
+    fetch('/verify', {
         method: 'POST',
         headers: {
             'jwt-token': userToken,
@@ -17,7 +17,7 @@ export const checkLogin = (userToken: string): Promise<boolean> => new Promise((
     })
         .then((r) => r.json())
         .then((r) => {
-            if ('success' === r.message) resolve(true);
+            if ('success' === r.status) resolve(true);
             else resolve(false);
         }).catch(() => resolve(false))
 });
@@ -28,7 +28,7 @@ export const removeLoginToken = () => {
 
 // Log in a user using username and password
 export const doLogin = (username: string, password: string): Promise<IUser> => new Promise<IUser>((resolve, reject) => {
-    fetch('http://localhost:3080/auth', {
+    fetch('/auth', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export const doLogin = (username: string, password: string): Promise<IUser> => n
     })
         .then((r) => r.json())
         .then((r) => {
-            if ('success' === r.message) {
+            if ('success' === r.status) {
                 resolve({
                     username,
                     token: r.token,
