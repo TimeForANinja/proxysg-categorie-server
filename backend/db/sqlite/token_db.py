@@ -56,15 +56,15 @@ class SQLiteToken(TokenDBInterface):
         )
         row = cursor.fetchone()
         if not row:
-            return Token(
-                id=row[0],
-                token=row[1],
-                description=row[2],
-                last_use=row[3],
-                is_deleted=0,
-                categories=row[4].split(',') if row[4] else [],
-            )
-        return None
+            return None
+        return Token(
+            id=row[0],
+            token=row[1],
+            description=row[2],
+            last_use=row[3],
+            is_deleted=0,
+            categories=row[4].split(',') if row[4] else [],
+        )
 
     def update_token(self, token_id: int, token: MutableToken) -> Token:
         updates = []

@@ -68,10 +68,10 @@ def update_token(token_id: int, mut_tok: MutableToken):
 @token_bp.doc(summary='Roll Token value', description='Randomize the value of a Token')
 @token_bp.output(CreateOrUpdateOutput)
 def roll_token(token_id: int):
-    new_token = str(uuid.uuid4())
+    new_token_val = str(uuid.uuid4())
 
     db_if = get_db()
-    new_token = db_if.tokens.roll_token(token_id, new_token)
+    new_token = db_if.tokens.roll_token(token_id, new_token_val)
     db_if.history.add_history_event(f"Token {token_id} rolled")
     return {
         "status": "success",
