@@ -7,10 +7,10 @@ from apiflask.fields import List, Nested
 from typing import List as tList
 from dataclasses import field, dataclass
 
-from db.urls import MutableURL, URL
+from db.url import MutableURL, URL
 from routes.schemas.generic_output import GenericOutput
 
-urls_bp = APIBlueprint('urls', __name__)
+url_bp = APIBlueprint('url', __name__)
 
 
 @dataclass
@@ -32,9 +32,9 @@ class ListCategoriesOutput(GenericOutput):
 
 
 # Route to fetch all URLs
-@urls_bp.get('/api/url')
-@urls_bp.doc(summary='List all URLs', description='List all URLs in the database')
-@urls_bp.output(ListResponseOutput)
+@url_bp.get('/api/url')
+@url_bp.doc(summary='List all URLs', description='List all URLs in the database')
+@url_bp.output(ListResponseOutput)
 def get_urls():
     db_if = get_db()
     urls = db_if.urls.get_all_urls()
@@ -46,10 +46,10 @@ def get_urls():
 
 
 # Route to update URL name
-@urls_bp.put('/api/url/<int:url_id>')
-@urls_bp.doc(summary='Update URL name', description='Update the name of a URL')
-@urls_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
-@urls_bp.output(CreateOrUpdateOutput)
+@url_bp.put('/api/url/<int:url_id>')
+@url_bp.doc(summary='Update URL name', description='Update the name of a URL')
+@url_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
+@url_bp.output(CreateOrUpdateOutput)
 def update_url(url_id: int, mut_url: MutableURL):
     db_if = get_db()
     new_url = db_if.urls.update_url(url_id, mut_url)
@@ -62,9 +62,9 @@ def update_url(url_id: int, mut_url: MutableURL):
 
 
 # Route to delete a URL
-@urls_bp.delete('/api/url/<int:url_id>')
-@urls_bp.doc(summary="Delete a URL", description="Delete a URL using its ID")
-@urls_bp.output(GenericOutput)
+@url_bp.delete('/api/url/<int:url_id>')
+@url_bp.doc(summary="Delete a URL", description="Delete a URL using its ID")
+@url_bp.output(GenericOutput)
 def delete_url(url_id: int):
     db_if = get_db()
     db_if.urls.delete_url(url_id)
@@ -76,10 +76,10 @@ def delete_url(url_id: int):
 
 
 # Route to create a new URL
-@urls_bp.post('/api/url')
-@urls_bp.doc(summary="Create a new URL", description="Create a new URL with a given name")
-@urls_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
-@urls_bp.output(CreateOrUpdateOutput)
+@url_bp.post('/api/url')
+@url_bp.doc(summary="Create a new URL", description="Create a new URL with a given name")
+@url_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
+@url_bp.output(CreateOrUpdateOutput)
 def create_url(mut_url: MutableURL):
     db_if = get_db()
     new_url = db_if.urls.add_url(mut_url)
@@ -93,8 +93,8 @@ def create_url(mut_url: MutableURL):
 
 
 # Route to add a Category to a URL
-@urls_bp.post('/api/url/<int:url_id>/category/<int:cat_id>')
-@urls_bp.doc(summary="add cat to url", description="Add the provided Category ID to the URL.Category List")
+@url_bp.post('/api/url/<int:url_id>/category/<int:cat_id>')
+@url_bp.doc(summary="add cat to url", description="Add the provided Category ID to the URL.Category List")
 def add_token_category(url_id: int, cat_id: int):
     db_if = get_db()
     db_if.url_categories.add_url_category(url_id, cat_id)
@@ -106,8 +106,8 @@ def add_token_category(url_id: int, cat_id: int):
 
 
 # Route to delete a Category from a URL
-@urls_bp.delete('/api/url/<int:url_id>/category/<int:cat_id>')
-@urls_bp.doc(summary="remove cat from url", description="Remove the provided Category ID from the URL.Category List")
+@url_bp.delete('/api/url/<int:url_id>/category/<int:cat_id>')
+@url_bp.doc(summary="remove cat from url", description="Remove the provided Category ID from the URL.Category List")
 def delete_token_category(url_id: int, cat_id: int):
     db_if = get_db()
     db_if.url_categories.delete_url_category(url_id, cat_id)
@@ -119,10 +119,10 @@ def delete_token_category(url_id: int, cat_id: int):
 
 
 # Route to set Categories to a given List
-@urls_bp.post('/api/url/<int:url_id>/category')
-@urls_bp.doc(summary="overwrite url categories", description="Set the Categories of a URL to the provided list")
-@urls_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
-@urls_bp.output(ListCategoriesOutput)
+@url_bp.post('/api/url/<int:url_id>/category')
+@url_bp.doc(summary="overwrite url categories", description="Set the Categories of a URL to the provided list")
+@url_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
+@url_bp.output(ListCategoriesOutput)
 def set_url_categories(url_id: int, set_cats: SetCategoriesInput):
     db_if = get_db()
     is_cats = db_if.url_categories.get_url_categories_by_url(url_id)

@@ -98,7 +98,7 @@ class TokenDBInterface(ABC):
             uuid: str,
     ) -> Token:
         """
-        Reroll the Token of a specific token.
+        Re-Roll the Token of a specific token.
 
         :param token_id: The ID of the token to update.
         :param uuid: The new token string to store.

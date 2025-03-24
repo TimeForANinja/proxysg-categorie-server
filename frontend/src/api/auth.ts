@@ -1,6 +1,6 @@
 import {IUser} from "../model/loginHandler";
 
-export const checkLogin = async (userToken: string): Promise<boolean> => new Promise((resolve, reject) => {
+export const checkLogin = async (userToken: string): Promise<boolean> => new Promise((resolve) => {
     fetch('/api/auth/verify', {
         method: 'POST',
         headers: {

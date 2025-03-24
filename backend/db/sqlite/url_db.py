@@ -1,9 +1,9 @@
 import sqlite3
-from db.urls import URLDBInterface, MutableURL, URL
+from db.url import URLDBInterface, MutableURL, URL
 from typing import Optional, List
 
 
-class SQLURLs(URLDBInterface):
+class SQLiteURL(URLDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
         self.create_table()

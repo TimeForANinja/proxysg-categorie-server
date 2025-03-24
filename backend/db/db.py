@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
 
-from db.categories import CategoriesDBInterface
+from db.category import CategoryDBInterface
 from db.history import HistoryDBInterface
 from db.token_category import TokenCategoryDBInterface
-from db.tokens import TokenDBInterface
+from db.token import TokenDBInterface
 from db.url_category import UrlCategoryDBInterface
-from db.urls import URLDBInterface
+from db.url import URLDBInterface
 
 
 class DBInterface(ABC):
-    categories: CategoriesDBInterface
+    categories: CategoryDBInterface
     history: HistoryDBInterface
     tokens: TokenDBInterface
     token_categories: TokenCategoryDBInterface

@@ -10,10 +10,10 @@ from typing import List as tList
 from dataclasses import field, dataclass
 
 
-from db.tokens import MutableToken, Token
+from db.token import MutableToken, Token
 from routes.schemas.generic_output import GenericOutput
 
-tokens_bp = APIBlueprint('tokens', __name__)
+token_bp = APIBlueprint('token', __name__)
 
 
 @dataclass
@@ -35,9 +35,9 @@ class ListCategoriesOutput(GenericOutput):
 
 
 # Route to fetch all Tokens
-@tokens_bp.get('/api/token')
-@tokens_bp.doc(summary='List all Tokens', description='List all Tokens in the database')
-@tokens_bp.output(ListResponseOutput)
+@token_bp.get('/api/token')
+@token_bp.doc(summary='List all Tokens', description='List all Tokens in the database')
+@token_bp.output(ListResponseOutput)
 def get_tokens():
     db_if = get_db()
     tokens = db_if.tokens.get_all_tokens()
@@ -49,10 +49,10 @@ def get_tokens():
 
 
 # Route to update Token name
-@tokens_bp.put('/api/token/<int:token_id>')
-@tokens_bp.doc(summary='Update Token name', description='Update the name of a Token')
-@tokens_bp.input(class_schema(MutableToken)(), location='json', arg_name="mut_tok")
-@tokens_bp.output(CreateOrUpdateOutput)
+@token_bp.put('/api/token/<int:token_id>')
+@token_bp.doc(summary='Update Token name', description='Update the name of a Token')
+@token_bp.input(class_schema(MutableToken)(), location='json', arg_name="mut_tok")
+@token_bp.output(CreateOrUpdateOutput)
 def update_token(token_id: int, mut_tok: MutableToken):
     db_if = get_db()
     new_token = db_if.tokens.update_token(token_id, mut_tok)
@@ -64,9 +64,9 @@ def update_token(token_id: int, mut_tok: MutableToken):
     }
 
 # Route to update Token name
-@tokens_bp.post('/api/token/<int:token_id>/roll')
-@tokens_bp.doc(summary='Roll Token value', description='Randomize the value of a Token')
-@tokens_bp.output(CreateOrUpdateOutput)
+@token_bp.post('/api/token/<int:token_id>/roll')
+@token_bp.doc(summary='Roll Token value', description='Randomize the value of a Token')
+@token_bp.output(CreateOrUpdateOutput)
 def roll_token(token_id: int):
     new_token = str(uuid.uuid4())
 
@@ -81,9 +81,9 @@ def roll_token(token_id: int):
 
 
 # Route to delete a Token
-@tokens_bp.delete('/api/token/<int:token_id>')
-@tokens_bp.doc(summary="Delete a Token", description="Delete a Token using its ID")
-@tokens_bp.output(GenericOutput)
+@token_bp.delete('/api/token/<int:token_id>')
+@token_bp.doc(summary="Delete a Token", description="Delete a Token using its ID")
+@token_bp.output(GenericOutput)
 def delete_token(token_id: int):
     db_if = get_db()
     db_if.tokens.delete_token(token_id)
@@ -95,10 +95,10 @@ def delete_token(token_id: int):
 
 
 # Route to create a new Token
-@tokens_bp.post('/api/token')
-@tokens_bp.doc(summary="Create a Token", description="Create a new Token with a given name")
-@tokens_bp.input(class_schema(MutableToken)(), location='json', arg_name="mut_tok")
-@tokens_bp.output(CreateOrUpdateOutput)
+@token_bp.post('/api/token')
+@token_bp.doc(summary="Create a Token", description="Create a new Token with a given name")
+@token_bp.input(class_schema(MutableToken)(), location='json', arg_name="mut_tok")
+@token_bp.output(CreateOrUpdateOutput)
 def create_token(mut_tok: MutableToken):
     new_token = str(uuid.uuid4())
 
@@ -114,8 +114,8 @@ def create_token(mut_tok: MutableToken):
 
 
 # Route to add a Category to a Token
-@tokens_bp.post('/api/token/<int:token_id>/category/<int:cat_id>')
-@tokens_bp.doc(summary="add cat to token", description="Add the provided Category ID to the Token.Category List")
+@token_bp.post('/api/token/<int:token_id>/category/<int:cat_id>')
+@token_bp.doc(summary="add cat to token", description="Add the provided Category ID to the Token.Category List")
 def add_token_category(token_id: int, cat_id: int):
     db_if = get_db()
     db_if.token_categories.add_token_category(token_id, cat_id)
@@ -127,8 +127,8 @@ def add_token_category(token_id: int, cat_id: int):
 
 
 # Route to delete a Category from a Token
-@tokens_bp.delete('/api/token/<int:token_id>/category/<int:cat_id>')
-@tokens_bp.doc(summary="remove cat from token", description="Remove the provided Category ID from the Token.Category List")
+@token_bp.delete('/api/token/<int:token_id>/category/<int:cat_id>')
+@token_bp.doc(summary="remove cat from token", description="Remove the provided Category ID from the Token.Category List")
 def delete_token_category(token_id: int, cat_id: int):
     db_if = get_db()
     db_if.token_categories.delete_token_category(token_id, cat_id)
@@ -140,10 +140,10 @@ def delete_token_category(token_id: int, cat_id: int):
 
 
 # Route to set Categories to a given List
-@tokens_bp.post('/api/token/<int:token_id>/category')
-@tokens_bp.doc(summary="overwrite token categories", description="Set the Categories of a Token to the provided list")
-@tokens_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
-@tokens_bp.output(ListCategoriesOutput)
+@token_bp.post('/api/token/<int:token_id>/category')
+@token_bp.doc(summary="overwrite token categories", description="Set the Categories of a Token to the provided list")
+@token_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
+@token_bp.output(ListCategoriesOutput)
 def set_token_categories(token_id: int, set_cats: SetCategoriesInput):
     db_if = get_db()
     is_cats = db_if.token_categories.get_token_categories_by_token(token_id)

@@ -4,7 +4,7 @@ from typing import List
 
 
 
-class SQLTokenCategories(TokenCategoryDBInterface):
+class SQLiteTokenCategory(TokenCategoryDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
         self.create_table()

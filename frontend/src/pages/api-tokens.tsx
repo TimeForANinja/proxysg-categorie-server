@@ -8,8 +8,7 @@ import {
     deleteToken,
     IApiToken,
     IMutableApiToken,
-    addTokenCategory,
-    deleteTokenCategory, setTokenCategory
+    setTokenCategory
 } from "../api/tokens";
 import {getCategories, ICategory} from "../api/categories";
 import Table from '@mui/material/Table';
@@ -30,7 +29,6 @@ import ShuffleIcon from "@mui/icons-material/Shuffle";
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
-import {CompareLists} from "../util/ArrayDiff";
 
 const TIME_SECONDS = 1000;
 

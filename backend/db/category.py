@@ -55,7 +55,7 @@ class Category(MutableCategory):
     )
 
 
-class CategoriesDBInterface(ABC):
+class CategoryDBInterface(ABC):
     @abstractmethod
     def create_table(self) -> None:
         """

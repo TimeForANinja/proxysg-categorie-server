@@ -7,8 +7,7 @@ import {
     deleteURL,
     createURL,
     updateURL,
-    addURLCategory,
-    deleteURLCategory, setURLCategory
+    setURLCategory
 } from "../api/urls"
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
@@ -36,12 +35,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
-import Select, {SelectChangeEvent} from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-import {CompareLists} from "../util/ArrayDiff";
-import {addTokenCategory, deleteTokenCategory} from "../api/tokens";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id - b.id

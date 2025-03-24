@@ -1,9 +1,9 @@
 import sqlite3
-from db.categories import CategoriesDBInterface, MutableCategory, Category
+from db.category import CategoryDBInterface, MutableCategory, Category
 from typing import Optional, List
 
 
-class SQLCategories(CategoriesDBInterface):
+class SQLiteCategory(CategoryDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
         self.create_table()

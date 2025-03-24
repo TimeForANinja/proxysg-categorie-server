@@ -4,10 +4,10 @@ import time
 from db.history import HistoryDBInterface, History
 from typing import List
 
-from db.sqlite.shared import _fetch_table_list
+from db.sqlite.util import _fetch_table_list
 
 
-class SQLHistory(HistoryDBInterface):
+class SQLiteHistory(HistoryDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
         self.create_table()

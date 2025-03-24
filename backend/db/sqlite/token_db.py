@@ -1,9 +1,9 @@
 import sqlite3
-from db.tokens import TokenDBInterface, MutableToken, Token
+from db.token import TokenDBInterface, MutableToken, Token
 from typing import Optional, List
 
 
-class SQLTokens(TokenDBInterface):
+class SQLiteToken(TokenDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
         self.create_table()

@@ -3,10 +3,10 @@ from db.db_singleton import get_db
 from marshmallow_dataclass import class_schema
 from apiflask.fields import List, Nested
 
-from db.categories import MutableCategory, Category
+from db.category import MutableCategory, Category
 from routes.schemas.generic_output import GenericOutput
 
-categories_bp = APIBlueprint('categories', __name__)
+category_bp = APIBlueprint('categories', __name__)
 
 
 class CreateOrUpdateOutput(GenericOutput):
@@ -19,9 +19,9 @@ class ListResponseOutput(GenericOutput):
 
 
 # Route to fetch all Categories
-@categories_bp.get('/api/category')
-@categories_bp.doc(summary='List all Categories', description='List all Categories in the database')
-@categories_bp.output(ListResponseOutput)
+@category_bp.get('/api/category')
+@category_bp.doc(summary='List all Categories', description='List all Categories in the database')
+@category_bp.output(ListResponseOutput)
 def get_categories():
     db_if = get_db()
     categories = db_if.categories.get_all_categories()
@@ -33,10 +33,10 @@ def get_categories():
 
 
 # Route to update Category name
-@categories_bp.put('/api/category/<int:cat_id>')
-@categories_bp.doc(summary='Update Category name', description='Update the name of a Category')
-@categories_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
-@categories_bp.output(CreateOrUpdateOutput)
+@category_bp.put('/api/category/<int:cat_id>')
+@category_bp.doc(summary='Update Category name', description='Update the name of a Category')
+@category_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
+@category_bp.output(CreateOrUpdateOutput)
 def update_category(cat_id: int, mut_cat: MutableCategory):
     db_if = get_db()
     new_category = db_if.categories.update_category(cat_id, mut_cat)
@@ -49,9 +49,9 @@ def update_category(cat_id: int, mut_cat: MutableCategory):
 
 
 # Route to delete a Category
-@categories_bp.delete('/api/category/<int:cat_id>')
-@categories_bp.doc(summary="Delete a Category", description="Delete a Category using its ID")
-@categories_bp.output(GenericOutput)
+@category_bp.delete('/api/category/<int:cat_id>')
+@category_bp.doc(summary="Delete a Category", description="Delete a Category using its ID")
+@category_bp.output(GenericOutput)
 def delete_category(cat_id: int):
     db_if = get_db()
     db_if.categories.delete_category(cat_id)
@@ -63,10 +63,10 @@ def delete_category(cat_id: int):
 
 
 # Route to create a new Category
-@categories_bp.post('/api/category')
-@categories_bp.doc(summary="Create a Category", description="Create a new Category with a given name")
-@categories_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
-@categories_bp.output(CreateOrUpdateOutput)
+@category_bp.post('/api/category')
+@category_bp.doc(summary="Create a Category", description="Create a new Category with a given name")
+@category_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
+@category_bp.output(CreateOrUpdateOutput)
 def create_category(mut_cat: MutableCategory):
     db_if = get_db()
     new_category = db_if.categories.add_category(mut_cat)
