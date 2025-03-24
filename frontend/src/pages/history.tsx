@@ -67,7 +67,10 @@ function HistoryPage() {
     React.useEffect(() => {
         Promise.all([getHistory()])
             .then(([commitData]) => {
-                setCommits(commitData);
+                // make sure the top value is the newest
+                const sorted = commitData.sort((a, b) => b.time - a.time);
+                // save history to state
+                setCommits(sorted);
             })
             .catch((error) => console.error("Error:", error));
     }, []);

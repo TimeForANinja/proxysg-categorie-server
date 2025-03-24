@@ -27,6 +27,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Modal from '@mui/material/Modal'
 import Chip from '@mui/material/Chip'
+import Grid from '@mui/material/Grid2';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import {colors} from "../util/colormixer";
 import TablePagination from '@mui/material/TablePagination';
@@ -256,61 +257,69 @@ function MatchingListPage() {
 
     return (
         <>
-            <Paper sx={{ width: '100%', mb: 2 }}>
-            <div>
-                <TextField label="Quick Search" size="small" variant="standard" onChange={event => setQuickSearch(event.target.value)}/>
-            </div>
-            <Button onClick={() => handleEditOpen(null)}>
-                + Add Category
-            </Button>
-            <TableContainer component={Paper} style={{maxHeight: '100%'}}>
-                <Modal
-                    open={isModalOpen}
-                        onClose={() => setModalOpen(false)}
-                        aria-labelledby="modal-modal-title"
-                        aria-describedby="modal-modal-description"
-                    >
-                        <Box sx={ModalStyle}>
-                            <Typography id="modal-modal-title" variant="h6" component="h2">
-                                Text in a modal
-                            </Typography>
-                            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                                Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-                            </Typography>
-                        </Box>
-                    </Modal>
-                <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table" stickyHeader>
-                    <TableHead>
-                    <TableRow>
-                        <TableCell />
-                        <TableCell><Stack direction="row"><Typography>ID</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
-                        <TableCell><Stack direction="row"><Typography>Hostname</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
-                        <TableCell><Stack direction="row"><Typography>Categories</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
-                        <TableCell></TableCell>
-                    </TableRow>
-                    </TableHead>
-                    <TableBody>
-                    {visibleRows.map(url =>
-                        <BuildRow
-                            key={url.id}
-                            url={url}
-                            categories={categories}
-                            onDelete={() => handleDelete(url)}
+            <Grid container spacing={0}>
+                <Grid size={8}>
+                    <Paper>
+                        <TextField label="Quick Search" size="small" variant="standard" onChange={event => setQuickSearch(event.target.value)}/>
+                    </Paper>
+                </Grid>
+                <Grid size={4}>
+                    <Paper>
+                        <Button onClick={() => handleEditOpen(null)}>+ Add Category</Button>
+                    </Paper>
+                </Grid>
+                <Grid size={12}>
+                    <Paper>
+                        <TableContainer component={Paper} style={{maxHeight: '100%'}}>
+                            <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table" stickyHeader>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell />
+                                        <TableCell><Stack direction="row"><Typography>ID</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
+                                        <TableCell><Stack direction="row"><Typography>Hostname</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
+                                        <TableCell><Stack direction="row"><Typography>Categories</Typography><FilterAltIcon onClick={() => setModalOpen(true)}/></Stack></TableCell>
+                                        <TableCell></TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {visibleRows.map(url =>
+                                        <BuildRow
+                                            key={url.id}
+                                            url={url}
+                                            categories={categories}
+                                            onDelete={() => handleDelete(url)}
+                                        />
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[20, 50, 100]}
+                            component="div"
+                            count={filteredRows.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
                         />
-                    )}
-                    </TableBody>
-                </Table>
-                </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[20, 50, 100]}
-                    component="div"
-                    count={filteredRows.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-            </Paper>
+                    </Paper>
+                </Grid>
+            </Grid>
+            <Modal
+                open={isModalOpen}
+                onClose={() => setModalOpen(false)}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={ModalStyle}>
+                    <Typography id="modal-modal-title" variant="h6" component="h2">
+                        Text in a modal
+                    </Typography>
+                    <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                        Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+                    </Typography>
+                </Box>
+            </Modal>
             <EditDialog
                 isOpen={isEditDialogOpen}
                 uri={editURL}
