@@ -37,11 +37,13 @@ class SQLiteURL(URLDBInterface):
         cursor.execute(
             '''SELECT 
                     u.id AS id,
-                    hostname,
+                    u.hostname,
                     GROUP_CONCAT(uc.category_id) as categories
                 FROM urls u
                 LEFT JOIN url_categories uc
                 ON u.id = uc.url_id AND uc.is_deleted = 0
+                INNER JOIN categories c
+                ON uc.category_id = c.id AND c.is_deleted = 0
                 WHERE u.id = ? AND u.is_deleted = 0
                 GROUP BY u.id''',
             (url_id,)
@@ -87,11 +89,13 @@ class SQLiteURL(URLDBInterface):
         cursor.execute(
             '''SELECT
                 u.id AS id,
-                hostname,
+                u.hostname,
                 GROUP_CONCAT(uc.category_id) as categories
             FROM urls u
             LEFT JOIN url_categories uc
             ON u.id = uc.url_id AND uc.is_deleted = 0
+            INNER JOIN categories c
+            ON uc.category_id = c.id AND c.is_deleted = 0
             WHERE u.is_deleted = 0
             GROUP BY u.id''',
         )

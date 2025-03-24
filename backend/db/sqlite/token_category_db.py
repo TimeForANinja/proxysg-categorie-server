@@ -24,7 +24,12 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
     def get_token_categories_by_token(self, token_id: int) -> List[int]:
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT category_id FROM token_categories WHERE token_id = ? AND is_deleted = 0',
+            '''SELECT
+                tc.category_id
+            FROM token_categories tc
+            INNER JOIN categories c
+            ON tc.category_id = c.id AND c.is_deleted = 0
+            WHERE tc.token_id = ? AND tc.is_deleted = 0''',
             (token_id,)
         )
         rows = cursor.fetchall()

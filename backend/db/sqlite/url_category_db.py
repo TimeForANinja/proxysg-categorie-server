@@ -24,7 +24,12 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
     def get_url_categories_by_url(self, url_id: int) -> List[int]:
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT category_id FROM url_categories WHERE url_id = ? AND is_deleted = 0',
+            '''SELECT
+                uc.category_id
+            FROM url_categories uc
+            INNER JOIN categories c
+            ON uc.category_id = c.id AND c.is_deleted = 0
+            WHERE uc.url_id = ? AND uc.is_deleted = 0''',
             (url_id,)
         )
         rows = cursor.fetchall()

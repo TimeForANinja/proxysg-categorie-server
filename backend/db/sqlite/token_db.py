@@ -41,13 +41,15 @@ class SQLiteToken(TokenDBInterface):
         cursor.execute(
             '''SELECT
                 t.id AS id,
-                token,
-                description,
-                last_use,
+                t.token,
+                t.description,
+                t.last_use,
                 GROUP_CONCAT(tc.category_id) as categories
             FROM tokens t 
             LEFT JOIN token_categories tc
             ON t.id = tc.token_id AND tc.is_deleted = 0
+            INNER JOIN categories c
+            ON tc.category_id = c.id AND c.is_deleted = 0
             WHERE t.is_deleted = 0 AND t.id = ?
             GROUP BY t.id''',
             (token_id,)
@@ -109,13 +111,15 @@ class SQLiteToken(TokenDBInterface):
         cursor.execute(
             '''SELECT
                 t.id AS id,
-                token,
-                description,
-                last_use,
+                t.token,
+                t.description,
+                t.last_use,
                 GROUP_CONCAT(tc.category_id) as categories
             FROM tokens t 
             LEFT JOIN token_categories tc
             ON t.id = tc.token_id AND tc.is_deleted = 0
+            INNER JOIN categories c
+            ON tc.category_id = c.id AND c.is_deleted = 0
             WHERE t.is_deleted = 0
             GROUP BY t.id''',
         )
