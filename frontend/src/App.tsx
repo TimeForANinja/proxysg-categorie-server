@@ -8,12 +8,11 @@ import CategoriesPage from "./pages/categories";
 import HistoryPage from "./pages/history";
 import HomePage from "./pages/home";
 import BaseLayout from "./pages/BaseLayout";
-import {checkLogin, readLoginToken} from "./model/loginHandler";
+import {checkLogin} from "./api/auth";
+import {readLoginToken} from "./model/loginHandler";
 import {OptBoolean} from "./model/OptionalBool";
 
 function App() {
-
-
     const [loggedIn, setLoggedIn] = React.useState<OptBoolean>(OptBoolean.Unknown)
     const [username, setUsername] = React.useState<string>('')
 
@@ -22,11 +21,11 @@ function App() {
             element: <BaseLayout username={username} loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>,
             children: [
                 {
-                    path: "/apitokens",
+                    path: "/token",
                     element: <ApiTokenPage/>,
                 },
                 {
-                    path: "/categories",
+                    path: "/category",
                     element: <CategoriesPage/>,
                 },
                 {
@@ -34,7 +33,7 @@ function App() {
                     element: <HistoryPage/>,
                 },
                 {
-                    path: "/matching",
+                    path: "/url",
                     element: <MatchingListPage/>,
                 },
                 {

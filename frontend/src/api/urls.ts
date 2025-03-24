@@ -9,13 +9,13 @@ export interface IURL extends IMutableURL {
 }
     
 export const getURLs = async (): Promise<IURL[]> => {
-    const response = await fetch('/api/urls');
+    const response = await fetch('/api/url');
     const data = await response.json();
     return data.data;
 }
 
 export const updateURL = async (id: Number, updatedURL: IMutableURL): Promise<IURL> => {
-    const response = await fetch(`/api/urls/${id}`, {
+    const response = await fetch(`/api/url/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export const updateURL = async (id: Number, updatedURL: IMutableURL): Promise<IU
 };
 
 export const createURL = async (partialURL: IMutableURL): Promise<IURL> => {
-    const response = await fetch(`/api/urls`, {
+    const response = await fetch(`/api/url`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ export const createURL = async (partialURL: IMutableURL): Promise<IURL> => {
 };
 
 export const deleteURL = async (id: number): Promise<void> => {
-    const response = await fetch(`/api/urls/${id}`, {
+    const response = await fetch(`/api/url/${id}`, {
         method: 'DELETE',
     });
 
@@ -59,7 +59,7 @@ export const deleteURL = async (id: number): Promise<void> => {
 };
 
 export const addURLCategory = async (id: number, categoryId: number): Promise<void> => {
-    const response = await fetch(`/api/urls/${id}/category/${categoryId}`, {
+    const response = await fetch(`/api/url/${id}/category/${categoryId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export const addURLCategory = async (id: number, categoryId: number): Promise<vo
 }
 
 export const deleteURLCategory = async (id: number, categoryId: number): Promise<void> => {
-    const response = await fetch(`/api/urls/${id}/category/${categoryId}`, {
+    const response = await fetch(`/api/url/${id}/category/${categoryId}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ export const deleteURLCategory = async (id: number, categoryId: number): Promise
 }
 
 export const setURLCategory = async (id: number, categories: number[]): Promise<number[]> => {
-    const response = await fetch(`/api/urls/${id}/categories`, {
+    const response = await fetch(`/api/url/${id}/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

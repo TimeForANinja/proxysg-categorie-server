@@ -2,7 +2,8 @@ import React from 'react';
 import './login.css';
 import {useNavigate} from 'react-router-dom'
 import {OptBoolean} from "../model/OptionalBool";
-import {doLogin} from "../model/loginHandler";
+import {doLogin} from "../api/auth";
+import {saveLoginToken} from "../model/loginHandler";
 
 interface Props {
     setUsername: React.Dispatch<React.SetStateAction<string>>,
@@ -48,7 +49,7 @@ function LoginPage(props: Props) {
 
         // Authentication call
         doLogin(username, password).then((user) => {
-            localStorage.setItem('user', JSON.stringify(user))
+            saveLoginToken(user)
             props.setLoggedIn(OptBoolean.Yes)
             props.setUsername(user.username)
             navigate('/')

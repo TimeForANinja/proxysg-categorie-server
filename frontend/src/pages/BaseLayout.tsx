@@ -60,9 +60,9 @@ const BaseLayout = (props: Props) => {
                     </Typography>
 
                     <Box sx={{ flexGrow: 1 }} />
-                    <Button color="inherit" onClick={() => navigate("/matching")}>Matching</Button>
-                    <Button color="inherit" onClick={() => navigate("/apitokens")}>Api Tokens</Button>
-                    <Button color="inherit" onClick={() => navigate("/categories")}>Categories</Button>
+                    <Button color="inherit" onClick={() => navigate("/url")}>Matching</Button>
+                    <Button color="inherit" onClick={() => navigate("/token")}>Api Tokens</Button>
+                    <Button color="inherit" onClick={() => navigate("/category")}>Categories</Button>
                     <Button color="inherit" onClick={() => navigate("/history")}>History</Button>
                     <Box sx={{ flexGrow: 1 }} />
 

@@ -3,47 +3,16 @@ export interface IUser {
     token: string;
 }
 
-export const readLoginToken = (): IUser => {
-    return JSON.parse(localStorage.getItem('user') ?? '{}');
-}
+const LOCAL_STORAGE_KEY = 'app_user';
 
-export const checkLogin = (userToken: string): Promise<boolean> => new Promise((resolve) => {
-    // If the token exists, verify it with the auth server to see if it is valid
-    fetch('/verify', {
-        method: 'POST',
-        headers: {
-            'jwt-token': userToken,
-        },
-    })
-        .then((r) => r.json())
-        .then((r) => {
-            if ('success' === r.status) resolve(true);
-            else resolve(false);
-        }).catch(() => resolve(false))
-});
+export const readLoginToken = (): IUser => {
+    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) ?? '{}');
+}
 
 export const removeLoginToken = () => {
-    localStorage.removeItem('user')
+    localStorage.removeItem(LOCAL_STORAGE_KEY)
 }
 
-// Log in a user using username and password
-export const doLogin = (username: string, password: string): Promise<IUser> => new Promise<IUser>((resolve, reject) => {
-    fetch('/auth', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({username, password}),
-    })
-        .then((r) => r.json())
-        .then((r) => {
-            if ('success' === r.status) {
-                resolve({
-                    username,
-                    token: r.token,
-                })
-            } else {
-                reject(new Error('Invalid username or password'));
-            }
-        }).catch(reject);
-});
+export const saveLoginToken = (user: IUser) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+}

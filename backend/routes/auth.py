@@ -21,7 +21,7 @@ class JWTHeaderInput:
     })
 
 
-@auth_bp.post("/verify")
+@auth_bp.post("/api/auth/verify")
 @auth_bp.input(class_schema(JWTHeaderInput)(), location='headers', arg_name="token")
 @auth_bp.output(GenericOutput)
 def handle_verify(token: JWTHeaderInput):
@@ -56,7 +56,7 @@ class LoginOutput(GenericOutput):
     })
 
 
-@auth_bp.post("/auth")
+@auth_bp.post("/api/auth/login")
 @auth_bp.input(class_schema(LoginInput)(), location='json', arg_name="login_input")
 @auth_bp.output(LoginOutput)
 def handle_auth(login_input: LoginInput):

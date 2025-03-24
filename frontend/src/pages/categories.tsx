@@ -7,7 +7,7 @@ import {
     updateCategory,
     IMutableCategory
 } from "../api/categories";
-import {colors} from "../model/colormixer";
+import {colors} from "../util/colormixer";
 import Paper from "@mui/material/Paper";
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';

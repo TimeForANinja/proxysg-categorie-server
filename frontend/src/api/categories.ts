@@ -9,13 +9,13 @@ export interface ICategory extends IMutableCategory {
 }
 
 export const getCategories = async (): Promise<ICategory[]> => {
-    const response = await fetch('/api/categories');
+    const response = await fetch('/api/category');
     const data = await response.json();
     return data.data;
 }
 
 export const updateCategory = async (id: Number, updatedCategory: IMutableCategory): Promise<ICategory> => {
-    const response = await fetch(`/api/categories/${id}`, {
+    const response = await fetch(`/api/category/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export const updateCategory = async (id: Number, updatedCategory: IMutableCatego
 };
 
 export const createCategory = async (partialCategory: IMutableCategory): Promise<ICategory> => {
-    const response = await fetch(`/api/categories`, {
+    const response = await fetch(`/api/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -48,9 +48,8 @@ export const createCategory = async (partialCategory: IMutableCategory): Promise
     return data.data;
 };
 
-
 export const deleteCategory = async (id: number): Promise<void> => {
-    const response = await fetch(`/api/categories/${id}`, {
+    const response = await fetch(`/api/category/${id}`, {
         method: 'DELETE',
     });
 

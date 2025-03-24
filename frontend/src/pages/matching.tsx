@@ -29,7 +29,7 @@ import TextField from '@mui/material/TextField'
 import Modal from '@mui/material/Modal'
 import Chip from '@mui/material/Chip'
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import {colors} from "../model/colormixer";
+import {colors} from "../util/colormixer";
 import TablePagination from '@mui/material/TablePagination';
 import {buildLUTFromID, getLUTValues, LUT} from "../util/LookUpTable";
 import DeleteIcon from "@mui/icons-material/Delete";

@@ -11,13 +11,13 @@ export interface IApiToken extends IMutableApiToken {
 
 
 export const getAPITokens = async (): Promise<IApiToken[]> => {
-    const response = await fetch('/api/api-tokens');
+    const response = await fetch('/api/token');
     const data = await response.json();
     return data.data;
 }
 
 export const updateToken = async (id: Number, updatedToken: IMutableApiToken): Promise<IApiToken> => {
-    const response = await fetch(`/api/api-tokens/${id}`, {
+    const response = await fetch(`/api/token/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ export const updateToken = async (id: Number, updatedToken: IMutableApiToken): P
 };
 
 export const createToken = async (partialToken: IMutableApiToken): Promise<IApiToken> => {
-    const response = await fetch(`/api/api-tokens`, {
+    const response = await fetch(`/api/token`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export const createToken = async (partialToken: IMutableApiToken): Promise<IApiT
 };
 
 export const rotateToken = async (id: Number): Promise<IApiToken> => {
-    const response = await fetch(`/api/api-tokens/${id}/roll`, {
+    const response = await fetch(`/api/token/${id}/roll`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export const rotateToken = async (id: Number): Promise<IApiToken> => {
 };
 
 export const deleteToken = async (id: number): Promise<void> => {
-    const response = await fetch(`/api/api-tokens/${id}`, {
+    const response = await fetch(`/api/token/${id}`, {
         method: 'DELETE',
     });
 
@@ -77,7 +77,7 @@ export const deleteToken = async (id: number): Promise<void> => {
 }
 
 export const addTokenCategory = async (id: number, categoryId: number): Promise<void> => {
-    const response = await fetch(`/api/api-tokens/${id}/category/${categoryId}`, {
+    const response = await fetch(`/api/token/${id}/category/${categoryId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ export const addTokenCategory = async (id: number, categoryId: number): Promise<
 }
 
 export const deleteTokenCategory = async (id: number, categoryId: number): Promise<void> => {
-    const response = await fetch(`/api/api-tokens/${id}/category/${categoryId}`, {
+    const response = await fetch(`/api/token/${id}/category/${categoryId}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ export const deleteTokenCategory = async (id: number, categoryId: number): Promi
 }
 
 export const setTokenCategory = async (id: number, categories: number[]): Promise<number[]> => {
-    const response = await fetch(`/api/api-tokens/${id}/categories`, {
+    const response = await fetch(`/api/token/${id}/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

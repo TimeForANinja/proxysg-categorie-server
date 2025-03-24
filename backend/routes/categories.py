@@ -19,7 +19,7 @@ class ListResponseOutput(GenericOutput):
 
 
 # Route to fetch all Categories
-@categories_bp.get('/api/categories')
+@categories_bp.get('/api/category')
 @categories_bp.doc(summary='List all Categories', description='List all Categories in the database')
 @categories_bp.output(ListResponseOutput)
 def get_categories():
@@ -33,7 +33,7 @@ def get_categories():
 
 
 # Route to update Category name
-@categories_bp.put('/api/categories/<int:cat_id>')
+@categories_bp.put('/api/category/<int:cat_id>')
 @categories_bp.doc(summary='Update Category name', description='Update the name of a Category')
 @categories_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
 @categories_bp.output(CreateOrUpdateOutput)
@@ -49,7 +49,7 @@ def update_category(cat_id: int, mut_cat: MutableCategory):
 
 
 # Route to delete a Category
-@categories_bp.delete('/api/categories/<int:cat_id>')
+@categories_bp.delete('/api/category/<int:cat_id>')
 @categories_bp.doc(summary="Delete a Category", description="Delete a Category using its ID")
 @categories_bp.output(GenericOutput)
 def delete_category(cat_id: int):
@@ -63,7 +63,7 @@ def delete_category(cat_id: int):
 
 
 # Route to create a new Category
-@categories_bp.post('/api/categories')
+@categories_bp.post('/api/category')
 @categories_bp.doc(summary="Create a Category", description="Create a new Category with a given name")
 @categories_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
 @categories_bp.output(CreateOrUpdateOutput)
