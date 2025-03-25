@@ -27,16 +27,16 @@ jobs:
       # Step 3: Install dependencies (set working directory to /frontend)
       - name: Install dependencies
         run: npm install
-        working-directory: frontend
+        working-directory: ./frontend
 
       # Step 4: Build the React app (set working directory to /frontend)
       - name: Build React app
         run: npm run build
-        working-directory: frontend
+        working-directory: ./frontend
 
       # Step 5: Upload the build artifact (set path to /frontend/build)
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: react-build
-          path: frontend/build/
+          path: ./frontend/build/
