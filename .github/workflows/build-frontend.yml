@@ -1,0 +1,55 @@
+name: Build and Upload React Artifact
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+      - test-react
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Step 3: Install dependencies (set working directory to /frontend)
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      # Step 4: Build the React app (set working directory to /frontend)
+      - name: Build React app
+        run: npm run build
+        working-directory: ./frontend
+
+      # Step 5: Zip the build folder (create build.zip)
+      - name: Zip the build folder
+        run: |
+          cd ./build
+          zip -r ../dist.zip *
+        working-directory: ./frontend
+
+      # Step 6: Create a release and upload the build artifact
+      - name: Upload artifact to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./frontend/dist.zip
+          tag_name: latest-dev
+          append_body: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
