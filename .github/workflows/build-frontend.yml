@@ -34,9 +34,10 @@ jobs:
         run: npm run build
         working-directory: ./frontend
 
-      # Step 5: Upload the build artifact (set path to /frontend/build)
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      # Step 6: Create a release and upload the build artifact
+      - name: Upload artifact to GitHub Releases
+        uses: softprops/action-gh-release@v2
         with:
-          name: react-build
-          path: ./frontend/build/
+          files: ./frontend/build/** # Include all files in the build folder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Automatically provided in GitHub Actions
