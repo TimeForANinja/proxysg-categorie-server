@@ -37,11 +37,18 @@ jobs:
         run: npm run build
         working-directory: ./frontend
 
+      # Step 5: Zip the build folder (create build.zip)
+      - name: Zip the build folder
+        run: |
+          cd ./frontend/build
+          zip -r ../build.zip *
+        working-directory: ./frontend
+
       # Step 6: Create a release and upload the build artifact
       - name: Upload artifact to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: ./frontend/build/** # Include all files in the build folder
+          files: ./frontend/build.zip
           tag_name: latest-dev
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Automatically provided in GitHub Actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
