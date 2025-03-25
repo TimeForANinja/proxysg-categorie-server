@@ -11,6 +11,7 @@ import BaseLayout from "./pages/BaseLayout";
 import {checkLogin} from "./api/auth";
 import {readLoginToken} from "./model/loginHandler";
 import {OptBoolean} from "./model/OptionalBool";
+import {RedirectToHome} from "./RedirectToHome";
 
 function App() {
     const [loggedIn, setLoggedIn] = React.useState<OptBoolean>(OptBoolean.Unknown)
@@ -46,7 +47,14 @@ function App() {
         {
             path: "/login",
             element: <LoginPage setLoggedIn={setLoggedIn} setUsername={setUsername}/>,
-        }
+        },
+
+        // Default wildcard route to redirect to "/"
+        {
+            path: "*",
+            element: <RedirectToHome/>,
+        },
+
     ]);
 
     React.useEffect(() => {
