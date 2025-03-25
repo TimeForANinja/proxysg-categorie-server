@@ -1,4 +1,7 @@
 import sqlite3
+import time
+
+from db.sqlite.util import split_opt_int_group
 from db.token import TokenDBInterface, MutableToken, Token
 from typing import Optional, List
 
@@ -69,7 +72,43 @@ class SQLiteToken(TokenDBInterface):
             description=row[2],
             last_use=row[3],
             is_deleted=0,
-            categories=row[4].split(',') if row[4] else [],
+            categories=split_opt_int_group(row[4]),
+        )
+
+    def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            '''SELECT
+                t.id AS id,
+                t.token,
+                t.description,
+                t.last_use,
+                GROUP_CONCAT(tc.category_id) as categories
+            FROM tokens t
+            LEFT JOIN (
+                SELECT
+                    tc.token_id,
+                    tc.category_id
+                FROM token_categories tc
+                INNER JOIN categories c
+                ON tc.category_id = c.id
+                WHERE c.is_deleted = 0 AND tc.is_deleted = 0
+            ) tc
+            ON t.id = tc.token_id
+            WHERE t.is_deleted = 0 AND t.token = ?
+            GROUP BY t.id''',
+            (token_uuid,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return Token(
+            id=row[0],
+            token=row[1],
+            description=row[2],
+            last_use=row[3],
+            is_deleted=0,
+            categories=split_opt_int_group(row[4]),
         )
 
     def update_token(self, token_id: int, token: MutableToken) -> Token:
@@ -89,6 +128,15 @@ class SQLiteToken(TokenDBInterface):
             self.conn.commit()
 
         return self.get_token(token_id)
+
+    def update_usage(self, token_id: int) -> None:
+        cursor = self.conn.cursor()
+        timestamp = int(time.time())
+        cursor.execute(
+            'UPDATE tokens SET last_use = ? WHERE id = ? AND is_deleted = 0',
+            (timestamp, token_id,)
+        )
+        self.conn.commit()
 
     def roll_token(
             self,
@@ -142,5 +190,5 @@ class SQLiteToken(TokenDBInterface):
             description=row[2],
             last_use=row[3],
             is_deleted=0,
-            categories=row[4].split(',') if row[4] else [],
+            categories=split_opt_int_group(row[4]),
         ) for row in rows]

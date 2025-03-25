@@ -77,6 +77,15 @@ class TokenDBInterface(ABC):
         """
         pass
 
+    def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
+        """
+        Fetch a Token based on the token.uuid string.
+
+        :param token_uuid: The token.uuid string to search for.
+        :return: A Token object or None if not found.
+        """
+        pass
+
     @abstractmethod
     def update_token(
             self,
@@ -92,6 +101,15 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
+    def update_usage(self, token_id: int) -> None:
+        """
+        Update the usage counter for a  specified token identified by its ID.
+
+        :param token_id: The ID of the token to update.
+        """
+        pass
+
+    @abstractmethod
     def roll_token(
             self,
             token_id: int,
@@ -102,6 +120,7 @@ class TokenDBInterface(ABC):
 
         :param token_id: The ID of the token to update.
         :param uuid: The new token string to store.
+        :return: The newly created token.
         """
         pass
 

@@ -1,4 +1,6 @@
 import sqlite3
+
+from db.sqlite.util import split_opt_int_group
 from db.url import URLDBInterface, MutableURL, URL
 from typing import Optional, List
 
@@ -60,7 +62,7 @@ class SQLiteURL(URLDBInterface):
                 id=row[0],
                 hostname=row[1],
                 is_deleted=0,
-                categories=row[2].split(',') if row[2] else [],
+                categories=split_opt_int_group(row[2]),
             )
         return None
 
@@ -116,5 +118,5 @@ class SQLiteURL(URLDBInterface):
             id=row[0],
             hostname=row[1],
             is_deleted=0,
-            categories=row[2].split(',') if row[2] else [],
+            categories=split_opt_int_group(row[2]),
         ) for row in rows]

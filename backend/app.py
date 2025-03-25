@@ -7,6 +7,7 @@ from flask import send_from_directory
 from db import db_singleton
 from routes.auth import auth_bp
 from routes.category import category_bp
+from routes.compile import compile_bp
 from routes.history import history_bp
 from routes.token import token_bp
 from routes.url import url_bp
@@ -27,6 +28,7 @@ app.register_blueprint(history_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(token_bp)
 app.register_blueprint(url_bp)
+app.register_blueprint(compile_bp)
 
 
 # Serve index.html for the root route
