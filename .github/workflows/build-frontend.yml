@@ -1,5 +1,8 @@
 name: Build and Upload React Artifact
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
