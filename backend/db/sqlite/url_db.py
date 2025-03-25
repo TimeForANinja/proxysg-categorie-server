@@ -35,17 +35,23 @@ class SQLiteURL(URLDBInterface):
     def get_url(self, url_id: int) -> Optional[URL]:
         cursor = self.conn.cursor()
         cursor.execute(
-            '''SELECT 
-                    u.id AS id,
-                    u.hostname,
-                    GROUP_CONCAT(uc.category_id) as categories
-                FROM urls u
-                LEFT JOIN url_categories uc
-                ON u.id = uc.url_id AND uc.is_deleted = 0
+            '''SELECT
+                u.id AS id,
+                u.hostname,
+                GROUP_CONCAT(uc.category_id) as categories
+            FROM urls u
+            LEFT JOIN (
+                SELECT
+                    uc.url_id,
+                    uc.category_id
+                FROM url_categories uc
                 INNER JOIN categories c
-                ON uc.category_id = c.id AND c.is_deleted = 0
-                WHERE u.id = ? AND u.is_deleted = 0
-                GROUP BY u.id''',
+                ON uc.category_id = c.id
+                WHERE c.is_deleted = 0 AND uc.is_deleted = 0
+            ) uc
+            ON u.id = uc.url_id
+            WHERE u.is_deleted = 0 AND u.id = ?
+            GROUP BY u.id''',
             (url_id,)
         )
         row = cursor.fetchone()
@@ -92,10 +98,16 @@ class SQLiteURL(URLDBInterface):
                 u.hostname,
                 GROUP_CONCAT(uc.category_id) as categories
             FROM urls u
-            LEFT JOIN url_categories uc
-            ON u.id = uc.url_id AND uc.is_deleted = 0
-            INNER JOIN categories c
-            ON uc.category_id = c.id AND c.is_deleted = 0
+            LEFT JOIN (
+                SELECT
+                    uc.url_id,
+                    uc.category_id
+                FROM url_categories uc
+                INNER JOIN categories c
+                ON uc.category_id = c.id
+                WHERE c.is_deleted = 0 AND uc.is_deleted = 0
+            ) uc
+            ON u.id = uc.url_id
             WHERE u.is_deleted = 0
             GROUP BY u.id''',
         )

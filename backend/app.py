@@ -37,8 +37,6 @@ def catch_all(path: str):
     static_folder = abspath('./dist/')
     static_file = os.path.join(static_folder, path)
 
-    print("catch_all", static_file)
-
     # Check if the requested static file exists
     if os.path.isfile(static_file):
         return send_from_directory(static_folder, path)

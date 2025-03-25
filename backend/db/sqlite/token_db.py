@@ -45,11 +45,17 @@ class SQLiteToken(TokenDBInterface):
                 t.description,
                 t.last_use,
                 GROUP_CONCAT(tc.category_id) as categories
-            FROM tokens t 
-            LEFT JOIN token_categories tc
-            ON t.id = tc.token_id AND tc.is_deleted = 0
-            INNER JOIN categories c
-            ON tc.category_id = c.id AND c.is_deleted = 0
+            FROM tokens t
+            LEFT JOIN (
+                SELECT
+                    tc.token_id,
+                    tc.category_id
+                FROM token_categories tc
+                INNER JOIN categories c
+                ON tc.category_id = c.id
+                WHERE c.is_deleted = 0 AND tc.is_deleted = 0
+            ) tc
+            ON t.id = tc.token_id
             WHERE t.is_deleted = 0 AND t.id = ?
             GROUP BY t.id''',
             (token_id,)
@@ -115,11 +121,17 @@ class SQLiteToken(TokenDBInterface):
                 t.description,
                 t.last_use,
                 GROUP_CONCAT(tc.category_id) as categories
-            FROM tokens t 
-            LEFT JOIN token_categories tc
-            ON t.id = tc.token_id AND tc.is_deleted = 0
-            INNER JOIN categories c
-            ON tc.category_id = c.id AND c.is_deleted = 0
+            FROM tokens t
+            LEFT JOIN (
+                SELECT
+                    tc.token_id,
+                    tc.category_id
+                FROM token_categories tc
+                INNER JOIN categories c
+                ON tc.category_id = c.id
+                WHERE c.is_deleted = 0 AND tc.is_deleted = 0
+            ) tc
+            ON t.id = tc.token_id
             WHERE t.is_deleted = 0
             GROUP BY t.id''',
         )
