@@ -41,14 +41,15 @@ jobs:
       - name: Zip the build folder
         run: |
           cd ./build
-          zip -r ../build.zip *
+          zip -r ../dist.zip *
         working-directory: ./frontend
 
       # Step 6: Create a release and upload the build artifact
       - name: Upload artifact to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: ./frontend/build.zip
+          files: ./frontend/dist.zip
           tag_name: latest-dev
+          append_body: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
