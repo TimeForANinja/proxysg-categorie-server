@@ -189,6 +189,8 @@ function MatchingListPage() {
 
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(50);
+    // TODO: remove
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [comparator, setComparator] = React.useState(() => COMPARATORS.BY_ID);
     const [quickSearch, setQuickSearch] = React.useState('');
 

@@ -19,32 +19,27 @@ function LoginPage(props: Props) {
     const navigate = useNavigate()
 
     const onSendLogin = () => {
+        // Set initial error values to empty
+        setUsernameError('')
+        setPasswordError('')
+
         // Validate Data
-        {
-            // Set initial error values to empty
-            setUsernameError('')
-            setPasswordError('')
-
-            // Check if the user has entered both fields correctly
-            if ('' === username) {
-                setUsernameError('Please enter your username')
-                return
-            }
-
-            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-                setUsernameError('Please enter a valid username')
-                return
-            }
-
-            if ('' === password) {
-                setPasswordError('Please enter a password')
-                return
-            }
-
-            if (password.length < 4) {
-                setPasswordError('The password must be 4 characters or longer')
-                return
-            }
+        // Check if the user has entered both fields correctly
+        if ('' === username) {
+            setUsernameError('Please enter your username')
+            return
+        }
+        if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+            setUsernameError('Please enter a valid username')
+            return
+        }
+        if ('' === password) {
+            setPasswordError('Please enter a password')
+            return
+        }
+        if (password.length < 4) {
+            setPasswordError('The password must be 4 characters or longer')
+            return
         }
 
         // Authentication call
