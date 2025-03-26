@@ -1,5 +1,14 @@
 import React from 'react';
-import {Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, DialogContentText} from '@mui/material';
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Button,
+    TextField,
+    DialogContentText,
+    Alert
+} from '@mui/material';
 import {
     createToken,
     getAPITokens,
@@ -198,29 +207,28 @@ function ApiTokenPage() {
 
     return (
         <>
-            <React.Fragment>
-                <Dialog
-                    open={isDeleteDialogOpen != null}
-                    onClose={() => handleDeleteConfirmation(false)}
-                    aria-labelledby="alert-dialog-title"
-                    aria-describedby="alert-dialog-description"
-                >
-                    <DialogTitle id="alert-dialog-title">
-                        {"Delete API Token?"}
-                    </DialogTitle>
-                    <DialogContent>
-                        <DialogContentText id="alert-dialog-description">
-                            Are you sure you want to Delete the API Token?
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => handleDeleteConfirmation(false)}>Disagree</Button>
-                        <Button onClick={() => handleDeleteConfirmation(true)} autoFocus>
-                            Agree
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </React.Fragment>
+            <Dialog
+                open={isDeleteDialogOpen != null}
+                onClose={() => handleDeleteConfirmation(false)}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">
+                    {"Delete API Token?"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to Delete the API Token?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => handleDeleteConfirmation(false)}>Disagree</Button>
+                    <Button onClick={() => handleDeleteConfirmation(true)} autoFocus>
+                        Agree
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>
             <TableContainer component={Paper}>
                 <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
                     <TableHead>

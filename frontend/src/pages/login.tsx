@@ -11,8 +11,8 @@ interface Props {
 }
 
 function LoginPage(props: Props) {
-    const [username, setUsername] = React.useState<string>('')
-    const [password, setPassword] = React.useState<string>('')
+    const [usernameField, setUsernameField] = React.useState<string>('')
+    const [passwordField, setPasswordField] = React.useState<string>('')
     const [usernameError, setUsernameError] = React.useState<string>('')
     const [passwordError, setPasswordError] = React.useState<string>('')
 
@@ -25,25 +25,25 @@ function LoginPage(props: Props) {
 
         // Validate Data
         // Check if the user has entered both fields correctly
-        if ('' === username) {
+        if ('' === usernameField) {
             setUsernameError('Please enter your username')
             return
         }
-        if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        if (!/^[a-zA-Z0-9_-]+$/.test(usernameField)) {
             setUsernameError('Please enter a valid username')
             return
         }
-        if ('' === password) {
+        if ('' === usernameField) {
             setPasswordError('Please enter a password')
             return
         }
-        if (password.length < 4) {
+        if (usernameField.length < 4) {
             setPasswordError('The password must be 4 characters or longer')
             return
         }
 
         // Authentication call
-        doLogin(username, password).then((user) => {
+        doLogin(usernameField, passwordField).then((user) => {
             saveLoginToken(user)
             props.setLoggedIn(OptBoolean.Yes)
             props.setUsername(user.username)
@@ -67,9 +67,9 @@ function LoginPage(props: Props) {
             <br/>
             <div className={'inputContainer'}>
                 <input
-                    value={username}
+                    value={usernameField}
                     placeholder="Enter your username here"
-                    onChange={(ev) => setUsername(ev.target.value)}
+                    onChange={(ev) => setUsernameField(ev.target.value)}
                     onKeyDown={handleKeyDown}
                     className={'inputBox'}
                 />
@@ -79,9 +79,9 @@ function LoginPage(props: Props) {
             <div className={'inputContainer'}>
                 <input
                     type="password"
-                    value={password}
+                    value={passwordField}
                     placeholder="Enter your password here"
-                    onChange={(ev) => setPassword(ev.target.value)}
+                    onChange={(ev) => setPasswordField(ev.target.value)}
                     onKeyDown={handleKeyDown}
                     className={'inputBox'}
                 />
