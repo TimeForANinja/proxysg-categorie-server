@@ -1,6 +1,5 @@
 import React, {useEffect, useRef} from 'react';
 import {Outlet, useNavigate} from "react-router-dom";
-import {removeLoginToken} from "../model/loginHandler";
 import {OptBoolean} from "../model/OptionalBool";
 
 import AppBar from '@mui/material/AppBar';
@@ -15,33 +14,20 @@ import MenuItem from '@mui/material/MenuItem';
 
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import {useAuth} from "../model/AuthContext";
 
-
-interface Props {
-    username: string,
-    loggedIn: OptBoolean,
-    setLoggedIn: React.Dispatch<React.SetStateAction<OptBoolean>>
-}
-
-const BaseLayout = (props: Props) => {
-    const {loggedIn, username, setLoggedIn} = props
+const BaseLayout = () => {
+    const authMgmt = useAuth();
     const navigate= useNavigate();
 
     useEffect(() => {
-        if (loggedIn === OptBoolean.Unknown) {
-            // Wait for Login Check
-            return;
-        } else if (loggedIn === OptBoolean.No) {
+        if (authMgmt.loggedIn === OptBoolean.No) {
             // if we are not logged, in then enforce login
             navigate('/login');
         }
-    }, [loggedIn, navigate])
-
-    const doLogout = () => {
-        removeLoginToken();
-        setLoggedIn(OptBoolean.No)
-    }
-
+        // if loggedIn is unknown -> wait for login check
+        // if loggedIn is true -> do nothing and stay on this page
+    }, [authMgmt, navigate])
 
     const [isMenuOpen, setMenuOpen] = React.useState<boolean>(false);
     const menuRef = useRef(null);
@@ -106,9 +92,9 @@ const BaseLayout = (props: Props) => {
                 open={isMenuOpen}
                 onClose={() => setMenuOpen(false)}
             >
-                <MenuItem>Signed in as: {username}</MenuItem>
+                <MenuItem>Signed in as: {authMgmt.username}</MenuItem>
                 <MenuItem>Profile</MenuItem>
-                <MenuItem onClick={doLogout}>Logout</MenuItem>
+                <MenuItem onClick={() => authMgmt.logout()}>Logout</MenuItem>
             </Menu>
 
             <Outlet/>

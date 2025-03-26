@@ -2,21 +2,25 @@ import React from 'react';
 import './login.css';
 import {useNavigate} from 'react-router-dom'
 import {OptBoolean} from "../model/OptionalBool";
-import {doLogin} from "../api/auth";
-import {saveLoginToken} from "../model/loginHandler";
+import {useAuth} from "../model/AuthContext";
 
-interface Props {
-    setUsername: React.Dispatch<React.SetStateAction<string>>,
-    setLoggedIn: React.Dispatch<React.SetStateAction<OptBoolean>>
-}
+function LoginPage() {
+    const authMgmt = useAuth();
+    const navigate= useNavigate();
 
-function LoginPage(props: Props) {
+    React.useEffect(() => {
+        if (authMgmt.loggedIn === OptBoolean.Yes) {
+            // if we are logged, bypass login page
+            navigate('/');
+        }
+        // if loggedIn is unknown -> wait for login check
+        // if loggedIn is false -> do nothing and stay on this page
+    }, [authMgmt, navigate])
+
     const [usernameField, setUsernameField] = React.useState<string>('')
     const [passwordField, setPasswordField] = React.useState<string>('')
     const [usernameError, setUsernameError] = React.useState<string>('')
     const [passwordError, setPasswordError] = React.useState<string>('')
-
-    const navigate = useNavigate()
 
     const onSendLogin = () => {
         // Set initial error values to empty
@@ -43,10 +47,7 @@ function LoginPage(props: Props) {
         }
 
         // Authentication call
-        doLogin(usernameField, passwordField).then((user) => {
-            saveLoginToken(user)
-            props.setLoggedIn(OptBoolean.Yes)
-            props.setUsername(user.username)
+        authMgmt.login(usernameField, passwordField).then(() => {
             navigate('/')
         }).catch((err) => {
             setUsernameError(err.message)
