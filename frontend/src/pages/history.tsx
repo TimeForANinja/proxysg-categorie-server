@@ -11,6 +11,7 @@ import TableRow from '@mui/material/TableRow';
 import IconButton from "@mui/material/IconButton";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import {useAuth} from "../model/AuthContext";
 
 function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
     const { commit, isFirstCommit} = props;
@@ -62,10 +63,11 @@ function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
 }
 
 function HistoryPage() {
+    const authMgmt = useAuth();
     const [commits, setCommits] = React.useState<ICommits[]>([]);
 
     React.useEffect(() => {
-        Promise.all([getHistory()])
+        Promise.all([getHistory(authMgmt.token)])
             .then(([commitData]) => {
                 // make sure the top value is the newest
                 const sorted = commitData.sort((a, b) => b.time - a.time);
@@ -73,7 +75,7 @@ function HistoryPage() {
                 setCommits(sorted);
             })
             .catch((error) => console.error("Error:", error));
-    }, []);
+    }, [authMgmt]);
 
     return (
         <TableContainer component={Paper}>

@@ -27,6 +27,7 @@ import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import {DialogContentText} from "@mui/material";
+import {useAuth} from "../model/AuthContext";
 
 function BuildRow(props: {
     category: ICategory,
@@ -56,6 +57,7 @@ function BuildRow(props: {
 }
 
 function CategoriesPage() {
+    const authMgmt = useAuth();
     const [categories, setCategory] = React.useState<ICategory[]>([]);
     const [editCategory, setEditCategory] = React.useState<ICategory | null>(null);
     const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
@@ -63,12 +65,12 @@ function CategoriesPage() {
 
     // load categories from backend
     React.useEffect(() => {
-        Promise.all([getCategories()])
+        Promise.all([getCategories(authMgmt.token)])
             .then(([categoriesData]) => {
                 setCategory(categoriesData);
             })
             .catch((error) => console.error("Error:", error));
-    }, []);
+    }, [authMgmt]);
 
     const handleEditOpen = (category: ICategory | null) => {
         setEditCategory(category);
@@ -82,11 +84,11 @@ function CategoriesPage() {
     const handleSave = (catID: number|null, category: IMutableCategory) => {
         if (catID == null) {
             // add new category
-            createCategory(category).then(newCat => {
+            createCategory(authMgmt.token, category).then(newCat => {
                 setCategory([...categories, newCat]);
             });
         } else {
-            updateCategory(catID, category).then(newCat => {
+            updateCategory(authMgmt.token, catID, category).then(newCat => {
                 // "replace" existing category if id matches
                 setCategory(categories.map(cat => cat.id === catID ? newCat : cat));
             })
@@ -102,7 +104,7 @@ function CategoriesPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteCategory(isDeleteDialogOpen.id).then(() => {
+            deleteCategory(authMgmt.token, isDeleteDialogOpen.id).then(() => {
                 // remove category with ID from store
                 setCategory(categories.filter(cat => cat.id !== isDeleteDialogOpen.id));
             });

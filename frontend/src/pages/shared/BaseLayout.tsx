@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useRef} from 'react';
 import {Outlet, useNavigate} from "react-router-dom";
 import {OptBoolean} from "../../model/OptionalBool";
 
@@ -20,7 +20,7 @@ const BaseLayout = () => {
     const authMgmt = useAuth();
     const navigate= useNavigate();
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (authMgmt.loggedIn === OptBoolean.No) {
             // if we are not logged, in then enforce login
             navigate('/login');

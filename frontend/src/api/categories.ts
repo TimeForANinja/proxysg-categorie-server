@@ -8,17 +8,30 @@ export interface ICategory extends IMutableCategory {
     id: number;
 }
 
-export const getCategories = async (): Promise<ICategory[]> => {
-    const response = await fetch('/api/category');
+export const getCategories = async (userToken: string): Promise<ICategory[]> => {
+    const response = await fetch('/api/category', {
+        headers: { 'jwt-token': userToken },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get category list`);
+    }
+
     const data = await response.json();
+
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+
     return data.data;
 }
 
-export const updateCategory = async (id: Number, updatedCategory: IMutableCategory): Promise<ICategory> => {
+export const updateCategory = async (userToken: string, id: Number, updatedCategory: IMutableCategory): Promise<ICategory> => {
     const response = await fetch(`/api/category/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
+            'jwt-token': userToken,
         },
         body: JSON.stringify(updatedCategory),
     });
@@ -28,14 +41,20 @@ export const updateCategory = async (id: Number, updatedCategory: IMutableCatego
     }
 
     const data = await response.json();
+
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+
     return data.data;
 };
 
-export const createCategory = async (partialCategory: IMutableCategory): Promise<ICategory> => {
+export const createCategory = async (userToken: string, partialCategory: IMutableCategory): Promise<ICategory> => {
     const response = await fetch(`/api/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'jwt-token': userToken,
         },
         body: JSON.stringify(partialCategory),
     });
@@ -48,9 +67,10 @@ export const createCategory = async (partialCategory: IMutableCategory): Promise
     return data.data;
 };
 
-export const deleteCategory = async (id: number): Promise<void> => {
+export const deleteCategory = async (userToken: string, id: number): Promise<void> => {
     const response = await fetch(`/api/category/${id}`, {
         method: 'DELETE',
+        headers: { 'jwt-token': userToken },
     });
 
     if (!response.ok) {

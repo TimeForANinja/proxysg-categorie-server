@@ -39,6 +39,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import {ListHeader} from "./shared/list-header";
 import {MyPaginator} from "./shared/paginator";
+import {useAuth} from "../model/AuthContext";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id - b.id
@@ -66,6 +67,7 @@ function BuildRow(props: {
         categories,
         onDelete,
     } = props;
+    const authMgmt = useAuth();
 
     // (un)fold a row into multiple rows
     const [isOpen, setIsOpen] = React.useState(false);
@@ -76,7 +78,7 @@ function BuildRow(props: {
     const handleChange = (event: React.SyntheticEvent, cats: ICategory[]) => {
         if (Array.isArray(cats)) {
             // update api
-            setURLCategory(url.id, cats.map(c => c.id)).then(newCats => {
+            setURLCategory(authMgmt.token, url.id, cats.map(c => c.id)).then(newCats => {
                 // save new version
                 setCategories(newCats);
             });
@@ -182,6 +184,7 @@ function BuildRow(props: {
 }
 
 function MatchingListPage() {
+    const authMgmt = useAuth();
     const [urls, setURLs] = React.useState<IURL[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>([]);
     const [editURL, setEditURL] = React.useState<IURL | null>(null);
@@ -205,16 +208,16 @@ function MatchingListPage() {
     );
 
     React.useEffect(() => {
-        Promise.all([getURLs(), getCategories()])
+        Promise.all([getURLs(authMgmt.token), getCategories(authMgmt.token)])
             .then(([urlsData, categoriesData]) => {
                 setCategory(buildLUTFromID(categoriesData));
                 setURLs(urlsData);
             })
             .catch((error) => console.error("Error:", error));
-    }, []);
+    }, [authMgmt]);
 
     const handleDelete = (remove_url: IURL) => {
-        deleteURL(remove_url.id).then(() => {
+        deleteURL(authMgmt.token, remove_url.id).then(() => {
             // remove URL with ID from store
             setURLs(urls.filter(uri => uri.id !== remove_url.id));
         });
@@ -232,11 +235,11 @@ function MatchingListPage() {
     const handleSave = (urlID: number|null, uri: IMutableURL) => {
         if (urlID == null) {
             // add new URL
-            createURL(uri).then(newURI => {
+            createURL(authMgmt.token, uri).then(newURI => {
                 setURLs([...urls, newURI]);
             });
         } else {
-            updateURL(urlID, uri).then(newURI => {
+            updateURL(authMgmt.token, urlID, uri).then(newURI => {
                 // "replace" existing URL if id matches
                 setURLs(urls.map(u => u.id === urlID ? newURI : u));
             })

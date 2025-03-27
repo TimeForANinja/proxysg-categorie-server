@@ -38,6 +38,7 @@ import ShuffleIcon from "@mui/icons-material/Shuffle";
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
+import {useAuth} from "../model/AuthContext";
 
 const TIME_SECONDS = 1000;
 
@@ -55,6 +56,7 @@ function BuildRow(props: {
         onDelete,
         onShuffle,
     } = props;
+    const authMgmt = useAuth();
     // tracks state for the copy icon, which slightly changes for a few seconds after being pressed
     const [isCopied, setIsCopied] = React.useState(false);
     // toggle the visibility of the token
@@ -76,7 +78,7 @@ function BuildRow(props: {
     const handleChange = (event: SelectChangeEvent<number[]>) => {
         if (Array.isArray(event.target.value)) {
             // update api
-            setTokenCategory(token.id, event.target.value).then(newCats => {
+            setTokenCategory(authMgmt.token, token.id, event.target.value).then(newCats => {
                 // save new version
                 setCategories(newCats);
             });
@@ -142,6 +144,7 @@ function BuildRow(props: {
 }
 
 function ApiTokenPage() {
+    const authMgmt = useAuth();
     const [tokens, setTokens] = React.useState<IApiToken[]>([]);
     const [categories, setCategory] = React.useState<ICategory[]>([]);
     const [editToken, setEditToken] = React.useState<IApiToken | null>(null);
@@ -150,13 +153,13 @@ function ApiTokenPage() {
 
     // Load tokens (& Categories) From backend
     React.useEffect(() => {
-        Promise.all([ getCategories(), getAPITokens()])
+        Promise.all([ getCategories(authMgmt.token), getAPITokens(authMgmt.token)])
             .then(([categoryData, tokenData]) => {
                 setTokens(tokenData);
                 setCategory(categoryData)
             })
             .catch((error) => console.error("Error:", error));
-    }, []);
+    }, [authMgmt]);
 
     const handleEditOpen = (token: IApiToken | null) => {
         setEditToken(token);
@@ -170,11 +173,11 @@ function ApiTokenPage() {
     const handleSave = (tokenID: number|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
-            createToken(token).then(newTok => {
+            createToken(authMgmt.token, token).then(newTok => {
                 setTokens([...tokens, newTok]);
             });
          } else {
-            updateToken(tokenID, token).then(newTok => {
+            updateToken(authMgmt.token, tokenID, token).then(newTok => {
                 // "replace" existing token if id matches
                 setTokens(tokens.map(tok => tok.id === tokenID ? newTok : tok));
             })
@@ -190,7 +193,7 @@ function ApiTokenPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteToken(isDeleteDialogOpen.id).then(() => {
+            deleteToken(authMgmt.token, isDeleteDialogOpen.id).then(() => {
                 // remove token with ID from store
                 setTokens(tokens.filter(tok => tok.id !== isDeleteDialogOpen.id));
             });
@@ -199,7 +202,7 @@ function ApiTokenPage() {
     }
 
     const handleOnShuffle = (token: IApiToken) => {
-        rotateToken(token.id).then(newTok => {
+        rotateToken(authMgmt.token, token.id).then(newTok => {
             // "replace" existing token if id matches
             setTokens(tokens.map(tok => tok.id === token.id ? newTok : tok));
         })

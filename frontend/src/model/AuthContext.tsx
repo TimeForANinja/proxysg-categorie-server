@@ -25,12 +25,12 @@ class AuthManager extends GenericContextClass<AuthState> {
     }
 
     // Method to get current username
-    get username(): string | undefined {
-        return this._state.user?.username;
+    get username(): string {
+        return this._state.user?.username ?? 'Unknown';
     }
 
-    get token(): string | undefined {
-        return this._state.user?.token;
+    get token(): string {
+        return this._state.user?.token ?? '';
     }
 
     // Method to log in a user (updates login state and username)
