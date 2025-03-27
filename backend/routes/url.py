@@ -1,13 +1,13 @@
 from apiflask import APIBlueprint
-from marshmallow.fields import Integer
-
-from db.db_singleton import get_db
-from marshmallow_dataclass import class_schema
 from apiflask.fields import List, Nested
+from marshmallow.fields import Integer
+from marshmallow_dataclass import class_schema
 from typing import List as tList
 from dataclasses import field, dataclass
 
+from auth import get_auth, AUTH_ROLES_RW, AUTH_ROLES_RO
 from db.url import MutableURL, URL
+from db.db_singleton import get_db
 from routes.schemas.generic_output import GenericOutput
 
 url_bp = APIBlueprint('url', __name__)
@@ -35,6 +35,7 @@ class ListCategoriesOutput(GenericOutput):
 @url_bp.get('/api/url')
 @url_bp.doc(summary='List all URLs', description='List all URLs in the database')
 @url_bp.output(ListResponseOutput)
+@url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RO])
 def get_urls():
     db_if = get_db()
     urls = db_if.urls.get_all_urls()
@@ -50,6 +51,7 @@ def get_urls():
 @url_bp.doc(summary='Update URL name', description='Update the name of a URL')
 @url_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
 @url_bp.output(CreateOrUpdateOutput)
+@url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def update_url(url_id: int, mut_url: MutableURL):
     db_if = get_db()
     new_url = db_if.urls.update_url(url_id, mut_url)
@@ -65,6 +67,7 @@ def update_url(url_id: int, mut_url: MutableURL):
 @url_bp.delete('/api/url/<int:url_id>')
 @url_bp.doc(summary="Delete a URL", description="Delete a URL using its ID")
 @url_bp.output(GenericOutput)
+@url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def delete_url(url_id: int):
     db_if = get_db()
     db_if.urls.delete_url(url_id)
@@ -80,6 +83,7 @@ def delete_url(url_id: int):
 @url_bp.doc(summary="Create a new URL", description="Create a new URL with a given name")
 @url_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
 @url_bp.output(CreateOrUpdateOutput)
+@url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def create_url(mut_url: MutableURL):
     db_if = get_db()
     new_url = db_if.urls.add_url(mut_url)
@@ -95,6 +99,7 @@ def create_url(mut_url: MutableURL):
 # Route to add a Category to a URL
 @url_bp.post('/api/url/<int:url_id>/category/<int:cat_id>')
 @url_bp.doc(summary="add cat to url", description="Add the provided Category ID to the URL.Category List")
+@url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def add_token_category(url_id: int, cat_id: int):
     db_if = get_db()
     db_if.url_categories.add_url_category(url_id, cat_id)
@@ -108,6 +113,7 @@ def add_token_category(url_id: int, cat_id: int):
 # Route to delete a Category from a URL
 @url_bp.delete('/api/url/<int:url_id>/category/<int:cat_id>')
 @url_bp.doc(summary="remove cat from url", description="Remove the provided Category ID from the URL.Category List")
+@url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def delete_token_category(url_id: int, cat_id: int):
     db_if = get_db()
     db_if.url_categories.delete_url_category(url_id, cat_id)
@@ -123,6 +129,7 @@ def delete_token_category(url_id: int, cat_id: int):
 @url_bp.doc(summary="overwrite url categories", description="Set the Categories of a URL to the provided list")
 @url_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
 @url_bp.output(ListCategoriesOutput)
+@url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def set_url_categories(url_id: int, set_cats: SetCategoriesInput):
     db_if = get_db()
     is_cats = db_if.url_categories.get_url_categories_by_url(url_id)

@@ -3,6 +3,7 @@ from db.db_singleton import get_db
 from marshmallow_dataclass import class_schema
 from apiflask.fields import List, Nested
 
+from auth import get_auth, AUTH_ROLES_RW, AUTH_ROLES_RO
 from db.category import MutableCategory, Category
 from routes.schemas.generic_output import GenericOutput
 
@@ -22,6 +23,7 @@ class ListResponseOutput(GenericOutput):
 @category_bp.get('/api/category')
 @category_bp.doc(summary='List all Categories', description='List all Categories in the database')
 @category_bp.output(ListResponseOutput)
+@category_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RO])
 def get_categories():
     db_if = get_db()
     categories = db_if.categories.get_all_categories()
@@ -37,6 +39,7 @@ def get_categories():
 @category_bp.doc(summary='Update Category name', description='Update the name of a Category')
 @category_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
 @category_bp.output(CreateOrUpdateOutput)
+@category_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def update_category(cat_id: int, mut_cat: MutableCategory):
     db_if = get_db()
     new_category = db_if.categories.update_category(cat_id, mut_cat)
@@ -52,6 +55,7 @@ def update_category(cat_id: int, mut_cat: MutableCategory):
 @category_bp.delete('/api/category/<int:cat_id>')
 @category_bp.doc(summary="Delete a Category", description="Delete a Category using its ID")
 @category_bp.output(GenericOutput)
+@category_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def delete_category(cat_id: int):
     db_if = get_db()
     db_if.categories.delete_category(cat_id)
@@ -67,6 +71,7 @@ def delete_category(cat_id: int):
 @category_bp.doc(summary="Create a Category", description="Create a new Category with a given name")
 @category_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
 @category_bp.output(CreateOrUpdateOutput)
+@category_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def create_category(mut_cat: MutableCategory):
     db_if = get_db()
     new_category = db_if.categories.add_category(mut_cat)

@@ -1,21 +1,19 @@
 from apiflask import APIBlueprint
+from apiflask.fields import String
 from dataclasses import field, dataclass
 from marshmallow.validate import Length
 from marshmallow_dataclass import class_schema
-from apiflask.fields import String
 
+from auth import AUTH_TOKEN_KEY, AUTH_DEFAULT_TOKEN, validate_token
 from routes.schemas.generic_output import GenericOutput
 
 auth_bp = APIBlueprint('authentication', __name__)
-
-# TODO: use actual random tokens
-TOKEN = "asdjkadsjlsajds"
 
 
 @dataclass
 class JWTHeaderInput:
     jwt_token: str = field(metadata={
-        "data_key": 'jwt-token',
+        "data_key": AUTH_TOKEN_KEY,
         "required": True,
         "description": "JWT Token for verifying access"
     })
@@ -25,7 +23,7 @@ class JWTHeaderInput:
 @auth_bp.input(class_schema(JWTHeaderInput)(), location='headers', arg_name="token")
 @auth_bp.output(GenericOutput)
 def handle_verify(token: JWTHeaderInput):
-    if token.jwt_token == TOKEN:
+    if validate_token(token.jwt_token):
         return {
             "status": 'success',
             "message": 'Login verified successfully',
@@ -64,9 +62,8 @@ def handle_auth(login_input: LoginInput):
         response = {
             "status": 'success',
             "message": 'Login successful',
-            "token": TOKEN,
+            "token": AUTH_DEFAULT_TOKEN,
         }
-        print("response", response)
         return response
     else:
         return {
