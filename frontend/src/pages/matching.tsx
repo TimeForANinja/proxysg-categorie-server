@@ -30,7 +30,6 @@ import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid2';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import {colors} from "../util/colormixer";
-import TablePagination from '@mui/material/TablePagination';
 import {buildLUTFromID, getLUTValues, LUT} from "../util/LookUpTable";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Dialog from "@mui/material/Dialog";
@@ -38,6 +37,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import {ListHeader} from "./shared/list-header";
+import {MyPaginator} from "./shared/paginator";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id - b.id
@@ -186,19 +187,13 @@ function MatchingListPage() {
     const [editURL, setEditURL] = React.useState<IURL | null>(null);
     const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
     const [isModalOpen, setModalOpen] = React.useState<boolean>(false);
+    const [visibleRows, setVisibleRows] = React.useState<IURL[]>([]);
 
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(50);
     // TODO: remove
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [comparator, setComparator] = React.useState(() => COMPARATORS.BY_ID);
     const [quickSearch, setQuickSearch] = React.useState('');
 
-    const handleChangePage = (_event: unknown, newPage: number) => setPage(newPage);
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
 
     const filteredRows = React.useMemo(
         () =>
@@ -207,14 +202,6 @@ function MatchingListPage() {
                 return `${x.id} ${x.hostname} ${x.categories.map(c => categories[c].name).join(' ')}`.toLowerCase().includes(quickSearch.toLowerCase())
             }),
         [quickSearch, urls, categories],
-    );
-    const visibleRows = React.useMemo(
-        () =>
-            filteredRows.sort(comparator).slice(
-                page * rowsPerPage,
-                page * rowsPerPage + rowsPerPage,
-            ),
-        [comparator, filteredRows, page, rowsPerPage],
     );
 
     React.useEffect(() => {
@@ -259,17 +246,16 @@ function MatchingListPage() {
 
     return (
         <>
-            <Grid container spacing={0}>
-                <Grid size={8}>
-                    <Paper>
-                        <TextField label="Quick Search" size="small" variant="standard" onChange={event => setQuickSearch(event.target.value)}/>
-                    </Paper>
-                </Grid>
-                <Grid size={4}>
-                    <Paper>
-                        <Button onClick={() => handleEditOpen(null)}>+ Add Category</Button>
-                    </Paper>
-                </Grid>
+            <Grid
+                container
+                spacing={1}
+                justifyContent="center"
+                alignItems="center"
+            >
+                <ListHeader
+                    handleEditOpen={handleEditOpen}
+                    setQuickSearch={setQuickSearch}
+                />
                 <Grid size={12}>
                     <Paper>
                         <TableContainer component={Paper} style={{maxHeight: '100%'}}>
@@ -295,14 +281,10 @@ function MatchingListPage() {
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                        <TablePagination
-                            rowsPerPageOptions={[20, 50, 100]}
-                            component="div"
-                            count={filteredRows.length}
-                            rowsPerPage={rowsPerPage}
-                            page={page}
-                            onPageChange={handleChangePage}
-                            onRowsPerPageChange={handleChangeRowsPerPage}
+                        <MyPaginator
+                            comparator={comparator}
+                            filteredRows={filteredRows}
+                            onVisibleRowsChange={setVisibleRows}
                         />
                     </Paper>
                 </Grid>

@@ -137,7 +137,7 @@ function CategoriesPage() {
                 </Dialog>
             </React.Fragment>
             <TableContainer component={Paper}>
-                <Table>
+                <Table sx={{ minWidth: 650 }} size="small">
                     <TableHead>
                         <TableRow>
                             <TableCell component="th" scope="row">ID</TableCell>

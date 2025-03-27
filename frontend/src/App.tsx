@@ -7,7 +7,7 @@ import ApiTokenPage from "./pages/api-tokens";
 import CategoriesPage from "./pages/categories";
 import HistoryPage from "./pages/history";
 import HomePage from "./pages/home";
-import BaseLayout from "./pages/BaseLayout";
+import BaseLayout from "./pages/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
 import {AuthProvider} from "./model/AuthContext";
 

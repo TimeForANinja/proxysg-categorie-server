@@ -77,7 +77,7 @@ function HistoryPage() {
 
     return (
         <TableContainer component={Paper}>
-            <Table>
+            <Table sx={{ minWidth: 650 }} size="small">
                 <TableHead>
                 <TableRow>
                     <TableCell />

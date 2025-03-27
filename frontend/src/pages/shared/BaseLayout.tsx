@@ -1,6 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {Outlet, useNavigate} from "react-router-dom";
-import {OptBoolean} from "../model/OptionalBool";
+import {OptBoolean} from "../../model/OptionalBool";
 
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -14,7 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import {useAuth} from "../model/AuthContext";
+import {useAuth} from "../../model/AuthContext";
 
 const BaseLayout = () => {
     const authMgmt = useAuth();

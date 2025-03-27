@@ -230,7 +230,7 @@ function ApiTokenPage() {
             </Dialog>
             <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>
             <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+                <Table sx={{ minWidth: 650 }} size="small">
                     <TableHead>
                         <TableRow>
                             <TableCell component="th" scope="row">ID</TableCell>
