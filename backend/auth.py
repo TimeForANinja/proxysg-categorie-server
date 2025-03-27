@@ -22,13 +22,16 @@ def _build_auth():
 
     @auth.get_user_roles
     def get_user_roles(user: Authorization):
-        return [AUTH_ROLES_RW]
+        return [AUTH_ROLES_RO, AUTH_ROLES_RW]
 
     @auth.verify_token
     def verify_token(token: str) -> bool:
         return validate_token(token)
 
     return auth
+
+def validate_token(token: str) -> bool:
+    return token == AUTH_DEFAULT_TOKEN
 
 class AuthSingleton:
     _instance = None
@@ -44,5 +47,3 @@ class AuthSingleton:
     def get_auth(self):
         return self._auth
 
-def validate_token(token: str) -> bool:
-    return token == AUTH_DEFAULT_TOKEN
