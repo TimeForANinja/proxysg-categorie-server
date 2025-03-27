@@ -3,6 +3,7 @@ from os.path import abspath
 
 from apiflask import APIFlask
 from flask import send_from_directory
+from flask_compress import Compress
 
 from db import db_singleton
 from routes.auth import auth_bp
@@ -21,6 +22,7 @@ app = APIFlask(
 #    static_url_path="/",
     static_folder="./dist",
 )
+Compress(app)
 
 # Register blueprints
 app.register_blueprint(category_bp)
