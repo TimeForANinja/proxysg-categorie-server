@@ -3,5 +3,6 @@ typing_extensions~=4.12.2
 marshmallow_dataclass~=8.7.1
 Flask~=3.1.0
 marshmallow~=3.26.1
+gunicorn~=23.0.0
 Flask-Compress~=1.17
 Werkzeug~=3.1.3

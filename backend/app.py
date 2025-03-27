@@ -19,7 +19,6 @@ app = APIFlask(
     "ProxySG Category Server",
     version="1.0.0",
     docs_path="/docs",
-#    static_url_path="/",
     static_folder="./dist",
 )
 Compress(app)
@@ -38,7 +37,7 @@ app.register_blueprint(compile_bp)
 @app.get('/<path:path>')
 def catch_all(path: str):
     """Catch-all route for non-API routes."""
-    static_folder = abspath('./dist/')
+    static_folder = abspath(app.static_folder)
     static_file = os.path.join(static_folder, path)
 
     # Check if the requested static file exists
