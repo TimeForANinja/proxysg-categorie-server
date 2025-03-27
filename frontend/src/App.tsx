@@ -1,9 +1,9 @@
 import React from 'react';
 import './App.css';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import MatchingListPage from "./pages/matching";
+import MatchingListPage from "./pages/urls";
 import LoginPage from "./pages/login";
-import ApiTokenPage from "./pages/api-tokens";
+import ApiTokenPage from "./pages/tokens";
 import CategoriesPage from "./pages/categories";
 import HistoryPage from "./pages/history";
 import HomePage from "./pages/home";
