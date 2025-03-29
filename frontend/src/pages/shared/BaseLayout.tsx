@@ -1,19 +1,20 @@
 import React, {useRef} from 'react';
 import {Outlet, useNavigate} from "react-router-dom";
-import {OptBoolean} from "../../model/OptionalBool";
-
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Box from '@mui/material/Box';
-import Badge from '@mui/material/Badge';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-
+import {
+    AppBar,
+    Toolbar,
+    Typography,
+    Button,
+    IconButton,
+    Box,
+    Badge,
+    Menu,
+    MenuItem,
+} from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+
+import {OptBoolean} from "../../model/OptionalBool";
 import {useAuth} from "../../model/AuthContext";
 
 const BaseLayout = () => {
@@ -29,12 +30,15 @@ const BaseLayout = () => {
         // if loggedIn is true -> do nothing and stay on this page
     }, [authMgmt, navigate])
 
+    // track state of the user meu
     const [isMenuOpen, setMenuOpen] = React.useState<boolean>(false);
     const menuRef = useRef(null);
+
     return (
         <>
             <AppBar position="static">
                 <Toolbar>
+                    { /* Logo to the left */ }
                     <Typography
                         variant="h6"
                         noWrap
@@ -45,6 +49,7 @@ const BaseLayout = () => {
                         CatTracker
                     </Typography>
 
+                    { /* Center Buttons, surrounded by flewGrow to center */ }
                     <Box sx={{ flexGrow: 1 }} />
                     <Button color="inherit" onClick={() => navigate("/url")}>URLs</Button>
                     <Button color="inherit" onClick={() => navigate("/token")}>Api Tokens</Button>
@@ -52,6 +57,7 @@ const BaseLayout = () => {
                     <Button color="inherit" onClick={() => navigate("/history")}>History</Button>
                     <Box sx={{ flexGrow: 1 }} />
 
+                    { /* Notification and User Icon to the right */ }
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <IconButton
                             size="large"
@@ -77,6 +83,7 @@ const BaseLayout = () => {
                 </Toolbar>
             </AppBar>
 
+            { /* User Menu */ }
             <Menu
                 anchorEl={menuRef.current}
                 anchorOrigin={{

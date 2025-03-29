@@ -1,33 +1,25 @@
 import React from 'react';
 import {
+    Alert,
+    Box,
+    Button,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    Button,
+    IconButton,
+    MenuItem,
+    Paper,
+    Select,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     TextField,
-    DialogContentText,
-    Alert
 } from '@mui/material';
-import {
-    createToken,
-    getAPITokens,
-    updateToken,
-    rotateToken,
-    deleteToken,
-    IApiToken,
-    IMutableApiToken,
-    setTokenCategory
-} from "../api/tokens";
-import {getCategories, ICategory} from "../api/categories";
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import IconButton from '@mui/material/IconButton';
+import Grid from '@mui/material/Grid2'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -35,20 +27,48 @@ import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from "@mui/icons-material/Edit"
 import ShuffleIcon from "@mui/icons-material/Shuffle";
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from "@mui/material/MenuItem";
-import Box from "@mui/material/Box";
+import {SelectChangeEvent} from '@mui/material/Select';
+
+import {
+    createToken,
+    deleteToken,
+    getAPITokens,
+    IApiToken,
+    IMutableApiToken,
+    rotateToken,
+    setTokenCategory,
+    updateToken
+} from "../api/tokens";
+import {getCategories, ICategory} from "../api/categories";
 import {useAuth} from "../model/AuthContext";
+import {ListHeader} from "./shared/list-header";
+import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
+import {TriState} from "./shared/EditDialogState";
+import {MyPaginator} from "./shared/paginator";
+import {buildLUTFromID, getLUTValues, LUT} from "../util/LookUpTable";
+
+const COMPARATORS = {
+    BY_ID:  (a: IApiToken, b: IApiToken) => a.id - b.id
+};
 
 const TIME_SECONDS = 1000;
 
-function BuildRow(props: {
+const parse_last_used = (last_use: number) => {
+    if (last_use === 0) {
+        return 'never';
+    } else {
+        return new Date(last_use * TIME_SECONDS).toLocaleString();
+    }
+}
+
+interface BuildRowProps {
     token: IApiToken,
-    categories: ICategory[],
+    categories: LUT<ICategory>,
     onEdit: () => void,
     onShuffle: () => void,
     onDelete: () => void,
-}) {
+}
+function BuildRow(props: BuildRowProps) {
     const {
         token,
         categories,
@@ -57,13 +77,14 @@ function BuildRow(props: {
         onShuffle,
     } = props;
     const authMgmt = useAuth();
-    // tracks state for the copy icon, which slightly changes for a few seconds after being pressed
-    const [isCopied, setIsCopied] = React.useState(false);
+
     // toggle the visibility of the token
     const [hideToken, setHideToken] = React.useState(false);
 
     const [isCategories, setCategories] = React.useState(token.categories);
 
+    // tracks state for the copy icon, which slightly changes for a few seconds after being pressed
+    const [isCopied, setIsCopied] = React.useState(false);
     // helper function, triggered when the "copy" button is pressed
     const handleCopy = async () => {
         // copy ID to clipboard
@@ -82,18 +103,8 @@ function BuildRow(props: {
                 // save new version
                 setCategories(newCats);
             });
-            /* old version
-            const { added, removed } = CompareLists(isCategories, event.target.value);
-
-            added.forEach(cat => addTokenCategory(token.id, cat));
-            removed.forEach(cat => deleteTokenCategory(token.id, cat));
-
-            setCategories(event.target.value);
-            */
         }
     };
-
-    const last_use_time = token.last_use === 0 ? 'never' : new Date(token.last_use * 1000).toLocaleString();
 
     return (
             <TableRow
@@ -114,7 +125,7 @@ function BuildRow(props: {
                         {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
                     </IconButton>
                 </TableCell>
-                <TableCell>{ last_use_time }</TableCell>
+                <TableCell>{ parse_last_used(token.last_use) }</TableCell>
                 <TableCell align="right">
                     <Select
                         multiple
@@ -122,10 +133,10 @@ function BuildRow(props: {
                         label="Categories"
                         onChange={handleChange}
                         displayEmpty
-                        renderValue={(selected) => selected.map(c => categories.find(cat => cat.id === c)?.name).join(', ')}
+                        renderValue={(selected) => selected.map(c => categories[c]?.name).join(', ')}
                     >
                         {
-                            categories.map((cat, catIDX) => {
+                            getLUTValues(categories).map((cat, catIDX) => {
                                 return (
                                     <MenuItem key={catIDX} value={cat.id}>
                                         <div style={{ background: cat.color}}>{cat.name}</div>
@@ -145,31 +156,49 @@ function BuildRow(props: {
 
 function ApiTokenPage() {
     const authMgmt = useAuth();
+
+    // State info for the Page
     const [tokens, setTokens] = React.useState<IApiToken[]>([]);
-    const [categories, setCategory] = React.useState<ICategory[]>([]);
-    const [editToken, setEditToken] = React.useState<IApiToken | null>(null);
-    const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
+    const [categories, setCategory] = React.useState<LUT<ICategory>>([]);
+
+    // search & pagination
+    const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
+    const comparator = COMPARATORS.BY_ID;
+    const [quickSearch, setQuickSearch] = React.useState('');
+    const filteredRows = React.useMemo(
+        () =>
+            tokens.filter(x => {
+                // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
+                const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
+                const search_str = `${x.id} ${x.description} ${parse_last_used(x.last_use)} ${cat_str}`.toLowerCase();
+                return search_str.toLowerCase().includes(quickSearch.toLowerCase());
+            }),
+        [quickSearch, tokens, categories],
+    );
+
+    // Track object (if any) for which a delete confirmation is open
     const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<IApiToken | null>(null);
 
     // Load tokens (& Categories) From backend
     React.useEffect(() => {
-        Promise.all([ getCategories(authMgmt.token), getAPITokens(authMgmt.token)])
-            .then(([categoryData, tokenData]) => {
+        Promise.all([ getAPITokens(authMgmt.token), getCategories(authMgmt.token)])
+            .then(([tokenData, categoryData]) => {
                 setTokens(tokenData);
-                setCategory(categoryData)
+                setCategory(buildLUTFromID(categoryData))
             })
             .catch((error) => console.error("Error:", error));
     }, [authMgmt]);
 
-    const handleEditOpen = (token: IApiToken | null) => {
-        setEditToken(token);
-        setEditDialogOpen(true);
+    // Edit Dialog State
+    const [editToken, setEditToken] = React.useState<TriState<IApiToken>>(TriState.CLOSED);
+    const handleEditOpen = (token: IApiToken | null = null) => {
+        setEditToken(token ? new TriState(token) : TriState.NEW);
     };
-
     const handleEditDialogClose = () => {
-        setEditDialogOpen(false);
+        setEditToken(TriState.CLOSED);
     };
 
+    // create or edit new object
     const handleSave = (tokenID: number|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
@@ -189,7 +218,6 @@ function ApiTokenPage() {
         // show the dialogue to confirm the deletion
         setDeleteDialogOpen(token);
     }
-
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
@@ -201,6 +229,7 @@ function ApiTokenPage() {
         setDeleteDialogOpen(null);
     }
 
+    // generate a new token
     const handleOnShuffle = (token: IApiToken) => {
         rotateToken(authMgmt.token, token.id).then(newTok => {
             // "replace" existing token if id matches
@@ -210,63 +239,63 @@ function ApiTokenPage() {
 
     return (
         <>
-            <Dialog
-                open={isDeleteDialogOpen != null}
-                onClose={() => handleDeleteConfirmation(false)}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
+            <Grid
+                container
+                spacing={1}
+                justifyContent="center"
+                alignItems="center"
             >
-                <DialogTitle id="alert-dialog-title">
-                    {"Delete API Token?"}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to Delete the API Token?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => handleDeleteConfirmation(false)}>Disagree</Button>
-                    <Button onClick={() => handleDeleteConfirmation(true)} autoFocus>
-                        Agree
-                    </Button>
-                </DialogActions>
-            </Dialog>
-            <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>
-            <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} size="small">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell component="th" scope="row">ID</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell align="right">Token</TableCell>
-                            <TableCell>Last Used</TableCell>
-                            <TableCell align="right">Categories</TableCell>
-                            <TableCell></TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {tokens.map(token =>
-                            <BuildRow
-                                key={token.id}
-                                token={token}
-                                categories={categories}
-                                onEdit={() => handleEditOpen(token)}
-                                onShuffle={() => handleOnShuffle(token)}
-                                onDelete={() => handleDelete(token)}
-                            />
-                        )}
-                        <TableRow>
-                            <TableCell colSpan={5} align="center">
-                                <Button onClick={() => handleEditOpen(null)}>
-                                    + Add Token
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                <ListHeader
+                    onCreate={handleEditOpen}
+                    setQuickSearch={setQuickSearch}
+                    addElement={"Token"}
+                />
+                <Grid size={12}>
+                    <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>
+                </Grid>
+                <Grid size={12}>
+                    <Paper>
+                        <TableContainer component={Paper}>
+                            <Table sx={{ minWidth: 650 }} size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell component="th" scope="row">ID</TableCell>
+                                        <TableCell>Description</TableCell>
+                                        <TableCell align="right">Token</TableCell>
+                                        <TableCell>Last Used</TableCell>
+                                        <TableCell align="right">Categories</TableCell>
+                                        <TableCell></TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {visibleRows.map(token =>
+                                        <BuildRow
+                                            key={token.id}
+                                            token={token}
+                                            categories={categories}
+                                            onEdit={() => handleEditOpen(token)}
+                                            onShuffle={() => handleOnShuffle(token)}
+                                            onDelete={() => handleDelete(token)}
+                                        />
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <MyPaginator
+                            comparator={comparator}
+                            filteredRows={filteredRows}
+                            onVisibleRowsChange={setVisibleRows}
+                        />
+                    </Paper>
+                </Grid>
+            </Grid>
+            <ConfirmDeletionDialog
+                onConfirmation={handleDeleteConfirmation}
+                header={"Delete API Token?"}
+                body={"Are you sure you want to Delete the API Token permanently?"}
+                isOpen={isDeleteDialogOpen != null}
+            />
             <EditDialog
-                isOpen={isEditDialogOpen}
                 token={editToken}
                 onClose={handleEditDialogClose}
                 onSave={handleSave}
@@ -275,34 +304,40 @@ function ApiTokenPage() {
     );
 }
 
-function EditDialog(props: {
-    isOpen: boolean,
-    token: IApiToken | null,
+interface EditDialogProps {
+    token: TriState<IApiToken>,
     onClose: () => void,
     onSave: (id: number | null, token: IMutableApiToken) => void
-}) {
-    const { isOpen, token, onClose, onSave } = props;
+}
+function EditDialog(props: EditDialogProps) {
+    const { token, onClose, onSave } = props;
 
     const [description, setDescription] = React.useState('');
 
     React.useEffect(() => {
-        if (token) {
-            setDescription(token.description);
+        // set existing values if a category was provided
+        // else force clear the fields
+        if (!token.isNull()) {
+            setDescription(token.getValue()!.description);
         } else {
             setDescription("");
         }
     }, [token]);
 
     const handleSave = () => {
-        onSave(token?.id ?? null, { description });
+        onSave(token.getValue()?.id ?? null, { description });
     };
 
     return (
-        <Dialog open={isOpen} onClose={onClose}>
+        <Dialog open={token.isOpen()} onClose={onClose}>
             <DialogTitle>Edit API Token</DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>
-                    <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                    <TextField
+                        label="Description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                    />
                 </Box>
             </DialogContent>
             <DialogActions>

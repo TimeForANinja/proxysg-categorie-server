@@ -1,44 +1,52 @@
 import React from 'react';
 import {
-    getCategories,
-    ICategory,
-    deleteCategory,
-    createCategory,
-    updateCategory,
-    IMutableCategory
-} from "../api/categories";
-import {colors} from "../util/colormixer";
-import Paper from "@mui/material/Paper";
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    MenuItem,
+    Paper,
+    Select,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit"
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import {DialogContentText} from "@mui/material";
-import {useAuth} from "../model/AuthContext";
 
-function BuildRow(props: {
+import {
+    createCategory,
+    deleteCategory,
+    getCategories,
+    ICategory,
+    IMutableCategory,
+    updateCategory
+} from "../api/categories";
+import {colors} from "../util/colormixer";
+import {useAuth} from "../model/AuthContext";
+import {ListHeader} from "./shared/list-header";
+import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
+import {TriState} from "./shared/EditDialogState";
+import {MyPaginator} from "./shared/paginator";
+
+const COMPARATORS = {
+    BY_ID:  (a: ICategory, b: ICategory) => a.id - b.id
+};
+
+interface BuildRowProps {
     category: ICategory,
     onEdit: () => void,
     onDelete: () => void,
-}) {
-    const {
-        category,
-        onEdit,
-        onDelete,
-    } = props;
+}
+function BuildRow(props: BuildRowProps) {
+    const { category, onEdit, onDelete } = props;
 
     return (
         <TableRow key={category.id}>
@@ -58,9 +66,24 @@ function BuildRow(props: {
 
 function CategoriesPage() {
     const authMgmt = useAuth();
+
+    // State info for the Page
     const [categories, setCategory] = React.useState<ICategory[]>([]);
-    const [editCategory, setEditCategory] = React.useState<ICategory | null>(null);
-    const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
+
+    // search & pagination
+    const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
+    const comparator = COMPARATORS.BY_ID;
+    const [quickSearch, setQuickSearch] = React.useState('');
+    const filteredRows = React.useMemo(
+        () =>
+            categories.filter(x => {
+                // not sure if switching to sth. like "levenshtein distance" makes more sense?
+                return `${x.id} ${x.name} ${x.description}`.toLowerCase().includes(quickSearch.toLowerCase())
+            }),
+        [quickSearch, categories],
+    );
+
+    // Track object (if any) for which a delete confirmation is open
     const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<ICategory | null>(null);
 
     // load categories from backend
@@ -72,15 +95,16 @@ function CategoriesPage() {
             .catch((error) => console.error("Error:", error));
     }, [authMgmt]);
 
-    const handleEditOpen = (category: ICategory | null) => {
-        setEditCategory(category);
-        setEditDialogOpen(true);
+    // Edit Dialog State
+    const [editCategory, setEditCategory] = React.useState<TriState<ICategory>>(TriState.CLOSED);
+    const handleEditOpen = (category: ICategory | null = null) => {
+        setEditCategory(category ? new TriState(category) : TriState.NEW);
     };
-
     const handleEditDialogClose = () => {
-        setEditDialogOpen(false);
+        setEditCategory(TriState.CLOSED);
     };
 
+    // create or edit new object
     const handleSave = (catID: number|null, category: IMutableCategory) => {
         if (catID == null) {
             // add new category
@@ -100,7 +124,6 @@ function CategoriesPage() {
         // show the dialogue to confirm the deletion
         setDeleteDialogOpen(category);
     }
-
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
@@ -114,62 +137,57 @@ function CategoriesPage() {
 
     return (
         <>
-            <React.Fragment>
-                <Dialog
-                    open={isDeleteDialogOpen != null}
-                    onClose={() => handleDeleteConfirmation(false)}
-                    aria-labelledby="alert-dialog-title"
-                    aria-describedby="alert-dialog-description"
-                >
-                    <DialogTitle id="alert-dialog-title">
-                        {"Delete Category?"}
-                    </DialogTitle>
-                    <DialogContent>
-                        <DialogContentText id="alert-dialog-description">
-                            Are you sure you want to Delete the Category?
-                            This will also unassign the Category from all URLs.
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => handleDeleteConfirmation(false)}>Disagree</Button>
-                        <Button onClick={() => handleDeleteConfirmation(true)} autoFocus>
-                            Agree
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </React.Fragment>
-            <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} size="small">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell component="th" scope="row">ID</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Color</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell></TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {categories.map(cat =>
-                            <BuildRow
-                                key={cat.id}
-                                category={cat}
-                                onEdit={() => handleEditOpen(cat)}
-                                onDelete={() => handleDelete(cat)}
-                            />
-                        )}
-                        <TableRow>
-                            <TableCell colSpan={5} align="center">
-                                <Button onClick={() => handleEditOpen(null)}>
-                                    + Add Category
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            <Grid
+                container
+                spacing={1}
+                justifyContent="center"
+                alignItems="center"
+            >
+                <ListHeader
+                    onCreate={handleEditOpen}
+                    setQuickSearch={setQuickSearch}
+                    addElement={"Category"}
+                />
+                <Grid size={12}>
+                    <Paper>
+                        <TableContainer component={Paper}>
+                            <Table sx={{ minWidth: 650 }} size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell component="th" scope="row">ID</TableCell>
+                                        <TableCell>Name</TableCell>
+                                        <TableCell>Color</TableCell>
+                                        <TableCell>Description</TableCell>
+                                        <TableCell></TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {visibleRows.map(cat =>
+                                        <BuildRow
+                                            key={cat.id}
+                                            category={cat}
+                                            onEdit={() => handleEditOpen(cat)}
+                                            onDelete={() => handleDelete(cat)}
+                                        />
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <MyPaginator
+                            comparator={comparator}
+                            filteredRows={filteredRows}
+                            onVisibleRowsChange={setVisibleRows}
+                        />
+                    </Paper>
+                </Grid>
+            </Grid>
+            <ConfirmDeletionDialog
+                onConfirmation={handleDeleteConfirmation}
+                header={"Delete Category?"}
+                body={"Are you sure you want to Delete the Category? This will also unassign the Category from all URLs."}
+                isOpen={isDeleteDialogOpen != null}
+            />
             <EditDialog
-                isOpen={isEditDialogOpen}
                 category={editCategory}
                 onClose={handleEditDialogClose}
                 onSave={handleSave}
@@ -178,23 +196,25 @@ function CategoriesPage() {
     );
 }
 
-function EditDialog(props: {
-    isOpen: boolean,
-    category: ICategory | null,
+interface EditDialogProps {
+    category: TriState<ICategory>,
     onClose: () => void,
     onSave: (id: number | null, category: IMutableCategory) => void
-}) {
-    let {isOpen, category, onClose, onSave} = props;
+}
+function EditDialog(props: EditDialogProps) {
+    let {category, onClose, onSave} = props;
 
     const [name, setName] = React.useState('');
     const [description, setDescription] = React.useState('');
     const [color, setColor] = React.useState(1);
 
     React.useEffect(() => {
-        if (category) {
-            setName(category.name);
-            setDescription(category.description);
-            setColor(category.color);
+        // set existing values if a category was provided
+        // else force clear the fields
+        if (!category.isNull()) {
+            setName(category.getValue()!.name);
+            setDescription(category.getValue()!.description);
+            setColor(category.getValue()!.color);
         } else {
             setName("")
             setDescription("")
@@ -203,20 +223,27 @@ function EditDialog(props: {
     }, [category]);
 
     const handleSave = () => {
-        onSave(category?.id ?? null, {name, description, color});
+        onSave(category.getValue()?.id ?? null, {name, description, color});
         setName("")
         setDescription("")
         setColor(1)
     };
 
     return (
-        <Dialog open={isOpen} onClose={onClose}>
+        <Dialog open={category.isOpen()} onClose={onClose}>
             <DialogTitle>Edit Category</DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>
-                    <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)}/>
-                    <TextField label="Description" value={description}
-                               onChange={(e) => setDescription(e.target.value)}/>
+                    <TextField
+                        label="Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                    <TextField
+                        label="Description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                    />
                     <Select
                         value={color.toString()}
                         label="Color"

@@ -1,17 +1,21 @@
-import Grid from "@mui/material/Grid2";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-
 import React from "react";
+import {
+    Box,
+    TextField,
+    Button,
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
 
-export const ListHeader = (props: {
-    handleEditOpen: (param: null) => void,
+interface ListHeaderProps {
+    onCreate: () => void,
     setQuickSearch: (search: string) => void,
-}) => {
+    addElement: string
+}
+export const ListHeader = (props: ListHeaderProps) => {
     const {
-        handleEditOpen,
-        setQuickSearch
+        onCreate,
+        setQuickSearch,
+        addElement,
     } = props;
 
     return (
@@ -31,9 +35,9 @@ export const ListHeader = (props: {
                 <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
                     <Button
                         variant="outlined"
-                        onClick={() => handleEditOpen(null)}
+                        onClick={() => onCreate()}
                     >
-                        + Add Category
+                        + Add {addElement}
                     </Button>
                 </Box>
             </Grid>
