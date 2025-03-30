@@ -3,7 +3,6 @@ from db.token_category import TokenCategoryDBInterface
 from typing import List
 
 
-
 class SQLiteTokenCategory(TokenCategoryDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn

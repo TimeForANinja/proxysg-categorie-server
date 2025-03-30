@@ -44,7 +44,12 @@ class Token(MutableToken):
             "description": "Whether the token is deleted or not",
         }
     )
-    categories: List[int] = field(default_factory=list)
+    categories: List[int] = field(
+        default_factory=list,
+        metadata={
+            "description": "List of category IDs associated with the URL",
+        }
+    )
 
 
 class TokenDBInterface(ABC):

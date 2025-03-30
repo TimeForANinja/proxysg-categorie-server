@@ -117,7 +117,7 @@ def add_token_category(url_id: int, cat_id: int):
 def delete_token_category(url_id: int, cat_id: int):
     db_if = get_db()
     db_if.url_categories.delete_url_category(url_id, cat_id)
-    db_if.history.add_history_event(f"Removed cat {cat_id} from url {url_id} deleted")
+    db_if.history.add_history_event(f"Removed cat {cat_id} from url {url_id}")
     return {
         "status": "success",
         "message": "Category successfully removed from URL"

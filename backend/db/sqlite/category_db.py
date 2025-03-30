@@ -2,6 +2,8 @@ import sqlite3
 from db.category import CategoryDBInterface, MutableCategory, Category
 from typing import Optional, List
 
+from db.sqlite.util import split_opt_int_group
+
 
 class SQLiteCategory(CategoryDBInterface):
     def __init__(self, conn: sqlite3.Connection):
@@ -39,7 +41,25 @@ class SQLiteCategory(CategoryDBInterface):
     def get_category(self, category_id: int) -> Optional[Category]:
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT id, name, description, color, is_deleted FROM categories WHERE id = ? AND is_deleted = 0',
+            '''SELECT
+                c.id as id,
+                c.name,
+                c.description,
+                c.color,
+                GROUP_CONCAT(sc.child_id) as sub_categories
+            FROM categories c
+            LEFT JOIN (
+                SELECT
+                    sc.parent_id,
+                    sc.child_id
+                FROM sub_category sc
+                INNER JOIN categories c
+                ON sc.child_id = c.id
+                WHERE c.is_deleted = 0 AND sc.is_deleted = 0
+            ) sc
+            ON c.id = sc.parent_id
+            WHERE id = ? AND is_deleted = 0
+            GROUP BY c.id''',
             (category_id,)
         )
         row = cursor.fetchone()
@@ -49,7 +69,8 @@ class SQLiteCategory(CategoryDBInterface):
                 name=row[1],
                 description=row[2],
                 color=row[3],
-                is_deleted=row[4],
+                is_deleted=0,
+                nested_categories=split_opt_int_group(row[4]),
             )
         return None
 
@@ -90,13 +111,32 @@ class SQLiteCategory(CategoryDBInterface):
     def get_all_categories(self) -> List[Category]:
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT id, name, color, description, is_deleted FROM categories WHERE is_deleted = 0'
+            '''SELECT
+                c.id as id,
+                c.name,
+                c.description,
+                c.color,
+                GROUP_CONCAT(sc.child_id) as sub_categories
+            FROM categories c
+            LEFT JOIN (
+                SELECT
+                    sc.parent_id,
+                    sc.child_id
+                FROM sub_category sc
+                INNER JOIN categories c
+                ON sc.child_id = c.id
+                WHERE c.is_deleted = 0 AND sc.is_deleted = 0
+            ) sc
+            ON c.id = sc.parent_id
+            WHERE is_deleted = 0
+            GROUP BY c.id'''
         )
         rows = cursor.fetchall()
         return [Category(
             id=row[0],
             name=row[1],
-            color=row[2],
-            description=row[3],
-            is_deleted=row[4],
+            description=row[2],
+            color=row[3],
+            is_deleted=0,
+            nested_categories=split_opt_int_group(row[4]),
         ) for row in rows]

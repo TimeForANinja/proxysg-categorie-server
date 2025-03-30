@@ -28,4 +28,3 @@ def get_categories():
         "message": "History fetched successfully",
         "data": histories,
     }
-

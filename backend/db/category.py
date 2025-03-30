@@ -53,6 +53,12 @@ class Category(MutableCategory):
             "description": "Whether the category is deleted or not",
         }
     )
+    nested_categories: List[int] = field(
+        default_factory=list,
+        metadata={
+            "description": "List of category IDs associated with the category",
+        }
+    )
 
 
 class CategoryDBInterface(ABC):
