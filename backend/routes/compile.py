@@ -27,8 +27,8 @@ def find_subcategories(
             continue
 
         # store cat in visited and result list
-        visited.add(current_cat.id)
-        result.append(current_cat)
+        visited.add(nested_cat.id)
+        result.append(nested_cat)
 
         # call recursively for the nested cat
         find_subcategories(nested_cat, categories_dict, visited, result)
@@ -82,15 +82,19 @@ def handle_compile(token_uuid: str):
         # header for the category
         response += f'; Category: {cat.name}\n'
         response += f'; Description: {cat.description}\n'
-        response += f'; Sub-Categories: {', '.join([c.name for c in sub_cats])}\n'
+        response += f'; Sub-Categories: {", ".join([c.name for c in sub_cats])}\n'
         response += f'define category "{cat.name}"\n'
 
         # fill in URLs that are part of the category
         for url in urls:
             if cat.id in url.categories:
                 response += f'  {url.hostname}\n'
-            elif any(sub_cat.id in url.categories for sub_cat in sub_cats):
-                response += f'  {url.hostname} ; from sub-cat {cat.name}\n'
+            else:
+                # check if any of the sub-cats includes the url
+                for sub_cat in sub_cats:
+                    if sub_cat.id in url.categories:
+                        response += f'  {url.hostname} ; from sub-cat {sub_cat.name}\n'
+                        break
 
         # end of category
         response += f'  ; end of {cat.name}\n'
