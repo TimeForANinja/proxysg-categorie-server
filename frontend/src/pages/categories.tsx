@@ -26,7 +26,7 @@ import {
     deleteCategory,
     getCategories,
     ICategory,
-    IMutableCategory,
+    IMutableCategory, setSubCategory,
     updateCategory
 } from "../api/categories";
 import {colors} from "../util/colormixer";
@@ -35,6 +35,8 @@ import {ListHeader} from "./shared/list-header";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "./shared/EditDialogState";
 import {MyPaginator} from "./shared/paginator";
+import {CategoryPicker} from "./shared/CategoryPicker02";
+import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../util/LookUpTable";
 
 const COMPARATORS = {
     BY_ID:  (a: ICategory, b: ICategory) => a.id - b.id
@@ -42,11 +44,29 @@ const COMPARATORS = {
 
 interface BuildRowProps {
     category: ICategory,
+    categories: LUT<ICategory>,
     onEdit: () => void,
     onDelete: () => void,
 }
 function BuildRow(props: BuildRowProps) {
-    const { category, onEdit, onDelete } = props;
+    const {
+        category,
+        categories,
+        onEdit,
+        onDelete
+    } = props;
+    const authMgmt = useAuth();
+
+    const [isCategories, setCategories] = React.useState(category.nested_categories);
+
+    // helper function, triggered when category selector changes
+    const handleChange = (newList: number[]) => {
+        // update api
+        setSubCategory(authMgmt.token, category.id, newList).then(newCats => {
+            // save new version
+            setCategories(newCats);
+        })
+    };
 
     return (
         <TableRow key={category.id}>
@@ -56,6 +76,13 @@ function BuildRow(props: BuildRowProps) {
                 <div style={{backgroundColor: colors[category.color], width: '20px', height: '20px'}}/>
             </TableCell>
             <TableCell>{category.description}</TableCell>
+            <TableCell>
+                <CategoryPicker
+                    isCategories={isCategories}
+                    onChange={(newList) => handleChange(newList)}
+                    categories={categories}
+                />
+            </TableCell>
             <TableCell>
                 <EditIcon onClick={onEdit}/>
                 <DeleteIcon onClick={onDelete}/>
@@ -68,7 +95,7 @@ function CategoriesPage() {
     const authMgmt = useAuth();
 
     // State info for the Page
-    const [categories, setCategory] = React.useState<ICategory[]>([]);
+    const [categories, setCategory] = React.useState<LUT<ICategory>>([]);
 
     // search & pagination
     const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
@@ -76,7 +103,7 @@ function CategoriesPage() {
     const [quickSearch, setQuickSearch] = React.useState('');
     const filteredRows = React.useMemo(
         () =>
-            categories.filter(x => {
+            getLUTValues(categories).filter(x => {
                 // not sure if switching to sth. like "levenshtein distance" makes more sense?
                 return `${x.id} ${x.name} ${x.description}`.toLowerCase().includes(quickSearch.toLowerCase())
             }),
@@ -90,7 +117,7 @@ function CategoriesPage() {
     React.useEffect(() => {
         Promise.all([getCategories(authMgmt.token)])
             .then(([categoriesData]) => {
-                setCategory(categoriesData);
+                setCategory(buildLUTFromID(categoriesData));
             })
             .catch((error) => console.error("Error:", error));
     }, [authMgmt]);
@@ -109,12 +136,12 @@ function CategoriesPage() {
         if (catID == null) {
             // add new category
             createCategory(authMgmt.token, category).then(newCat => {
-                setCategory([...categories, newCat]);
+                setCategory(pushLUT(categories, newCat));
             });
         } else {
             updateCategory(authMgmt.token, catID, category).then(newCat => {
                 // "replace" existing category if id matches
-                setCategory(categories.map(cat => cat.id === catID ? newCat : cat));
+                setCategory(mapLUT(categories, (cat => cat.id === catID ? newCat : cat)));
             })
         }
         handleEditDialogClose();
@@ -129,7 +156,7 @@ function CategoriesPage() {
         if (del && isDeleteDialogOpen != null) {
             deleteCategory(authMgmt.token, isDeleteDialogOpen.id).then(() => {
                 // remove category with ID from store
-                setCategory(categories.filter(cat => cat.id !== isDeleteDialogOpen.id));
+                setCategory(filterLUT(categories, (cat => cat.id !== isDeleteDialogOpen.id)));
             });
         }
         setDeleteDialogOpen(null);
@@ -158,6 +185,7 @@ function CategoriesPage() {
                                         <TableCell>Name</TableCell>
                                         <TableCell>Color</TableCell>
                                         <TableCell>Description</TableCell>
+                                        <TableCell>Sub-Categories</TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -165,6 +193,7 @@ function CategoriesPage() {
                                     {visibleRows.map(cat =>
                                         <BuildRow
                                             key={cat.id}
+                                            categories={categories}
                                             category={cat}
                                             onEdit={() => handleEditOpen(cat)}
                                             onDelete={() => handleDelete(cat)}

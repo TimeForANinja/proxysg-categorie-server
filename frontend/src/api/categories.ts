@@ -6,6 +6,7 @@ export interface IMutableCategory {
 
 export interface ICategory extends IMutableCategory {
     id: number;
+    nested_categories: number[];
 }
 
 export const getCategories = async (userToken: string): Promise<ICategory[]> => {
@@ -77,3 +78,64 @@ export const deleteCategory = async (userToken: string, id: number): Promise<voi
         throw new Error(`Failed to delete category.`);
     }
 };
+
+export const addSubCategory = async (userToken: string, cat_id: number, subCategoryId: number): Promise<void> => {
+    const response = await fetch(`/api/category/${cat_id}/category/${subCategoryId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'jwt-token': userToken,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to add sub-category ${subCategoryId} to category with id: ${cat_id}`);
+    }
+
+    const data = await response.json();
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+}
+
+export const deleteSubCategory = async (userToken: string, cat_id: number, subCategoryId: number): Promise<void> => {
+    const response = await fetch(`/api/category/${cat_id}/category/${subCategoryId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'jwt-token': userToken,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to remove sub-category ${subCategoryId} from category with id: ${cat_id}`);
+    }
+
+    const data = await response.json();
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+}
+
+export const setSubCategory = async (userToken: string, cat_id: number, subCategories: number[]): Promise<number[]> => {
+    const response = await fetch(`/api/category/${cat_id}/category`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'jwt-token': userToken,
+        },
+        body: JSON.stringify({ categories: subCategories }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to set sub-categories ${subCategories.join(',')} for category with id: ${cat_id}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+
+    return data.data;
+}
