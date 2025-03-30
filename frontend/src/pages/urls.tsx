@@ -1,9 +1,7 @@
 import React from 'react';
 import {
-    Autocomplete,
     Box,
     Button,
-    Chip,
     Collapse,
     Dialog,
     DialogActions,
@@ -27,12 +25,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import {getCategories, ICategory} from "../api/categories";
 import {createURL, deleteURL, getURLs, IMutableURL, IURL, setURLCategory, updateURL} from "../api/urls"
-import {colors} from "../util/colormixer";
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {MyPaginator} from "./shared/paginator";
-import {buildLUTFromID, getLUTValues, LUT} from "../util/LookUpTable";
+import {buildLUTFromID, LUT} from "../util/LookUpTable";
 import {TriState} from "./shared/EditDialogState";
+import {CategoryPicker} from "./shared/CategoryPicker";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id - b.id
@@ -53,14 +51,12 @@ function BuildRow(props: BuildRowProps) {
     const [isCategories, setCategories] = React.useState(url.categories);
 
     // helper function, triggered when category selector changes
-    const handleChange = (event: React.SyntheticEvent, cats: ICategory[]) => {
-        if (Array.isArray(cats)) {
-            // update api
-            setURLCategory(authMgmt.token, url.id, cats.map(c => c.id)).then(newCats => {
-                // save new version
-                setCategories(newCats);
-            });
-        }
+    const handleChange = (newList: number[]) => {
+        // update api
+        setURLCategory(authMgmt.token, url.id, newList).then(newCats => {
+            // save new version
+            setCategories(newCats);
+        });
     };
 
     return (
@@ -78,62 +74,10 @@ function BuildRow(props: BuildRowProps) {
                 <TableCell>{url.id}</TableCell>
                 <TableCell>{url.hostname}</TableCell>
                 <TableCell>
-                    <Autocomplete
-                        multiple
-                        disableCloseOnSelect
-                        size="small"
-                        options={getLUTValues(categories)}
-                        getOptionLabel={(cat) => cat.name}
-                        defaultValue={isCategories.map(c => categories[c])}
-                        onChange={handleChange}
-                        renderTags={(values, getTagProps) =>
-                            values.map((val, index: number) => {
-                                const { key, ...tagProps } = getTagProps({ index });
-                                return (
-                                    <Chip variant="outlined" label={val.name} key={key} {...tagProps} sx={{ bgcolor: colors[val.color]}} />
-                                );
-                            })
-                        }
-                        isOptionEqualToValue={(a, b) => a.id === b.id}
-                        renderOption={(props, option, { selected }) => {
-                            const { key, ...optionProps } = props;
-                            return (
-                                <li key={key} {...optionProps}>
-                                    <Box
-                                        component="span"
-                                        sx={{
-                                            width: 14,
-                                            height: 14,
-                                            flexShrink: 0,
-                                            borderRadius: '3px',
-                                            mr: 1,
-                                            mt: '2px',
-                                        }}
-                                        style={{ backgroundColor: colors[option.color] }}
-                                    />
-                                    <Box
-                                        sx={(t) => ({
-                                            flexGrow: 1,
-                                            '& span': {
-                                                color: '#8b949e',
-                                                ...t.applyStyles('light', {
-                                                    color: '#586069',
-                                                }),
-                                            },
-                                        })}
-                                    >
-                                        {option.name}
-                                    </Box>
-                                </li>
-                            );
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                variant="standard"
-                                placeholder="Categories"
-                            />
-                        )}
+                    <CategoryPicker
+                        isCategories={isCategories}
+                        onChange={(newList) => handleChange(newList)}
+                        categories={categories}
                     />
                 </TableCell>
                 <TableCell><DeleteIcon onClick={onDelete}/></TableCell>

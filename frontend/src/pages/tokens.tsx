@@ -8,9 +8,7 @@ import {
     DialogContent,
     DialogTitle,
     IconButton,
-    MenuItem,
     Paper,
-    Select,
     Table,
     TableBody,
     TableCell,
@@ -27,7 +25,6 @@ import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from "@mui/icons-material/Edit"
 import ShuffleIcon from "@mui/icons-material/Shuffle";
-import {SelectChangeEvent} from '@mui/material/Select';
 
 import {
     createToken,
@@ -45,7 +42,8 @@ import {ListHeader} from "./shared/list-header";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "./shared/EditDialogState";
 import {MyPaginator} from "./shared/paginator";
-import {buildLUTFromID, getLUTValues, LUT} from "../util/LookUpTable";
+import {buildLUTFromID, LUT} from "../util/LookUpTable";
+import {CategoryPicker} from "./shared/CategoryPicker02";
 
 const COMPARATORS = {
     BY_ID:  (a: IApiToken, b: IApiToken) => a.id - b.id
@@ -96,61 +94,46 @@ function BuildRow(props: BuildRowProps) {
     };
 
     // helper function, triggered when category selector changes
-    const handleChange = (event: SelectChangeEvent<number[]>) => {
-        if (Array.isArray(event.target.value)) {
-            // update api
-            setTokenCategory(authMgmt.token, token.id, event.target.value).then(newCats => {
-                // save new version
-                setCategories(newCats);
-            });
-        }
+    const handleChange = (newList: number[]) => {
+        // update api
+        setTokenCategory(authMgmt.token, token.id, newList).then(newCats => {
+            // save new version
+            setCategories(newCats);
+        });
     };
 
     return (
-            <TableRow
-                key={token.id}
-                sx={{ '&:last-child td, &:last-child th': {border: 0 }}}
-            >
-                <TableCell component="th" scope="row">{token.id}</TableCell>
-                <TableCell>{token.description}</TableCell>
-                <TableCell align="right">
-                    {hideToken ? token.token : token.token.replace(/[a-zA-Z0-9]/g, '*')}
-                    <IconButton onClick={() => setHideToken(!hideToken)}>
-                        { hideToken ? <VisibilityIcon /> : <VisibilityOffIcon /> }
-                    </IconButton>
-                    <IconButton onClick={onShuffle}>
-                        <ShuffleIcon />
-                    </IconButton>
-                    <IconButton onClick={handleCopy}>
-                        {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
-                    </IconButton>
-                </TableCell>
-                <TableCell>{ parse_last_used(token.last_use) }</TableCell>
-                <TableCell align="right">
-                    <Select
-                        multiple
-                        value={isCategories}
-                        label="Categories"
-                        onChange={handleChange}
-                        displayEmpty
-                        renderValue={(selected) => selected.map(c => categories[c]?.name).join(', ')}
-                    >
-                        {
-                            getLUTValues(categories).map((cat, catIDX) => {
-                                return (
-                                    <MenuItem key={catIDX} value={cat.id}>
-                                        <div style={{ background: cat.color}}>{cat.name}</div>
-                                    </MenuItem>
-                                )
-                            })
-                        }
-                    </Select>
-                </TableCell>
-                <TableCell>
-                    <EditIcon onClick={onEdit} />
-                    <DeleteIcon onClick={onDelete}/>
-                </TableCell>
-            </TableRow>
+        <TableRow
+            key={token.id}
+            sx={{ '&:last-child td, &:last-child th': {border: 0 }}}
+        >
+            <TableCell component="th" scope="row">{token.id}</TableCell>
+            <TableCell>{token.description}</TableCell>
+            <TableCell align="right">
+                {hideToken ? token.token : token.token.replace(/[a-zA-Z0-9]/g, '*')}
+                <IconButton onClick={() => setHideToken(!hideToken)}>
+                    { hideToken ? <VisibilityIcon /> : <VisibilityOffIcon /> }
+                </IconButton>
+                <IconButton onClick={onShuffle}>
+                    <ShuffleIcon />
+                </IconButton>
+                <IconButton onClick={handleCopy}>
+                    {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
+                </IconButton>
+            </TableCell>
+            <TableCell>{ parse_last_used(token.last_use) }</TableCell>
+            <TableCell align="right">
+                <CategoryPicker
+                    onChange={(newList) => handleChange(newList)}
+                    categories={categories}
+                    isCategories={isCategories}
+                />
+            </TableCell>
+            <TableCell>
+                <EditIcon onClick={onEdit} />
+                <DeleteIcon onClick={onDelete}/>
+            </TableCell>
+        </TableRow>
     )
 }
 
