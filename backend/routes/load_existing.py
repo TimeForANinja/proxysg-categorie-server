@@ -88,8 +88,9 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
                     hostname=new_url,
                 ))
 
-            # map url to cat
-            db.url_categories.add_url_category(my_url.id, my_cat.id)
+            # map url to cat, if not already done
+            if not my_url.id in my_url.categories:
+                db.url_categories.add_url_category(my_url.id, my_cat.id)
 
 
 def parse_db(db_str: str) -> List[ExistingCat]:
