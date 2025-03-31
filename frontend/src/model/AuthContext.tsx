@@ -2,6 +2,7 @@ import React, {createContext, useContext} from "react";
 import {OptBoolean} from "./OptionalBool";
 import {IUser, readLoginToken, removeLoginToken, saveLoginToken} from "./loginHandler";
 import {checkLogin, doLogin} from "../api/auth";
+import {CircularProgress} from "@mui/material";
 
 class GenericContextClass<T> {
     protected readonly _state: T;
@@ -94,6 +95,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     React.useEffect(() => {
         AuthManager.getInitialState().then(state => setState(state));
     },[])
+
+    if (authManager.loggedIn === OptBoolean.Unknown) {
+        return (
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100vh',
+                }}
+            >
+                <CircularProgress />
+                <div>Checking Authentication...</div>
+            </div>
+        );
+    }
 
     return (
         <AuthContext.Provider value={authManager}>

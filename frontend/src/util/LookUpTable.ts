@@ -1,5 +1,5 @@
-export type LUT<A> = {
-    [key: number]: A;
+export type LUT<T> = {
+    [key: number]: T;
 };
 
 export const filterLUT = <T>(lut: LUT<T>, filter: (value: T) => boolean): LUT<T> => {
@@ -9,7 +9,8 @@ export const filterLUT = <T>(lut: LUT<T>, filter: (value: T) => boolean): LUT<T>
             filtered[key] = lut[key];
         }
     }
-    return filtered;
+    // Return a separate object - do not filter in-place
+    return { ...filtered };
 }
 
 export const mapLUT = <T, U>(lut: LUT<T>, mapper: (value: T) => U): LUT<U> => {
@@ -21,10 +22,12 @@ export const mapLUT = <T, U>(lut: LUT<T>, mapper: (value: T) => U): LUT<U> => {
 }
 
 export const pushLUT = <T extends { id: number }>(lut: LUT<T>, ...newElements: Array<T>): LUT<T> => {
+    // clone the existing object - do not push in-place
+    const updatedLUT: LUT<T> = { ...lut };
     for (const obj of newElements) {
-        lut[obj.id] = obj;
+        updatedLUT[obj.id] = obj;
     }
-    return lut;
+    return updatedLUT;
 }
 
 export const buildLUTFromID = <T extends { id: number }>(objects: Array<T>): LUT<T> => {
