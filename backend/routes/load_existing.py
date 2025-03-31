@@ -8,6 +8,7 @@ from marshmallow_dataclass import class_schema
 
 from auth import get_auth, AUTH_ROLES_RW
 from db.category import MutableCategory
+from db.db import DBInterface
 from db.db_singleton import get_db
 from db.url import MutableURL
 from routes.schemas.generic_output import GenericOutput
@@ -41,12 +42,13 @@ class ExistingCat:
 @other_bp.output(GenericOutput)
 @other_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
 def create_category(existing_db: ExistingDBInput):
+    db_if = get_db()
+
     # parse db into intermediate object
     categories = parse_db(existing_db.categoryDB)
+    # ush the intermediate objects to the main db
+    create_in_db(db_if, categories)
 
-    create_in_db(categories)
-
-    db_if = get_db()
     db_if.history.add_history_event(f"existing db imported")
 
     return {
@@ -55,11 +57,10 @@ def create_category(existing_db: ExistingDBInput):
     }
 
 
-def create_in_db(new_cats: List[ExistingCat]):
+def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
     # get existing data from db
-    db_if = get_db()
-    existing_cats = db_if.categories.get_all_categories()
-    existing_urls = db_if.urls.get_all_urls()
+    existing_cats = db.categories.get_all_categories()
+    existing_urls = db.urls.get_all_urls()
 
     # create all entries and mappings for existing customDB in db
     for new_cat in new_cats:
@@ -70,7 +71,7 @@ def create_in_db(new_cats: List[ExistingCat]):
                 my_cat = ec
                 break
         if my_cat is None:
-            my_cat = db_if.categories.add_category(MutableCategory(
+            my_cat = db.categories.add_category(MutableCategory(
                 name=new_cat.name,
                 color=1,
             ))
@@ -83,12 +84,12 @@ def create_in_db(new_cats: List[ExistingCat]):
                     my_url = eu
                     break
             if my_url is None:
-                my_url = db_if.urls.add_url(MutableURL(
+                my_url = db.urls.add_url(MutableURL(
                     hostname=new_url,
                 ))
 
             # map url to cat
-            db_if.url_categories.add_url_category(my_url.id, my_cat.id)
+            db.url_categories.add_url_category(my_url.id, my_cat.id)
 
 
 def parse_db(db_str: str) -> List[ExistingCat]:

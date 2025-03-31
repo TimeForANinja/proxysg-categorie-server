@@ -7,6 +7,7 @@ from flask import send_from_directory
 from flask_compress import Compress
 
 from db import db_singleton
+from db.sqlite.sqlite_db import MySQLiteDB
 from routes.auth import auth_bp
 from routes.category import category_bp
 from routes.compile import compile_bp
@@ -72,7 +73,8 @@ if __name__ == '__main__':
     existing_local_db = Path("./local_db.txt")
     if existing_local_db.is_file():
         file_str = existing_local_db.read_text()
+        db = MySQLiteDB('./mydatabase.db')
         new_cats = parse_db(file_str)
-        create_in_db(new_cats)
+        create_in_db(db, new_cats)
 
     app.run(port=8080, host="0.0.0.0")
