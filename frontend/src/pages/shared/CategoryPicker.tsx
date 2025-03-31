@@ -4,6 +4,7 @@ import {Autocomplete, Box, Chip, TextField} from "@mui/material";
 import {getLUTValues, LUT} from "../../util/LookUpTable";
 import {ICategory} from "../../api/categories";
 import {colors} from "../../util/colormixer";
+import {CompareLists} from "../../util/ArrayDiff";
 
 interface CategoryPickerProps {
     isCategories: number[],
@@ -18,9 +19,11 @@ export function CategoryPicker(props: CategoryPickerProps) {
     } = props;
 
     // helper function, triggered when category selector changes
-    const handleChange = (event: React.SyntheticEvent, cats: ICategory[]) => {
-        if (Array.isArray(cats)) {
-            onChange(cats.map(c => c.id), [], []);
+    const handleChange = (event: React.SyntheticEvent, new_cats: ICategory[]) => {
+        if (Array.isArray(new_cats)) {
+            const { added, removed } = CompareLists(isCategories, new_cats.map(c => c.id));
+
+            onChange(new_cats.map(c => c.id), added, removed);
         }
     };
 

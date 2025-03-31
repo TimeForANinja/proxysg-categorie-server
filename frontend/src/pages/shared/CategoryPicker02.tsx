@@ -4,6 +4,7 @@ import {MenuItem, Select} from "@mui/material";
 import {getLUTValues, LUT} from "../../util/LookUpTable";
 import {ICategory} from "../../api/categories";
 import {SelectChangeEvent} from "@mui/material/Select";
+import {CompareLists} from "../../util/ArrayDiff";
 
 interface CategoryPickerProps {
     isCategories: number[],
@@ -19,7 +20,9 @@ export function CategoryPicker(props: CategoryPickerProps) {
 
     const handleChange = (event: SelectChangeEvent<number[]>) => {
         if (Array.isArray(event.target.value)) {
-            onChange(event.target.value, [], []);
+            const { added, removed } = CompareLists(isCategories, event.target.value);
+
+            onChange(event.target.value, added, removed);
         }
     };
 

@@ -38,24 +38,24 @@ const COMPARATORS = {
 
 interface BuildRowProps {
     url: IURL,
+    updateURL: (newURL: IURL) => void,
     categories: LUT<ICategory>,
     onDelete: () => void,
 }
 function BuildRow(props: BuildRowProps) {
-    const { url, categories, onDelete } = props;
+    const { url, updateURL, categories, onDelete } = props;
     const authMgmt = useAuth();
 
     // (un)fold a row into multiple rows
     const [isOpen, setIsOpen] = React.useState(false);
-
-    const [isCategories, setCategories] = React.useState(url.categories);
 
     // helper function, triggered when category selector changes
     const handleChange = (newList: number[]) => {
         // update api
         setURLCategory(authMgmt.token, url.id, newList).then(newCats => {
             // save new version
-            setCategories(newCats);
+            const newURL = {...url, categories: newCats};
+            updateURL(newURL);
         });
     };
 
@@ -75,7 +75,7 @@ function BuildRow(props: BuildRowProps) {
                 <TableCell>{url.hostname}</TableCell>
                 <TableCell>
                     <CategoryPicker
-                        isCategories={isCategories}
+                        isCategories={url.categories}
                         onChange={(newList) => handleChange(newList)}
                         categories={categories}
                     />
@@ -193,6 +193,7 @@ function MatchingListPage() {
                                         <BuildRow
                                             key={url.id}
                                             url={url}
+                                            updateURL={newURL => setURLs(urls.map(u => u.id === newURL.id ? newURL : u))}
                                             categories={categories}
                                             onDelete={() => handleDelete(url)}
                                         />

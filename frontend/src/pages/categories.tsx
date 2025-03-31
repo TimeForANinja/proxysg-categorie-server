@@ -44,6 +44,7 @@ const COMPARATORS = {
 
 interface BuildRowProps {
     category: ICategory,
+    updateCategory: (newCategory: ICategory) => void,
     categories: LUT<ICategory>,
     onEdit: () => void,
     onDelete: () => void,
@@ -51,20 +52,20 @@ interface BuildRowProps {
 function BuildRow(props: BuildRowProps) {
     const {
         category,
+        updateCategory,
         categories,
         onEdit,
         onDelete
     } = props;
     const authMgmt = useAuth();
 
-    const [isCategories, setCategories] = React.useState(category.nested_categories);
-
     // helper function, triggered when category selector changes
     const handleChange = (newList: number[]) => {
         // update api
         setSubCategory(authMgmt.token, category.id, newList).then(newCats => {
             // save new version
-            setCategories(newCats);
+            const newCat = {...category, nested_categories: newCats};
+            updateCategory(newCat);
         })
     };
 
@@ -78,7 +79,7 @@ function BuildRow(props: BuildRowProps) {
             <TableCell>{category.description}</TableCell>
             <TableCell>
                 <CategoryPicker
-                    isCategories={isCategories}
+                    isCategories={category.nested_categories}
                     onChange={(newList) => handleChange(newList)}
                     categories={categories}
                 />
@@ -104,8 +105,10 @@ function CategoriesPage() {
     const filteredRows = React.useMemo(
         () =>
             getLUTValues(categories).filter(x => {
-                // not sure if switching to sth. like "levenshtein distance" makes more sense?
-                return `${x.id} ${x.name} ${x.description}`.toLowerCase().includes(quickSearch.toLowerCase())
+                // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
+                const cat_str = x.nested_categories.map(c => categories[c]?.name).join(' ');
+                const search_str = `${x.id} ${x.name} ${x.description} ${cat_str}`;
+                return search_str.toLowerCase().includes(quickSearch.toLowerCase());
             }),
         [quickSearch, categories],
     );
@@ -194,6 +197,7 @@ function CategoriesPage() {
                                         <BuildRow
                                             key={cat.id}
                                             categories={categories}
+                                            updateCategory={newCat => setCategory(mapLUT(categories, (cat => cat.id === newCat.id ? newCat : cat)))}
                                             category={cat}
                                             onEdit={() => handleEditOpen(cat)}
                                             onDelete={() => handleDelete(cat)}

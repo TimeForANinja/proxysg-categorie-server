@@ -61,6 +61,7 @@ const parse_last_used = (last_use: number) => {
 
 interface BuildRowProps {
     token: IApiToken,
+    updateToken: (newToken: IApiToken) => void,
     categories: LUT<ICategory>,
     onEdit: () => void,
     onShuffle: () => void,
@@ -69,6 +70,7 @@ interface BuildRowProps {
 function BuildRow(props: BuildRowProps) {
     const {
         token,
+        updateToken,
         categories,
         onEdit,
         onDelete,
@@ -78,8 +80,6 @@ function BuildRow(props: BuildRowProps) {
 
     // toggle the visibility of the token
     const [hideToken, setHideToken] = React.useState(false);
-
-    const [isCategories, setCategories] = React.useState(token.categories);
 
     // tracks state for the copy icon, which slightly changes for a few seconds after being pressed
     const [isCopied, setIsCopied] = React.useState(false);
@@ -98,7 +98,8 @@ function BuildRow(props: BuildRowProps) {
         // update api
         setTokenCategory(authMgmt.token, token.id, newList).then(newCats => {
             // save new version
-            setCategories(newCats);
+            const newToken = {...token, categories: newCats};
+            updateToken(newToken);
         });
     };
 
@@ -126,7 +127,7 @@ function BuildRow(props: BuildRowProps) {
                 <CategoryPicker
                     onChange={(newList) => handleChange(newList)}
                     categories={categories}
-                    isCategories={isCategories}
+                    isCategories={token.categories}
                 />
             </TableCell>
             <TableCell>
@@ -255,6 +256,7 @@ function ApiTokenPage() {
                                         <BuildRow
                                             key={token.id}
                                             token={token}
+                                            updateToken={newToken => setTokens(tokens.map(t => t.id === newToken.id ? newToken : t))}
                                             categories={categories}
                                             onEdit={() => handleEditOpen(token)}
                                             onShuffle={() => handleOnShuffle(token)}
