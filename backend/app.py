@@ -1,5 +1,6 @@
 import os
 from os.path import abspath
+from pathlib import Path
 
 from apiflask import APIFlask
 from flask import send_from_directory
@@ -10,6 +11,7 @@ from routes.auth import auth_bp
 from routes.category import category_bp
 from routes.compile import compile_bp
 from routes.history import history_bp
+from routes.load_existing import other_bp, parse_db, create_in_db
 from routes.token import token_bp
 from routes.url import url_bp
 
@@ -30,6 +32,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(token_bp)
 app.register_blueprint(url_bp)
 app.register_blueprint(compile_bp)
+app.register_blueprint(other_bp)
 
 
 # Serve index.html for the root route
@@ -66,4 +69,10 @@ def teardown(exception):
 
 
 if __name__ == '__main__':
+    existing_local_db = Path("./local_db.txt")
+    if existing_local_db.is_file():
+        file_str = existing_local_db.read_text()
+        new_cats = parse_db(file_str)
+        create_in_db(new_cats)
+
     app.run(port=8080, host="0.0.0.0")
