@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  proxysg-categorie-server:
+    image: ghcr.io/timeforaninja/proxysg-categorie-server:main
+    container_name: proxysg-categorie-server
+    ports:
+      # Exposes the server on port 8080
+      - "8080:8080"
+    volumes:
+      # Mounts the database file
+      - ./mydatabase.db:/data/mydatabase.db
+    # Ensures the container automatically restarts on failure
+    restart: unless-stopped
