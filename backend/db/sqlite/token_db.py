@@ -138,11 +138,7 @@ class SQLiteToken(TokenDBInterface):
         )
         self.conn.commit()
 
-    def roll_token(
-            self,
-            token_id: str,
-            uuid: str,
-    ) -> Token:
+    def roll_token(self, token_id: str, uuid: str) -> Token:
         cursor = self.conn.cursor()
         cursor.execute(
             'UPDATE tokens SET token = ? WHERE id = ? AND is_deleted = 0',
