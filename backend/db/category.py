@@ -3,12 +3,17 @@ from dataclasses import field, dataclass
 from typing import Optional, List
 from marshmallow.validate import Length
 
+from db.util.validators import simpleNameValidator, simpleStringValidator
+
 
 @dataclass(kw_only=True)
 class MutableCategory:
     name: str = field(metadata={
         "required": True,
-        "validate": Length(min=1),
+        "validate": [
+            Length(min=1),
+            simpleNameValidator,
+        ],
         "description": "Name of the category",
     })
     color: int = field(metadata={
@@ -17,7 +22,10 @@ class MutableCategory:
     description: Optional[str] = field(
         default=None,
         metadata={
-            "validate": Length(max=255),
+            "validate": [
+                Length(max=255),
+                simpleStringValidator,
+            ],
             "description": "Description of the category"
         },
     )
@@ -34,7 +42,10 @@ class Category(MutableCategory):
     })
     name: str = field(metadata={
         "required": True,
-        "validate": Length(min=1),
+        "validate": [
+            Length(min=1),
+            simpleNameValidator,
+        ],
         "description": "Name of the category",
     })
     color: int = field(metadata={
@@ -43,7 +54,10 @@ class Category(MutableCategory):
     description: Optional[str] = field(
         default=None,
         metadata={
-            "validate": Length(max=255),
+            "validate": [
+                Length(max=255),
+                simpleStringValidator,
+            ],
             "description": "Description of the category"
         },
     )

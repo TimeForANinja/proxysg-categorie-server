@@ -3,12 +3,17 @@ from dataclasses import field, dataclass
 from typing import Optional, List
 from marshmallow.validate import Length
 
+from db.util.validators import simpleStringValidator
+
 
 @dataclass(kw_only=True)
 class MutableToken:
     description: str = field(metadata={
         "required": True,
-        "validate": Length(max=255),
+        "validate": [
+            Length(max=255),
+            simpleStringValidator,
+        ],
         "description": "Description of the token"
     })
 
@@ -29,7 +34,10 @@ class Token(MutableToken):
     })
     description: str = field(metadata={
         "required": True,
-        "validate": Length(max=255),
+        "validate": [
+            Length(max=255),
+            simpleStringValidator,
+        ],
         "description": "Description of the token"
     })
     last_use: int = field(
