@@ -20,6 +20,9 @@ WORKDIR /backend
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# make dir for persistent content
+RUN mkdir -p /backend/data
+
 # Copy the backend code
 COPY ./backend/ ./
 

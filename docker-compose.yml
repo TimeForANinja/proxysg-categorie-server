@@ -2,13 +2,19 @@ version: "3.8"
 
 services:
   proxysg-categorie-server:
+    # use the preexisting image
     image: ghcr.io/timeforaninja/proxysg-categorie-server:main
+    # __OR__ build new from local Dockerfile
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile
+
     container_name: proxysg-categorie-server
     ports:
       # Exposes the server on port 8080
       - "8080:8080"
     volumes:
-      # Mounts the database file
-      - ./mydatabase.db:/data/mydatabase.db
+      # Mounts the folder with persistent files
+      - ./data/:/backend/data/
     # Ensures the container automatically restarts on failure
     restart: unless-stopped
