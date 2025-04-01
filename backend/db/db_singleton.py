@@ -3,7 +3,7 @@ from db.sqlite.sqlite_db import MySQLiteDB
 from flask import g
 
 
-def get_db(database_name='mydatabase.db') -> DBInterface:
+def get_db(database_name='./data/mydatabase.db') -> DBInterface:
     db = getattr(g, '_database', None)
 
     if db is None:

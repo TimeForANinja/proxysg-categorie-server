@@ -71,10 +71,10 @@ def teardown(exception):
 
 if __name__ == '__main__':
     # load local db if it exists
-    existing_local_db = Path("./local_db.txt")
+    existing_local_db = Path("./data/local_db.txt")
     if existing_local_db.is_file():
         file_str = existing_local_db.read_text()
-        db = MySQLiteDB('./mydatabase.db')
+        db = MySQLiteDB('./data/mydatabase.db')
         new_cats = parse_db(file_str)
         create_in_db(db, new_cats)
 
