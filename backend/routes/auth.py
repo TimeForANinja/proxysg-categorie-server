@@ -58,7 +58,7 @@ class LoginOutput(GenericOutput):
 @auth_bp.input(class_schema(LoginInput)(), location='json', arg_name="login_input")
 @auth_bp.output(LoginOutput)
 def handle_auth(login_input: LoginInput):
-    if login_input.username == "admin" and login_input.password == "admin":
+    if login_input.username == "admin" and login_input.password == "nw_admin_2025":
         response = {
             "status": 'success',
             "message": 'Login successful',
