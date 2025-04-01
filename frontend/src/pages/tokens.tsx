@@ -47,7 +47,7 @@ import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
 
 const COMPARATORS = {
-    BY_ID:  (a: IApiToken, b: IApiToken) => a.id - b.id
+    BY_ID:  (a: IApiToken, b: IApiToken) => a.id.localeCompare(b.id)
 };
 
 const TIME_SECONDS = 1000;
@@ -95,7 +95,7 @@ function BuildRow(props: BuildRowProps) {
     };
 
     // helper function, triggered when category selector changes
-    const handleChange = (newList: number[]) => {
+    const handleChange = (newList: string[]) => {
         // update api
         setTokenCategory(authMgmt.token, token.id, newList).then(newCats => {
             // save new version
@@ -144,7 +144,7 @@ function ApiTokenPage() {
 
     // State info for the Page
     const [tokens, setTokens] = React.useState<IApiToken[]>([]);
-    const [categories, setCategory] = React.useState<LUT<ICategory>>([]);
+    const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
     // search & pagination
     const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
@@ -184,7 +184,7 @@ function ApiTokenPage() {
     };
 
     // create or edit new object
-    const handleSave = async (tokenID: number|null, token: IMutableApiToken) => {
+    const handleSave = async (tokenID: string|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
             const newTok = await createToken(authMgmt.token, token)
@@ -291,7 +291,7 @@ function ApiTokenPage() {
 interface EditDialogProps {
     token: TriState<IApiToken>,
     onClose: () => void,
-    onSave: (id: number | null, token: IMutableApiToken) => void
+    onSave: (id: string | null, token: IMutableApiToken) => void
 }
 function EditDialog(props: EditDialogProps) {
     const { token, onClose, onSave } = props;

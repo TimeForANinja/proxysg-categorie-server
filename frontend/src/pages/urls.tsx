@@ -34,7 +34,7 @@ import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleURLCheck} from "../util/InputValidators";
 
 const COMPARATORS = {
-    BY_ID:  (a: IURL, b: IURL) => a.id - b.id
+    BY_ID:  (a: IURL, b: IURL) => a.id.localeCompare(b.id)
 };
 
 interface BuildRowProps {
@@ -51,7 +51,7 @@ function BuildRow(props: BuildRowProps) {
     const [isOpen, setIsOpen] = React.useState(false);
 
     // helper function, triggered when category selector changes
-    const handleChange = (newList: number[]) => {
+    const handleChange = (newList: string[]) => {
         // update api
         setURLCategory(authMgmt.token, url.id, newList).then(newCats => {
             // save new version
@@ -103,7 +103,7 @@ function MatchingListPage() {
 
     // State info for the Page
     const [urls, setURLs] = React.useState<IURL[]>([]);
-    const [categories, setCategory] = React.useState<LUT<ICategory>>([]);
+    const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
     // search & pagination
     const [visibleRows, setVisibleRows] = React.useState<IURL[]>([]);
@@ -141,7 +141,7 @@ function MatchingListPage() {
     };
 
     // create or edit new object
-    const handleSave = async (urlID: number|null, uri: IMutableURL) => {
+    const handleSave = async (urlID: string|null, uri: IMutableURL) => {
         if (urlID == null) {
             // add new URL
             const newURI = await createURL(authMgmt.token, uri);
@@ -220,7 +220,7 @@ function MatchingListPage() {
 interface EditDialogProps {
     uri: TriState<IURL>,
     onClose: () => void,
-    onSave: (id: number | null, uri: IMutableURL) => void
+    onSave: (id: string | null, uri: IMutableURL) => void
 }
 function EditDialog(props: EditDialogProps) {
     let {uri, onClose, onSave} = props;

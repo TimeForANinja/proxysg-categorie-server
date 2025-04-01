@@ -7,8 +7,8 @@ import {SelectChangeEvent} from "@mui/material/Select";
 import {CompareLists} from "../../util/ArrayDiff";
 
 interface CategoryPickerProps {
-    isCategories: number[],
-    onChange: (newCats: number[], added: number[], removed: number[]) => void,
+    isCategories: string[],
+    onChange: (newCats: string[], added: string[], removed: string[]) => void,
     categories: LUT<ICategory>,
 }
 export function CategoryPicker(props: CategoryPickerProps) {
@@ -18,7 +18,7 @@ export function CategoryPicker(props: CategoryPickerProps) {
         categories
     } = props;
 
-    const handleChange = (event: SelectChangeEvent<number[]>) => {
+    const handleChange = (event: SelectChangeEvent<string[]>) => {
         if (Array.isArray(event.target.value)) {
             const { added, removed } = CompareLists(isCategories, event.target.value);
 

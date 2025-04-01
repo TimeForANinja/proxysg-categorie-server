@@ -3,9 +3,9 @@ export interface IMutableApiToken {
 }
 
 export interface IApiToken extends IMutableApiToken {
-    id: number;
+    id: string;
     token: string;
-    categories: number[];
+    categories: string[];
     last_use: number;
 }
 
@@ -28,7 +28,7 @@ export const getAPITokens = async (userToken: string): Promise<IApiToken[]> => {
     return data.data;
 }
 
-export const updateToken = async (userToken: string, id: Number, updatedToken: IMutableApiToken): Promise<IApiToken> => {
+export const updateToken = async (userToken: string, id: string, updatedToken: IMutableApiToken): Promise<IApiToken> => {
     const response = await fetch(`/api/token/${id}`, {
         method: 'PUT',
         headers: {
@@ -74,7 +74,7 @@ export const createToken = async (userToken: string, partialToken: IMutableApiTo
     return data.data;
 };
 
-export const rotateToken = async (userToken: string, id: Number): Promise<IApiToken> => {
+export const rotateToken = async (userToken: string, id: string): Promise<IApiToken> => {
     const response = await fetch(`/api/token/${id}/roll`, {
         method: 'POST',
         headers: {
@@ -96,7 +96,7 @@ export const rotateToken = async (userToken: string, id: Number): Promise<IApiTo
     return data.data;
 };
 
-export const deleteToken = async (userToken: string, id: number): Promise<void> => {
+export const deleteToken = async (userToken: string, id: string): Promise<void> => {
     const response = await fetch(`/api/token/${id}`, {
         method: 'DELETE',
         headers: { 'jwt-token': userToken },
@@ -112,7 +112,7 @@ export const deleteToken = async (userToken: string, id: number): Promise<void> 
     }
 }
 
-export const addTokenCategory = async (userToken: string, id: number, categoryId: number): Promise<void> => {
+export const addTokenCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
     const response = await fetch(`/api/token/${id}/category/${categoryId}`, {
         method: 'POST',
         headers: {
@@ -131,7 +131,7 @@ export const addTokenCategory = async (userToken: string, id: number, categoryId
     }
 }
 
-export const deleteTokenCategory = async (userToken: string, id: number, categoryId: number): Promise<void> => {
+export const deleteTokenCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
     const response = await fetch(`/api/token/${id}/category/${categoryId}`, {
         method: 'DELETE',
         headers: {
@@ -150,7 +150,7 @@ export const deleteTokenCategory = async (userToken: string, id: number, categor
     }
 }
 
-export const setTokenCategory = async (userToken: string, id: number, categories: number[]): Promise<number[]> => {
+export const setTokenCategory = async (userToken: string, id: string, categories: string[]): Promise<string[]> => {
     const response = await fetch(`/api/token/${id}/category`, {
         method: 'POST',
         headers: {

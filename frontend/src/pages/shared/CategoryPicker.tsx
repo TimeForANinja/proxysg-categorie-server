@@ -7,8 +7,8 @@ import {colors} from "../../util/colormixer";
 import {CompareLists} from "../../util/ArrayDiff";
 
 interface CategoryPickerProps {
-    isCategories: number[],
-    onChange: (newCats: number[], added: number[], removed: number[]) => void,
+    isCategories: string[],
+    onChange: (newCats: string[], added: string[], removed: string[]) => void,
     categories: LUT<ICategory>,
 }
 export function CategoryPicker(props: CategoryPickerProps) {
