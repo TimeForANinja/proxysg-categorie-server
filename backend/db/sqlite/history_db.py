@@ -37,7 +37,7 @@ class SQLiteHistory(HistoryDBInterface):
         self.conn.commit()
 
         hist = History(
-            id = cursor.lastrowid,
+            id = str(cursor.lastrowid),
             time = timestamp,
             description = action,
             atomics = [],

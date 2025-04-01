@@ -22,7 +22,7 @@ class Token(MutableToken):
     """
     Helper class to represent a token.
     """
-    id: int = field(metadata={
+    id: str = field(metadata={
         "required": True,
         "description": "ID of the token",
     })
@@ -52,7 +52,7 @@ class Token(MutableToken):
             "description": "Whether the token is deleted or not",
         }
     )
-    categories: List[int] = field(
+    categories: List[str] = field(
         default_factory=list,
         metadata={
             "description": "List of category IDs associated with the URL",
@@ -80,7 +80,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_token(self, token_id: int) -> Optional[Token]:
+    def get_token(self, token_id: str) -> Optional[Token]:
         """
         Retrieve the details of a specific token by its ID.
 
@@ -102,7 +102,7 @@ class TokenDBInterface(ABC):
     @abstractmethod
     def update_token(
             self,
-            token_id: int,
+            token_id: str,
             token: MutableToken,
     ) -> Token:
         """
@@ -114,7 +114,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_usage(self, token_id: int) -> None:
+    def update_usage(self, token_id: str) -> None:
         """
         Update the usage counter for a  specified token identified by its ID.
 
@@ -125,7 +125,7 @@ class TokenDBInterface(ABC):
     @abstractmethod
     def roll_token(
             self,
-            token_id: int,
+            token_id: str,
             uuid: str,
     ) -> Token:
         """
@@ -138,7 +138,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_token(self, token_id: int) -> None:
+    def delete_token(self, token_id: str) -> None:
         """
         Soft delete a token by setting its `is_deleted` flag to 1.
 

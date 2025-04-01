@@ -10,7 +10,7 @@ class SubCategoryDBInterface(ABC):
         """
         pass
 
-    def get_sub_categories_by_id(self, category_id: int) -> List[int]:
+    def get_sub_categories_by_id(self, category_id: str) -> List[str]:
         """
         Get all sub-categories of a category
 
@@ -18,7 +18,7 @@ class SubCategoryDBInterface(ABC):
         """
         pass
 
-    def add_sub_category(self, category_id: int, sub_category_id: int) -> None:
+    def add_sub_category(self, category_id: str, sub_category_id: str) -> None:
         """
         Add a new sub-category
 
@@ -27,7 +27,7 @@ class SubCategoryDBInterface(ABC):
         """
         pass
 
-    def delete_sub_category(self, category_id: int, sub_category_id: int) -> None:
+    def delete_sub_category(self, category_id: str, sub_category_id: str) -> None:
         """
         Delete a mapping of a sub-category.
 

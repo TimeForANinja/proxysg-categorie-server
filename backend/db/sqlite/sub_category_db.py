@@ -21,7 +21,7 @@ class SQLiteSubCategory(SubCategoryDBInterface):
         )''')
         self.conn.commit()
 
-    def get_sub_categories_by_id(self, category_id: int) -> List[int]:
+    def get_sub_categories_by_id(self, category_id: str) -> List[str]:
         cursor = self.conn.cursor()
         cursor.execute(
             '''SELECT
@@ -30,23 +30,23 @@ class SQLiteSubCategory(SubCategoryDBInterface):
             INNER JOIN categories c
             ON sc.child_id = c.id AND c.is_deleted = 0
             WHERE sc.parent_id = ? AND sc.is_deleted = 0''',
-            (category_id,)
+            (int(category_id),)
         )
         rows = cursor.fetchall()
         return [row[0] for row in rows]
 
-    def add_sub_category(self, category_id: int, sub_category_id: int) -> None:
+    def add_sub_category(self, category_id: str, sub_category_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
             'INSERT INTO sub_category (parent_id, child_id) VALUES (?, ?)',
-            (category_id, sub_category_id,)
+            (int(category_id), int(sub_category_id),)
         )
         self.conn.commit()
 
-    def delete_sub_category(self, category_id: int, sub_category_id: int) -> None:
+    def delete_sub_category(self, category_id: str, sub_category_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
             'UPDATE sub_category SET is_deleted = 1 WHERE parent_id = ? AND child_id = ? AND is_deleted = 0',
-            (category_id, sub_category_id,)
+            (int(category_id), int(sub_category_id),)
         )
         self.conn.commit()

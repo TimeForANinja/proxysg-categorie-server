@@ -22,7 +22,7 @@ class URL(MutableURL):
     """
     Helper class to represent a URL.
     """
-    id: int = field(metadata={
+    id: str = field(metadata={
         "required": True,
         "description": "ID of the URL",
     })
@@ -40,7 +40,7 @@ class URL(MutableURL):
             "description": "Whether the url is deleted or not",
         }
     )
-    categories: List[int] = field(
+    categories: List[str] = field(
         default_factory=list,
         metadata={
             "description": "List of category IDs associated with the URL",
@@ -67,7 +67,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_url(self, url_id: int) -> Optional[URL]:
+    def get_url(self, url_id: str) -> Optional[URL]:
         """
         Retrieve the details of a specific url by its ID.
 
@@ -80,7 +80,7 @@ class URLDBInterface(ABC):
     @abstractmethod
     def update_url(
             self,
-            url_id: int,
+            url_id: str,
             url: MutableURL,
     ) -> URL:
         """
@@ -92,7 +92,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_url(self, url_id: int) -> None:
+    def delete_url(self, url_id: str) -> None:
         """
         Soft delete an url by setting its `is_deleted` flag to 1.
 

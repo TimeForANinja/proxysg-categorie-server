@@ -1,8 +1,8 @@
 import sqlite3
-from db.category import CategoryDBInterface, MutableCategory, Category
 from typing import Optional, List
 
 from db.sqlite.util import split_opt_int_group
+from db.category import CategoryDBInterface, MutableCategory, Category
 
 
 class SQLiteCategory(CategoryDBInterface):
@@ -33,12 +33,12 @@ class SQLiteCategory(CategoryDBInterface):
             name = mut_cat.name,
             description = mut_cat.description,
             color = mut_cat.color,
-            id = cursor.lastrowid,
+            id = str(cursor.lastrowid),
             is_deleted = 0,
         )
         return cat
 
-    def get_category(self, category_id: int) -> Optional[Category]:
+    def get_category(self, category_id: str) -> Optional[Category]:
         cursor = self.conn.cursor()
         cursor.execute(
             '''SELECT
@@ -60,7 +60,7 @@ class SQLiteCategory(CategoryDBInterface):
             ON c.id = sc.parent_id
             WHERE id = ? AND is_deleted = 0
             GROUP BY c.id''',
-            (category_id,)
+            (int(category_id),)
         )
         row = cursor.fetchone()
         if row:
@@ -74,7 +74,7 @@ class SQLiteCategory(CategoryDBInterface):
             )
         return None
 
-    def update_category(self, cat_id: int, category: MutableCategory) -> Category:
+    def update_category(self, cat_id: str, category: MutableCategory) -> Category:
         updates = []
         params = []
 
@@ -93,18 +93,18 @@ class SQLiteCategory(CategoryDBInterface):
 
         if updates:
             query = f'UPDATE categories SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
-            params.append(cat_id)
+            params.append(int(cat_id))
             cursor = self.conn.cursor()
             cursor.execute(query, params)
             self.conn.commit()
 
         return self.get_category(cat_id)
 
-    def delete_category(self, category_id: int) -> None:
+    def delete_category(self, category_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
             'UPDATE categories SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
-            (category_id,)
+            (int(category_id),)
         )
         self.conn.commit()
 

@@ -21,7 +21,7 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
         )''')
         self.conn.commit()
 
-    def get_url_categories_by_url(self, url_id: int) -> List[int]:
+    def get_url_categories_by_url(self, url_id: str) -> List[str]:
         cursor = self.conn.cursor()
         cursor.execute(
             '''SELECT
@@ -30,23 +30,23 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
             INNER JOIN categories c
             ON uc.category_id = c.id AND c.is_deleted = 0
             WHERE uc.url_id = ? AND uc.is_deleted = 0''',
-            (url_id,)
+            (int(url_id),)
         )
         rows = cursor.fetchall()
         return [row[0] for row in rows]
 
-    def add_url_category(self, url_id: int, category_id: int) -> None:
+    def add_url_category(self, url_id: str, category_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
             'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
-            (url_id, category_id,)
+            (int(url_id), int(category_id),)
         )
         self.conn.commit()
 
-    def delete_url_category(self, url_id: int, category_id: int) -> None:
+    def delete_url_category(self, url_id: str, category_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
             'UPDATE url_categories SET is_deleted = 1 WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
-            (url_id, category_id,)
+            (int(url_id), int(category_id),)
         )
         self.conn.commit()

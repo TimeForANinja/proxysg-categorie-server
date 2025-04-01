@@ -36,7 +36,7 @@ class Category(MutableCategory):
     """
     Helper class to represent a category.
     """
-    id: int = field(metadata={
+    id: str = field(metadata={
         "required": True,
         "description": "ID of the category",
     })
@@ -67,7 +67,7 @@ class Category(MutableCategory):
             "description": "Whether the category is deleted or not",
         }
     )
-    nested_categories: List[int] = field(
+    nested_categories: List[str] = field(
         default_factory=list,
         metadata={
             "description": "List of category IDs associated with the category",
@@ -94,7 +94,7 @@ class CategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_category(self, category_id: int) -> Optional[Category]:
+    def get_category(self, category_id: str) -> Optional[Category]:
         """
         Retrieve the details of a specific category by its ID.
 
@@ -107,7 +107,7 @@ class CategoryDBInterface(ABC):
     @abstractmethod
     def update_category(
             self,
-            cat_id: int,
+            cat_id: str,
             category: MutableCategory,
     ) -> Category:
         """
@@ -119,7 +119,7 @@ class CategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_category(self, category_id: int) -> None:
+    def delete_category(self, category_id: str) -> None:
         """
         Soft delete a category by setting its `is_deleted` flag to 1.
 

@@ -11,7 +11,7 @@ class Atomic:
 @dataclass
 class History:
     """Helper class to represent a category."""
-    id: int = field(metadata={
+    id: str = field(metadata={
         "required": True,
         "description": "ID of the category",
     })
