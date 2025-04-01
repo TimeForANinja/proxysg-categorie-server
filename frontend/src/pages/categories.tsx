@@ -37,9 +37,13 @@ import {TriState} from "./shared/EditDialogState";
 import {MyPaginator} from "./shared/paginator";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../util/LookUpTable";
+import {
+    simpleNameCheck,
+    simpleStringCheck,
+} from "../util/InputValidators";
 
 const COMPARATORS = {
-    BY_ID:  (a: ICategory, b: ICategory) => a.id - b.id
+    BY_ID: (a: ICategory, b: ICategory) => a.id - b.id
 };
 
 interface BuildRowProps {
@@ -135,17 +139,15 @@ function CategoriesPage() {
     };
 
     // create or edit new object
-    const handleSave = (catID: number|null, category: IMutableCategory) => {
+    const handleSave = async (catID: number | null, category: IMutableCategory) => {
         if (catID == null) {
             // add new category
-            createCategory(authMgmt.token, category).then(newCat => {
-                setCategory(pushLUT(categories, newCat));
-            });
+            const newCat = await createCategory(authMgmt.token, category)
+            setCategory(pushLUT(categories, newCat));
         } else {
-            updateCategory(authMgmt.token, catID, category).then(newCat => {
-                // "replace" existing category if id matches
-                setCategory(mapLUT(categories, (cat => cat.id === catID ? newCat : cat)));
-            })
+            const newCat = await updateCategory(authMgmt.token, catID, category)
+            // "replace" existing category if id matches
+            setCategory(mapLUT(categories, (cat => cat.id === catID ? newCat : cat)));
         }
         handleEditDialogClose();
     };
@@ -181,7 +183,7 @@ function CategoriesPage() {
                 <Grid size={12}>
                     <Paper>
                         <TableContainer component={Paper}>
-                            <Table sx={{ minWidth: 650 }} size="small">
+                            <Table sx={{minWidth: 650}} size="small">
                                 <TableHead>
                                     <TableRow>
                                         <TableCell component="th" scope="row">ID</TableCell>
@@ -241,6 +243,16 @@ function EditDialog(props: EditDialogProps) {
     const [description, setDescription] = React.useState('');
     const [color, setColor] = React.useState(1);
 
+    // validate inputs
+    const nameError: string|null = React.useMemo(
+        () => simpleNameCheck(name, true),
+        [name],
+    )
+    const descriptionError: string|null = React.useMemo(
+        () => simpleStringCheck(description),
+        [description],
+    )
+
     React.useEffect(() => {
         // set existing values if a category was provided
         // else force clear the fields
@@ -256,6 +268,11 @@ function EditDialog(props: EditDialogProps) {
     }, [category]);
 
     const handleSave = () => {
+        if (nameError != null || descriptionError != null) {
+            // only continue if the inputs are valid
+            return;
+        }
+
         onSave(category.getValue()?.id ?? null, {name, description, color});
         setName("")
         setDescription("")
@@ -270,12 +287,17 @@ function EditDialog(props: EditDialogProps) {
                     <TextField
                         label="Name"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={e => setName(e.target.value)}
+                        error={nameError != null}
+                        helperText={nameError ? nameError : ''}
+                        required
                     />
                     <TextField
                         label="Description"
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={e => setDescription(e.target.value)}
+                        error={descriptionError != null}
+                        helperText={descriptionError ? descriptionError : ''}
                     />
                     <Select
                         value={color.toString()}

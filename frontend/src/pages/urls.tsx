@@ -31,6 +31,7 @@ import {MyPaginator} from "./shared/paginator";
 import {buildLUTFromID, LUT} from "../util/LookUpTable";
 import {TriState} from "./shared/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
+import {simpleURLCheck} from "../util/InputValidators";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id - b.id
@@ -140,17 +141,15 @@ function MatchingListPage() {
     };
 
     // create or edit new object
-    const handleSave = (urlID: number|null, uri: IMutableURL) => {
+    const handleSave = async (urlID: number|null, uri: IMutableURL) => {
         if (urlID == null) {
             // add new URL
-            createURL(authMgmt.token, uri).then(newURI => {
-                setURLs([...urls, newURI]);
-            });
+            const newURI = await createURL(authMgmt.token, uri);
+            setURLs([...urls, newURI]);
         } else {
-            updateURL(authMgmt.token, urlID, uri).then(newURI => {
-                // "replace" existing URL if id matches
-                setURLs(urls.map(u => u.id === urlID ? newURI : u));
-            })
+            const newURI = await updateURL(authMgmt.token, urlID, uri)
+            // "replace" existing URL if id matches
+            setURLs(urls.map(u => u.id === urlID ? newURI : u));
         }
         handleEditDialogClose();
     };
@@ -228,6 +227,12 @@ function EditDialog(props: EditDialogProps) {
 
     const [hostname, setHostname] = React.useState('');
 
+    // validate inputs
+    const hostnameError: string|null = React.useMemo(
+        () => simpleURLCheck(hostname, true),
+        [hostname],
+    )
+
     React.useEffect(() => {
         // set existing values if a category was provided
         // else force clear the fields
@@ -239,6 +244,11 @@ function EditDialog(props: EditDialogProps) {
     }, [uri]);
 
     const handleSave = () => {
+        if (hostnameError != null) {
+            // only continue if the inputs are valid
+            return;
+        }
+
         onSave(uri.getValue()?.id ?? null, {hostname});
         setHostname("")
     };
@@ -252,6 +262,9 @@ function EditDialog(props: EditDialogProps) {
                         label="Hostname (FQDN)"
                         value={hostname}
                         onChange={(e) => setHostname(e.target.value)}
+                        error={hostnameError != null}
+                        helperText={hostnameError ? hostnameError : ''}
+                        required
                     />
                 </Box>
             </DialogContent>

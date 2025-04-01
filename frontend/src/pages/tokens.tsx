@@ -44,6 +44,7 @@ import {TriState} from "./shared/EditDialogState";
 import {MyPaginator} from "./shared/paginator";
 import {buildLUTFromID, LUT} from "../util/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker02";
+import {simpleStringCheck} from "../util/InputValidators";
 
 const COMPARATORS = {
     BY_ID:  (a: IApiToken, b: IApiToken) => a.id - b.id
@@ -183,17 +184,15 @@ function ApiTokenPage() {
     };
 
     // create or edit new object
-    const handleSave = (tokenID: number|null, token: IMutableApiToken) => {
+    const handleSave = async (tokenID: number|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
-            createToken(authMgmt.token, token).then(newTok => {
-                setTokens([...tokens, newTok]);
-            });
+            const newTok = await createToken(authMgmt.token, token)
+            setTokens([...tokens, newTok]);
          } else {
-            updateToken(authMgmt.token, tokenID, token).then(newTok => {
-                // "replace" existing token if id matches
-                setTokens(tokens.map(tok => tok.id === tokenID ? newTok : tok));
-            })
+            const newTok = await updateToken(authMgmt.token, tokenID, token)
+            // "replace" existing token if id matches
+            setTokens(tokens.map(tok => tok.id === tokenID ? newTok : tok));
         }
         handleEditDialogClose();
     };
@@ -299,6 +298,12 @@ function EditDialog(props: EditDialogProps) {
 
     const [description, setDescription] = React.useState('');
 
+    // validate inputs
+    const descriptionError: string|null = React.useMemo(
+        () => simpleStringCheck(description),
+        [description],
+    )
+
     React.useEffect(() => {
         // set existing values if a category was provided
         // else force clear the fields
@@ -310,6 +315,11 @@ function EditDialog(props: EditDialogProps) {
     }, [token]);
 
     const handleSave = () => {
+        if (descriptionError != null) {
+            // only continue if the inputs are valid
+            return;
+        }
+
         onSave(token.getValue()?.id ?? null, { description });
     };
 
@@ -322,6 +332,8 @@ function EditDialog(props: EditDialogProps) {
                         label="Description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
+                        error={descriptionError != null}
+                        helperText={descriptionError ? descriptionError : ''}
                     />
                 </Box>
             </DialogContent>
