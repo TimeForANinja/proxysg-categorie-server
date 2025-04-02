@@ -7,7 +7,7 @@ from db.url import URLDBInterface, MutableURL, URL
 
 def _build_url(row: Mapping[str, any]) -> URL:
     return URL(
-        id=row["_id"],
+        id=str(row["_id"]),
         hostname=row["hostname"],
         is_deleted=row["is_deleted"],
         categories=[

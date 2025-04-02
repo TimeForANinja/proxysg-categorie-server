@@ -33,7 +33,7 @@ class SQLiteSubCategory(SubCategoryDBInterface):
             (int(category_id),)
         )
         rows = cursor.fetchall()
-        return [row[0] for row in rows]
+        return [str(row[0]) for row in rows]
 
     def add_sub_category(self, category_id: str, sub_category_id: str) -> None:
         cursor = self.conn.cursor()

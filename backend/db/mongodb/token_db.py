@@ -8,7 +8,7 @@ from db.token import TokenDBInterface, MutableToken, Token
 
 def _build_token(row: Mapping[str, any]) -> Token:
     return Token(
-        id=row["_id"],
+        id=str(row["_id"]),
         token=row["token"],
         description=row.get("description"),
         last_use=row["last_use"],

@@ -32,7 +32,7 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
             (int(token_id),)
         )
         rows = cursor.fetchall()
-        return [row[0] for row in rows]
+        return [str(row[0]) for row in rows]
 
     def add_token_category(self, token_id: str, category_id: str) -> None:
         cursor = self.conn.cursor()

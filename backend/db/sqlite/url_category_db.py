@@ -33,7 +33,7 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
             (int(url_id),)
         )
         rows = cursor.fetchall()
-        return [row[0] for row in rows]
+        return [str(row[0]) for row in rows]
 
     def add_url_category(self, url_id: str, category_id: str) -> None:
         cursor = self.conn.cursor()

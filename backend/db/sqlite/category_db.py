@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Optional, List
 
-from db.sqlite.util import split_opt_int_group
+from db.sqlite.util import split_opt_str_group
 from db.category import CategoryDBInterface, MutableCategory, Category
 
 
@@ -65,12 +65,12 @@ class SQLiteCategory(CategoryDBInterface):
         row = cursor.fetchone()
         if row:
             return Category(
-                id=row[0],
+                id=str(row[0]),
                 name=row[1],
                 description=row[2],
                 color=row[3],
                 is_deleted=0,
-                nested_categories=split_opt_int_group(row[4]),
+                nested_categories=split_opt_str_group(row[4]),
             )
         return None
 
@@ -133,10 +133,10 @@ class SQLiteCategory(CategoryDBInterface):
         )
         rows = cursor.fetchall()
         return [Category(
-            id=row[0],
+            id=str(row[0]),
             name=row[1],
             description=row[2],
             color=row[3],
             is_deleted=0,
-            nested_categories=split_opt_int_group(row[4]),
+            nested_categories=split_opt_str_group(row[4]),
         ) for row in rows]

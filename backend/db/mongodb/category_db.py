@@ -7,7 +7,7 @@ from db.category import CategoryDBInterface, MutableCategory, Category
 
 def _build_category(row: Mapping[str, any]) -> Category:
     return Category(
-        id=row["_id"],
+        id=str(row["_id"]),
         name=row["name"],
         color=row["color"],
         description=row.get("description"),

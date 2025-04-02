@@ -1,7 +1,7 @@
 import sqlite3
 import time
 
-from db.sqlite.util import split_opt_int_group
+from db.sqlite.util import split_opt_str_group
 from db.token import TokenDBInterface, MutableToken, Token
 from typing import Optional, List
 
@@ -67,12 +67,12 @@ class SQLiteToken(TokenDBInterface):
         if not row:
             return None
         return Token(
-            id=row[0],
+            id=str(row[0]),
             token=row[1],
             description=row[2],
             last_use=row[3],
             is_deleted=0,
-            categories=split_opt_int_group(row[4]),
+            categories=split_opt_str_group(row[4]),
         )
 
     def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
@@ -97,18 +97,18 @@ class SQLiteToken(TokenDBInterface):
             ON t.id = tc.token_id
             WHERE t.is_deleted = 0 AND t.token = ?
             GROUP BY t.id''',
-            (int(token_uuid),)
+            (token_uuid,)
         )
         row = cursor.fetchone()
         if not row:
             return None
         return Token(
-            id=row[0],
+            id=str(row[0]),
             token=row[1],
             description=row[2],
             last_use=row[3],
             is_deleted=0,
-            categories=split_opt_int_group(row[4]),
+            categories=split_opt_str_group(row[4]),
         )
 
     def update_token(self, token_id: str, token: MutableToken) -> Token:
@@ -181,10 +181,10 @@ class SQLiteToken(TokenDBInterface):
         )
         rows = cursor.fetchall()
         return [Token(
-            id=row[0],
+            id=str(row[0]),
             token=row[1],
             description=row[2],
             last_use=row[3],
             is_deleted=0,
-            categories=split_opt_int_group(row[4]),
+            categories=split_opt_str_group(row[4]),
         ) for row in rows]
