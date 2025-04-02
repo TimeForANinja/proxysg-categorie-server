@@ -17,8 +17,9 @@ export const simpleNameCheck = (
     return null;
 }
 
-export const simpleStringRegex = /^[a-zA-Z0-9 _-]*$/
-export const simpleStringError = "Only alphanumeric, underscores, hyphens and spaces are allowed."
+//eslint-disable-next-line no-useless-escape
+export const simpleStringRegex = /^[0-9A-Za-z !#$%&()*\-.\/:;=?@[\]_|~]*$/
+export const simpleStringError = "Only ASCII excluding some control characters is allowed."
 export const simpleStringCheck = (
     value: string,
     required: boolean = false,
