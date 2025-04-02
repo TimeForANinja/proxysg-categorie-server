@@ -7,8 +7,8 @@ simpleNameRegex = r"^[a-zA-Z0-9_-]+$"
 simpleNameError = "Only alphanumeric, underscores and hyphens are allowed."
 simpleNameValidator = Regexp(simpleNameRegex, error=simpleNameError)
 
-simpleStringRegex = r"^[a-zA-Z0-9 _-]*$"
-simpleStringError = "Only alphanumeric, underscores, hyphens and spaces are allowed."
+simpleStringRegex = r"^[0-9A-Za-z !#$%&()*\-.\/:;=?@[\]_|~]*$"
+simpleStringError = "Only ASCII excluding some control characters is allowed."
 simpleStringValidator = Regexp(simpleStringRegex, error=simpleStringError)
 
 simpleURLRegex = r"^([a-zA-Z0-9_-]+\.)+([a-zA-Z0-9_-]+)$"
