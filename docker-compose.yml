@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  proxysg-categorie-server:
+  proxysg-category-server:
     # use the preexisting image
     image: ghcr.io/timeforaninja/proxysg-categorie-server:main
     # __OR__ build new from local Dockerfile
@@ -9,7 +9,7 @@ services:
     #  context: .
     #  dockerfile: Dockerfile
 
-    container_name: proxysg-categorie-server
+    container_name: proxysg-category-server
     ports:
       # Exposes the server on port 8080
       - "8080:8080"
@@ -17,4 +17,19 @@ services:
       # Mounts the folder with persistent files
       - ./data/:/backend/data/
     # Ensures the container automatically restarts on failure
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      # Exposes MongoDB on the default port 27017
+      - "27017:27017"
+    volumes:
+      # Mounts a volume for MongoDB data
+      - ./mongo-data:/data/db
+    environment:
+      # Sets a MongoDB root user and password
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpassword
     restart: unless-stopped

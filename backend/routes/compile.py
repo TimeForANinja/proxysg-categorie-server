@@ -9,8 +9,8 @@ compile_bp = APIBlueprint('compile', __name__)
 
 def find_subcategories(
         current_cat: Category,
-        categories_dict: dict[int, Category],
-        visited: set[int],
+        categories_dict: dict[str, Category],
+        visited: set[str],
         result: list[Category]
 ):
     for nested_id in current_cat.nested_categories:

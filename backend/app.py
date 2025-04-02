@@ -79,4 +79,5 @@ if __name__ == '__main__':
         create_in_db(db, new_cats)
 
     # start app
-    app.run(port=8080, host="0.0.0.0")
+    app_port = int(os.getenv('APP_PORT', 8080))
+    app.run(port=app_port, host="0.0.0.0")

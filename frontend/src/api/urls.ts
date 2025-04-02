@@ -3,9 +3,9 @@ export interface IMutableURL {
 }
 
 export interface IURL extends IMutableURL {
-    id: number;
+    id: string;
     hostname: string;
-    categories: number[];
+    categories: string[];
 }
     
 export const getURLs = async (userToken: string): Promise<IURL[]> => {
@@ -26,7 +26,7 @@ export const getURLs = async (userToken: string): Promise<IURL[]> => {
     return data.data;
 }
 
-export const updateURL = async (userToken: string, id: Number, updatedURL: IMutableURL): Promise<IURL> => {
+export const updateURL = async (userToken: string, id: string, updatedURL: IMutableURL): Promise<IURL> => {
     const response = await fetch(`/api/url/${id}`, {
         method: 'PUT',
         headers: {
@@ -72,7 +72,7 @@ export const createURL = async (userToken: string, partialURL: IMutableURL): Pro
     return data.data;
 };
 
-export const deleteURL = async (userToken: string, id: number): Promise<void> => {
+export const deleteURL = async (userToken: string, id: string): Promise<void> => {
     const response = await fetch(`/api/url/${id}`, {
         method: 'DELETE',
         headers: { 'jwt-token': userToken },
@@ -88,7 +88,7 @@ export const deleteURL = async (userToken: string, id: number): Promise<void> =>
     }
 };
 
-export const addURLCategory = async (userToken: string, id: number, categoryId: number): Promise<void> => {
+export const addURLCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
     const response = await fetch(`/api/url/${id}/category/${categoryId}`, {
         method: 'POST',
         headers: {
@@ -107,7 +107,7 @@ export const addURLCategory = async (userToken: string, id: number, categoryId: 
     }
 }
 
-export const deleteURLCategory = async (userToken: string, id: number, categoryId: number): Promise<void> => {
+export const deleteURLCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
     const response = await fetch(`/api/url/${id}/category/${categoryId}`, {
         method: 'DELETE',
         headers: {
@@ -126,7 +126,7 @@ export const deleteURLCategory = async (userToken: string, id: number, categoryI
     }
 }
 
-export const setURLCategory = async (userToken: string, id: number, categories: number[]): Promise<number[]> => {
+export const setURLCategory = async (userToken: string, id: string, categories: string[]): Promise<string[]> => {
     const response = await fetch(`/api/url/${id}/category`, {
         method: 'POST',
         headers: {

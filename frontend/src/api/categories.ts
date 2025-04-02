@@ -5,8 +5,8 @@ export interface IMutableCategory {
 }
 
 export interface ICategory extends IMutableCategory {
-    id: number;
-    nested_categories: number[];
+    id: string;
+    nested_categories: string[];
 }
 
 export const getCategories = async (userToken: string): Promise<ICategory[]> => {
@@ -27,7 +27,7 @@ export const getCategories = async (userToken: string): Promise<ICategory[]> => 
     return data.data;
 }
 
-export const updateCategory = async (userToken: string, id: Number, updatedCategory: IMutableCategory): Promise<ICategory> => {
+export const updateCategory = async (userToken: string, id: string, updatedCategory: IMutableCategory): Promise<ICategory> => {
     const response = await fetch(`/api/category/${id}`, {
         method: 'PUT',
         headers: {
@@ -68,7 +68,7 @@ export const createCategory = async (userToken: string, partialCategory: IMutabl
     return data.data;
 };
 
-export const deleteCategory = async (userToken: string, id: number): Promise<void> => {
+export const deleteCategory = async (userToken: string, id: string): Promise<void> => {
     const response = await fetch(`/api/category/${id}`, {
         method: 'DELETE',
         headers: { 'jwt-token': userToken },
@@ -79,7 +79,7 @@ export const deleteCategory = async (userToken: string, id: number): Promise<voi
     }
 };
 
-export const addSubCategory = async (userToken: string, cat_id: number, subCategoryId: number): Promise<void> => {
+export const addSubCategory = async (userToken: string, cat_id: string, subCategoryId: string): Promise<void> => {
     const response = await fetch(`/api/category/${cat_id}/category/${subCategoryId}`, {
         method: 'POST',
         headers: {
@@ -98,7 +98,7 @@ export const addSubCategory = async (userToken: string, cat_id: number, subCateg
     }
 }
 
-export const deleteSubCategory = async (userToken: string, cat_id: number, subCategoryId: number): Promise<void> => {
+export const deleteSubCategory = async (userToken: string, cat_id: string, subCategoryId: string): Promise<void> => {
     const response = await fetch(`/api/category/${cat_id}/category/${subCategoryId}`, {
         method: 'DELETE',
         headers: {
@@ -117,7 +117,7 @@ export const deleteSubCategory = async (userToken: string, cat_id: number, subCa
     }
 }
 
-export const setSubCategory = async (userToken: string, cat_id: number, subCategories: number[]): Promise<number[]> => {
+export const setSubCategory = async (userToken: string, cat_id: string, subCategories: string[]): Promise<string[]> => {
     const response = await fetch(`/api/category/${cat_id}/category`, {
         method: 'POST',
         headers: {

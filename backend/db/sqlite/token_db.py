@@ -31,7 +31,7 @@ class SQLiteToken(TokenDBInterface):
         self.conn.commit()
 
         tok = Token(
-            id=cursor.lastrowid,
+            id=str(cursor.lastrowid),
             token=uuid,
             description=mut_tok.description,
             last_use=0,
@@ -39,7 +39,7 @@ class SQLiteToken(TokenDBInterface):
         )
         return tok
 
-    def get_token(self, token_id: int) -> Optional[Token]:
+    def get_token(self, token_id: str) -> Optional[Token]:
         cursor = self.conn.cursor()
         cursor.execute(
             '''SELECT
@@ -61,7 +61,7 @@ class SQLiteToken(TokenDBInterface):
             ON t.id = tc.token_id
             WHERE t.is_deleted = 0 AND t.id = ?
             GROUP BY t.id''',
-            (token_id,)
+            (int(token_id),)
         )
         row = cursor.fetchone()
         if not row:
@@ -97,7 +97,7 @@ class SQLiteToken(TokenDBInterface):
             ON t.id = tc.token_id
             WHERE t.is_deleted = 0 AND t.token = ?
             GROUP BY t.id''',
-            (token_uuid,)
+            (int(token_uuid),)
         )
         row = cursor.fetchone()
         if not row:
@@ -111,7 +111,7 @@ class SQLiteToken(TokenDBInterface):
             categories=split_opt_int_group(row[4]),
         )
 
-    def update_token(self, token_id: int, token: MutableToken) -> Token:
+    def update_token(self, token_id: str, token: MutableToken) -> Token:
         updates = []
         params = []
 
@@ -129,34 +129,30 @@ class SQLiteToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def update_usage(self, token_id: int) -> None:
+    def update_usage(self, token_id: str) -> None:
         cursor = self.conn.cursor()
         timestamp = int(time.time())
         cursor.execute(
             'UPDATE tokens SET last_use = ? WHERE id = ? AND is_deleted = 0',
-            (timestamp, token_id,)
+            (timestamp, int(token_id),)
         )
         self.conn.commit()
 
-    def roll_token(
-            self,
-            token_id: int,
-            uuid: str,
-    ) -> Token:
+    def roll_token(self, token_id: str, uuid: str) -> Token:
         cursor = self.conn.cursor()
         cursor.execute(
             'UPDATE tokens SET token = ? WHERE id = ? AND is_deleted = 0',
-            (uuid, token_id,)
+            (uuid, int(token_id),)
         )
         self.conn.commit()
 
         return self.get_token(token_id)
 
-    def delete_token(self, token_id: int) -> None:
+    def delete_token(self, token_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
             'UPDATE tokens SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
-            (token_id,)
+            (int(token_id),)
         )
         self.conn.commit()
 

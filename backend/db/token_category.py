@@ -9,7 +9,7 @@ class TokenCategoryDBInterface(ABC):
         """
         pass
 
-    def get_token_categories_by_token(self, token_id: int) -> List[int]:
+    def get_token_categories_by_token(self, token_id: str) -> List[str]:
         """
         Get all categories of a Token
 
@@ -17,7 +17,7 @@ class TokenCategoryDBInterface(ABC):
         """
         pass
 
-    def add_token_category(self, token_id: int, category_id: int) -> None:
+    def add_token_category(self, token_id: str, category_id: str) -> None:
         """
         Add a new mapping of Token and Category
 
@@ -26,7 +26,7 @@ class TokenCategoryDBInterface(ABC):
         """
         pass
 
-    def delete_token_category(self, token_id: int, category_id: int) -> None:
+    def delete_token_category(self, token_id: str, category_id: str) -> None:
         """
         Delete a mapping of Token and Category.
 

@@ -1,3 +1,5 @@
+import os
+
 from apiflask import APIBlueprint
 from apiflask.fields import String
 from dataclasses import field, dataclass
@@ -58,13 +60,18 @@ class LoginOutput(GenericOutput):
 @auth_bp.input(class_schema(LoginInput)(), location='json', arg_name="login_input")
 @auth_bp.output(LoginOutput)
 def handle_auth(login_input: LoginInput):
-    if login_input.username == "admin" and login_input.password == "nw_admin_2025":
-        response = {
-            "status": 'success',
-            "message": 'Login successful',
-            "token": AUTH_DEFAULT_TOKEN,
-        }
-        return response
+    auth_type = os.getenv('APP_AUTH_TYPE', 'local')
+
+    if auth_type == 'local':
+        auth_user = os.getenv('APP_AUTH_LOCAL_USER', 'admin')
+        auth_password = os.getenv('APP_AUTH_LOCAL_PASSWORD', 'nw_admin_2025')
+        if login_input.username == auth_user and login_input.password == auth_password:
+            response = {
+                "status": 'success',
+                "message": 'Login successful',
+                "token": AUTH_DEFAULT_TOKEN,
+            }
+            return response
     else:
         return {
             "status": 'failed',

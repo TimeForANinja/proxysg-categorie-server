@@ -43,7 +43,7 @@ import {
 } from "../util/InputValidators";
 
 const COMPARATORS = {
-    BY_ID: (a: ICategory, b: ICategory) => a.id - b.id
+    BY_ID: (a: ICategory, b: ICategory) => a.id.localeCompare(b.id)
 };
 
 interface BuildRowProps {
@@ -64,7 +64,7 @@ function BuildRow(props: BuildRowProps) {
     const authMgmt = useAuth();
 
     // helper function, triggered when category selector changes
-    const handleChange = (newList: number[]) => {
+    const handleChange = (newList: string[]) => {
         // update api
         setSubCategory(authMgmt.token, category.id, newList).then(newCats => {
             // save new version
@@ -100,7 +100,7 @@ function CategoriesPage() {
     const authMgmt = useAuth();
 
     // State info for the Page
-    const [categories, setCategory] = React.useState<LUT<ICategory>>([]);
+    const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
     // search & pagination
     const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
@@ -139,7 +139,7 @@ function CategoriesPage() {
     };
 
     // create or edit new object
-    const handleSave = async (catID: number | null, category: IMutableCategory) => {
+    const handleSave = async (catID: string | null, category: IMutableCategory) => {
         if (catID == null) {
             // add new category
             const newCat = await createCategory(authMgmt.token, category)
@@ -234,7 +234,7 @@ function CategoriesPage() {
 interface EditDialogProps {
     category: TriState<ICategory>,
     onClose: () => void,
-    onSave: (id: number | null, category: IMutableCategory) => void
+    onSave: (id: string | null, category: IMutableCategory) => void
 }
 function EditDialog(props: EditDialogProps) {
     let {category, onClose, onSave} = props;

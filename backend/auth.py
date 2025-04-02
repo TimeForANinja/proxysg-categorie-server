@@ -1,15 +1,19 @@
 from apiflask import HTTPTokenAuth
 from threading import Lock
 from werkzeug.datastructures.auth import Authorization
+import secrets
 
 
+def generate_auth_token(length=64):
+    """Generate a secure random authentication token."""
+    return secrets.token_hex(length)
+
+
+# Constants
 AUTH_TOKEN_KEY = "jwt-token"
-
-# TODO: use actual random tokens
-AUTH_DEFAULT_TOKEN = "asdjkadsjlsajds"
-
 AUTH_ROLES_RO = "pxy_admin_ro"
 AUTH_ROLES_RW = "pxy_admin_rw"
+AUTH_DEFAULT_TOKEN = generate_auth_token()
 
 def get_auth():
     return AuthSingleton().get_auth()

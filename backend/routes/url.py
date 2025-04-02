@@ -1,6 +1,6 @@
 from apiflask import APIBlueprint
 from apiflask.fields import List, Nested
-from marshmallow.fields import Integer
+from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
 from typing import List as tList
 from dataclasses import field, dataclass
@@ -16,7 +16,7 @@ url_bp = APIBlueprint('url', __name__)
 @dataclass
 class SetCategoriesInput:
     """Class for input schema for set categories"""
-    categories: tList[int] = field(default_factory=list)
+    categories: tList[str] = field(default_factory=list)
 
 class CreateOrUpdateOutput(GenericOutput):
     """Output schema for create/update url"""
@@ -28,7 +28,7 @@ class ListResponseOutput(GenericOutput):
 
 class ListCategoriesOutput(GenericOutput):
     """Output schema for listing Categories of a URL"""
-    data = List(Integer, required=True, description="List of Categories")
+    data = List(String, required=True, description="List of Categories")
 
 
 # Route to fetch all URLs
@@ -47,12 +47,12 @@ def get_urls():
 
 
 # Route to update URL name
-@url_bp.put('/api/url/<int:url_id>')
+@url_bp.put('/api/url/<string:url_id>')
 @url_bp.doc(summary='Update URL name', description='Update the name of a URL')
 @url_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
 @url_bp.output(CreateOrUpdateOutput)
 @url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
-def update_url(url_id: int, mut_url: MutableURL):
+def update_url(url_id: str, mut_url: MutableURL):
     db_if = get_db()
     new_url = db_if.urls.update_url(url_id, mut_url)
     db_if.history.add_history_event(f"URL {url_id} updated")
@@ -64,11 +64,11 @@ def update_url(url_id: int, mut_url: MutableURL):
 
 
 # Route to delete a URL
-@url_bp.delete('/api/url/<int:url_id>')
+@url_bp.delete('/api/url/<string:url_id>')
 @url_bp.doc(summary="Delete a URL", description="Delete a URL using its ID")
 @url_bp.output(GenericOutput)
 @url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
-def delete_url(url_id: int):
+def delete_url(url_id: str):
     db_if = get_db()
     db_if.urls.delete_url(url_id)
     db_if.history.add_history_event(f"URL {url_id} deleted")
@@ -97,10 +97,10 @@ def create_url(mut_url: MutableURL):
 
 
 # Route to add a Category to a URL
-@url_bp.post('/api/url/<int:url_id>/category/<int:cat_id>')
+@url_bp.post('/api/url/<string:url_id>/category/<string:cat_id>')
 @url_bp.doc(summary="add cat to url", description="Add the provided Category ID to the URL.Category List")
 @url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
-def add_token_category(url_id: int, cat_id: int):
+def add_token_category(url_id: str, cat_id: str):
     db_if = get_db()
     db_if.url_categories.add_url_category(url_id, cat_id)
     db_if.history.add_history_event(f"Added cat {cat_id} to url {url_id}")
@@ -111,10 +111,10 @@ def add_token_category(url_id: int, cat_id: int):
 
 
 # Route to delete a Category from a URL
-@url_bp.delete('/api/url/<int:url_id>/category/<int:cat_id>')
+@url_bp.delete('/api/url/<string:url_id>/category/<string:cat_id>')
 @url_bp.doc(summary="remove cat from url", description="Remove the provided Category ID from the URL.Category List")
 @url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
-def delete_token_category(url_id: int, cat_id: int):
+def delete_token_category(url_id: str, cat_id: str):
     db_if = get_db()
     db_if.url_categories.delete_url_category(url_id, cat_id)
     db_if.history.add_history_event(f"Removed cat {cat_id} from url {url_id}")
@@ -125,12 +125,12 @@ def delete_token_category(url_id: int, cat_id: int):
 
 
 # Route to set Categories to a given List
-@url_bp.post('/api/url/<int:url_id>/category')
+@url_bp.post('/api/url/<string:url_id>/category')
 @url_bp.doc(summary="overwrite url categories", description="Set the Categories of a URL to the provided list")
 @url_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
 @url_bp.output(ListCategoriesOutput)
 @url_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
-def set_url_categories(url_id: int, set_cats: SetCategoriesInput):
+def set_url_categories(url_id: str, set_cats: SetCategoriesInput):
     db_if = get_db()
     is_cats = db_if.url_categories.get_url_categories_by_url(url_id)
 

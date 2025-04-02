@@ -9,7 +9,7 @@ class UrlCategoryDBInterface(ABC):
         """
         pass
 
-    def get_url_categories_by_url(self, url_id: int) -> List[int]:
+    def get_url_categories_by_url(self, url_id: str) -> List[str]:
         """
         Get all categories of a URL
 
@@ -17,7 +17,7 @@ class UrlCategoryDBInterface(ABC):
         """
         pass
 
-    def add_url_category(self, url_id: int, category_id: int) -> None:
+    def add_url_category(self, url_id: str, category_id: str) -> None:
         """
         Add a new mapping of URL and Category
 
@@ -26,7 +26,7 @@ class UrlCategoryDBInterface(ABC):
         """
         pass
 
-    def delete_url_category(self, url_id: int, category_id: int) -> None:
+    def delete_url_category(self, url_id: str, category_id: str) -> None:
         """
         Delete a mapping of URL and Category.
 

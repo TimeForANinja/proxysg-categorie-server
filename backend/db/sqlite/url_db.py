@@ -29,12 +29,12 @@ class SQLiteURL(URLDBInterface):
 
         new_url = URL(
             hostname = mut_url.hostname,
-            id = cursor.lastrowid,
+            id = str(cursor.lastrowid),
             is_deleted = 0,
         )
         return new_url
 
-    def get_url(self, url_id: int) -> Optional[URL]:
+    def get_url(self, url_id: str) -> Optional[URL]:
         cursor = self.conn.cursor()
         cursor.execute(
             '''SELECT
@@ -54,7 +54,7 @@ class SQLiteURL(URLDBInterface):
             ON u.id = uc.url_id
             WHERE u.is_deleted = 0 AND u.id = ?
             GROUP BY u.id''',
-            (url_id,)
+            (int(url_id),)
         )
         row = cursor.fetchone()
         if row:
@@ -66,7 +66,7 @@ class SQLiteURL(URLDBInterface):
             )
         return None
 
-    def update_url(self, url_id: int, mut_url: MutableURL) -> URL:
+    def update_url(self, url_id: str, mut_url: MutableURL) -> URL:
         updates = []
         params = []
 
@@ -77,18 +77,18 @@ class SQLiteURL(URLDBInterface):
 
         if updates:
             query = f'UPDATE urls SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
-            params.append(url_id)
+            params.append(int(url_id))
             cursor = self.conn.cursor()
             cursor.execute(query, params)
             self.conn.commit()
 
         return self.get_url(url_id)
 
-    def delete_url(self, url_id: int) -> None:
+    def delete_url(self, url_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
             'UPDATE urls SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
-            (url_id,)
+            (int(url_id),)
         )
         self.conn.commit()
 

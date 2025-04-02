@@ -1,11 +1,11 @@
 
 export interface IAtomic {
-    id: number;
+    id: string;
     action: string;
 }
 
 export interface ICommits {
-    id: number;
+    id: string;
     time: number;
     description: string;
     atomics: IAtomic[];
