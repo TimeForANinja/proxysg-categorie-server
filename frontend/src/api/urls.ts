@@ -1,10 +1,10 @@
 export interface IMutableURL {
     hostname: string;
+    description: string;
 }
 
 export interface IURL extends IMutableURL {
     id: string;
-    hostname: string;
     categories: string[];
 }
     

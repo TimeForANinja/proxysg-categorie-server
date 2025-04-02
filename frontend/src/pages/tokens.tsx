@@ -132,7 +132,7 @@ function BuildRow(props: BuildRowProps) {
                 />
             </TableCell>
             <TableCell>
-                <EditIcon onClick={onEdit} />
+                <EditIcon onClick={onEdit}/>
                 <DeleteIcon onClick={onDelete}/>
             </TableCell>
         </TableRow>
@@ -321,6 +321,7 @@ function EditDialog(props: EditDialogProps) {
         }
 
         onSave(token.getValue()?.id ?? null, { description });
+        setDescription("");
     };
 
     return (

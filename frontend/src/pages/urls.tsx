@@ -31,7 +31,8 @@ import {MyPaginator} from "./shared/paginator";
 import {buildLUTFromID, LUT} from "../util/LookUpTable";
 import {TriState} from "./shared/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
-import {simpleURLCheck} from "../util/InputValidators";
+import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
+import EditIcon from "@mui/icons-material/Edit";
 
 const COMPARATORS = {
     BY_ID:  (a: IURL, b: IURL) => a.id.localeCompare(b.id)
@@ -41,10 +42,11 @@ interface BuildRowProps {
     url: IURL,
     updateURL: (newURL: IURL) => void,
     categories: LUT<ICategory>,
+    onEdit: () => void,
     onDelete: () => void,
 }
 function BuildRow(props: BuildRowProps) {
-    const { url, updateURL, categories, onDelete } = props;
+    const { url, updateURL, categories, onEdit, onDelete } = props;
     const authMgmt = useAuth();
 
     // (un)fold a row into multiple rows
@@ -81,7 +83,11 @@ function BuildRow(props: BuildRowProps) {
                         categories={categories}
                     />
                 </TableCell>
-                <TableCell><DeleteIcon onClick={onDelete}/></TableCell>
+                <TableCell>{url.description}</TableCell>
+                <TableCell>
+                    <EditIcon onClick={onEdit}/>
+                    <DeleteIcon onClick={onDelete}/>
+                </TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={4}>
@@ -184,6 +190,7 @@ function MatchingListPage() {
                                         <TableCell>ID</TableCell>
                                         <TableCell>Hostname</TableCell>
                                         <TableCell>Categories</TableCell>
+                                        <TableCell>Description</TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -194,6 +201,7 @@ function MatchingListPage() {
                                             url={url}
                                             updateURL={newURL => setURLs(urls.map(u => u.id === newURL.id ? newURL : u))}
                                             categories={categories}
+                                            onEdit={() => handleEditOpen(url)}
                                             onDelete={() => handleDelete(url)}
                                         />
                                     )}
@@ -226,11 +234,16 @@ function EditDialog(props: EditDialogProps) {
     let {uri, onClose, onSave} = props;
 
     const [hostname, setHostname] = React.useState('');
+    const [description, setDescription] = React.useState('');
 
     // validate inputs
     const hostnameError: string|null = React.useMemo(
         () => simpleURLCheck(hostname, true),
         [hostname],
+    )
+    const descriptionError: string|null = React.useMemo(
+        () => simpleStringCheck(description),
+        [description],
     )
 
     React.useEffect(() => {
@@ -238,19 +251,22 @@ function EditDialog(props: EditDialogProps) {
         // else force clear the fields
         if (!uri.isNull()) {
             setHostname(uri.getValue()!.hostname);
+            setDescription(uri.getValue()!.description);
         } else {
             setHostname("")
+            setDescription("");
         }
     }, [uri]);
 
     const handleSave = () => {
-        if (hostnameError != null) {
+        if (hostnameError != null || descriptionError != null) {
             // only continue if the inputs are valid
             return;
         }
 
-        onSave(uri.getValue()?.id ?? null, {hostname});
+        onSave(uri.getValue()?.id ?? null, {hostname, description});
         setHostname("")
+        setDescription("");
     };
 
     return (
@@ -265,6 +281,13 @@ function EditDialog(props: EditDialogProps) {
                         error={hostnameError != null}
                         helperText={hostnameError ? hostnameError : ''}
                         required
+                    />
+                    <TextField
+                        label="Description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        error={descriptionError != null}
+                        helperText={descriptionError ? descriptionError : ''}
                     />
                 </Box>
             </DialogContent>
