@@ -12,7 +12,11 @@ def _build_category(row: Mapping[str, any]) -> Category:
         color=row["color"],
         description=row.get("description"),
         is_deleted=row["is_deleted"],
-        nested_categories=[x['cat'] for x in row.get("nested_categories", [])]
+        nested_categories=[
+            x['cat']
+            for x in row.get("nested_categories", [])
+            if x['is_deleted'] == 0
+        ]
     )
 
 
@@ -74,8 +78,17 @@ class MongoDBCategory(CategoryDBInterface):
         if result.matched_count == 0:
             raise ValueError(f"Category with ID {category_id} not found or already deleted.")
 
+        # delete from all other collections
+        update2 = {"$set": {"nested_categories.$[elem].is_deleted": 1}}
+        update3 = {"$set": {"categories.$[elem].is_deleted": 1}}
+        array_filters2 = [{"elem.cat": category_id, "elem.is_deleted": 0}]
+
+        self.db['categories'].update_many({}, update2, array_filters=array_filters2)
+        self.db['urls'].update_many({}, update3, array_filters=array_filters2)
+        self.db['tokens'].update_many({}, update3, array_filters=array_filters2)
+
     def get_all_categories(self) -> List[Category]:
-        rows = self.collection.find({"is_deleted": 0})
+        rows = self.collection.find({ "is_deleted": 0 })
         return [
             _build_category(row)
             for row in rows

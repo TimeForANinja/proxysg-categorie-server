@@ -19,7 +19,11 @@ class MongoDBSubCategory(SubCategoryDBInterface):
         if not row:
             return []
 
-        return [x.cat for x in row.get("nested_categories", [])]
+        return [
+            x['cat']
+            for x in row.get("nested_categories", [])
+            if x['is_deleted'] == 0
+        ]
 
     def add_sub_category(self, category_id: str, sub_category_id: str) -> None:
         query = {"_id": ObjectId(category_id), "is_deleted": 0}

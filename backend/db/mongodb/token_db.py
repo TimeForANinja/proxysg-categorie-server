@@ -13,7 +13,11 @@ def _build_token(row: Mapping[str, any]) -> Token:
         description=row.get("description"),
         last_use=row["last_use"],
         is_deleted=row["is_deleted"],
-        categories=[x['cat'] for x in row.get("categories", [])],
+        categories=[
+            x['cat']
+            for x in row.get("categories", [])
+            if x['is_deleted'] == 0
+        ],
     )
 
 
@@ -105,7 +109,7 @@ class MongoDBToken(TokenDBInterface):
             raise ValueError(f"Token with ID {token_id} not found or already deleted.")
 
     def get_all_tokens(self) -> List[Token]:
-        rows = self.collection.find({"is_deleted": 0})
+        rows = self.collection.find({ "is_deleted": 0 })
         return [
             _build_token(row)
             for row in rows

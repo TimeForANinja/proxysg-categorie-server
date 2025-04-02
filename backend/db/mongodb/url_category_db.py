@@ -19,7 +19,11 @@ class MongoDBURLCategory(UrlCategoryDBInterface):
         if not row:
             return []
 
-        return [x.cat for x in row.get("categories", [])]
+        return [
+            x['cat']
+            for x in row.get("categories", [])
+            if x['is_deleted'] == 0
+        ]
 
     def add_url_category(self, url_id: str, category_id: str) -> None:
         query = {"_id": ObjectId(url_id), "is_deleted": 0}

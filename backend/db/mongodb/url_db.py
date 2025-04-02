@@ -10,7 +10,11 @@ def _build_url(row: Mapping[str, any]) -> URL:
         id=row["_id"],
         hostname=row["hostname"],
         is_deleted=row["is_deleted"],
-        categories=[x['cat'] for x in row.get("categories", [])],
+        categories=[
+            x['cat']
+            for x in row.get("categories", [])
+            if x['is_deleted'] == 0
+        ],
     )
 
 
@@ -66,7 +70,7 @@ class MongoDBURL(URLDBInterface):
             raise ValueError(f"URL with ID {url_id} not found or already deleted.")
 
     def get_all_urls(self) -> List[URL]:
-        rows = self.collection.find({"is_deleted": 0})
+        rows = self.collection.find({ "is_deleted": 0 })
         return [
             _build_url(row)
             for row in rows
