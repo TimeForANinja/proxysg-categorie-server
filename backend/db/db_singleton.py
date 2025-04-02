@@ -12,9 +12,12 @@ def get_db() -> DBInterface:
     if db is None:
         db_type = os.getenv('APP_DB_TYPE', 'sqlite').lower()  # Default to SQLite
         # TODO: document all ENV variables
-        if db_type == 'mongo':
+        if db_type == 'mongodb':
             database_name = os.getenv('APP_DB_MONGO_DBNAME', 'proxysg_localdb')
-            connection_uri = os.getenv('APP_DB_MONGO_CON_URL', 'mongodb://admin:adminpassword@localhost:27017/')
+            connection_user = os.getenv('APP_DB_MONGO_CON_USER', 'admin')
+            connection_password = os.getenv('APP_DB_MONGO_CON_PASSWORD', 'adminpassword')
+            connection_host = os.getenv('APP_DB_MONGO_CON_HOST', 'localhost:27017')
+            connection_uri = f"mongodb://{connection_user}:{connection_password}@{connection_host}/"
             db = g._database = MyMongoDB(database_name, connection_uri)
         elif db_type == 'sqlite':
             database_name = os.getenv('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')
