@@ -9,6 +9,7 @@ def _build_url(row: Mapping[str, any]) -> URL:
     return URL(
         id=str(row["_id"]),
         hostname=row["hostname"],
+        description=row["description"],
         is_deleted=row["is_deleted"],
         categories=[
             x['cat']
@@ -29,6 +30,7 @@ class MongoDBURL(URLDBInterface):
     def add_url(self, mut_url: MutableURL) -> URL:
         result = self.collection.insert_one({
             "hostname": mut_url.hostname,
+            "description": mut_url.description,
             "is_deleted": 0,
             "categories": []
         })
@@ -36,6 +38,7 @@ class MongoDBURL(URLDBInterface):
         return URL(
             id=str(result.inserted_id),
             hostname=mut_url.hostname,
+            description=mut_url.description,
             is_deleted=0,
             categories=[]
         )
@@ -52,6 +55,7 @@ class MongoDBURL(URLDBInterface):
         query = {"_id": ObjectId(url_id), "is_deleted": 0}
         update_fields = {
             "hostname": mut_url.hostname,
+            "description": mut_url.description,
         }
 
         result = self.collection.update_one(query, {"$set": update_fields})

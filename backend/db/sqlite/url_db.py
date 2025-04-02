@@ -15,6 +15,7 @@ class SQLiteURL(URLDBInterface):
         cursor.execute('''CREATE TABLE IF NOT EXISTS urls (
                             id INTEGER PRIMARY KEY,
                             hostname TEXT NOT NULL,
+                            description TEXT NOT NULL,
                             is_deleted INTEGER DEFAULT 0
         )''')
         self.conn.commit()
@@ -22,13 +23,14 @@ class SQLiteURL(URLDBInterface):
     def add_url(self, mut_url: MutableURL) -> URL:
         cursor = self.conn.cursor()
         cursor.execute(
-            'INSERT INTO urls (hostname) VALUES (?)',
-            (mut_url.hostname,)
+            'INSERT INTO urls (hostname, description) VALUES (?, ?)',
+            (mut_url.hostname,mut_url.description)
         )
         self.conn.commit()
 
         new_url = URL(
             hostname = mut_url.hostname,
+            description=mut_url.description,
             id = str(cursor.lastrowid),
             is_deleted = 0,
         )
@@ -40,6 +42,7 @@ class SQLiteURL(URLDBInterface):
             '''SELECT
                 u.id AS id,
                 u.hostname,
+                u.description,
                 GROUP_CONCAT(uc.category_id) as categories
             FROM urls u
             LEFT JOIN (
@@ -61,8 +64,9 @@ class SQLiteURL(URLDBInterface):
             return URL(
                 id=str(row[0]),
                 hostname=row[1],
+                description=row[2],
                 is_deleted=0,
-                categories=split_opt_str_group(row[2]),
+                categories=split_opt_str_group(row[3]),
             )
         return None
 
@@ -74,6 +78,9 @@ class SQLiteURL(URLDBInterface):
         if mut_url.hostname is not None:
             updates.append("hostname = ?")
             params.append(mut_url.hostname)
+        if mut_url.description is not None:
+            updates.append("description = ?")
+            params.append(mut_url.description)
 
         if updates:
             query = f'UPDATE urls SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
@@ -98,6 +105,7 @@ class SQLiteURL(URLDBInterface):
             '''SELECT
                 u.id AS id,
                 u.hostname,
+                u.description,
                 GROUP_CONCAT(uc.category_id) as categories
             FROM urls u
             LEFT JOIN (
@@ -117,6 +125,7 @@ class SQLiteURL(URLDBInterface):
         return [URL(
             id=str(row[0]),
             hostname=row[1],
+            description=row[2],
             is_deleted=0,
-            categories=split_opt_str_group(row[2]),
+            categories=split_opt_str_group(row[3]),
         ) for row in rows]

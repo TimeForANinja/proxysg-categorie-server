@@ -3,7 +3,7 @@ from dataclasses import field, dataclass
 from typing import Optional, List
 from marshmallow.validate import Length
 
-from db.util.validators import simpleURLValidator
+from db.util.validators import simpleURLValidator, simpleStringValidator
 
 
 @dataclass(kw_only=True)
@@ -15,6 +15,14 @@ class MutableURL:
             simpleURLValidator,
         ],
         "description": "FQDN of the URL",
+    })
+    description: str = field(metadata={
+        "required": True,
+        "validate": [
+            Length(max=255),
+            simpleStringValidator,
+        ],
+        "description": "Description of the token"
     })
 
 @dataclass(kw_only=True)
@@ -33,6 +41,14 @@ class URL(MutableURL):
             simpleURLValidator,
         ],
         "description": "FQDN of the URL",
+    })
+    description: str = field(metadata={
+        "required": True,
+        "validate": [
+            Length(max=255),
+            simpleStringValidator,
+        ],
+        "description": "Description of the token"
     })
     is_deleted: int = field(
         default=0,
