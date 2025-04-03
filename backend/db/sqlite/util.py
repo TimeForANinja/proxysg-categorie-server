@@ -11,7 +11,7 @@ def _fetch_table_list(conn: sqlite3.Connection) -> List[str]:
     ]
 
 def split_opt_str_group(group: str | None) -> List[str]:
-    if group is None:
+    if group is None or group == "":
         return []
     return split_str_group(group)
 

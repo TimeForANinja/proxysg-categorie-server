@@ -1,8 +1,19 @@
 import sqlite3
 
 from db.sqlite.util import split_opt_str_group
-from db.url import URLDBInterface, MutableURL, URL
+from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
 from typing import Optional, List
+
+
+def _build_url(row: any) -> URL:
+        return URL(
+            id=str(row[0]),
+            hostname=row[1],
+            description=row[2],
+            is_deleted=0,
+            bc_cats=split_opt_str_group(row[3]),
+            categories=split_opt_str_group(row[4]),
+        )
 
 
 class SQLiteURL(URLDBInterface):
@@ -16,6 +27,7 @@ class SQLiteURL(URLDBInterface):
                             id INTEGER PRIMARY KEY,
                             hostname TEXT NOT NULL,
                             description TEXT NOT NULL,
+                            bc_cats TEXT NOT NULL,
                             is_deleted INTEGER DEFAULT 0
         )''')
         self.conn.commit()
@@ -23,8 +35,8 @@ class SQLiteURL(URLDBInterface):
     def add_url(self, mut_url: MutableURL) -> URL:
         cursor = self.conn.cursor()
         cursor.execute(
-            'INSERT INTO urls (hostname, description) VALUES (?, ?)',
-            (mut_url.hostname,mut_url.description)
+            'INSERT INTO urls (hostname, description, bc_cats) VALUES (?, ?, ?)',
+            (mut_url.hostname,mut_url.description, NO_BC_CATEGORY_YET)
         )
         self.conn.commit()
 
@@ -33,6 +45,7 @@ class SQLiteURL(URLDBInterface):
             description=mut_url.description,
             id = str(cursor.lastrowid),
             is_deleted = 0,
+            bc_cats= [NO_BC_CATEGORY_YET],
         )
         return new_url
 
@@ -43,6 +56,7 @@ class SQLiteURL(URLDBInterface):
                 u.id AS id,
                 u.hostname,
                 u.description,
+                u.bc_cats,
                 GROUP_CONCAT(uc.category_id) as categories
             FROM urls u
             LEFT JOIN (
@@ -61,13 +75,7 @@ class SQLiteURL(URLDBInterface):
         )
         row = cursor.fetchone()
         if row:
-            return URL(
-                id=str(row[0]),
-                hostname=row[1],
-                description=row[2],
-                is_deleted=0,
-                categories=split_opt_str_group(row[3]),
-            )
+            return _build_url(row)
         return None
 
     def update_url(self, url_id: str, mut_url: MutableURL) -> URL:
@@ -91,6 +99,12 @@ class SQLiteURL(URLDBInterface):
 
         return self.get_url(url_id)
 
+    def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
+        query = 'UPDATE urls SET bc_cats = ? WHERE id = ? AND is_deleted = 0'
+        cursor = self.conn.cursor()
+        cursor.execute(query, (",".join(bc_cats), int(url_id)))
+        self.conn.commit()
+
     def delete_url(self, url_id: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute(
@@ -106,6 +120,7 @@ class SQLiteURL(URLDBInterface):
                 u.id AS id,
                 u.hostname,
                 u.description,
+                u.bc_cats,
                 GROUP_CONCAT(uc.category_id) as categories
             FROM urls u
             LEFT JOIN (
@@ -122,10 +137,4 @@ class SQLiteURL(URLDBInterface):
             GROUP BY u.id''',
         )
         rows = cursor.fetchall()
-        return [URL(
-            id=str(row[0]),
-            hostname=row[1],
-            description=row[2],
-            is_deleted=0,
-            categories=split_opt_str_group(row[3]),
-        ) for row in rows]
+        return [_build_url(row) for row in rows]

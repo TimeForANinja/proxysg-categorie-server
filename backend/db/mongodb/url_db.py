@@ -2,7 +2,7 @@ from typing import Optional, List, Mapping
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
-from db.url import URLDBInterface, MutableURL, URL
+from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
 
 
 def _build_url(row: Mapping[str, any]) -> URL:
@@ -16,6 +16,7 @@ def _build_url(row: Mapping[str, any]) -> URL:
             for x in row.get("categories", [])
             if x['is_deleted'] == 0
         ],
+        bc_cats=row["bc_cats"],
     )
 
 
@@ -32,7 +33,8 @@ class MongoDBURL(URLDBInterface):
             "hostname": mut_url.hostname,
             "description": mut_url.description,
             "is_deleted": 0,
-            "categories": []
+            "categories": [],
+            "bc_cats": [NO_BC_CATEGORY_YET],
         })
 
         return URL(
@@ -40,7 +42,8 @@ class MongoDBURL(URLDBInterface):
             hostname=mut_url.hostname,
             description=mut_url.description,
             is_deleted=0,
-            categories=[]
+            categories=[],
+            bc_cats=[NO_BC_CATEGORY_YET],
         )
 
     def get_url(self, url_id: str) -> Optional[URL]:
@@ -64,6 +67,14 @@ class MongoDBURL(URLDBInterface):
             raise ValueError(f"URL with ID {url_id} not found or is deleted.")
 
         return self.get_url(url_id)
+
+    def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
+        query = {"_id": ObjectId(url_id), "is_deleted": 0}
+        update = {"$set": {"bc_cats": bc_cats}}
+        result = self.collection.update_one(query, update)
+
+        if result.matched_count == 0:
+            raise ValueError(f"URL with ID {url_id} not found or already deleted.")
 
     def delete_url(self, url_id: str) -> None:
         query = {"_id": ObjectId(url_id), "is_deleted": 0}

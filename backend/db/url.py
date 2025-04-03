@@ -5,6 +5,9 @@ from marshmallow.validate import Length
 
 from db.util.validators import simpleURLValidator, simpleStringValidator
 
+# Default Value set in the bc_cats array
+# It indicates that a URL has never been queried against the BC Database
+NO_BC_CATEGORY_YET = "to be queried"
 
 @dataclass(kw_only=True)
 class MutableURL:
@@ -64,6 +67,12 @@ class URL(MutableURL):
         default_factory=list,
         metadata={
             "description": "List of category IDs associated with the URL",
+        }
+    )
+    bc_cats: List[str] = field(
+        default_factory=list,
+        metadata={
+            "description": "List of BlueCoat Categories this URL is currently categorised as",
         }
     )
 
@@ -126,5 +135,15 @@ class URLDBInterface(ABC):
         Retrieve all active URLs that are not marked as deleted.
 
         :return: A list of URLs
+        """
+        pass
+
+    @abstractmethod
+    def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
+        """
+        Update the BlueCoat Categories associated with a URL.
+
+        :param url_id: The ID of the url to update.
+        :param bc_cats: The list of BlueCoat Categories to associate with the URL.
         """
         pass

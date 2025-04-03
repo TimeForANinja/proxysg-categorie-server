@@ -8,6 +8,7 @@ from flask_compress import Compress
 
 from db import db_singleton
 from db.db_singleton import get_db
+from other.background_tasks import start_background_tasks
 from routes.auth import auth_bp
 from routes.category import category_bp
 from routes.compile import compile_bp
@@ -77,6 +78,9 @@ if __name__ == '__main__':
             db_if = get_db()
             new_cats = parse_db(file_str)
             create_in_db(db_if, new_cats)
+
+    # start background tasks
+    start_background_tasks(app)
 
     # start app
     app_port = int(os.getenv('APP_PORT', 8080))
