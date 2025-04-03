@@ -6,6 +6,17 @@ from db.token import TokenDBInterface, MutableToken, Token
 from typing import Optional, List
 
 
+def _build_token(row: any) -> Token:
+    return Token(
+        id=str(row[0]),
+        token=row[1],
+        description=row[2],
+        last_use=row[3],
+        is_deleted=0,
+        categories=split_opt_str_group(row[4]),
+    )
+
+
 class SQLiteToken(TokenDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
@@ -30,14 +41,14 @@ class SQLiteToken(TokenDBInterface):
         )
         self.conn.commit()
 
-        tok = Token(
+        new_token = Token(
             id=str(cursor.lastrowid),
             token=uuid,
             description=mut_tok.description,
             last_use=0,
             is_deleted=0,
         )
-        return tok
+        return new_token
 
     def get_token(self, token_id: str) -> Optional[Token]:
         cursor = self.conn.cursor()
@@ -64,16 +75,9 @@ class SQLiteToken(TokenDBInterface):
             (int(token_id),)
         )
         row = cursor.fetchone()
-        if not row:
-            return None
-        return Token(
-            id=str(row[0]),
-            token=row[1],
-            description=row[2],
-            last_use=row[3],
-            is_deleted=0,
-            categories=split_opt_str_group(row[4]),
-        )
+        if row:
+            return _build_token(row)
+        return None
 
     def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
         cursor = self.conn.cursor()
@@ -100,16 +104,9 @@ class SQLiteToken(TokenDBInterface):
             (token_uuid,)
         )
         row = cursor.fetchone()
-        if not row:
-            return None
-        return Token(
-            id=str(row[0]),
-            token=row[1],
-            description=row[2],
-            last_use=row[3],
-            is_deleted=0,
-            categories=split_opt_str_group(row[4]),
-        )
+        if row:
+            return _build_token(row)
+        return None
 
     def update_token(self, token_id: str, token: MutableToken) -> Token:
         updates = []
@@ -180,11 +177,4 @@ class SQLiteToken(TokenDBInterface):
             GROUP BY t.id''',
         )
         rows = cursor.fetchall()
-        return [Token(
-            id=str(row[0]),
-            token=row[1],
-            description=row[2],
-            last_use=row[3],
-            is_deleted=0,
-            categories=split_opt_str_group(row[4]),
-        ) for row in rows]
+        return [_build_token(row) for row in rows]

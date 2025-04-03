@@ -5,6 +5,16 @@ from db.sqlite.util import split_opt_str_group
 from db.category import CategoryDBInterface, MutableCategory, Category
 
 
+def _build_category(row: any) -> Category:
+    return Category(
+        id=str(row[0]),
+        name=row[1],
+        description=row[2],
+        color=row[3],
+        is_deleted=0,
+        nested_categories=split_opt_str_group(row[4]),
+    )
+
 class SQLiteCategory(CategoryDBInterface):
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
@@ -29,14 +39,14 @@ class SQLiteCategory(CategoryDBInterface):
         )
         self.conn.commit()
 
-        cat = Category(
+        new_cat = Category(
             name = mut_cat.name,
             description = mut_cat.description,
             color = mut_cat.color,
             id = str(cursor.lastrowid),
             is_deleted = 0,
         )
-        return cat
+        return new_cat
 
     def get_category(self, category_id: str) -> Optional[Category]:
         cursor = self.conn.cursor()
@@ -64,14 +74,7 @@ class SQLiteCategory(CategoryDBInterface):
         )
         row = cursor.fetchone()
         if row:
-            return Category(
-                id=str(row[0]),
-                name=row[1],
-                description=row[2],
-                color=row[3],
-                is_deleted=0,
-                nested_categories=split_opt_str_group(row[4]),
-            )
+            return _build_category(row)
         return None
 
     def update_category(self, cat_id: str, category: MutableCategory) -> Category:
@@ -132,11 +135,4 @@ class SQLiteCategory(CategoryDBInterface):
             GROUP BY c.id'''
         )
         rows = cursor.fetchall()
-        return [Category(
-            id=str(row[0]),
-            name=row[1],
-            description=row[2],
-            color=row[3],
-            is_deleted=0,
-            nested_categories=split_opt_str_group(row[4]),
-        ) for row in rows]
+        return [_build_category(row) for row in rows]
