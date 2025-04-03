@@ -7,7 +7,7 @@ from flask import send_from_directory
 from flask_compress import Compress
 
 from db import db_singleton
-from db.sqlite.sqlite_db import MySQLiteDB
+from db.db_singleton import get_db
 from routes.auth import auth_bp
 from routes.category import category_bp
 from routes.compile import compile_bp
@@ -69,13 +69,14 @@ def teardown(exception):
 
 
 if __name__ == '__main__':
-    # load local db if it exists
-    existing_local_db = Path("./data/local_db.txt")
-    if existing_local_db.is_file():
-        file_str = existing_local_db.read_text()
-        db = MySQLiteDB('./data/mydatabase.db')
-        new_cats = parse_db(file_str)
-        create_in_db(db, new_cats)
+    with app.app_context():
+        # load local db if it exists
+        existing_local_db = Path("./data/local_db.txt")
+        if existing_local_db.is_file():
+            file_str = existing_local_db.read_text(encoding="utf-8")
+            db_if = get_db()
+            new_cats = parse_db(file_str)
+            create_in_db(db_if, new_cats)
 
     # start app
     app_port = int(os.getenv('APP_PORT', 8080))
