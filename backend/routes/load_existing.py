@@ -1,4 +1,5 @@
 import re
+import time
 from typing import List
 from apiflask import APIBlueprint
 from apiflask.fields import String
@@ -74,6 +75,7 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
             my_cat = db.categories.add_category(MutableCategory(
                 name=new_cat.name,
                 color=1,
+                description=f"Imported on {time.strftime('%Y-%m-%d %H:%M:%S')}",
             ))
 
         for new_url in new_cat.urls:
@@ -86,10 +88,11 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
             if my_url is None:
                 my_url = db.urls.add_url(MutableURL(
                     hostname=new_url,
+                    description=f"Imported on {time.strftime('%Y-%m-%d %H:%M:%S')}",
                 ))
 
             # map url to cat, if not already done
-            if not my_url.id in my_url.categories:
+            if not my_cat.id in my_url.categories:
                 db.url_categories.add_url_category(my_url.id, my_cat.id)
 
 

@@ -50,7 +50,6 @@ def catch_all(path: str):
 
     # Fallback to serving index.html
     return send_from_directory(static_folder, 'index.html')
-    #return app.send_static_file('index.html')
 
 
 # add "status" and "status_code" fields to the default flask errors

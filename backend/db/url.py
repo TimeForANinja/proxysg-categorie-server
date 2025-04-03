@@ -16,14 +16,16 @@ class MutableURL:
         ],
         "description": "FQDN of the URL",
     })
-    description: str = field(metadata={
-        "required": True,
-        "validate": [
-            Length(max=255),
-            simpleStringValidator,
-        ],
-        "description": "Description of the token"
-    })
+    description: str = field(
+        default=None,
+        metadata={
+            "validate": [
+                Length(max=255),
+                simpleStringValidator,
+            ],
+            "description": "Description of the token"
+        },
+    )
 
 @dataclass(kw_only=True)
 class URL(MutableURL):
@@ -42,14 +44,16 @@ class URL(MutableURL):
         ],
         "description": "FQDN of the URL",
     })
-    description: str = field(metadata={
-        "required": True,
-        "validate": [
-            Length(max=255),
-            simpleStringValidator,
-        ],
-        "description": "Description of the token"
-    })
+    description: str = field(
+        default=None,
+        metadata={
+            "validate": [
+                Length(max=255),
+                simpleStringValidator,
+            ],
+            "description": "Description of the token"
+        },
+    )
     is_deleted: int = field(
         default=0,
         metadata={

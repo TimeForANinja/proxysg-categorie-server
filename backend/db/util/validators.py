@@ -1,8 +1,6 @@
 from marshmallow.validate import Regexp
 
 
-
-
 simpleNameRegex = r"^[a-zA-Z0-9_-]+$"
 simpleNameError = "Only alphanumeric, underscores and hyphens are allowed."
 simpleNameValidator = Regexp(simpleNameRegex, error=simpleNameError)

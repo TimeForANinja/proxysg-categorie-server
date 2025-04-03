@@ -1,5 +1,6 @@
 # custom
 *.db
+data/
 
 # predefined (by github)
 
