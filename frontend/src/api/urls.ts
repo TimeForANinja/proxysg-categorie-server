@@ -6,6 +6,7 @@ export interface IMutableURL {
 export interface IURL extends IMutableURL {
     id: string;
     categories: string[];
+    bc_cats: string[];
 }
     
 export const getURLs = async (userToken: string): Promise<IURL[]> => {

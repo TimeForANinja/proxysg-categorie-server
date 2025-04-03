@@ -84,6 +84,9 @@ function BuildRow(props: BuildRowProps) {
                     />
                 </TableCell>
                 <TableCell>{url.description}</TableCell>
+                <TableCell>{url.bc_cats.map((cat, index) => (
+                    <div key={index}>{cat}</div>
+                ))}</TableCell>
                 <TableCell>
                     <EditIcon onClick={onEdit}/>
                     <DeleteIcon onClick={onDelete}/>
@@ -191,6 +194,7 @@ function MatchingListPage() {
                                         <TableCell>Hostname</TableCell>
                                         <TableCell>Categories</TableCell>
                                         <TableCell>Description</TableCell>
+                                        <TableCell>BC Categories</TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 </TableHead>
