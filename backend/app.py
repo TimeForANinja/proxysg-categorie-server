@@ -1,19 +1,16 @@
 import os
 from os.path import abspath
-from pathlib import Path
-
 from apiflask import APIFlask
 from flask import send_from_directory
 from flask_compress import Compress
 
 from db import db_singleton
-from db.db_singleton import get_db
 from other.background_tasks import start_background_tasks
 from routes.auth import auth_bp
 from routes.category import category_bp
 from routes.compile import compile_bp
 from routes.history import history_bp
-from routes.load_existing import other_bp, parse_db, create_in_db
+from routes.load_existing import other_bp
 from routes.token import token_bp
 from routes.url import url_bp
 
@@ -69,18 +66,15 @@ def teardown(exception):
     db_singleton.close_connection()
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        # load local db if it exists
-        existing_local_db = Path("./data/local_db.txt")
-        if existing_local_db.is_file():
-            file_str = existing_local_db.read_text(encoding="utf-8")
-            db_if = get_db()
-            new_cats = parse_db(file_str)
-            create_in_db(db_if, new_cats)
-
+def initialize_app(a: APIFlask):
     # start background tasks
-    start_background_tasks(app)
+    start_background_tasks(a)
+
+if __name__ == '__main__':
+    # initialize background tasks
+    # we keep this in the __main__ and manually trigger it for gunicorn with the on_starting
+    # to prevent the background tasks being run on multiple workers
+    initialize_app(app)
 
     # start app
     app_port = int(os.getenv('APP_PORT', 8080))

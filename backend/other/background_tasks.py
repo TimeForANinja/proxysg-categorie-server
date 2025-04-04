@@ -5,14 +5,45 @@ from apiflask import APIFlask
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from other.query_bc import ServerCredentials, query_all
+from other.load_existing_db import load_existing_file
+
+TIME_MINUTES = 60
 
 
 def start_background_tasks(app: APIFlask):
     """Initialize all background tasks"""
-    start_query_bc(app)
+    # Prepare the Scheduler
+    scheduler = BackgroundScheduler()
+
+    # add all tasks
+    start_query_bc(scheduler, app)
+    start_load_existing(scheduler, app)
+
+    # Start the Scheduler
+    scheduler.start()
 
 
-def start_query_bc(app: APIFlask):
+def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
+    """
+    Initialize the background task to load an existing LocalDB File.
+    Currently only done once after startup.
+    """
+
+    # wrapper to use the app_context
+    # this allows us to use the existing db_singleton stored as flask global object
+    def query_executor(a: APIFlask):
+        with a.app_context():
+            load_existing_file()
+
+    # run once "quick" after 1 minute
+    scheduler.add_job(
+        lambda: query_executor(app),
+        'date',
+        run_date=datetime.now() + timedelta(seconds=1*TIME_MINUTES)
+    )
+
+
+def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask):
     """
     Initialize the background task to query URL Categories from Bluecoat DB
     This is only possible with the Mgmt API of a Proxy Device
@@ -44,11 +75,8 @@ def start_query_bc(app: APIFlask):
         with a.app_context():
             query_all(c, unknown_only)
 
-    # Prepare the Scheduler
-    scheduler = BackgroundScheduler()
-
     # run at the interval defined
-    # and once "quick" after 1 minute (only query not-yet-rated URLs)
+    # and once "quick" after 2 minute (only query not-yet-rated URLs)
     scheduler.add_job(
         lambda: query_executor(app, creds),
         'interval',
@@ -57,8 +85,5 @@ def start_query_bc(app: APIFlask):
     scheduler.add_job(
         lambda: query_executor(app, creds, True),
         'date',
-        run_date=datetime.now() + timedelta(seconds=60)
+        run_date=datetime.now() + timedelta(seconds=2*TIME_MINUTES)
     )
-
-    # Start the Scheduler
-    scheduler.start()
