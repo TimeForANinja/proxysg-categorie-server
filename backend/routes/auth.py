@@ -6,7 +6,7 @@ from dataclasses import field, dataclass
 from marshmallow.validate import Length
 from marshmallow_dataclass import class_schema
 
-from auth import AUTH_TOKEN_KEY, AUTH_DEFAULT_TOKEN, validate_token
+from auth import AUTH_TOKEN_KEY, get_token, validate_token
 from routes.schemas.generic_output import GenericOutput
 
 auth_bp = APIBlueprint('authentication', __name__)
@@ -69,7 +69,7 @@ def handle_auth(login_input: LoginInput):
             response = {
                 "status": 'success',
                 "message": 'Login successful',
-                "token": AUTH_DEFAULT_TOKEN,
+                "token": get_token(),
             }
             return response
     else:

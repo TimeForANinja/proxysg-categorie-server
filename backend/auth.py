@@ -1,7 +1,8 @@
+import os
+import secrets
 from apiflask import HTTPTokenAuth
 from threading import Lock
 from werkzeug.datastructures.auth import Authorization
-import secrets
 
 
 def generate_auth_token(length=64):
@@ -13,7 +14,25 @@ def generate_auth_token(length=64):
 AUTH_TOKEN_KEY = "jwt-token"
 AUTH_ROLES_RO = "pxy_admin_ro"
 AUTH_ROLES_RW = "pxy_admin_rw"
-AUTH_DEFAULT_TOKEN = generate_auth_token()
+
+token_file = "/tmp/auth_token.txt"
+def get_token() -> str:
+    """
+    This method returns the current authentication token.
+
+    Unfortunately writing to a tmp file is currently the best way to achieve this.
+    Adding to flask g like done for the db_singleton does not work, since it's not thread safe.
+    An alternative would be to use redis, but this would be overkill to setup just for this use-case.
+    """
+    if not os.path.exists(token_file):
+        token = generate_auth_token()
+        with open(token_file, "w") as f:
+            f.write(token)
+    else:
+        with open(token_file, "r") as f:
+            token = f.read().strip()
+
+    return token
 
 def get_auth():
     return AuthSingleton().get_auth()
@@ -35,7 +54,7 @@ def _build_auth():
     return auth
 
 def validate_token(token: str) -> bool:
-    return token == AUTH_DEFAULT_TOKEN
+    return token == get_token()
 
 class AuthSingleton:
     _instance = None

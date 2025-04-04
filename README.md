@@ -29,7 +29,7 @@ To run the application in production, you can choose between the two options:
 1. **Using the Official Docker Image**  
    The production environment is preconfigured in the official Docker setup. Run the containerized app to deploy seamlessly.
 
-   Example Code for this can be found in `./docker-compose.yml`
+   Example Code for this can be found in `./docker-compose.yml` and `./.env.example`
 
 2. **Manual Build**  
    - Build the React-based frontend.  

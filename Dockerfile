@@ -36,4 +36,4 @@ COPY --from=frontend-builder /frontend/build ./dist
 EXPOSE 8080
 
 # Start the server with Gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-c", "gunicorn_config.py", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]

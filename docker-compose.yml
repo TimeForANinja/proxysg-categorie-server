@@ -1,5 +1,8 @@
 version: "3.8"
 
+# this app expects various Environment variables to be present
+# you can check the .env.example for some details regarding this
+
 services:
   proxysg-category-server:
     # use the preexisting image
@@ -11,13 +14,23 @@ services:
 
     container_name: proxysg-category-server
     ports:
-      # Exposes the server on port 8080
-      - "8080:8080"
+      # Exposes the server which listens on port 8080 on port 3000
+      - "3000:8080"
     volumes:
       # Mounts the folder with persistent files
       - ./data/:/backend/data/
     # Ensures the container automatically restarts on failure
     restart: unless-stopped
+    env_file:
+      # Pass the .env file since most vars are category-server vars
+      - .env
+    environment:
+      # Overwrite a few variables that are irrelevant with this compose deployment
+      APP_DB_TYPE: mongodb
+      APP_DB_MONGO_CON_USER: ${MONGO_USER}
+      APP_DB_MONGO_CON_PASSWORD: ${MONGO_PASSWORD}
+      APP_DB_MONGO_CON_HOST: mongodb:27017
+      APP_PORT: 8080
 
   mongodb:
     image: mongo:6.0
@@ -28,8 +41,8 @@ services:
     volumes:
       # Mounts a volume for MongoDB data
       - ./mongo-data:/data/db
+    restart: unless-stopped
     environment:
       # Sets a MongoDB root user and password
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: adminpassword
-    restart: unless-stopped
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
