@@ -1,7 +1,7 @@
 import sqlite3
-from db.url_category import UrlCategoryDBInterface
 from typing import List
 
+from db.url_category import UrlCategoryDBInterface
 
 
 class SQLiteURLCategory(UrlCategoryDBInterface):

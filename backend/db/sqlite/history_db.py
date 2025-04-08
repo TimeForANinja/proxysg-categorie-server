@@ -1,9 +1,8 @@
 import sqlite3
 import time
-
-from db.history import HistoryDBInterface, History
 from typing import List
 
+from db.history import HistoryDBInterface, History
 from db.sqlite.util.metadata import fetch_table_list
 
 

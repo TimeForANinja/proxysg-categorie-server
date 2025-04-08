@@ -11,6 +11,15 @@ def find_subcategories(
         visited: set[str],
         result: list[Category]
 ):
+    """
+    This method is used to recursively traverse the nested categories.
+    All categories that are in some form a sub category of the provided current_cat will be added to the result list.
+
+    :param current_cat: The current category to start the traversal from
+    :param categories_dict: A mapping of category IDs to category objects
+    :param visited: A set to track already visited categories
+    :param result: A list to store the found subcategories
+    """
     for nested_id in current_cat.nested_categories:
         # resolve category id to category in lookup table
         nested_cat = categories_dict.get(nested_id)
@@ -32,6 +41,15 @@ def find_subcategories(
         find_subcategories(nested_cat, categories_dict, visited, result)
 
 def calc_sub_cats(cat: Category, categories: list[Category]) -> list[Category]:
+    """
+    This method calculates all sub categories for the provided category.
+    It's a wrapper around the find_subcategories method,
+    which provides all variables for the initial call of the recursive func.
+
+    :param cat: The category to calculate sub categories for
+    :param categories: A list of all categories in the database
+    :return: A list of all sub categories for the provided category
+    """
     # Create a mapping of category IDs to category objects for quick lookup
     categories_dict = {category.id: category for category in categories}
 

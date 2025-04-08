@@ -8,6 +8,7 @@ from marshmallow.validate import Length
 class Atomic:
     pass
 
+
 @dataclass
 class History:
     """Helper class to represent a category."""

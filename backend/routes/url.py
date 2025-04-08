@@ -18,15 +18,15 @@ class SetCategoriesInput:
 
 class CreateOrUpdateOutput(GenericOutput):
     """Output schema for create/update url"""
-    data = Nested(class_schema(URL)(), required=True, description="URL")
+    data: URL = Nested(class_schema(URL)(), required=True, description="URL")
 
 class ListResponseOutput(GenericOutput):
     """Output schema for list of URL"""
-    data = List(Nested(class_schema(URL)()), required=True, description="List of URLs")
+    data: tList[URL] = List(Nested(class_schema(URL)()), required=True, description="List of URLs")
 
 class ListCategoriesOutput(GenericOutput):
     """Output schema for listing Categories of a URL"""
-    data = List(String, required=True, description="List of Categories")
+    data: List[str] = List(String, required=True, description="List of Categories")
 
 
 def add_url_bp(app: APIFlask):

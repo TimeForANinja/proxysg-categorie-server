@@ -17,7 +17,7 @@ from routes.schemas.generic_output import GenericOutput
 
 @dataclass
 class ExistingDBInput:
-    """Class for input schema for set sub categories"""
+    """Class representing the DB Structure loaded from an existing DB File"""
     categoryDB: str = String(
         required=True,
         validate=Length(min=1),
@@ -25,6 +25,7 @@ class ExistingDBInput:
     )
 
 class ExistingCat:
+    """Class for a single category read from an existing Database file"""
     name: str
     urls: List[str]
     def __init__(self, name: str, urls: List[str]):
@@ -33,6 +34,14 @@ class ExistingCat:
 
 
 def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
+    """
+    This method creates a DB as read from an existing file in the provided DB.
+
+    If cats / urls already exist we'll only map them.
+
+    :param db: The DBInterface to use for the DB operations
+    :param new_cats: The list of categories to import
+    """
     # get existing data from db
     existing_cats = db.categories.get_all_categories()
     existing_urls = db.urls.get_all_urls()

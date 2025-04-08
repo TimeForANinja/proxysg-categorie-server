@@ -30,7 +30,6 @@ class MutableCategory:
         },
     )
 
-
 @dataclass(kw_only=True)
 class Category(MutableCategory):
     """

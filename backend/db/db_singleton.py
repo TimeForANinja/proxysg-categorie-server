@@ -7,6 +7,7 @@ from db.sqlite.sqlite_db import MySQLiteDB
 
 
 def get_db() -> DBInterface:
+    """Get a unique DB instance."""
     db = getattr(g, '_database', None)
 
     if db is None:
@@ -28,6 +29,7 @@ def get_db() -> DBInterface:
 
 
 def close_connection():
+    """Remove the current database connection."""
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()

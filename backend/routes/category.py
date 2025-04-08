@@ -18,15 +18,15 @@ class SetSubCategoriesInput:
 
 class CreateOrUpdateOutput(GenericOutput):
     """Output schema for create/update category"""
-    data = Nested(class_schema(Category)(), required=True, description="Category")
+    data: Category = Nested(class_schema(Category)(), required=True, description="Category")
 
 class ListResponseOutput(GenericOutput):
     """Output schema for list of categories"""
-    data = List(Nested(class_schema(Category)()), required=True, description="List of Categories")
+    data: tList[Category] = List(Nested(class_schema(Category)()), required=True, description="List of Categories")
 
 class ListCategoriesOutput(GenericOutput):
     """Output schema for listing Sub-Categories of a Category"""
-    data = List(String, required=True, description="List of Sub-Categories")
+    data: tList[str] = List(String, required=True, description="List of Sub-Categories")
 
 
 def add_category_bp(app: APIFlask):

@@ -20,4 +20,5 @@ class DBInterface(ABC):
 
     @abstractmethod
     def close(self):
+        """Method to trigger any cleanup actions."""
         pass

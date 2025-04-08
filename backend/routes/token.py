@@ -19,15 +19,15 @@ class SetCategoriesInput:
 
 class CreateOrUpdateOutput(GenericOutput):
     """Output schema for create/update token"""
-    data = Nested(class_schema(Token)(), required=True, description="Token")
+    data: Token = Nested(class_schema(Token)(), required=True, description="Token")
 
 class ListResponseOutput(GenericOutput):
     """Output schema for list of tokens"""
-    data = List(Nested(class_schema(Token)()), required=True, description="List of Tokens")
+    data: tList[Token] = List(Nested(class_schema(Token)()), required=True, description="List of Tokens")
 
 class ListCategoriesOutput(GenericOutput):
     """Output schema for listing Categories of a Token"""
-    data = List(String, required=True, description="List of Categories")
+    data: tList[str] = List(String, required=True, description="List of Categories")
 
 
 def add_token_bp(app: APIFlask):

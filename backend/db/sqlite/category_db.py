@@ -6,6 +6,7 @@ from db.category import CategoryDBInterface, MutableCategory, Category
 
 
 def _build_category(row: any) -> Category:
+    """Parse SQLite row into Category object."""
     return Category(
         id=str(row[0]),
         name=row[1],
@@ -14,6 +15,7 @@ def _build_category(row: any) -> Category:
         is_deleted=0,
         nested_categories=split_opt_str_group(row[4]),
     )
+
 
 class SQLiteCategory(CategoryDBInterface):
     def __init__(self, conn: sqlite3.Connection):

@@ -7,6 +7,7 @@ from db.token import TokenDBInterface, MutableToken, Token
 
 
 def _build_token(row: Mapping[str, any]) -> Token:
+    """build a Token object from a MongoDB document"""
     return Token(
         id=str(row["_id"]),
         token=row["token"],

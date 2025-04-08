@@ -6,14 +6,15 @@ from typing import Optional, List
 
 
 def _build_url(row: any) -> URL:
-        return URL(
-            id=str(row[0]),
-            hostname=row[1],
-            description=row[2],
-            is_deleted=0,
-            bc_cats=split_opt_str_group(row[3]),
-            categories=split_opt_str_group(row[4]),
-        )
+    """Parse SQLite row into URL object."""
+    return URL(
+        id=str(row[0]),
+        hostname=row[1],
+        description=row[2],
+        is_deleted=0,
+        bc_cats=split_opt_str_group(row[3]),
+        categories=split_opt_str_group(row[4]),
+    )
 
 
 class SQLiteURL(URLDBInterface):

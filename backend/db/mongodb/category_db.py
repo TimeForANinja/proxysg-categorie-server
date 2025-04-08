@@ -6,6 +6,7 @@ from db.category import CategoryDBInterface, MutableCategory, Category
 
 
 def _build_category(row: Mapping[str, any]) -> Category:
+    """build a Category object from a MongoDB document"""
     return Category(
         id=str(row["_id"]),
         name=row["name"],

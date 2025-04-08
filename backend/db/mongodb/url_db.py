@@ -6,6 +6,7 @@ from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
 
 
 def _build_url(row: Mapping[str, any]) -> URL:
+    """build a URL object from a MongoDB document"""
     return URL(
         id=str(row["_id"]),
         hostname=row["hostname"],

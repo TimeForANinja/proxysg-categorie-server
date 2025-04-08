@@ -9,6 +9,7 @@ from db.sqlite.token_category_db import SQLiteTokenCategory
 from db.sqlite.url_db import SQLiteURL
 from db.sqlite.url_category_db import SQLiteURLCategory
 
+
 class MySQLiteDB(DBInterface):
     def __init__(self, filename):
         super().__init__()

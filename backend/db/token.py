@@ -17,6 +17,7 @@ class MutableToken:
         "description": "Description of the token"
     })
 
+
 @dataclass(kw_only=True)
 class Token(MutableToken):
     """

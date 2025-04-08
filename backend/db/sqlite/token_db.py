@@ -1,12 +1,13 @@
 import sqlite3
 import time
+from typing import Optional, List
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.token import TokenDBInterface, MutableToken, Token
-from typing import Optional, List
 
 
 def _build_token(row: any) -> Token:
+    """Parse SQLite row into Token object."""
     return Token(
         id=str(row[0]),
         token=row[1],

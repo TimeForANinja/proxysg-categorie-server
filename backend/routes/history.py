@@ -1,6 +1,7 @@
 from apiflask import APIBlueprint, APIFlask
 from apiflask.fields import List, Nested
 from marshmallow_dataclass import class_schema
+from typing import List as tList
 
 from auth.auth_singleton import get_auth_if
 from db.history import History
@@ -10,7 +11,7 @@ from routes.schemas.generic_output import GenericOutput
 
 class ListResponseOutput(GenericOutput):
     """Output schema for list of categories"""
-    data = List(Nested(class_schema(History)()), required=True, description="List of History Events")
+    data: tList[History] = List(Nested(class_schema(History)()), required=True, description="List of History Events")
 
 
 def add_history_bp(app: APIFlask):
