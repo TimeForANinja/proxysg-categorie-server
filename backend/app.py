@@ -6,13 +6,13 @@ from flask_compress import Compress
 
 from db import db_singleton
 from background.background_tasks import start_background_tasks
-from routes.auth import auth_bp
-from routes.category import category_bp
-from routes.compile import compile_bp
-from routes.history import history_bp
-from routes.load_existing import other_bp
-from routes.token import token_bp
-from routes.url import url_bp
+from routes.auth import add_auth_bp
+from routes.category import add_category_bp
+from routes.compile import add_compile_bp
+from routes.history import add_history_bp
+from routes.load_existing import add_other_bp
+from routes.token import add_token_bp
+from routes.url import add_url_bp
 
 # Initialize APIFlask instead of Flask
 app = APIFlask(
@@ -25,13 +25,13 @@ app = APIFlask(
 Compress(app)
 
 # Register blueprints
-app.register_blueprint(category_bp)
-app.register_blueprint(history_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(token_bp)
-app.register_blueprint(url_bp)
-app.register_blueprint(compile_bp)
-app.register_blueprint(other_bp)
+add_category_bp(app)
+add_history_bp(app)
+add_auth_bp(app)
+add_token_bp(app)
+add_url_bp(app)
+add_compile_bp(app)
+add_other_bp(app)
 
 
 # Serve index.html for the root route

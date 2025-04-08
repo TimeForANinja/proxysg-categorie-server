@@ -7,15 +7,12 @@ from dataclasses import dataclass
 from marshmallow.validate import Length
 from marshmallow_dataclass import class_schema
 
-from auth import get_auth, AUTH_ROLES_RW
+from auth.auth_singleton import get_auth_if
 from db.category import MutableCategory
 from db.db import DBInterface
 from db.db_singleton import get_db
 from db.url import MutableURL
 from routes.schemas.generic_output import GenericOutput
-
-
-other_bp = APIBlueprint('other', __name__)
 
 
 @dataclass
@@ -27,35 +24,12 @@ class ExistingDBInput:
         metadata={"description": "Content of the existing category DB"},
     )
 
-
 class ExistingCat:
     name: str
     urls: List[str]
     def __init__(self, name: str, urls: List[str]):
         self.name = name
         self.urls = urls
-
-
-# Route to upload an existing category db
-@other_bp.post('/api/upload_existing_db')
-@other_bp.doc(summary="Upload existing DB", description="Upload an existing database to the server")
-@other_bp.input(class_schema(ExistingDBInput)(), location='json', arg_name="existing_db")
-@other_bp.output(GenericOutput)
-@other_bp.auth_required(get_auth(), roles=[AUTH_ROLES_RW])
-def create_category(existing_db: ExistingDBInput):
-    db_if = get_db()
-
-    # parse db into intermediate object
-    categories = parse_db(existing_db.categoryDB)
-    # ush the intermediate objects to the main db
-    create_in_db(db_if, categories)
-
-    db_if.history.add_history_event(f"existing db imported")
-
-    return {
-        "status": "success",
-        "message": "Database successfully loaded",
-    }
 
 
 def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
@@ -94,7 +68,6 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
             # map url to cat, if not already done
             if not my_cat.id in my_url.categories:
                 db.url_categories.add_url_category(my_url.id, my_cat.id)
-
 
 def parse_db(db_str: str) -> List[ExistingCat]:
     """
@@ -139,3 +112,31 @@ def parse_db(db_str: str) -> List[ExistingCat]:
         raise ValueError("Syntax error: Category not properly ended with 'end'")
 
     return categories
+
+
+def add_other_bp(app):
+    auth_if = get_auth_if(app)
+    other_bp = APIBlueprint('other', __name__)
+
+    # Route to upload an existing category db
+    @other_bp.post('/api/upload_existing_db')
+    @other_bp.doc(summary="Upload existing DB", description="Upload an existing database to the server")
+    @other_bp.input(class_schema(ExistingDBInput)(), location='json', arg_name="existing_db")
+    @other_bp.output(GenericOutput)
+    @other_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
+    def create_category(existing_db: ExistingDBInput):
+        db_if = get_db()
+
+        # parse db into intermediate object
+        categories = parse_db(existing_db.categoryDB)
+        # ush the intermediate objects to the main db
+        create_in_db(db_if, categories)
+
+        db_if.history.add_history_event(f"existing db imported")
+
+        return {
+            "status": "success",
+            "message": "Database successfully loaded",
+        }
+
+    app.register_blueprint(other_bp)

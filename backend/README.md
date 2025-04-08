@@ -6,23 +6,23 @@ You can for example provide them via a single `.env` file to fully configure the
 
 ## Summary Table
 
-| Variable                    | Default Value          | Description                                        | Dependencies                   |
-|-----------------------------|------------------------|----------------------------------------------------|--------------------------------|
-| `APP_DB_TYPE`               | `sqlite`               | Database type                                      | -                              |
-| `APP_DB_SQLITE_FILENAME`    | `./Data/mydatabase.db` | SQLite database filepath                           | Requires `APP_DB_TYPE=sqlite`  |
-| `APP_DB_MONGO_DBNAME`       | `proxysg_localdb`      | MongoDB database name                              | Requires `APP_DB_TYPE=mongodb` |
-| `APP_DB_MONGO_CON_USER`     | `admin`                | MongoDB username                                   | Requires `APP_DB_TYPE=mongodb` |
-| `APP_DB_MONGO_CON_PASSWORD` | `adminpassword`        | MongoDB password                                   | Requires `APP_DB_TYPE=mongodb` |
-| `APP_DB_MONGO_CON_HOST`     | `localhost:27017`      | MongoDB host and port                              | Requires `APP_DB_TYPE=mongodb` |
-|                             |                        |                                                    |                                |
-| `APP_PORT`                  | `8080`                 | Application port                                   | -                              |
-|                             |                        |                                                    |                                |
-| `APP_AUTH_TYPE`             | `local`                | Authentication type                                | -                              |
-| `APP_AUTH_LOCAL_USER`       | `admin`                | Local authentication username                      | Requires `APP_AUTH_TYPE=local` |
-| `APP_AUTH_LOCAL_PASSWORD`   | `nw_admin_2025`        | Local authentication password                      | Requires `APP_AUTH_TYPE=local` |
-|                             |                        |                                                    |                                |
-| `APP_BC_DB`                 |                        | fqdn or ip of the BC proxy                         |                                |
-| `APP_BC_INTERVAL`           | `86400`                | interval (seconds) at which to update BC cats      | Requires `APP_BC_INTERVAL`     |
-| `APP_BC_USER`               | `ro_admin`             | username to query the proxy                        | Requires `APP_BC_INTERVAL`     |
-| `APP_BC_PASSWORD`           |                        | password to query the proxy                        | Requires `APP_BC_INTERVAL`     |
-| `APP_BC_VERIFY_SSL`         | `true`                 | verify the proxy https certificate? (true / false) | Requires `APP_BC_INTERVAL`     |
+| Variable                    | Default Value          | Description                                        | Dependencies                    |
+|-----------------------------|------------------------|----------------------------------------------------|---------------------------------|
+| `APP_DB_TYPE`               | `sqlite`               | Database type                                      | -                               |
+| `APP_DB_SQLITE_FILENAME`    | `./Data/mydatabase.db` | SQLite database filepath                           | Requires `APP_DB_TYPE=sqlite`   |
+| `APP_DB_MONGO_DBNAME`       | `proxysg_localdb`      | MongoDB database name                              | Requires `APP_DB_TYPE=mongodb`  |
+| `APP_DB_MONGO_CON_USER`     | `admin`                | MongoDB username                                   | Requires `APP_DB_TYPE=mongodb`  |
+| `APP_DB_MONGO_CON_PASSWORD` | `adminpassword`        | MongoDB password                                   | Requires `APP_DB_TYPE=mongodb`  |
+| `APP_DB_MONGO_CON_HOST`     | `localhost:27017`      | MongoDB host and port                              | Requires `APP_DB_TYPE=mongodb`  |
+|                             |                        |                                                    |                                 |
+| `APP_PORT`                  | `8080`                 | Application port                                   | -                               |
+|                             |                        |                                                    |                                 |
+| `APP_AUTH_ORDER`            | `local`                | Comma Separated List of Authentication type        | -                               |
+| `APP_AUTH_LOCAL_USER`       | `admin`                | Local authentication username                      | Requires `APP_AUTH_ORDER=local` |
+| `APP_AUTH_LOCAL_PASSWORD`   | `nw_admin_2025`        | Local authentication password                      | Requires `APP_AUTH_ORDER=local` |
+|                             |                        |                                                    |                                 |
+| `APP_BC_DB`                 |                        | fqdn or ip of the BC proxy                         |                                 |
+| `APP_BC_INTERVAL`           | `86400`                | interval (seconds) at which to update BC cats      | Requires `APP_BC_INTERVAL`      |
+| `APP_BC_USER`               | `ro_admin`             | username to query the proxy                        | Requires `APP_BC_INTERVAL`      |
+| `APP_BC_PASSWORD`           |                        | password to query the proxy                        | Requires `APP_BC_INTERVAL`      |
+| `APP_BC_VERIFY_SSL`         | `true`                 | verify the proxy https certificate? (true / false) | Requires `APP_BC_INTERVAL`      |

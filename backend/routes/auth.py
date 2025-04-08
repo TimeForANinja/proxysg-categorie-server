@@ -1,15 +1,14 @@
-import os
-
-from apiflask import APIBlueprint
-from apiflask.fields import String
+from apiflask import APIBlueprint, Schema
+from apiflask.fields import String, Nested
 from dataclasses import field, dataclass
+from typing import Optional
 from marshmallow.validate import Length
 from marshmallow_dataclass import class_schema
 
-from auth import AUTH_TOKEN_KEY, get_token, validate_token
+from auth.auth import AUTH_TOKEN_KEY
+from auth.auth_singleton import get_auth_if
+from auth.auth_user import AuthUser
 from routes.schemas.generic_output import GenericOutput
-
-auth_bp = APIBlueprint('authentication', __name__)
 
 
 @dataclass
@@ -19,23 +18,6 @@ class JWTHeaderInput:
         "required": True,
         "description": "JWT Token for verifying access"
     })
-
-
-@auth_bp.post("/api/auth/verify")
-@auth_bp.input(class_schema(JWTHeaderInput)(), location='headers', arg_name="token")
-@auth_bp.output(GenericOutput)
-def handle_verify(token: JWTHeaderInput):
-    if validate_token(token.jwt_token):
-        return {
-            "status": 'success',
-            "message": 'Login verified successfully',
-        }
-    else:
-        return {
-            "status": 'failed',
-            "message": 'Invalid token',
-        }
-
 
 @dataclass
 class LoginInput:
@@ -50,30 +32,58 @@ class LoginInput:
         "description": "Password or Token",
     })
 
-class LoginOutput(GenericOutput):
-    token = String(required=True, metadata={
+class LoginOutputData(Schema):
+    token: str = String(required=True, metadata={
         "description": "Token for use with future requests",
     })
+    user: AuthUser = Nested(class_schema(AuthUser)(), required=True, description="User which logged in")
+
+class LoginOutput(GenericOutput):
+    data: Optional[LoginOutputData] = Nested(LoginOutputData, required=False, description="Login data, if login was successfully")
+
+class VerifyOutput(GenericOutput):
+    data: Optional[AuthUser] = Nested(class_schema(AuthUser)(), required=False, description="User which logged in, if login was successfully")
+
+def add_auth_bp(app):
+    auth_if = get_auth_if(app)
+    auth_bp = APIBlueprint('authentication', __name__)
+
+    @auth_bp.post("/api/auth/verify")
+    @auth_bp.input(class_schema(JWTHeaderInput)(), location='headers', arg_name="token")
+    @auth_bp.output(VerifyOutput)
+    def handle_verify(token: JWTHeaderInput):
+        user = auth_if.verify_token(token.jwt_token)
+        if user is None:
+            return {
+                "status": 'failed',
+                "message": 'Invalid token',
+            }
+        else:
+            return {
+                "status": 'success',
+                "message": 'Login verified successfully',
+                "data": user,
+            }
 
 
-@auth_bp.post("/api/auth/login")
-@auth_bp.input(class_schema(LoginInput)(), location='json', arg_name="login_input")
-@auth_bp.output(LoginOutput)
-def handle_auth(login_input: LoginInput):
-    auth_type = os.getenv('APP_AUTH_TYPE', 'local')
-
-    if auth_type == 'local':
-        auth_user = os.getenv('APP_AUTH_LOCAL_USER', 'admin')
-        auth_password = os.getenv('APP_AUTH_LOCAL_PASSWORD', 'nw_admin_2025')
-        if login_input.username == auth_user and login_input.password == auth_password:
-            response = {
+    @auth_bp.post("/api/auth/login")
+    @auth_bp.input(class_schema(LoginInput)(), location='json', arg_name="login_input")
+    @auth_bp.output(LoginOutput)
+    def handle_auth(login_input: LoginInput):
+        login = auth_if.check_login(login_input.username, login_input.password)
+        if login is None:
+            return {
+                "status": 'failed',
+                "message": 'Invalid credentials',
+            }
+        else:
+            return {
                 "status": 'success',
                 "message": 'Login successful',
-                "token": get_token(),
+                "data": {
+                    "token": login[0],
+                    "user": login[1],
+                }
             }
-            return response
-    else:
-        return {
-            "status": 'failed',
-            "message": 'Invalid credentials',
-        }
+
+    app.register_blueprint(auth_bp)
