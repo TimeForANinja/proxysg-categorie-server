@@ -16,15 +16,15 @@ class SetSubCategoriesInput:
     """Class for input schema for set sub categories"""
     categories: tList[str] = field(default_factory=list)
 
-class CreateOrUpdateOutput(GenericOutput):
+class CreateOrUpdateCategoryOutput(GenericOutput):
     """Output schema for create/update category"""
     data: Category = Nested(class_schema(Category)(), required=True, description="Category")
 
-class ListResponseOutput(GenericOutput):
+class ListCategoriesResponseOutput(GenericOutput):
     """Output schema for list of categories"""
     data: tList[Category] = List(Nested(class_schema(Category)()), required=True, description="List of Categories")
 
-class ListCategoriesOutput(GenericOutput):
+class ListSubCategoriesOutput(GenericOutput):
     """Output schema for listing Sub-Categories of a Category"""
     data: tList[str] = List(String, required=True, description="List of Sub-Categories")
 
@@ -36,7 +36,7 @@ def add_category_bp(app: APIFlask):
     # Route to fetch all Categories
     @category_bp.get('/api/category')
     @category_bp.doc(summary='List all Categories', description='List all Categories in the database')
-    @category_bp.output(ListResponseOutput)
+    @category_bp.output(ListCategoriesResponseOutput)
     @category_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RO])
     def get_categories():
         db_if = get_db()
@@ -51,7 +51,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.put('/api/category/<string:cat_id>')
     @category_bp.doc(summary='Update Category name', description='Update the name of a Category')
     @category_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
-    @category_bp.output(CreateOrUpdateOutput)
+    @category_bp.output(CreateOrUpdateCategoryOutput)
     @category_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def update_category(cat_id: str, mut_cat: MutableCategory):
         db_if = get_db()
@@ -81,7 +81,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.post('/api/category')
     @category_bp.doc(summary="Create a Category", description="Create a new Category with a given name")
     @category_bp.input(class_schema(MutableCategory)(), location='json', arg_name="mut_cat")
-    @category_bp.output(CreateOrUpdateOutput)
+    @category_bp.output(CreateOrUpdateCategoryOutput)
     @category_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def create_category(mut_cat: MutableCategory):
         db_if = get_db()
@@ -124,7 +124,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.post('/api/category/<string:cat_id>/category')
     @category_bp.doc(summary="overwrite token categories", description="Set the Sub-Categories of a Category to the provided list")
     @category_bp.input(class_schema(SetSubCategoriesInput)(), location='json', arg_name="set_cats")
-    @category_bp.output(ListCategoriesOutput)
+    @category_bp.output(ListSubCategoriesOutput)
     @category_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def set_sub_categories(cat_id: str, set_cats: SetSubCategoriesInput):
         db_if = get_db()

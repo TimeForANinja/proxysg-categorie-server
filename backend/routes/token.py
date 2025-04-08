@@ -13,19 +13,19 @@ from routes.schemas.generic_output import GenericOutput
 
 
 @dataclass
-class SetCategoriesInput:
+class SetTokenCategoriesInput:
     """Class for input schema for set categories"""
     categories: tList[str] = field(default_factory=list)
 
-class CreateOrUpdateOutput(GenericOutput):
+class CreateOrUpdateTokenOutput(GenericOutput):
     """Output schema for create/update token"""
     data: Token = Nested(class_schema(Token)(), required=True, description="Token")
 
-class ListResponseOutput(GenericOutput):
+class ListTokenOutput(GenericOutput):
     """Output schema for list of tokens"""
     data: tList[Token] = List(Nested(class_schema(Token)()), required=True, description="List of Tokens")
 
-class ListCategoriesOutput(GenericOutput):
+class ListTokenCategoriesOutput(GenericOutput):
     """Output schema for listing Categories of a Token"""
     data: tList[str] = List(String, required=True, description="List of Categories")
 
@@ -37,7 +37,7 @@ def add_token_bp(app: APIFlask):
     # Route to fetch all Tokens
     @token_bp.get('/api/token')
     @token_bp.doc(summary='List all Tokens', description='List all Tokens in the database')
-    @token_bp.output(ListResponseOutput)
+    @token_bp.output(ListTokenOutput)
     @token_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RO])
     def get_tokens():
         db_if = get_db()
@@ -52,7 +52,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.put('/api/token/<string:token_id>')
     @token_bp.doc(summary='Update Token name', description='Update the name of a Token')
     @token_bp.input(class_schema(MutableToken)(), location='json', arg_name="mut_tok")
-    @token_bp.output(CreateOrUpdateOutput)
+    @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def update_token(token_id: str, mut_tok: MutableToken):
         db_if = get_db()
@@ -67,7 +67,7 @@ def add_token_bp(app: APIFlask):
     # Route to update Token name
     @token_bp.post('/api/token/<string:token_id>/roll')
     @token_bp.doc(summary='Roll Token value', description='Randomize the value of a Token')
-    @token_bp.output(CreateOrUpdateOutput)
+    @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def roll_token(token_id: str):
         new_token_val = str(uuid.uuid4())
@@ -99,7 +99,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.post('/api/token')
     @token_bp.doc(summary="Create a Token", description="Create a new Token with a given name")
     @token_bp.input(class_schema(MutableToken)(), location='json', arg_name="mut_tok")
-    @token_bp.output(CreateOrUpdateOutput)
+    @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def create_token(mut_tok: MutableToken):
         new_token = str(uuid.uuid4())
@@ -143,10 +143,10 @@ def add_token_bp(app: APIFlask):
     # Route to set Categories to a given List
     @token_bp.post('/api/token/<string:token_id>/category')
     @token_bp.doc(summary="overwrite token categories", description="Set the Categories of a Token to the provided list")
-    @token_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
-    @token_bp.output(ListCategoriesOutput)
+    @token_bp.input(class_schema(SetTokenCategoriesInput)(), location='json', arg_name="set_cats")
+    @token_bp.output(ListTokenCategoriesOutput)
     @token_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
-    def set_token_categories(token_id: str, set_cats: SetCategoriesInput):
+    def set_token_categories(token_id: str, set_cats: SetTokenCategoriesInput):
         db_if = get_db()
         is_cats = db_if.token_categories.get_token_categories_by_token(token_id)
 

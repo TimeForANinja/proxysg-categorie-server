@@ -9,7 +9,7 @@ from db.db_singleton import get_db
 from routes.schemas.generic_output import GenericOutput
 
 
-class ListResponseOutput(GenericOutput):
+class ListHistoryOutput(GenericOutput):
     """Output schema for list of categories"""
     data: tList[History] = List(Nested(class_schema(History)()), required=True, description="List of History Events")
 
@@ -21,7 +21,7 @@ def add_history_bp(app: APIFlask):
     # Route to fetch all Categories
     @history_bp.get('/api/history')
     @history_bp.doc(summary='List Change History', description='List all Changes done to the Database')
-    @history_bp.output(ListResponseOutput)
+    @history_bp.output(ListHistoryOutput)
     @history_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RO])
     def get_categories():
         db_if = get_db()

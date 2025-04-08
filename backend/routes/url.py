@@ -12,21 +12,21 @@ from routes.schemas.generic_output import GenericOutput
 
 
 @dataclass
-class SetCategoriesInput:
+class SetURLCategoriesInput:
     """Class for input schema for set categories"""
     categories: tList[str] = field(default_factory=list)
 
-class CreateOrUpdateOutput(GenericOutput):
+class CreateOrUpdateURLOutput(GenericOutput):
     """Output schema for create/update url"""
     data: URL = Nested(class_schema(URL)(), required=True, description="URL")
 
-class ListResponseOutput(GenericOutput):
+class ListURLOutput(GenericOutput):
     """Output schema for list of URL"""
     data: tList[URL] = List(Nested(class_schema(URL)()), required=True, description="List of URLs")
 
-class ListCategoriesOutput(GenericOutput):
+class ListURLCategoriesOutput(GenericOutput):
     """Output schema for listing Categories of a URL"""
-    data: List[str] = List(String, required=True, description="List of Categories")
+    data: tList[str] = List(String, required=True, description="List of Categories")
 
 
 def add_url_bp(app: APIFlask):
@@ -36,7 +36,7 @@ def add_url_bp(app: APIFlask):
     # Route to fetch all URLs
     @url_bp.get('/api/url')
     @url_bp.doc(summary='List all URLs', description='List all URLs in the database')
-    @url_bp.output(ListResponseOutput)
+    @url_bp.output(ListURLOutput)
     @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RO])
     def get_urls():
         db_if = get_db()
@@ -51,7 +51,7 @@ def add_url_bp(app: APIFlask):
     @url_bp.put('/api/url/<string:url_id>')
     @url_bp.doc(summary='Update URL name', description='Update the name of a URL')
     @url_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
-    @url_bp.output(CreateOrUpdateOutput)
+    @url_bp.output(CreateOrUpdateURLOutput)
     @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def update_url(url_id: str, mut_url: MutableURL):
         db_if = get_db()
@@ -81,7 +81,7 @@ def add_url_bp(app: APIFlask):
     @url_bp.post('/api/url')
     @url_bp.doc(summary="Create a new URL", description="Create a new URL with a given name")
     @url_bp.input(class_schema(MutableURL)(), location='json', arg_name="mut_url")
-    @url_bp.output(CreateOrUpdateOutput)
+    @url_bp.output(CreateOrUpdateURLOutput)
     @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def create_url(mut_url: MutableURL):
         db_if = get_db()
@@ -123,10 +123,10 @@ def add_url_bp(app: APIFlask):
     # Route to set Categories to a given List
     @url_bp.post('/api/url/<string:url_id>/category')
     @url_bp.doc(summary="overwrite url categories", description="Set the Categories of a URL to the provided list")
-    @url_bp.input(class_schema(SetCategoriesInput)(), location='json', arg_name="set_cats")
-    @url_bp.output(ListCategoriesOutput)
+    @url_bp.input(class_schema(SetURLCategoriesInput)(), location='json', arg_name="set_cats")
+    @url_bp.output(ListURLCategoriesOutput)
     @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
-    def set_url_categories(url_id: str, set_cats: SetCategoriesInput):
+    def set_url_categories(url_id: str, set_cats: SetURLCategoriesInput):
         db_if = get_db()
         is_cats = db_if.url_categories.get_url_categories_by_url(url_id)
 
