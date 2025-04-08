@@ -4,8 +4,8 @@ from datetime import timedelta, datetime
 from apiflask import APIFlask
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from other.query_bc import ServerCredentials, query_all
-from other.load_existing_db import load_existing_file
+from background.query_bc import ServerCredentials, query_all
+from background.load_existing_db import load_existing_file
 
 TIME_MINUTES = 60
 

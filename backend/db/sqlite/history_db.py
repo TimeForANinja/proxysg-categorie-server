@@ -4,7 +4,7 @@ import time
 from db.history import HistoryDBInterface, History
 from typing import List
 
-from db.sqlite.util import _fetch_table_list
+from db.sqlite.util.metadata import fetch_table_list
 
 
 class SQLiteHistory(HistoryDBInterface):
@@ -13,7 +13,7 @@ class SQLiteHistory(HistoryDBInterface):
         self.create_table()
 
     def create_table(self) -> None:
-        has_tables = _fetch_table_list(self.conn)
+        has_tables = fetch_table_list(self.conn)
 
         cursor = self.conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS history (

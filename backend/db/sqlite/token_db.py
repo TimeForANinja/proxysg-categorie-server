@@ -1,7 +1,7 @@
 import sqlite3
 import time
 
-from db.sqlite.util import split_opt_str_group
+from db.sqlite.util.groups import split_opt_str_group
 from db.token import TokenDBInterface, MutableToken, Token
 from typing import Optional, List
 

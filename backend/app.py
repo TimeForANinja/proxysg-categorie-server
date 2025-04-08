@@ -5,7 +5,7 @@ from flask import send_from_directory
 from flask_compress import Compress
 
 from db import db_singleton
-from other.background_tasks import start_background_tasks
+from background.background_tasks import start_background_tasks
 from routes.auth import auth_bp
 from routes.category import category_bp
 from routes.compile import compile_bp

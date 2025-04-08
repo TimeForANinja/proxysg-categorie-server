@@ -17,7 +17,7 @@ def find_subcategories(
         # resolve category id to category in lookup table
         nested_cat = categories_dict.get(nested_id)
 
-        # make sure we could lookup the nested category
+        # make sure we could look up the nested category
         if not nested_cat:
             continue
 

@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Optional, List
 
-from db.sqlite.util import split_opt_str_group
+from db.sqlite.util.groups import split_opt_str_group
 from db.category import CategoryDBInterface, MutableCategory, Category
 
 
