@@ -8,6 +8,8 @@ from db.util.validators import simpleURLValidator, simpleStringValidator
 # Default Value set in the bc_cats array
 # It indicates that a URL has never been queried against the BC Database
 NO_BC_CATEGORY_YET = "to be queried"
+# Value returned by BC if the Category-Service is not working
+FAILED_BC_CATEGORY_LOOKUP = "unavailable"
 
 @dataclass(kw_only=True)
 class MutableURL:

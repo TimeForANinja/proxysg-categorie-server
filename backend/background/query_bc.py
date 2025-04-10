@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 
 from db.db_singleton import get_db
-from db.url import NO_BC_CATEGORY_YET
+from db.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP
 
 
 @dataclass
@@ -19,17 +19,40 @@ class ServerCredentials:
         """Build a base URL which includes basic auth"""
         return f"https://{self.user}:{self.password}@{self.server}:8082"
 
+def is_unknown_category(bc_cats: List[str]) -> bool:
+    """
+    Method to check if a list of BlueCoat Categories is unknown
+
+    A Category is unknown if:
+    * no cat is set
+    * only the NO_BC_CATEGORY_YET cat is set
+    * only "unavailable" cat is set
+
+    :param bc_cats: The list of BlueCoat Categories to check
+    :return: True if the list is unknown, False otherwise
+    """
+    if len(bc_cats) == 0:
+        return True
+    if len(bc_cats) == 1 and bc_cats[0] == NO_BC_CATEGORY_YET:
+        return True
+    if len(bc_cats) == 1 and bc_cats[0] == FAILED_BC_CATEGORY_LOOKUP:
+        return True
+    return False
+
 def query_all(creds: ServerCredentials, unknown_only: bool):
+    """
+    Method to query all URLs in the DB for their BlueCoat Categories
+
+    :param creds: The credentials to use for the request
+    :param unknown_only: If True, only URLs with unknown BlueCoat Categories will be queried
+    """
     db_if = get_db()
 
     urls = db_if.urls.get_all_urls()
 
     for url in urls:
-        # if unknown_only is set we only want to check elements where
-        # no cat is set, or only the NO_BC_CATEGORY_YET cat is set
-        no_bc_cats = len(url.bc_cats) == 0
-        only_tbd_cats = len(url.bc_cats) == 1 and url.bc_cats[0] == NO_BC_CATEGORY_YET
-        if unknown_only and not no_bc_cats and not only_tbd_cats:
+        # if unknown_only is set we only want to check not yet looked up / where the prev lookup failed
+        if unknown_only and not is_unknown_category(url.bc_cats):
             continue
 
         # query the proxy for the categories
