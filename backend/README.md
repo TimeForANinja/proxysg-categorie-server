@@ -9,7 +9,7 @@ You can for example provide them via a single `.env` file to fully configure the
 | Variable                    | Default Value          | Description                                        | Dependencies                     |
 |-----------------------------|------------------------|----------------------------------------------------|----------------------------------|
 | `APP_DB_TYPE`               | `sqlite`               | Database type                                      | -                                |
-| `APP_DB_SQLITE_FILENAME`    | `./Data/mydatabase.db` | SQLite database filepath                           | Requires `APP_DB_TYPE=sqlite`    |
+| `APP_DB_SQLITE_FILENAME`    | `./data/mydatabase.db` | SQLite database filepath                           | Requires `APP_DB_TYPE=sqlite`    |
 | `APP_DB_MONGO_DBNAME`       | `proxysg_localdb`      | MongoDB database name                              | Requires `APP_DB_TYPE=mongodb`   |
 | `APP_DB_MONGO_CON_USER`     | `admin`                | MongoDB username                                   | Requires `APP_DB_TYPE=mongodb`   |
 | `APP_DB_MONGO_CON_PASSWORD` | `adminpassword`        | MongoDB password                                   | Requires `APP_DB_TYPE=mongodb`   |
