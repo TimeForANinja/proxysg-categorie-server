@@ -1,7 +1,7 @@
 import sqlite3
+from typing import List
 
 from db.sub_category import SubCategoryDBInterface
-from typing import List
 
 
 class SQLiteSubCategory(SubCategoryDBInterface):

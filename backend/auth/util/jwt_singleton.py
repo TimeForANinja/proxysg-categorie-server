@@ -10,7 +10,7 @@ def get_jwt_handler(app: APIFlask) -> JWTHandler:
         jwt_handler = getattr(g, '_jwt', None)
 
         if jwt_handler is None:
-            lifetime = int(os.getenv('APP_JWT_LIFETIME'))
+            lifetime = int(os.getenv('APP_JWT_LIFETIME', '21600'))
             secret_key = os.getenv('APP_JWT_SECRET')
 
             jwt_handler = g._jwt = JWTHandler(lifetime, secret_key)

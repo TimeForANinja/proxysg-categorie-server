@@ -2,6 +2,7 @@ from apiflask import Schema
 from apiflask.fields import String
 from apiflask.validators import OneOf
 
+
 # TODO: make sure output is defined for all routes
 class GenericOutput(Schema):
     """Every Output Schema should inherit from this class."""

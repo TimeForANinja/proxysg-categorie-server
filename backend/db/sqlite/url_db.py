@@ -1,8 +1,8 @@
 import sqlite3
+from typing import Optional, List
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
-from typing import Optional, List
 
 
 def _build_url(row: any) -> URL:

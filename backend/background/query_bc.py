@@ -53,11 +53,13 @@ def query_all(creds: ServerCredentials, unknown_only: bool):
 
     urls = db_if.urls.get_all_urls()
 
-    for url in urls:
+    scheduled_urls = [
+        url for url in urls
         # if unknown_only is set we only want to check not yet looked up / where the prev lookup failed
-        if unknown_only and not is_unknown_category(url.bc_cats):
-            continue
+        if not unknown_only or is_unknown_category(url.bc_cats)
+    ]
 
+    for url in scheduled_urls:
         # query the proxy for the categories
         bc_cats = do_query(creds, url.hostname)
 
@@ -65,7 +67,7 @@ def query_all(creds: ServerCredentials, unknown_only: bool):
         if set(bc_cats) != set(url.bc_cats):
             db_if.urls.set_bc_cats(url.id, bc_cats)
 
-    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Finished updating BlueCoat categories for {'unknown URLs' if unknown_only else 'all URLs'}")
+    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Finished updating BlueCoat categories for {len(scheduled_urls)} of the total {len(urls)} URLS ({'mode=only_unknown' if unknown_only else 'mode=all'})")
 
 def do_query(creds: ServerCredentials, url: str) -> List[str]:
     """
@@ -91,8 +93,8 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
             if "Blue Coat:" in line:
                 categories = line.split("Blue Coat:")[1].strip().split("; ")
                 return categories
-        print(f"No BlueCoat categories found in Response for \"{url}\"")
+        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} No BlueCoat categories found in Response for \"{url}\"")
         return []
     except requests.RequestException as e:
-        print(f"An error occurred fetching \"{url}\": {e}")
+        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} An error occurred fetching \"{url}\": {e}")
         return []

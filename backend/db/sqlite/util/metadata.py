@@ -1,6 +1,7 @@
 import sqlite3
 from typing import List
 
+
 def fetch_table_list(conn: sqlite3.Connection) -> List[str]:
     """
     This utility function returns a list of table names in the SQLite database.

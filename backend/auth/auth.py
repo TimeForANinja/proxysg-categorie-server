@@ -4,7 +4,7 @@ from apiflask import HTTPTokenAuth
 from auth.auth_realm import AuthRealmInterface
 from auth.auth_user import AuthUser, AUTH_ROLES_RO, AUTH_ROLES_RW
 
-# Constants
+# HTTP Header name for the Auth token
 AUTH_TOKEN_KEY = "jwt-token"
 
 

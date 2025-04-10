@@ -23,7 +23,7 @@ You can for example provide them via a single `.env` file to fully configure the
 | `APP_AUTH_RADIUS_SERVER`    | -                        | Radius Auth Server IP / Hostname                                                | Requires `APP_AUTH_ORDER=radius` |
 | `APP_AUTH_RADIUS_SECRET`    | -                        | Pre-Shared-Secret to use for Radius                                             | Requires `APP_AUTH_ORDER=radius` |
 |                             |                          |                                                                                 |                                  |
-| `APP_JWT_LIFETIME`          | -                        | Lifetime of JWT Tokens in Seconds                                               | -                                |
+| `APP_JWT_LIFETIME`          | `21600` (6h)             | Lifetime of JWT Tokens in Seconds                                               | -                                |
 | `APP_JWT_SECRET`            | -                        | Secret used for JWT Tokens                                                      | -                                |
 |                             |                          |                                                                                 |                                  |
 | `APP_BC_DB`                 |                          | fqdn or ip of the BC proxy                                                      | -                                |

@@ -97,5 +97,5 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask):
     scheduler.add_job(
         lambda: query_executor(app, creds, True),
         'date',
-        run_date=datetime.now() + timedelta(seconds=2*TIME_MINUTES)
+        run_date=datetime.now() + timedelta(seconds=3*TIME_MINUTES)
     )

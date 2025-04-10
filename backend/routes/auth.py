@@ -44,6 +44,7 @@ class LoginOutput(GenericOutput):
 class VerifyOutput(GenericOutput):
     data: Optional[AuthUser] = Nested(class_schema(AuthUser)(), required=False, description="User which logged in, if login was successfully")
 
+
 def add_auth_bp(app):
     auth_if = get_auth_if(app)
     auth_bp = APIBlueprint('authentication', __name__)

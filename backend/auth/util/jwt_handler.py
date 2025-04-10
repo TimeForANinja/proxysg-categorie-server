@@ -13,7 +13,6 @@ class JWTHandler:
         self.lifetime = lifetime
         self.secret_key = secret_key
 
-    # TODO: switch to a defined object instead of a simple dict
     def generate_token(self, data: TokenData) -> str:
         """
         Generate a JWT token with the provided data.
@@ -45,13 +44,12 @@ class JWTHandler:
             decoded_data = jwt.decode(token, self.secret_key, algorithms=["HS256"])
             data = decoded_data.get("data")  # Return the original data (from the payload)
             if not data:
+                # Token Content is invalid
                 return None
             return TokenData.from_dict(data)
         except jwt.ExpiredSignatureError:
             # Token has expired
-            print("Token has expired.")
             return None
         except jwt.InvalidTokenError:
             # Token is invalid
-            print("Invalid token.")
             return None

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+
 class UrlCategoryDBInterface(ABC):
     @abstractmethod
     def create_table(self) -> None:

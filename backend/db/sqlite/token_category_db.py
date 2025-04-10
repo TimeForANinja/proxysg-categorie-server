@@ -1,6 +1,7 @@
 import sqlite3
-from db.token_category import TokenCategoryDBInterface
 from typing import List
+
+from db.token_category import TokenCategoryDBInterface
 
 
 class SQLiteTokenCategory(TokenCategoryDBInterface):
