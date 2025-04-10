@@ -35,8 +35,11 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
         return True
     if len(bc_cats) == 1 and bc_cats[0] == NO_BC_CATEGORY_YET:
         return True
-    if len(bc_cats) == 1 and bc_cats[0] == FAILED_BC_CATEGORY_LOOKUP:
-        return True
+    # TODO: decide on how to continue with this
+    # Unavailable is used a) when BC Cat Services are offline
+    # and b) when the URL / FQDN is not ratable (e.g. IP)
+    #if len(bc_cats) == 1 and bc_cats[0] == FAILED_BC_CATEGORY_LOOKUP:
+    #    return True
     return False
 
 def query_all(creds: ServerCredentials, unknown_only: bool):
@@ -62,7 +65,7 @@ def query_all(creds: ServerCredentials, unknown_only: bool):
         if set(bc_cats) != set(url.bc_cats):
             db_if.urls.set_bc_cats(url.id, bc_cats)
 
-    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Finished updating BlueCoat categories for all URLs")
+    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Finished updating BlueCoat categories for {'unknown URLs' if unknown_only else 'all URLs'}")
 
 def do_query(creds: ServerCredentials, url: str) -> List[str]:
     """
@@ -88,8 +91,8 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
             if "Blue Coat:" in line:
                 categories = line.split("Blue Coat:")[1].strip().split("; ")
                 return categories
-        print("No BlueCoat categories found in Response")
+        print(f"No BlueCoat categories found in Response for \"{url}\"")
         return []
     except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred fetching \"{url}\": {e}")
         return []

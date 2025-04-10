@@ -3,6 +3,7 @@ import urllib3
 from datetime import timedelta, datetime
 from apiflask import APIFlask
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
@@ -57,7 +58,8 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask):
     """
 
     # load required config variables
-    bc_interval = os.getenv('APP_BC_INTERVAL', 86400)
+    bc_interval = os.getenv('APP_BC_INTERVAL', "0 3 * * *")
+    bc_interval_quick = os.getenv("APP_BC_INTERVAL_QUICK", "0 * * * *")
     bc_db = os.getenv('APP_BC_DB')
     bc_user = os.getenv('APP_BC_USER', 'ro_admin')
     bc_password = os.getenv('APP_BC_PASSWORD')
@@ -86,8 +88,11 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask):
     # and once "quick" after 2 minute (only query not-yet-rated URLs)
     scheduler.add_job(
         lambda: query_executor(app, creds),
-        'interval',
-        seconds=int(bc_interval)
+        CronTrigger.from_crontab(bc_interval),
+    )
+    scheduler.add_job(
+        lambda: query_executor(app, creds, True),
+        CronTrigger.from_crontab(bc_interval_quick),
     )
     scheduler.add_job(
         lambda: query_executor(app, creds, True),
