@@ -33,10 +33,7 @@ import {TriState} from "./shared/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
 import EditIcon from "@mui/icons-material/Edit";
-
-const COMPARATORS = {
-    BY_ID:  (a: IURL, b: IURL) => a.id.localeCompare(b.id)
-};
+import {BY_ID} from "./shared/comparator";
 
 interface BuildRowProps {
     url: IURL,
@@ -116,7 +113,7 @@ function MatchingListPage() {
 
     // search & pagination
     const [visibleRows, setVisibleRows] = React.useState<IURL[]>([]);
-    const comparator = COMPARATORS.BY_ID;
+    const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState('');
     const filteredRows = React.useMemo(
         () =>

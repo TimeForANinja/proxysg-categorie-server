@@ -45,10 +45,7 @@ import {MyPaginator} from "./shared/paginator";
 import {buildLUTFromID, LUT} from "../util/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
-
-const COMPARATORS = {
-    BY_ID:  (a: IApiToken, b: IApiToken) => a.id.localeCompare(b.id)
-};
+import {BY_ID} from "./shared/comparator";
 
 const TIME_SECONDS = 1000;
 
@@ -148,7 +145,7 @@ function ApiTokenPage() {
 
     // search & pagination
     const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
-    const comparator = COMPARATORS.BY_ID;
+    const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState('');
     const filteredRows = React.useMemo(
         () =>

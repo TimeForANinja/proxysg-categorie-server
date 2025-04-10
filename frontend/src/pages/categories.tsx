@@ -41,10 +41,7 @@ import {
     simpleNameCheck,
     simpleStringCheck,
 } from "../util/InputValidators";
-
-const COMPARATORS = {
-    BY_ID: (a: ICategory, b: ICategory) => a.id.localeCompare(b.id)
-};
+import {BY_ID} from "./shared/comparator";
 
 interface BuildRowProps {
     category: ICategory,
@@ -104,7 +101,7 @@ function CategoriesPage() {
 
     // search & pagination
     const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
-    const comparator = COMPARATORS.BY_ID;
+    const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState('');
     const filteredRows = React.useMemo(
         () =>
