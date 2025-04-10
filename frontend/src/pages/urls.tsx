@@ -120,7 +120,8 @@ function MatchingListPage() {
             urls.filter(x => {
                 // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
                 const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
-                const search_str = `${x.id} ${x.hostname} ${x.description} ${cat_str}`;
+                const bc_cat_str = x.bc_cats.join(' ');
+                const search_str = `${x.id} ${x.hostname} ${x.description} ${bc_cat_str} ${cat_str}`;
                 return search_str.toLowerCase().includes(quickSearch.toLowerCase());
             }),
         [quickSearch, urls, categories],
