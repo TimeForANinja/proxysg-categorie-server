@@ -32,14 +32,13 @@ export const doLogin = async (username: string, password: string): Promise<IUser
 
     const data = await response.json();
 
-
     if (data.status === "failed") {
         throw new Error('Invalid username or password');
     }
 
     return {
         username,
-        token: data.token,
+        token: data.data.token,
     }
 }
 
