@@ -73,6 +73,10 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
                     hostname=new_url,
                     description=f"Imported on {time.strftime('%Y-%m-%d %H:%M:%S')}",
                 ))
+                # add to existing URLs
+                # this helps to not create URLs multiple times
+                # if they exist in multiple cats
+                existing_urls.append(my_url)
 
             # map url to cat, if not already done
             if not my_cat.id in my_url.categories:

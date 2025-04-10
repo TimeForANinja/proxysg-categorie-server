@@ -23,11 +23,14 @@ You can for example provide them via a single `.env` file to fully configure the
 | `APP_AUTH_RADIUS_SERVER`    | -                      | Radius Auth Server IP / Hostname                   | Requires `APP_AUTH_ORDER=radius` |
 | `APP_AUTH_RADIUS_SECRET`    | -                      | Pre-Shared-Secret to use for Radius                | Requires `APP_AUTH_ORDER=radius` |
 |                             |                        |                                                    |                                  |
-| `APP_JWT_LIFETIME`          | -                      | Lifetime of JWT Tokens in Seconds                  |                                  |
-| `APP_JWT_SECRET`            | -                      | Secret used for JWT Tokens                         |                                  |
+| `APP_JWT_LIFETIME`          | -                      | Lifetime of JWT Tokens in Seconds                  | -                                |
+| `APP_JWT_SECRET`            | -                      | Secret used for JWT Tokens                         | -                                |
 |                             |                        |                                                    |                                  |
-| `APP_BC_DB`                 |                        | fqdn or ip of the BC proxy                         |                                  |
+| `APP_BC_DB`                 |                        | fqdn or ip of the BC proxy                         | -                                |
 | `APP_BC_INTERVAL`           | `86400`                | interval (seconds) at which to update BC cats      | Requires `APP_BC_INTERVAL`       |
 | `APP_BC_USER`               | `ro_admin`             | username to query the proxy                        | Requires `APP_BC_INTERVAL`       |
 | `APP_BC_PASSWORD`           | -                      | password to query the proxy                        | Requires `APP_BC_INTERVAL`       |
 | `APP_BC_VERIFY_SSL`         | `true`                 | verify the proxy https certificate? (true / false) | Requires `APP_BC_INTERVAL`       |
+|                             |                        |                                                    |                                  |
+| `APP_LOAD_EXISTING_PATH`    | `./data/local_db.txt`  | Path to an existing DB (if any) to load            | -                                |
+| `APP_LOAD_EXISTING_PREFIX`  | (empty string)         | Prefix for Cats of the imported LocalDB            | -                                |

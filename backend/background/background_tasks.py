@@ -29,11 +29,18 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     Currently only done once after startup.
     """
 
+    # load required config variables
+    load_existing_path = os.getenv('APP_LOAD_EXISTING_PATH', "./data/local_db.txt")
+    load_existing_prefix = os.getenv('APP_LOAD_EXISTING_PREFIX', "")
+
     # wrapper to use the app_context
     # this allows us to use the existing db_singleton stored as flask global object
     def query_executor(a: APIFlask):
         with a.app_context():
-            load_existing_file()
+            load_existing_file(
+                filepath=load_existing_path,
+                prefix_cats=load_existing_prefix,
+            )
 
     # run once "quick" after 1 minute
     scheduler.add_job(
