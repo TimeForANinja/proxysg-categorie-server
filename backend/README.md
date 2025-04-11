@@ -16,6 +16,7 @@ You can for example provide them via a single `.env` file to fully configure the
 | `APP_DB_MONGO_CON_HOST`     | `localhost:27017`        | MongoDB host and port                                                           | Requires `APP_DB_TYPE=mongodb`   |
 |                             |                          |                                                                                 |                                  |
 | `APP_PORT`                  | `8080`                   | Application port                                                                | -                                |
+| `APP_TIMEZONE`              | `Europe/Berlin`          | Timezone (used for CRON)                                                        | -                                |
 |                             |                          |                                                                                 |                                  |
 | `APP_AUTH_ORDER`            | `local`                  | Comma Separated List of Authentication type                                     | -                                |
 | `APP_AUTH_LOCAL_USER`       | `admin`                  | Local authentication username                                                   | Requires `APP_AUTH_ORDER=local`  |

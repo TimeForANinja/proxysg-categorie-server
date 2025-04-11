@@ -14,7 +14,8 @@ TIME_MINUTES = 60
 def start_background_tasks(app: APIFlask):
     """Initialize all background tasks"""
     # Prepare the Scheduler
-    scheduler = BackgroundScheduler()
+    tz = os.getenv('APP_TIMEZONE', 'Europe/Berlin')
+    scheduler = BackgroundScheduler({'apscheduler.timezone': tz})
 
     # add all tasks
     start_query_bc(scheduler, app)
