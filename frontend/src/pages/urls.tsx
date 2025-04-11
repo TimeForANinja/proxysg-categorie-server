@@ -22,6 +22,8 @@ import Grid from '@mui/material/Grid2';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+
 
 import {getCategories, ICategory} from "../api/categories";
 import {createURL, deleteURL, getURLs, IMutableURL, IURL, setURLCategory, updateURL} from "../api/urls"
@@ -32,7 +34,6 @@ import {buildLUTFromID, LUT} from "../util/LookUpTable";
 import {TriState} from "./shared/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
-import EditIcon from "@mui/icons-material/Edit";
 import {BY_ID} from "./shared/comparator";
 
 interface BuildRowProps {
@@ -180,6 +181,14 @@ function MatchingListPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"URL"}
+                    downloadRows={filteredRows.map(row => ({
+                        "id": row.id,
+                        "hostname": row.hostname,
+                        "description": row.description,
+                        "cat_ids": row.categories.join(','),
+                        "cats": row.categories.map(c => categories[c]?.name).join(','),
+                        "bc_cats": row.bc_cats.join(','),
+                    }))}
                 />
                 <Grid size={12}>
                     <Paper>

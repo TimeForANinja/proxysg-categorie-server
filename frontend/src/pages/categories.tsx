@@ -176,6 +176,7 @@ function CategoriesPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"Category"}
+                    downloadRows={null}
                 />
                 <Grid size={12}>
                     <Paper>
