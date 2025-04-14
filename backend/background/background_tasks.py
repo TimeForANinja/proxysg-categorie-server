@@ -10,6 +10,9 @@ from background.load_existing_db import load_existing_file
 
 TIME_MINUTES = 60
 
+# Allows up to 15 minutes as grace period, if the Scheduler is busy / blocked by other stuff
+MISFIRE_GRACE_TIME = 15 * TIME_MINUTES
+
 
 def start_background_tasks(app: APIFlask):
     """Initialize all background tasks"""
@@ -48,7 +51,8 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     scheduler.add_job(
         lambda: query_executor(app),
         'date',
-        run_date=datetime.now() + timedelta(seconds=1*TIME_MINUTES)
+        run_date=datetime.now() + timedelta(seconds=1*TIME_MINUTES),
+        misfire_grace_time=MISFIRE_GRACE_TIME,
     )
 
 
@@ -90,13 +94,16 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask):
     scheduler.add_job(
         lambda: query_executor(app, creds),
         CronTrigger.from_crontab(bc_interval),
+        misfire_grace_time=MISFIRE_GRACE_TIME,
     )
     scheduler.add_job(
         lambda: query_executor(app, creds, True),
         CronTrigger.from_crontab(bc_interval_quick),
+        misfire_grace_time=MISFIRE_GRACE_TIME,
     )
     scheduler.add_job(
         lambda: query_executor(app, creds, True),
         'date',
-        run_date=datetime.now() + timedelta(seconds=3*TIME_MINUTES)
+        run_date=datetime.now() + timedelta(seconds=3*TIME_MINUTES),
+        misfire_grace_time=MISFIRE_GRACE_TIME,
     )
