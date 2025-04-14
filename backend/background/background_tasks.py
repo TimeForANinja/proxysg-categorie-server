@@ -1,6 +1,6 @@
 import os
 import urllib3
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from apiflask import APIFlask
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -21,7 +21,7 @@ def start_background_tasks(app: APIFlask):
     scheduler = BackgroundScheduler({'apscheduler.timezone': tz})
 
     # add all tasks
-    start_query_bc(scheduler, app)
+    start_query_bc(scheduler, app, tz)
     start_load_existing(scheduler, app)
 
     # Start the Scheduler
@@ -32,6 +32,9 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     """
     Initialize the background task to load an existing LocalDB File.
     Currently only done once after startup.
+
+    :param scheduler: The scheduler to use
+    :param app: The flask app to use
     """
 
     # load required config variables
@@ -51,15 +54,19 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     scheduler.add_job(
         lambda: query_executor(app),
         'date',
-        run_date=datetime.now() + timedelta(seconds=1*TIME_MINUTES),
+        run_date=datetime.now(timezone.utc) + timedelta(seconds=1*TIME_MINUTES),
         misfire_grace_time=MISFIRE_GRACE_TIME,
     )
 
 
-def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask):
+def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     """
     Initialize the background task to query URL Categories from Bluecoat DB
     This is only possible with the Mgmt API of a Proxy Device
+
+    :param scheduler: The scheduler to use
+    :param app: The flask app to use
+    :param tz: The timezone to use for cron triggers
     """
 
     # load required config variables
@@ -93,17 +100,17 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask):
     # and once "quick" after 2 minute (only query not-yet-rated URLs)
     scheduler.add_job(
         lambda: query_executor(app, creds),
-        CronTrigger.from_crontab(bc_interval),
+        CronTrigger.from_crontab(bc_interval, timezone=tz),
         misfire_grace_time=MISFIRE_GRACE_TIME,
     )
     scheduler.add_job(
         lambda: query_executor(app, creds, True),
-        CronTrigger.from_crontab(bc_interval_quick),
+        CronTrigger.from_crontab(bc_interval_quick, timezone=tz),
         misfire_grace_time=MISFIRE_GRACE_TIME,
     )
     scheduler.add_job(
         lambda: query_executor(app, creds, True),
         'date',
-        run_date=datetime.now() + timedelta(seconds=3*TIME_MINUTES),
+        run_date=datetime.now(timezone.utc) + timedelta(seconds=3*TIME_MINUTES),
         misfire_grace_time=MISFIRE_GRACE_TIME,
     )
