@@ -8,6 +8,7 @@ from marshmallow_dataclass import class_schema
 from auth.auth import AUTH_TOKEN_KEY
 from auth.auth_singleton import get_auth_if
 from auth.auth_user import AuthUser
+from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 
 
@@ -46,6 +47,7 @@ class VerifyOutput(GenericOutput):
 
 
 def add_auth_bp(app):
+    log_debug("ROUTES", "Adding Authentication Blueprint")
     auth_if = get_auth_if(app)
     auth_bp = APIBlueprint('authentication', __name__)
 

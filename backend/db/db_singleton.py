@@ -1,29 +1,36 @@
-import os
-from flask import g
+from flask import current_app
 
 from db.db import DBInterface
 from db.mongodb.mongo_db import MyMongoDB
 from db.sqlite.sqlite_db import MySQLiteDB
+from log import log_info
 
 
 def get_db() -> DBInterface:
     """Get a unique DB instance."""
-    db = getattr(g, '_database', None)
+    db = current_app.config.get('SINGLETONS', {}).get('DB', None)
 
     if db is None:
-        db_type = os.getenv('APP_DB_TYPE', 'sqlite').lower()
+        db_type = current_app.config.get('DB', {}).get('TYPE', 'sqlite').lower()
         if db_type == 'mongodb':
-            database_name = os.getenv('APP_DB_MONGO_DBNAME', 'proxysg_localdb')
-            connection_user = os.getenv('APP_DB_MONGO_CON_USER', 'admin')
-            connection_password = os.getenv('APP_DB_MONGO_CON_PASSWORD', 'adminpassword')
-            connection_host = os.getenv('APP_DB_MONGO_CON_HOST', 'localhost:27017')
+            mongo_cfg: dict = current_app.config.get('DB', {}).get('MONGO', {})
+            database_name = mongo_cfg.get('DBNAME', 'proxysg_localdb')
+            connection_user = mongo_cfg.get('CON_USER', 'admin')
+            connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
+            connection_host = mongo_cfg.get('CON_HOST', 'localhost:27017')
             connection_uri = f"mongodb://{connection_user}:{connection_password}@{connection_host}/"
-            db = g._database = MyMongoDB(database_name, connection_uri)
+            log_info("DB", "Connecting to MongoDB", { 'db': database_name, 'user': connection_user, 'host': connection_host })
+            db = MyMongoDB(database_name, connection_uri)
         elif db_type == 'sqlite':
-            database_name = os.getenv('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')
-            db = g._database = MySQLiteDB(database_name)
+            sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})
+            database_name = sqlite_cfg.get('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')
+            log_info("DB", "Connecting to SQLite", { 'db': database_name })
+            db = MySQLiteDB(database_name)
         else:
             raise ValueError(f"Unsupported APP_DB_TYPE: {db_type}")
+
+        current_app.config.setdefault('SINGLETONS', {})
+        current_app.config['SINGLETONS']['DB'] = db
 
     return db
 

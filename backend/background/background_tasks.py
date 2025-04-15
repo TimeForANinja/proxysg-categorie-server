@@ -1,4 +1,3 @@
-import os
 import urllib3
 from datetime import timedelta, datetime, timezone
 from apiflask import APIFlask
@@ -17,7 +16,7 @@ MISFIRE_GRACE_TIME = 15 * TIME_MINUTES
 def start_background_tasks(app: APIFlask):
     """Initialize all background tasks"""
     # Prepare the Scheduler
-    tz = os.getenv('APP_TIMEZONE', 'Europe/Berlin')
+    tz = app.config.get('TIMEZONE', 'Europe/Berlin')
     scheduler = BackgroundScheduler({'apscheduler.timezone': tz})
 
     # add all tasks
@@ -38,8 +37,8 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     """
 
     # load required config variables
-    load_existing_path = os.getenv('APP_LOAD_EXISTING_PATH', "./data/local_db.txt")
-    load_existing_prefix = os.getenv('APP_LOAD_EXISTING_PREFIX', "")
+    load_existing_path = app.config.get('LOAD_EXISTING', {}).get('PATH', './data/local_db.txt')
+    load_existing_prefix = app.config.get('LOAD_EXISTING', {}).get('PREFIX', '')
 
     # wrapper to use the app_context
     # this allows us to use the existing db_singleton stored as flask global object
@@ -70,13 +69,14 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     """
 
     # load required config variables
-    bc_interval = os.getenv('APP_BC_INTERVAL', "0 3 * * *")
-    bc_interval_quick = os.getenv("APP_BC_INTERVAL_QUICK", "0 * * * *")
-    bc_db = os.getenv('APP_BC_DB')
-    bc_user = os.getenv('APP_BC_USER', 'ro_admin')
-    bc_password = os.getenv('APP_BC_PASSWORD')
+    query_bc_conf: dict = app.config.get('BC', {})
+    bc_interval = query_bc_conf.get('INTERVAL', "0 3 * * *")
+    bc_interval_quick = query_bc_conf.get("INTERVAL_QUICK", "0 * * * *")
+    bc_db = query_bc_conf.get('HOST')
+    bc_user = query_bc_conf.get('USER', 'ro_admin')
+    bc_password = query_bc_conf.get('PASSWORD')
     # check for false or not false, so that we default to "true" for all other values
-    bc_verify_ssl = os.getenv('APP_BC_VERIFY_SSL', 'true').lower() != "false"
+    bc_verify_ssl = query_bc_conf.get('VERIFY_SSL', 'true').lower() != "false"
 
     if not bc_verify_ssl:
         # hide warnings telling us to enable ssl verification

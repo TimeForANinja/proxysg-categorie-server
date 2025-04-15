@@ -11,7 +11,7 @@ from auth.util.jwt_handler import JWTHandler
 from auth.util.server_ip import get_server_ip
 
 
-class RadiusAuthHandler(AuthRealmInterface):
+class RadiusAuthRealm(AuthRealmInterface):
     def __init__(self, jwt: JWTHandler, server: str, secret: str):
         self.jwt = jwt
         self.client = Client(server=server, secret=secret, dict=Dictionary("dictionary"))

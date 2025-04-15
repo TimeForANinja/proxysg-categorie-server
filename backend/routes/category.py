@@ -8,6 +8,7 @@ from dataclasses import field, dataclass
 from db.db_singleton import get_db
 from auth.auth_singleton import get_auth_if
 from db.category import MutableCategory, Category
+from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 
 
@@ -30,6 +31,7 @@ class ListSubCategoriesOutput(GenericOutput):
 
 
 def add_category_bp(app: APIFlask):
+    log_debug("ROUTES", "Adding Category Blueprint")
     auth_if = get_auth_if(app)
     category_bp = APIBlueprint('categories', __name__)
 

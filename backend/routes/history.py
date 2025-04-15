@@ -6,6 +6,7 @@ from typing import List as tList
 from auth.auth_singleton import get_auth_if
 from db.history import History
 from db.db_singleton import get_db
+from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 
 
@@ -15,6 +16,7 @@ class ListHistoryOutput(GenericOutput):
 
 
 def add_history_bp(app: APIFlask):
+    log_debug("ROUTES", "Adding History Blueprint")
     auth_if = get_auth_if(app)
     history_bp = APIBlueprint('history', __name__)
 

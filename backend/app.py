@@ -14,7 +14,7 @@ from routes.history import add_history_bp
 from routes.load_existing import add_other_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
-from log import setup_logging
+from log import setup_logging, log_info, log_error
 
 # Initialize APIFlask instead of Flask
 app = APIFlask(
@@ -24,17 +24,24 @@ app = APIFlask(
     docs_path="/docs",
     static_folder="./dist",
 )
+
+# add module to allow compression of replies
 Compress(app)
 
-# Fix for src_ip if used behind a reverse Proxy
-if os.getenv("APP_PROXY_FIX", "false").lower() == "true":
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
-
-# load env variables
-app.config.from_prefixed_env(prefix="APP")
+# load env variables into app.config
+# overwrite the default loads, to keep properties as strings instead of doing a json parse
+app.config.from_prefixed_env(prefix="APP", loads=lambda x: x)
+# we can then use app.config.get("module", {}).get("property", "default val") to access them
+# for an example see the wsgi ProxyFix below
 
 # setup logging
 setup_logging(app)
+
+# Fix for src_ip if used behind a reverse Proxy
+if app.config.get("PROXY_FIX", "false").lower() == "true":
+    log_info("APP", "applying reverse proxy fix")
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 
 # Register blueprints
 add_category_bp(app)
@@ -65,6 +72,11 @@ def catch_all(path: str):
 # add "status" and "status_code" fields to the default flask errors
 @app.error_processor
 def handle_error(error):
+    log_error("APP", f"FLASK Error", {
+        "status_code": error.status_code,
+        "message": error.message,
+        "detail": error.detail,
+    })
     return {
         'status': 'failed',
         'status_code': error.status_code,
@@ -89,5 +101,5 @@ if __name__ == '__main__':
     initialize_app(app)
 
     # start app
-    app_port = int(os.getenv('APP_PORT', 8080))
+    app_port = int(app.config.get("PORT", 8080))
     app.run(port=app_port, host="0.0.0.0")

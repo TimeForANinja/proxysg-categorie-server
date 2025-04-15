@@ -8,6 +8,7 @@ from dataclasses import field, dataclass
 from auth.auth_singleton import get_auth_if
 from db.url import MutableURL, URL
 from db.db_singleton import get_db
+from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 
 
@@ -30,6 +31,7 @@ class ListURLCategoriesOutput(GenericOutput):
 
 
 def add_url_bp(app: APIFlask):
+    log_debug("ROUTES", "Adding URL Blueprint")
     auth_if = get_auth_if(app)
     url_bp = APIBlueprint('url', __name__)
 

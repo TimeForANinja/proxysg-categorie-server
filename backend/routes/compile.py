@@ -3,6 +3,7 @@ from apiflask import APIBlueprint
 
 from db.category import Category
 from db.db_singleton import get_db
+from log import log_debug
 
 
 def find_subcategories(
@@ -65,6 +66,7 @@ def calc_sub_cats(cat: Category, categories: list[Category]) -> list[Category]:
 
 
 def add_compile_bp(app):
+    log_debug("ROUTES", "Adding Compile Blueprint")
     compile_bp = APIBlueprint('compile', __name__)
 
     @compile_bp.get("/api/compile/<string:token_uuid>")

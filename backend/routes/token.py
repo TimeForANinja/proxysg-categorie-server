@@ -9,6 +9,7 @@ from dataclasses import field, dataclass
 from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
 from db.token import MutableToken, Token
+from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 
 
@@ -31,6 +32,7 @@ class ListTokenCategoriesOutput(GenericOutput):
 
 
 def add_token_bp(app: APIFlask):
+    log_debug("ROUTES", "Adding Token Blueprint")
     auth_if = get_auth_if(app)
     token_bp = APIBlueprint('token', __name__)
 

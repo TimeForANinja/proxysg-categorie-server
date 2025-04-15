@@ -12,6 +12,7 @@ from db.category import MutableCategory
 from db.db import DBInterface
 from db.db_singleton import get_db
 from db.url import MutableURL
+from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 
 
@@ -128,6 +129,7 @@ def parse_db(db_str: str) -> List[ExistingCat]:
 
 
 def add_other_bp(app):
+    log_debug("ROUTES", "Adding other Blueprint")
     auth_if = get_auth_if(app)
     other_bp = APIBlueprint('other', __name__)
 
