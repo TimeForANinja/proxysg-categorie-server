@@ -17,6 +17,7 @@ You can for example provide them via a single `.env` file to fully configure the
 |                             |                          |                                                                                 |                                  |
 | `APP_PORT`                  | `8080`                   | Application port                                                                | -                                |
 | `APP_TIMEZONE`              | `Europe/Berlin`          | Timezone (used for CRON)                                                        | -                                |
+| `APP_PROXY_FIX`             | `false`                  | if "true" the WGSI parses x-forwarded-for Headers                               | -                                |
 | `APP_SYSLOG_SERVER`         | (empty => disabled)      | FQDN of the Syslog server                                                       |                                  |
 | `APP_SYSLOG_PORT`           | 514                      | Port of the Syslog Server                                                       |                                  |
 |                             |                          |                                                                                 |                                  |

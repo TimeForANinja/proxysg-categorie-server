@@ -3,6 +3,7 @@ from os.path import abspath
 from apiflask import APIFlask
 from flask import send_from_directory
 from flask_compress import Compress
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from db import db_singleton
 from background.background_tasks import start_background_tasks
@@ -24,6 +25,10 @@ app = APIFlask(
     static_folder="./dist",
 )
 Compress(app)
+
+# Fix for src_ip if used behind a reverse Proxy
+if os.getenv("APP_PROXY_FIX", "false").lower() == "true":
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # load env variables
 app.config.from_prefixed_env(prefix="APP")
