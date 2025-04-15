@@ -5,6 +5,7 @@ from typing import List
 
 from db.db_singleton import get_db
 from db.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP
+from log import log_info, log_error
 
 
 @dataclass
@@ -67,7 +68,11 @@ def query_all(creds: ServerCredentials, unknown_only: bool):
         if set(bc_cats) != set(url.bc_cats):
             db_if.urls.set_bc_cats(url.id, bc_cats)
 
-    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Finished updating BlueCoat categories for {len(scheduled_urls)} of the total {len(urls)} URLS ({'mode=only_unknown' if unknown_only else 'mode=all'})")
+    log_info("background","Updated BlueCoat categories", {
+        "mode": "only_unknown" if unknown_only else "all",
+        "total": len(urls),
+        "updated": len(scheduled_urls),
+    })
 
 def do_query(creds: ServerCredentials, url: str) -> List[str]:
     """
@@ -93,8 +98,16 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
             if "Blue Coat:" in line:
                 categories = line.split("Blue Coat:")[1].strip().split("; ")
                 return categories
-        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} No BlueCoat categories found in Response for \"{url}\"")
+        log_error(
+            "background",
+            "BlueCoat Category not found in Response",
+            {"url": url, "response": raw_content }
+        )
         return []
     except requests.RequestException as e:
-        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} An error occurred fetching \"{url}\": {e}")
+        log_error(
+            "background",
+            "Error fetching BlueCoat Categories",
+            {"url": url, "error": str(e)}
+        )
         return []

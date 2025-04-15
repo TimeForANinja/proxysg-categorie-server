@@ -17,6 +17,8 @@ You can for example provide them via a single `.env` file to fully configure the
 |                             |                          |                                                                                 |                                  |
 | `APP_PORT`                  | `8080`                   | Application port                                                                | -                                |
 | `APP_TIMEZONE`              | `Europe/Berlin`          | Timezone (used for CRON)                                                        | -                                |
+| `APP_SYSLOG_SERVER`         | (empty => disabled)      | FQDN of the Syslog server                                                       |                                  |
+| `APP_SYSLOG_PORT`           | 514                      | Port of the Syslog Server                                                       |                                  |
 |                             |                          |                                                                                 |                                  |
 | `APP_AUTH_ORDER`            | `local`                  | Comma Separated List of Authentication type                                     | -                                |
 | `APP_AUTH_LOCAL_USER`       | `admin`                  | Local authentication username                                                   | Requires `APP_AUTH_ORDER=local`  |

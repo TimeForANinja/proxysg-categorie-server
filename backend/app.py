@@ -13,6 +13,7 @@ from routes.history import add_history_bp
 from routes.load_existing import add_other_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
+from log import setup_logging
 
 # Initialize APIFlask instead of Flask
 app = APIFlask(
@@ -23,6 +24,12 @@ app = APIFlask(
     static_folder="./dist",
 )
 Compress(app)
+
+# load env variables
+app.config.from_prefixed_env(prefix="APP")
+
+# setup logging
+setup_logging(app)
 
 # Register blueprints
 add_category_bp(app)

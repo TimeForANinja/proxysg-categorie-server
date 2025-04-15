@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 
 from db.db_singleton import get_db
+from log import log_info
 from routes.load_existing import parse_db, create_in_db
 
 
@@ -17,7 +18,11 @@ def load_existing_file(filepath="./data/local_db.txt", prefix_cats=""):
     # check if we have a local db file
     existing_local_db = Path(filepath)
     if not existing_local_db.is_file():
-        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Skipped loading existing LocalDB - File not found")
+        log_info(
+            "background",
+            "Existing LocalDB not found",
+            {"filepath": filepath}
+        )
         return
 
     # load the content, parse it
@@ -32,4 +37,8 @@ def load_existing_file(filepath="./data/local_db.txt", prefix_cats=""):
 
     create_in_db(db_if, new_cats)
 
-    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Finished loading existing LocalDB")
+    log_info(
+        "background",
+        f"Loaded {len(new_cats)} Cats from existing LocalDB",
+        {"filepath": filepath}
+    )

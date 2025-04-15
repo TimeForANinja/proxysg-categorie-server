@@ -13,6 +13,8 @@ RUN npm run build
 # Stage 2: Prepare the Flask backend
 FROM python:3.11 AS backend
 
+MAINTAINER Tobias Kutscha
+
 # Set working directory
 WORKDIR /backend
 
