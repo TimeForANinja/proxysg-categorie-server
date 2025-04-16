@@ -24,11 +24,11 @@ class JWTHandler:
         expiration_time = datetime.datetime.now() + datetime.timedelta(seconds=self.lifetime)
         # Add expiration and other custom fields to the payload
         payload = {
-            "data": data.to_dict(),
-            "exp": expiration_time
+            'data': data.to_dict(),
+            'exp': expiration_time
         }
         # Encode the token using the secret key
-        token = jwt.encode(payload, self.secret_key, algorithm="HS256")
+        token = jwt.encode(payload, self.secret_key, algorithm='HS256')
         return token
 
 
@@ -41,8 +41,8 @@ class JWTHandler:
         """
         try:
             # Decode the token using the secret key
-            decoded_data = jwt.decode(token, self.secret_key, algorithms=["HS256"])
-            data = decoded_data.get("data")  # Return the original data (from the payload)
+            decoded_data = jwt.decode(token, self.secret_key, algorithms=['HS256'])
+            data = decoded_data.get('data')  # Return the original data (from the payload)
             if not data:
                 # Token Content is invalid
                 return None

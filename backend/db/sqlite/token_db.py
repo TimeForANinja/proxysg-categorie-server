@@ -113,9 +113,9 @@ class SQLiteToken(TokenDBInterface):
         updates = []
         params = []
 
-        # Prepare update query based on non-None fields
+        # Prepare an update query based on non-None fields
         if token.description is not None:
-            updates.append("description = ?")
+            updates.append('description = ?')
             params.append(token.description)
 
         if updates:

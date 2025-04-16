@@ -10,7 +10,7 @@ def fetch_table_list(conn: sqlite3.Connection) -> List[str]:
     :return: A list of table names
     """
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    cursor.execute('SELECT name FROM sqlite_master WHERE type=\'table\'')
     tables = cursor.fetchall()
     # Extract the table names from the tuples returned by fetchall
     return [

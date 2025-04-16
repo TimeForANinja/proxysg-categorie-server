@@ -8,7 +8,7 @@ def split_opt_str_group(group: str | None) -> List[str]:
     :param group: The comma-separated string to be split
     :return: A list of strings
     """
-    if group is None or group == "":
+    if group is None or group == '':
         return []
     return split_str_group(group)
 
@@ -20,7 +20,7 @@ def split_str_group(group: str) -> List[str]:
     :param group: The comma-separated string to be split
     :return: A list of strings
     """
-    parts = group.split(",")
+    parts = group.split(',')
     return [
         str(part)
         for part

@@ -13,18 +13,18 @@ class Atomic:
 class History:
     """Helper class to represent a category."""
     id: str = field(metadata={
-        "required": True,
-        "description": "ID of the category",
+        'required': True,
+        'description': 'ID of the category',
     })
     time: int = field(metadata={
-        "required": True,
-        "description": "Timestamp of the event",
+        'required': True,
+        'description': 'Timestamp of the event',
     })
     description: Optional[str] = field(
         default=None,
         metadata={
-            "validate": Length(max=255),
-            "description": "Description of the category"
+            'validate': Length(max=255),
+            'description': 'Description of the category'
         },
     )
     atomics: List[Atomic] = field(default_factory=list)

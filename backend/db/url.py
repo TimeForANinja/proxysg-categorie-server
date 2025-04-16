@@ -8,29 +8,29 @@ from db.util.validators import simpleURLValidator, simpleStringValidator
 
 # Default Value set in the bc_cats array
 # It indicates that a URL has never been queried against the BC Database
-NO_BC_CATEGORY_YET = "to be queried"
+NO_BC_CATEGORY_YET = 'to be queried'
 # Value returned by BC if the Category-Service is not working
-FAILED_BC_CATEGORY_LOOKUP = "unavailable"
+FAILED_BC_CATEGORY_LOOKUP = 'unavailable'
 
 
 @dataclass(kw_only=True)
 class MutableURL:
     hostname: str = field(metadata={
-        "required": True,
-        "validate": [
+        'required': True,
+        'validate': [
             Length(min=4),
             simpleURLValidator,
         ],
-        "description": "FQDN of the URL",
+        'description': 'FQDN of the URL',
     })
     description: str = field(
         default=None,
         metadata={
-            "validate": [
+            'validate': [
                 Length(max=255),
                 simpleStringValidator,
             ],
-            "description": "Description of the token"
+            'description': 'Description of the token'
         },
     )
 
@@ -40,43 +40,43 @@ class URL(MutableURL):
     Helper class to represent a URL.
     """
     id: str = field(metadata={
-        "required": True,
-        "description": "ID of the URL",
+        'required': True,
+        'description': 'ID of the URL',
     })
     hostname: str = field(metadata={
-        "required": True,
-        "validate": [
+        'required': True,
+        'validate': [
             Length(min=4),
             simpleURLValidator,
         ],
-        "description": "FQDN of the URL",
+        'description': 'FQDN of the URL',
     })
     description: str = field(
         default=None,
         metadata={
-            "validate": [
+            'validate': [
                 Length(max=255),
                 simpleStringValidator,
             ],
-            "description": "Description of the token"
+            'description': 'Description of the token'
         },
     )
     is_deleted: int = field(
         default=0,
         metadata={
-            "description": "Whether the url is deleted or not",
+            'description': 'Whether the url is deleted or not',
         }
     )
     categories: List[str] = field(
         default_factory=list,
         metadata={
-            "description": "List of category IDs associated with the URL",
+            'description': 'List of category IDs associated with the URL',
         }
     )
     bc_cats: List[str] = field(
         default_factory=list,
         metadata={
-            "description": "List of BlueCoat Categories this URL is currently categorised as",
+            'description': 'List of BlueCoat Categories this URL is currently categorised as',
         }
     )
 
@@ -127,7 +127,7 @@ class URLDBInterface(ABC):
     @abstractmethod
     def delete_url(self, url_id: str) -> None:
         """
-        Soft delete an url by setting its `is_deleted` flag to 1.
+        Soft delete a URL by setting its `is_deleted` flag to 1.
 
         :param url_id: The ID of the url to delete.
         """

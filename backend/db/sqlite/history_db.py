@@ -22,8 +22,8 @@ class SQLiteHistory(HistoryDBInterface):
         )''')
         self.conn.commit()
 
-        # if the history table did not yet exist we enter a default event
-        if "history" not in has_tables:
+        # if the history table did not yet exist, we enter a default event
+        if 'history' not in has_tables:
             self.add_history_event('Database created')
 
     def add_history_event(self, action: str) -> History:

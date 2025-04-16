@@ -83,12 +83,12 @@ class SQLiteURL(URLDBInterface):
         updates = []
         params = []
 
-        # Prepare update query based on non-None fields
+        # Prepare an update query based on non-None fields
         if mut_url.hostname is not None:
-            updates.append("hostname = ?")
+            updates.append('hostname = ?')
             params.append(mut_url.hostname)
         if mut_url.description is not None:
-            updates.append("description = ?")
+            updates.append('description = ?')
             params.append(mut_url.description)
 
         if updates:
@@ -103,7 +103,7 @@ class SQLiteURL(URLDBInterface):
     def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
         query = 'UPDATE urls SET bc_cats = ? WHERE id = ? AND is_deleted = 0'
         cursor = self.conn.cursor()
-        cursor.execute(query, (",".join(bc_cats), int(url_id)))
+        cursor.execute(query, (','.join(bc_cats), int(url_id)))
         self.conn.commit()
 
     def delete_url(self, url_id: str) -> None:

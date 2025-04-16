@@ -9,12 +9,12 @@ from db.util.validators import simpleStringValidator
 @dataclass(kw_only=True)
 class MutableToken:
     description: str = field(metadata={
-        "required": True,
-        "validate": [
+        'required': True,
+        'validate': [
             Length(max=255),
             simpleStringValidator,
         ],
-        "description": "Description of the token"
+        'description': 'Description of the token'
     })
 
 
@@ -24,39 +24,39 @@ class Token(MutableToken):
     Helper class to represent a token.
     """
     id: str = field(metadata={
-        "required": True,
-        "description": "ID of the token",
+        'required': True,
+        'description': 'ID of the token',
     })
     token: str = field(metadata={
-        "required": True,
+        'required': True,
         # uuid v4 is always 36 characters
-        "validate": Length(min=36, max=36),
-        "description": "Token for use with the API",
+        'validate': Length(min=36, max=36),
+        'description': 'Token for use with the API',
     })
     description: str = field(metadata={
-        "required": True,
-        "validate": [
+        'required': True,
+        'validate': [
             Length(max=255),
             simpleStringValidator,
         ],
-        "description": "Description of the token"
+        'description': 'Description of the token'
     })
     last_use: int = field(
         default=0,
         metadata={
-            "description": "Timestamp when the token was last used",
+            'description': 'Timestamp when the token was last used',
         }
     )
     is_deleted: int = field(
         default=0,
         metadata={
-            "description": "Whether the token is deleted or not",
+            'description': 'Whether the token is deleted or not',
         }
     )
     categories: List[str] = field(
         default_factory=list,
         metadata={
-            "description": "List of category IDs associated with the URL",
+            'description': 'List of category IDs associated with the URL',
         }
     )
 
@@ -117,7 +117,7 @@ class TokenDBInterface(ABC):
     @abstractmethod
     def update_usage(self, token_id: str) -> None:
         """
-        Update the usage counter for a  specified token identified by its ID.
+        Update the usage counter for a specified token identified by its ID.
 
         :param token_id: The ID of the token to update.
         """

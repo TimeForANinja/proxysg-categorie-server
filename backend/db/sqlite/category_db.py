@@ -6,7 +6,7 @@ from db.category import CategoryDBInterface, MutableCategory, Category
 
 
 def _build_category(row: any) -> Category:
-    """Parse SQLite row into Category object."""
+    """Parse SQLite row into a Category object."""
     return Category(
         id=str(row[0]),
         name=row[1],
@@ -83,17 +83,17 @@ class SQLiteCategory(CategoryDBInterface):
         updates = []
         params = []
 
-        # Prepare update query based on non-None fields
+        # Prepare an update query based on non-None fields
         if category.name is not None:
-            updates.append("name = ?")
+            updates.append('name = ?')
             params.append(category.name)
 
         if category.description is not None:
-            updates.append("description = ?")
+            updates.append('description = ?')
             params.append(category.description)
 
         if category.color is not None:
-            updates.append("color = ?")
+            updates.append('color = ?')
             params.append(category.color)
 
         if updates:

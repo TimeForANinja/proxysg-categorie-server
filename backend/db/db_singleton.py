@@ -18,16 +18,16 @@ def get_db() -> DBInterface:
             connection_user = mongo_cfg.get('CON_USER', 'admin')
             connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
             connection_host = mongo_cfg.get('CON_HOST', 'localhost:27017')
-            connection_uri = f"mongodb://{connection_user}:{connection_password}@{connection_host}/"
-            log_info("DB", "Connecting to MongoDB", { 'db': database_name, 'user': connection_user, 'host': connection_host })
+            connection_uri = f'mongodb://{connection_user}:{connection_password}@{connection_host}/'
+            log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'user': connection_user, 'host': connection_host })
             db = MyMongoDB(database_name, connection_uri)
         elif db_type == 'sqlite':
             sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})
             database_name = sqlite_cfg.get('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')
-            log_info("DB", "Connecting to SQLite", { 'db': database_name })
+            log_info('DB', 'Connecting to SQLite', { 'db': database_name })
             db = MySQLiteDB(database_name)
         else:
-            raise ValueError(f"Unsupported APP_DB_TYPE: {db_type}")
+            raise ValueError(f'Unsupported APP_DB_TYPE: {db_type}')
 
         current_app.config.setdefault('SINGLETONS', {})
         current_app.config['SINGLETONS']['DB'] = db
@@ -37,6 +37,6 @@ def get_db() -> DBInterface:
 
 def close_connection():
     """Remove the current database connection."""
-    db = getattr(g, '_database', None)
+    db = get_db()
     if db is not None:
         db.close()

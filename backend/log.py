@@ -17,29 +17,29 @@ class InterceptHandler(logging.Handler):
 def setup_logging(app: apiflask):
     # remove all loggers
     logger.remove()
-    # add default stderr, but allow for custom level
-    loglevel = app.config.get("LOGLEVEL", "INFO")
+    # add default stderr but allow for custom level
+    loglevel = app.config.get('LOGLEVEL', 'INFO')
     logger.add(sys.stderr, level=loglevel)
 
     # redirect all logs to our custom log handler
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
-    # if a syslog server is defined also send it there
-    syslog_server = app.config.get("SYSLOG", {}).get('SYSLOG_SERVER', None)
+    # if a syslog server is defined, also send it there
+    syslog_server = app.config.get('SYSLOG', {}).get('SYSLOG_SERVER', None)
     if syslog_server is not None:
-        syslog_port = int(app.config.get("SYSLOG", {}).get('SYSLOG_PORT', 514))
+        syslog_port = int(app.config.get('SYSLOG', {}).get('SYSLOG_PORT', 514))
         handler = SysLogHandler(address=(syslog_server, syslog_port))
         logger.add(handler)
 
 
 def log_debug(module: str, message: str, *attachment: any):
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).debug(f"{module} | {message} | {json.dumps(attachment)}")
+    logger.opt(depth=1).debug(f'{module} | {message} | {json.dumps(attachment)}')
 
 def log_error(module: str, message: str, *attachment: any):
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).error(f"{module} | {message} | {json.dumps(attachment)}")
+    logger.opt(depth=1).error(f'{module} | {message} | {json.dumps(attachment)}')
 
 def log_info(module: str, message: str, *attachment: any):
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).info(f"{module} | {message} | {json.dumps(attachment)}")
+    logger.opt(depth=1).info(f'{module} | {message} | {json.dumps(attachment)}')

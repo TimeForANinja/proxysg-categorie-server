@@ -14,7 +14,7 @@ def find_subcategories(
 ):
     """
     This method is used to recursively traverse the nested categories.
-    All categories that are in some form a sub category of the provided current_cat will be added to the result list.
+    All categories that are in some form a subcategory of the provided current_cat will be added to the result list.
 
     :param current_cat: The current category to start the traversal from
     :param categories_dict: A mapping of category IDs to category objects
@@ -22,14 +22,14 @@ def find_subcategories(
     :param result: A list to store the found subcategories
     """
     for nested_id in current_cat.nested_categories:
-        # resolve category id to category in lookup table
+        # resolve category id to category in the lookup table
         nested_cat = categories_dict.get(nested_id)
 
         # make sure we could look up the nested category
         if not nested_cat:
             continue
 
-        # make sure we did not yet visit the nested category
+        # make sure we did not yet visit the nested category,
         # this should prevent infinite loops with circular nested categories
         if nested_cat.id in visited:
             continue
@@ -43,15 +43,15 @@ def find_subcategories(
 
 def calc_sub_cats(cat: Category, categories: list[Category]) -> list[Category]:
     """
-    This method calculates all sub categories for the provided category.
+    This method calculates all subcategories for the provided category.
     It's a wrapper around the find_subcategories method,
     which provides all variables for the initial call of the recursive func.
 
-    :param cat: The category to calculate sub categories for
+    :param cat: The category to calculate subcategories for
     :param categories: A list of all categories in the database
-    :return: A list of all sub categories for the provided category
+    :return: A list of all subcategories for the provided category
     """
-    # Create a mapping of category IDs to category objects for quick lookup
+    # Create a mapping of category IDs to category objects for a quick lookup
     categories_dict = {category.id: category for category in categories}
 
     # List to store the subcategories
@@ -66,17 +66,17 @@ def calc_sub_cats(cat: Category, categories: list[Category]) -> list[Category]:
 
 
 def add_compile_bp(app):
-    log_debug("ROUTES", "Adding Compile Blueprint")
+    log_debug('ROUTES', 'Adding Compile Blueprint')
     compile_bp = APIBlueprint('compile', __name__)
 
-    @compile_bp.get("/api/compile/<string:token_uuid>")
-    @compile_bp.doc(summary="Compile Categories", description="Compile Categories for the provided Token")
+    @compile_bp.get('/api/compile/<string:token_uuid>')
+    @compile_bp.doc(summary='Compile Categories', description='Compile Categories for the provided Token')
     def handle_compile(token_uuid: str):
         db_if = get_db()
         token = db_if.tokens.get_token_by_uuid(token_uuid)
         if not token:
             return (
-                "Token not found",
+                'Token not found',
                 404,
                 {'Content-Type': 'text/plain'},
             )
@@ -91,13 +91,13 @@ def add_compile_bp(app):
         urls = db_if.urls.get_all_urls()
 
         # use response var to track the returned database string
-        response = ""
+        response = ''
         # write a header with some generic info
         response += '; Generated Categorisation File\n'
         response += f'; Generated on {datetime.now()}\n\n'
 
         for cat in token_cats:
-            # calculate subcategories (excluding the "root" cat itself)
+            # calculate subcategories (excluding the 'root' cat itself)
             sub_cats = calc_sub_cats(cat, categories)
 
             # header for the category

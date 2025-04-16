@@ -2,9 +2,6 @@ import re
 import time
 from typing import List
 from apiflask import APIBlueprint
-from apiflask.fields import String
-from dataclasses import dataclass
-from marshmallow.validate import Length
 from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
@@ -14,31 +11,14 @@ from db.db_singleton import get_db
 from db.url import MutableURL
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
-
-
-@dataclass
-class ExistingDBInput:
-    """Class representing the DB Structure loaded from an existing DB File"""
-    categoryDB: str = String(
-        required=True,
-        validate=Length(min=1),
-        metadata={"description": "Content of the existing category DB"},
-    )
-
-class ExistingCat:
-    """Class for a single category read from an existing Database file"""
-    name: str
-    urls: List[str]
-    def __init__(self, name: str, urls: List[str]):
-        self.name = name
-        self.urls = urls
+from routes.schemas.load_existing import ExistingCat, ExistingDBInput
 
 
 def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
     """
     This method creates a DB as read from an existing file in the provided DB.
 
-    If cats / urls already exist we'll only map them.
+    If cats / urls already exist, we'll only map them.
 
     :param db: The DBInterface to use for the DB operations
     :param new_cats: The list of categories to import
@@ -49,7 +29,7 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
 
     # create all entries and mappings for existing customDB in db
     for new_cat in new_cats:
-        # identify cat or create a new one
+        # identify a cat or create a new one
         my_cat = None
         for ec in existing_cats:
             if ec.name == new_cat.name:
@@ -59,7 +39,7 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
             my_cat = db.categories.add_category(MutableCategory(
                 name=new_cat.name,
                 color=1,
-                description=f"Imported on {time.strftime('%Y-%m-%d %H:%M:%S')}",
+                description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
             ))
 
         for new_url in new_cat.urls:
@@ -72,7 +52,7 @@ def create_in_db(db: DBInterface, new_cats: List[ExistingCat]):
             if my_url is None:
                 my_url = db.urls.add_url(MutableURL(
                     hostname=new_url,
-                    description=f"Imported on {time.strftime('%Y-%m-%d %H:%M:%S')}",
+                    description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
                 ))
                 # add to existing URLs
                 # this helps to not create URLs multiple times
@@ -90,10 +70,10 @@ def parse_db(db_str: str) -> List[ExistingCat]:
     categories = []
     current_cat = None
 
-    # Regex to match "define category <cat_name>", with optional quotes around cat_name
+    # Regex to match 'define category <cat_name>', with optional quotes around cat_name
     define_category_regex = re.compile(r'define category (?:"([^"]+)"|([^\s"]+))')
 
-    for line in db_str.split("\n"):
+    for line in db_str.split('\n'):
         # Remove comments and strip leading/trailing whitespace
         clean_line = line.split(';')[0].strip()
 
@@ -110,10 +90,10 @@ def parse_db(db_str: str) -> List[ExistingCat]:
                 current_cat = ExistingCat(name=cat_name, urls=[])
             else:
                 # Any other string outside a category is a syntax error
-                raise ValueError(f"Syntax error: Unexpected line outside category: '{clean_line}'")
+                raise ValueError(f'Syntax error: Unexpected line outside category: \'{clean_line}\'')
         else:
             # Inside a category
-            if clean_line.lower() == "end":
+            if clean_line.lower() == 'end':
                 # End the current category
                 categories.append(current_cat)
                 current_cat = None
@@ -123,35 +103,35 @@ def parse_db(db_str: str) -> List[ExistingCat]:
 
     if current_cat is not None:
         # If still inside a category when the file ends, it's an error
-        raise ValueError("Syntax error: Category not properly ended with 'end'")
+        raise ValueError('Syntax error: Category not properly ended with \'end\'')
 
     return categories
 
 
 def add_other_bp(app):
-    log_debug("ROUTES", "Adding other Blueprint")
+    log_debug('ROUTES', 'Adding other Blueprint')
     auth_if = get_auth_if(app)
     other_bp = APIBlueprint('other', __name__)
 
     # Route to upload an existing category db
     @other_bp.post('/api/upload_existing_db')
-    @other_bp.doc(summary="Upload existing DB", description="Upload an existing database to the server")
-    @other_bp.input(class_schema(ExistingDBInput)(), location='json', arg_name="existing_db")
+    @other_bp.doc(summary='Upload existing DB', description='Upload an existing database to the server')
+    @other_bp.input(class_schema(ExistingDBInput)(), location='json', arg_name='existing_db')
     @other_bp.output(GenericOutput)
     @other_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
     def create_category(existing_db: ExistingDBInput):
         db_if = get_db()
 
-        # parse db into intermediate object
+        # parse db into an intermediate object
         categories = parse_db(existing_db.categoryDB)
         # ush the intermediate objects to the main db
         create_in_db(db_if, categories)
 
-        db_if.history.add_history_event(f"existing db imported")
+        db_if.history.add_history_event('existing db imported')
 
         return {
-            "status": "success",
-            "message": "Database successfully loaded",
+            'status': 'success',
+            'message': 'Database successfully loaded',
         }
 
     app.register_blueprint(other_bp)

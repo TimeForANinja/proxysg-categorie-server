@@ -27,7 +27,7 @@ class StaticAuthRealm(AuthRealmInterface):
         token_data = TokenData(
             username=username,
             roles=[AUTH_ROLES_RO, AUTH_ROLES_RW],
-            realm="static",
+            realm='static',
             date_of_creation=int(time.time())
         )
         token = self.jwt.generate_token(token_data)

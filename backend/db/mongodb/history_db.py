@@ -17,9 +17,9 @@ class MongoDBHistory(HistoryDBInterface):
     def add_history_event(self, action: str) -> History:
         timestamp = int(time.time())  # Current UNIX time
         result = self.collection.insert_one({
-            "time": timestamp,
-            "description": action,
-            "atomics": []  # Default empty atomics list
+            'time': timestamp,
+            'description': action,
+            'atomics': []  # Default empty atomics list
         })
 
         return History(
@@ -33,10 +33,10 @@ class MongoDBHistory(HistoryDBInterface):
         events = self.collection.find({})
         result = [
             History(
-                id=event["_id"],
-                time=event["time"],
-                description=event.get("description"),
-                atomics=event.get("atomics", []),
+                id=event['_id'],
+                time=event['time'],
+                description=event.get('description'),
+                atomics=event.get('atomics', []),
             ) for event in events
         ]
         return result

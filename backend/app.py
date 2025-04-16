@@ -19,27 +19,27 @@ from log import setup_logging, log_info, log_error
 # Initialize APIFlask instead of Flask
 app = APIFlask(
     __name__,
-    "ProxySG Category Server",
-    version="1.0.0",
-    docs_path="/docs",
-    static_folder="./dist",
+    'ProxySG Category Server',
+    version='1.0.0',
+    docs_path='/docs',
+    static_folder='./dist',
 )
 
 # add module to allow compression of replies
 Compress(app)
 
 # load env variables into app.config
-# overwrite the default loads, to keep properties as strings instead of doing a json parse
-app.config.from_prefixed_env(prefix="APP", loads=lambda x: x)
-# we can then use app.config.get("module", {}).get("property", "default val") to access them
+# overwrite the default loads, to keep properties as strings instead of doing a JSON parse
+app.config.from_prefixed_env(prefix='APP', loads=lambda x: x)
+# we can then use app.config.get('module', {}).get('property', 'default val') to access them
 # for an example see the wsgi ProxyFix below
 
 # setup logging
 setup_logging(app)
 
 # Fix for src_ip if used behind a reverse Proxy
-if app.config.get("PROXY_FIX", "false").lower() == "true":
-    log_info("APP", "applying reverse proxy fix")
+if app.config.get('PROXY_FIX', 'false').lower() == 'true':
+    log_info('APP', 'applying reverse proxy fix')
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 
@@ -69,13 +69,13 @@ def catch_all(path: str):
     return send_from_directory(static_folder, 'index.html')
 
 
-# add "status" and "status_code" fields to the default flask errors
+# add 'status' and 'status_code' fields to the default flask errors
 @app.error_processor
 def handle_error(error):
-    log_error("APP", f"FLASK Error", {
-        "status_code": error.status_code,
-        "message": error.message,
-        "detail": error.detail,
+    log_error('APP', 'FLASK Error', {
+        'status_code': error.status_code,
+        'message': error.message,
+        'detail': error.detail,
     })
     return {
         'status': 'failed',
@@ -86,7 +86,7 @@ def handle_error(error):
 
 
 @app.teardown_appcontext
-def teardown(exception):
+def teardown():
     db_singleton.close_connection()
 
 
@@ -101,5 +101,5 @@ if __name__ == '__main__':
     initialize_app(app)
 
     # start app
-    app_port = int(app.config.get("PORT", 8080))
-    app.run(port=app_port, host="0.0.0.0")
+    app_port = int(app.config.get('PORT', 8080))
+    app.run(port=app_port, host='0.0.0.0')

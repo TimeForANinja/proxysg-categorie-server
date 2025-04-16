@@ -12,7 +12,7 @@ class SubCategoryDBInterface(ABC):
 
     def get_sub_categories_by_id(self, category_id: str) -> List[str]:
         """
-        Get all sub-categories of a category
+        Get all subcategories of a category
 
         :param category_id: The ID of the Category
         """
@@ -20,18 +20,18 @@ class SubCategoryDBInterface(ABC):
 
     def add_sub_category(self, category_id: str, sub_category_id: str) -> None:
         """
-        Add a new sub-category
+        Add a new subcategory
 
         :param category_id: The ID of the parent-category
-        :param sub_category_id: The ID of the sub-category
+        :param sub_category_id: The ID of the subcategory
         """
         pass
 
     def delete_sub_category(self, category_id: str, sub_category_id: str) -> None:
         """
-        Delete a mapping of a sub-category.
+        Delete a mapping of a subcategory.
 
         :param category_id: The ID of the parent-category
-        :param sub_category_id: The ID of the sub-category
+        :param sub_category_id: The ID of the subcategory
         """
         pass
