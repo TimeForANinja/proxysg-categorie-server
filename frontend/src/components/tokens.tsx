@@ -40,12 +40,12 @@ import {getCategories, ICategory} from "../api/categories";
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
-import {TriState} from "./shared/EditDialogState";
+import {TriState} from "../model/types/EditDialogState";
 import {MyPaginator} from "./shared/paginator";
-import {buildLUTFromID, LUT} from "../util/LookUpTable";
+import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
-import {BY_ID} from "./shared/comparator";
+import {BY_ID} from "../util/comparator";
 
 const TIME_SECONDS = 1000;
 
@@ -91,11 +91,11 @@ function BuildRow(props: BuildRowProps) {
         setTimeout(() => setIsCopied(false), 1.5 * TIME_SECONDS);
     };
 
-    // helper function, triggered when category selector changes
+    // helper function, triggered when the category selector changes
     const handleChange = (newList: string[]) => {
         // update api
         setTokenCategory(authMgmt.token, token.id, newList).then(newCats => {
-            // save new version
+            // save the new version
             const newToken = {...token, categories: newCats};
             updateToken(newToken);
         });
@@ -143,7 +143,7 @@ function ApiTokenPage() {
     const [tokens, setTokens] = React.useState<IApiToken[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
-    // search & pagination
+    // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState('');
@@ -158,7 +158,7 @@ function ApiTokenPage() {
         [quickSearch, tokens, categories],
     );
 
-    // Track object (if any) for which a delete confirmation is open
+    // Track the object (if any) for which a delete confirmation is open
     const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<IApiToken | null>(null);
 
     // Load tokens (& Categories) From backend
@@ -180,7 +180,7 @@ function ApiTokenPage() {
         setEditToken(TriState.CLOSED);
     };
 
-    // create or edit new object
+    // create or edit a new object
     const handleSave = async (tokenID: string|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
@@ -202,7 +202,7 @@ function ApiTokenPage() {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
             deleteToken(authMgmt.token, isDeleteDialogOpen.id).then(() => {
-                // remove token with ID from store
+                // remove token with ID from the store
                 setTokens(tokens.filter(tok => tok.id !== isDeleteDialogOpen.id));
             });
         }

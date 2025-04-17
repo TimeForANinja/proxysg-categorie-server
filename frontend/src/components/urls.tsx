@@ -30,11 +30,11 @@ import {createURL, deleteURL, getURLs, IMutableURL, IURL, setURLCategory, update
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {MyPaginator} from "./shared/paginator";
-import {buildLUTFromID, LUT} from "../util/LookUpTable";
-import {TriState} from "./shared/EditDialogState";
+import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
+import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
-import {BY_ID} from "./shared/comparator";
+import {BY_ID} from "../util/comparator";
 
 interface BuildRowProps {
     url: IURL,
@@ -50,11 +50,11 @@ function BuildRow(props: BuildRowProps) {
     // (un)fold a row into multiple rows
     const [isOpen, setIsOpen] = React.useState(false);
 
-    // helper function, triggered when category selector changes
+    // helper function, triggered when the category selector changes
     const handleChange = (newList: string[]) => {
         // update api
         setURLCategory(authMgmt.token, url.id, newList).then(newCats => {
-            // save new version
+            // save the new version
             const newURL = {...url, categories: newCats};
             updateURL(newURL);
         });
@@ -112,7 +112,7 @@ function MatchingListPage() {
     const [urls, setURLs] = React.useState<IURL[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
-    // search & pagination
+    // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IURL[]>([]);
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState('');
@@ -148,7 +148,7 @@ function MatchingListPage() {
         setEditURL(TriState.CLOSED);
     };
 
-    // create or edit new object
+    // create or edit a new object
     const handleSave = async (urlID: string|null, uri: IMutableURL) => {
         if (urlID == null) {
             // add new URL

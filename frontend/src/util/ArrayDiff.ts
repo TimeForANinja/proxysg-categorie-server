@@ -1,7 +1,6 @@
 type comparing_result<Type> = {
     added: Type[],
     removed: Type[],
-
 }
 
 export function CompareLists<Type>(oldList: Type[], newList:Type[]): comparing_result<Type> {

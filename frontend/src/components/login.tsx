@@ -1,7 +1,7 @@
 import React from 'react';
 import './login.css';
 import {useNavigate} from 'react-router-dom'
-import {OptBoolean} from "../model/OptionalBool";
+import {OptBoolean} from "../model/types/OptionalBool";
 import {useAuth} from "../model/AuthContext";
 
 function LoginPage() {
@@ -10,7 +10,7 @@ function LoginPage() {
 
     React.useEffect(() => {
         if (authMgmt.loggedIn === OptBoolean.Yes) {
-            // if we are logged, bypass login page
+            // if we are logged in, we want to bypass the login page
             navigate('/');
         }
         // if loggedIn is unknown -> wait for login check

@@ -18,7 +18,7 @@ export function MyPaginator<T>(props: MyPaginatorProps<T>) {
         setPage(newPage);
     }
 
-    // user selects a different amount of rows per page
+    // a user selects a different number of rows per page
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRowsPerPage(parseInt(event.target.value, 10));
         // TODO: recalculate position

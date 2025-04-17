@@ -1,7 +1,7 @@
 import React, {createContext, useContext} from "react";
-import {OptBoolean} from "./OptionalBool";
-import {IUser, readLoginToken, removeLoginToken, saveLoginToken} from "./loginHandler";
-import {checkLogin, doLogin} from "../api/auth";
+import {OptBoolean} from "./types/OptionalBool";
+import {readLoginToken, removeLoginToken, saveLoginToken} from "./loginHandler";
+import {IUser, checkLogin, doLogin} from "../api/auth";
 import {CircularProgress} from "@mui/material";
 
 class GenericContextClass<T> {
@@ -120,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 };
 
-// Helper hook to use the context
+// small wrapper to use the auth context in a component
 export const useAuth = (): AuthManager => {
     const context = useContext(AuthContext);
     if (!context) {

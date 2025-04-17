@@ -14,7 +14,7 @@ import {
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 
-import {OptBoolean} from "../../model/OptionalBool";
+import {OptBoolean} from "../../model/types/OptionalBool";
 import {useAuth} from "../../model/AuthContext";
 
 const BaseLayout = () => {
@@ -23,14 +23,14 @@ const BaseLayout = () => {
 
     React.useEffect(() => {
         if (authMgmt.loggedIn === OptBoolean.No) {
-            // if we are not logged, in then enforce login
+            // if we are not logged in, then enforce login
             navigate('/login');
         }
         // if loggedIn is unknown -> wait for login check
         // if loggedIn is true -> do nothing and stay on this page
     }, [authMgmt, navigate])
 
-    // track state of the user meu
+    // track the state of the user meu
     const [isMenuOpen, setMenuOpen] = React.useState<boolean>(false);
     const menuRef = useRef(null);
 

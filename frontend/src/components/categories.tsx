@@ -33,15 +33,15 @@ import {colors} from "../util/colormixer";
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
-import {TriState} from "./shared/EditDialogState";
+import {TriState} from "../model/types/EditDialogState";
 import {MyPaginator} from "./shared/paginator";
 import {CategoryPicker} from "./shared/CategoryPicker02";
-import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../util/LookUpTable";
+import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../model/types/LookUpTable";
 import {
     simpleNameCheck,
     simpleStringCheck,
 } from "../util/InputValidators";
-import {BY_ID} from "./shared/comparator";
+import {BY_ID} from "../util/comparator";
 
 interface BuildRowProps {
     category: ICategory,
@@ -60,11 +60,11 @@ function BuildRow(props: BuildRowProps) {
     } = props;
     const authMgmt = useAuth();
 
-    // helper function, triggered when category selector changes
+    // helper function, triggered when the category selector changes
     const handleChange = (newList: string[]) => {
         // update api
         setSubCategory(authMgmt.token, category.id, newList).then(newCats => {
-            // save new version
+            // save the new version
             const newCat = {...category, nested_categories: newCats};
             updateCategory(newCat);
         })
@@ -99,7 +99,7 @@ function CategoriesPage() {
     // State info for the Page
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
-    // search & pagination
+    // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState('');
@@ -114,10 +114,10 @@ function CategoriesPage() {
         [quickSearch, categories],
     );
 
-    // Track object (if any) for which a delete confirmation is open
+    // Track the object (if any) for which a delete confirmation is open
     const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<ICategory | null>(null);
 
-    // load categories from backend
+    // load categories from the backend
     React.useEffect(() => {
         Promise.all([getCategories(authMgmt.token)])
             .then(([categoriesData]) => {
@@ -135,10 +135,10 @@ function CategoriesPage() {
         setEditCategory(TriState.CLOSED);
     };
 
-    // create or edit new object
+    // create or edit a new object
     const handleSave = async (catID: string | null, category: IMutableCategory) => {
         if (catID == null) {
-            // add new category
+            // add the new category
             const newCat = await createCategory(authMgmt.token, category)
             setCategory(pushLUT(categories, newCat));
         } else {
@@ -157,7 +157,7 @@ function CategoriesPage() {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
             deleteCategory(authMgmt.token, isDeleteDialogOpen.id).then(() => {
-                // remove category with ID from store
+                // remove category with ID from the store
                 setCategory(filterLUT(categories, (cat => cat.id !== isDeleteDialogOpen.id)));
             });
         }

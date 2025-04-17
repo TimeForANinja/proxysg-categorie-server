@@ -1,13 +1,13 @@
 import React from 'react';
 import './App.css';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import MatchingListPage from "./pages/urls";
-import LoginPage from "./pages/login";
-import ApiTokenPage from "./pages/tokens";
-import CategoriesPage from "./pages/categories";
-import HistoryPage from "./pages/history";
-import HomePage from "./pages/home";
-import BaseLayout from "./pages/shared/BaseLayout";
+import MatchingListPage from "./components/urls";
+import LoginPage from "./components/login";
+import ApiTokenPage from "./components/tokens";
+import CategoriesPage from "./components/categories";
+import HistoryPage from "./components/history";
+import HomePage from "./components/home";
+import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
 import {AuthProvider} from "./model/AuthContext";
 

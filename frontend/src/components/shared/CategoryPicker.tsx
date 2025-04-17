@@ -1,7 +1,7 @@
 import React from "react";
 import {Autocomplete, Box, Chip, TextField} from "@mui/material";
 
-import {getLUTValues, LUT} from "../../util/LookUpTable";
+import {getLUTValues, LUT} from "../../model/types/LookUpTable";
 import {ICategory} from "../../api/categories";
 import {colors} from "../../util/colormixer";
 import {CompareLists} from "../../util/ArrayDiff";
@@ -18,7 +18,7 @@ export function CategoryPicker(props: CategoryPickerProps) {
         categories,
     } = props;
 
-    // helper function, triggered when category selector changes
+    // helper function, triggered when the category selector changes
     const handleChange = (event: React.SyntheticEvent, new_cats: ICategory[]) => {
         if (Array.isArray(new_cats)) {
             const { added, removed } = CompareLists(isCategories, new_cats.map(c => c.id));

@@ -1,7 +1,4 @@
-export interface IUser {
-    username: string;
-    token: string;
-}
+import {IUser} from '../api/auth'
 
 const LOCAL_STORAGE_KEY = 'app_user';
 

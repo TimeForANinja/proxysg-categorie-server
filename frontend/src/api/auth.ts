@@ -1,4 +1,7 @@
-import {IUser} from "../model/loginHandler";
+export interface IUser {
+    username: string;
+    token: string;
+}
 
 export const checkLogin = async (userToken: string): Promise<boolean> => {
     const response = await fetch('/api/auth/verify', {
