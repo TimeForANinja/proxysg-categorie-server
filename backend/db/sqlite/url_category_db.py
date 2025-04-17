@@ -1,16 +1,16 @@
 import sqlite3
-from typing import List
+from typing import List, Callable
 
 from db.url_category import UrlCategoryDBInterface
 
 
 class SQLiteURLCategory(UrlCategoryDBInterface):
-    def __init__(self, conn: sqlite3.Connection):
-        self.conn = conn
+    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
+        self.get_conn = get_conn
         self.create_table()
 
     def create_table(self) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS url_categories (
                             id INTEGER PRIMARY KEY,
                             url_id INTEGER,
@@ -19,10 +19,10 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
                             FOREIGN KEY (url_id) REFERENCES urls(id),
                             FOREIGN KEY (category_id) REFERENCES categories(id)
         )''')
-        self.conn.commit()
+        self.get_conn().commit()
 
     def get_url_categories_by_url(self, url_id: str) -> List[str]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 uc.category_id
@@ -36,17 +36,17 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
         return [str(row[0]) for row in rows]
 
     def add_url_category(self, url_id: str, category_id: str) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
             (int(url_id), int(category_id),)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
     def delete_url_category(self, url_id: str, category_id: str) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE url_categories SET is_deleted = 1 WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
             (int(url_id), int(category_id),)
         )
-        self.conn.commit()
+        self.get_conn().commit()

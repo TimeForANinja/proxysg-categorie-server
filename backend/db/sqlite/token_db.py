@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.token import TokenDBInterface, MutableToken, Token
@@ -19,12 +19,12 @@ def _build_token(row: any) -> Token:
 
 
 class SQLiteToken(TokenDBInterface):
-    def __init__(self, conn: sqlite3.Connection):
-        self.conn = conn
+    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
+        self.get_conn = get_conn
         self.create_table()
 
     def create_table(self) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS tokens (
                             id INTEGER PRIMARY KEY,
                             token TEXT NOT NULL,
@@ -32,15 +32,15 @@ class SQLiteToken(TokenDBInterface):
                             last_use INTEGER DEFAULT 0,
                             is_deleted INTEGER DEFAULT 0
         )''')
-        self.conn.commit()
+        self.get_conn().commit()
 
     def add_token(self, uuid: str, mut_tok: MutableToken) -> Token:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO tokens (token, description) VALUES (?, ?)',
             (uuid, mut_tok.description)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
         new_token = Token(
             id=str(cursor.lastrowid),
@@ -52,7 +52,7 @@ class SQLiteToken(TokenDBInterface):
         return new_token
 
     def get_token(self, token_id: str) -> Optional[Token]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 t.id AS id,
@@ -81,7 +81,7 @@ class SQLiteToken(TokenDBInterface):
         return None
 
     def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 t.id AS id,
@@ -121,41 +121,41 @@ class SQLiteToken(TokenDBInterface):
         if updates:
             query = f'UPDATE tokens SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
             params.append(token_id)
-            cursor = self.conn.cursor()
+            cursor = self.get_conn().cursor()
             cursor.execute(query, params)
-            self.conn.commit()
+            self.get_conn().commit()
 
         return self.get_token(token_id)
 
     def update_usage(self, token_id: str) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         timestamp = int(time.time())
         cursor.execute(
             'UPDATE tokens SET last_use = ? WHERE id = ? AND is_deleted = 0',
             (timestamp, int(token_id),)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
     def roll_token(self, token_id: str, uuid: str) -> Token:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE tokens SET token = ? WHERE id = ? AND is_deleted = 0',
             (uuid, int(token_id),)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
         return self.get_token(token_id)
 
     def delete_token(self, token_id: str) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE tokens SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
             (int(token_id),)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
     def get_all_tokens(self) -> List[Token]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 t.id AS id,

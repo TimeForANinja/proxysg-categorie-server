@@ -30,4 +30,6 @@ class MyMongoDB(DBInterface):
         self.url_categories = MongoDBURLCategory(self.db)
 
     def close(self):
-        self.client.close()
+        # no call to self.client.close() required after each context closure
+        # since the DB is external we do not need to worry about thread safety here
+        pass

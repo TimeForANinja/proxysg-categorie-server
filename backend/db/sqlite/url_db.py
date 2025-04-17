@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
@@ -18,12 +18,12 @@ def _build_url(row: any) -> URL:
 
 
 class SQLiteURL(URLDBInterface):
-    def __init__(self, conn: sqlite3.Connection):
-        self.conn = conn
+    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
+        self.get_conn = get_conn
         self.create_table()
 
     def create_table(self) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS urls (
                             id INTEGER PRIMARY KEY,
                             hostname TEXT NOT NULL,
@@ -31,15 +31,15 @@ class SQLiteURL(URLDBInterface):
                             bc_cats TEXT NOT NULL,
                             is_deleted INTEGER DEFAULT 0
         )''')
-        self.conn.commit()
+        self.get_conn().commit()
 
     def add_url(self, mut_url: MutableURL) -> URL:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO urls (hostname, description, bc_cats) VALUES (?, ?, ?)',
             (mut_url.hostname,mut_url.description, NO_BC_CATEGORY_YET)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
         new_url = URL(
             hostname = mut_url.hostname,
@@ -51,7 +51,7 @@ class SQLiteURL(URLDBInterface):
         return new_url
 
     def get_url(self, url_id: str) -> Optional[URL]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 u.id AS id,
@@ -94,28 +94,28 @@ class SQLiteURL(URLDBInterface):
         if updates:
             query = f'UPDATE urls SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
             params.append(int(url_id))
-            cursor = self.conn.cursor()
+            cursor = self.get_conn().cursor()
             cursor.execute(query, params)
-            self.conn.commit()
+            self.get_conn().commit()
 
         return self.get_url(url_id)
 
     def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
         query = 'UPDATE urls SET bc_cats = ? WHERE id = ? AND is_deleted = 0'
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(query, (','.join(bc_cats), int(url_id)))
-        self.conn.commit()
+        self.get_conn().commit()
 
     def delete_url(self, url_id: str) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE urls SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
             (int(url_id),)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
     def get_all_urls(self) -> List[URL]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 u.id AS id,

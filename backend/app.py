@@ -1,5 +1,6 @@
 import os
 from os.path import abspath
+from typing import Any
 from apiflask import APIFlask
 from flask import send_from_directory
 from flask_compress import Compress
@@ -81,18 +82,20 @@ def handle_error(error):
         'status': 'failed',
         'status_code': error.status_code,
         'message': error.message,
-        'detail': error.detail
+        'detail': error.detail,
     }, error.status_code, error.headers
 
 
 @app.teardown_appcontext
-def teardown():
+def teardown(_exception: Any):
+    # exception parameter must be defined, or else Flask crashes
     db_singleton.close_connection()
 
 
 def initialize_app(a: APIFlask):
     # start background tasks
     start_background_tasks(a)
+
 
 if __name__ == '__main__':
     # initialize background tasks

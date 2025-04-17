@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.category import CategoryDBInterface, MutableCategory, Category
@@ -18,12 +18,12 @@ def _build_category(row: any) -> Category:
 
 
 class SQLiteCategory(CategoryDBInterface):
-    def __init__(self, conn: sqlite3.Connection):
-        self.conn = conn
+    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
+        self.get_conn = get_conn
         self.create_table()
 
     def create_table(self) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS categories (
                             id INTEGER PRIMARY KEY,
                             name TEXT NOT NULL,
@@ -31,15 +31,15 @@ class SQLiteCategory(CategoryDBInterface):
                             color INTEGER NOT NULL,
                             is_deleted INTEGER DEFAULT 0
         )''')
-        self.conn.commit()
+        self.get_conn().commit()
 
     def add_category(self, mut_cat: MutableCategory) -> Category:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO categories (name, description, color) VALUES (?, ?, ?)',
             (mut_cat.name, mut_cat.description, mut_cat.color)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
         new_cat = Category(
             name = mut_cat.name,
@@ -51,7 +51,7 @@ class SQLiteCategory(CategoryDBInterface):
         return new_cat
 
     def get_category(self, category_id: str) -> Optional[Category]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 c.id as id,
@@ -99,22 +99,22 @@ class SQLiteCategory(CategoryDBInterface):
         if updates:
             query = f'UPDATE categories SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
             params.append(int(cat_id))
-            cursor = self.conn.cursor()
+            cursor = self.get_conn().cursor()
             cursor.execute(query, params)
-            self.conn.commit()
+            self.get_conn().commit()
 
         return self.get_category(cat_id)
 
     def delete_category(self, category_id: str) -> None:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE categories SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
             (int(category_id),)
         )
-        self.conn.commit()
+        self.get_conn().commit()
 
     def get_all_categories(self) -> List[Category]:
-        cursor = self.conn.cursor()
+        cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
                 c.id as id,
