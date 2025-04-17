@@ -4,6 +4,7 @@ from flask import request
 
 from auth.auth_user import AuthUser
 from auth.auth_realm import AuthRealmInterface
+from auth.util.role_map import parse_role_map, apply_role_map
 from log import log_info, log_error
 
 
@@ -13,7 +14,8 @@ class RESTAuthRealm(AuthRealmInterface):
             auth_url: str,
             verify_url: str,
             ssl_verify: bool,
-            paths: Dict[str, str]
+            paths: Dict[str, str],
+            role_map: str,
     ):
         """
         :param auth_url: URL to authenticate with username / pw
@@ -25,11 +27,13 @@ class RESTAuthRealm(AuthRealmInterface):
                 'groups': 'user.groups',
                 'token': 'token'
             }
+        :param role_map: A string of role mappings in the format:
         """
         self.verify_url = verify_url
         self.auth_url = auth_url
         self.ssl_verify = ssl_verify
         self.paths = paths
+        self.role_map = parse_role_map(role_map)
 
     @staticmethod
     def _get_json_key(json_obj: Dict, key: str) -> any:
@@ -64,9 +68,10 @@ class RESTAuthRealm(AuthRealmInterface):
 
         resp_obj = r.json()
         log_info( 'AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', r.json())
+        raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
         user = AuthUser(
             username = self._get_json_key(resp_obj, self.paths.get('username')),
-            roles = self._get_json_key(resp_obj, self.paths.get('groups')),
+            roles = apply_role_map(raw_roles, self.role_map),
         )
 
         return user
@@ -90,9 +95,10 @@ class RESTAuthRealm(AuthRealmInterface):
 
             resp_obj = r.json()
             log_info('AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', resp_obj)
+            raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
             user = AuthUser(
                 username = self._get_json_key(resp_obj, self.paths.get('username')),
-                roles = self._get_json_key(resp_obj, self.paths.get('groups')),
+                roles = apply_role_map(raw_roles, self.role_map),
             )
             rest_token = self._get_json_key(resp_obj, self.paths.get('token'))
             return rest_token, user

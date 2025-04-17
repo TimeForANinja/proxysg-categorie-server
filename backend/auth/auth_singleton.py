@@ -29,8 +29,9 @@ def get_auth_if(app: APIFlask) -> AuthHandler:
                     radius_cfg: dict = app.config.get('AUTH', {}).get('RADIUS', {})
                     radius_server = radius_cfg.get('SERVER')
                     radius_secret = radius_cfg.get('SECRET')
+                    radius_role_map = radius_cfg.get('ROLE_MAP', "")
                     log_info('AUTH', 'Adding Radius Realm', { 'server': radius_server })
-                    realm = RadiusAuthRealm(jwt, radius_server, radius_secret)
+                    realm = RadiusAuthRealm(jwt, radius_server, radius_secret, radius_role_map)
                     realms.append(realm)
                 elif auth_type == 'rest':
                     rest_cfg: dict = app.config.get('AUTH', {}).get('REST', {})
@@ -38,6 +39,7 @@ def get_auth_if(app: APIFlask) -> AuthHandler:
                     verify_url = rest_cfg.get('VERIFY_URL')
                     # check for false or not false, so that we default to 'true' for all other values
                     ssl_verify = rest_cfg.get('SSL_VERIFY', 'true').lower() != 'false'
+                    rest_role_map = rest_cfg.get('ROLE_MAP', "")
                     paths = {
                         'username': rest_cfg.get('PATH_USERNAME', 'username'),
                         'groups': rest_cfg.get('PATH_GROUPS', 'groups'),
@@ -47,7 +49,7 @@ def get_auth_if(app: APIFlask) -> AuthHandler:
                         'AUTH',
                         'Adding REST Realm',
                         { 'auth_url': auth_url, 'verify_url': verify_url, 'ssl_verify': ssl_verify, 'paths': paths })
-                    realm = RESTAuthRealm(auth_url, verify_url, ssl_verify, paths)
+                    realm = RESTAuthRealm(auth_url, verify_url, ssl_verify, paths, rest_role_map)
                     realms.append(realm)
                 else:
                     raise ValueError(f'Unsupported APP_AUTH_ORDER TYPE: {auth_type}')
