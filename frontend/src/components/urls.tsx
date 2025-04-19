@@ -24,7 +24,6 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
-
 import {getCategories, ICategory} from "../api/categories";
 import {createURL, deleteURL, getURLs, IMutableURL, IURL, setURLCategory, updateURL} from "../api/urls"
 import {useAuth} from "../model/AuthContext";
@@ -35,6 +34,7 @@ import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
+import {BuildSyntaxTree, TreeNode} from "../searchParser/Parser";
 
 interface BuildRowProps {
     url: IURL,
@@ -117,14 +117,31 @@ function MatchingListPage() {
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState('');
     const filteredRows = React.useMemo(
-        () =>
-            urls.filter(x => {
-                // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
+        () => {
+            let tree: TreeNode | null = null;
+            try {
+                tree = BuildSyntaxTree(quickSearch);
+                console.log("Search Query:", tree.print());
+            } catch(e: Error | any) {
+                console.log("Invalid Error:", e?.message, e?.stack);
+            }
+            return urls.filter(x => {
                 const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
                 const bc_cat_str = x.bc_cats.join(' ');
                 const search_str = `${x.id} ${x.hostname} ${x.description} ${bc_cat_str} ${cat_str}`;
-                return search_str.toLowerCase().includes(quickSearch.toLowerCase());
-            }),
+                const raw_row = {
+                    id: x.id,
+                    host: x.hostname,
+                    description: x.description,
+                    cats: cat_str,
+                    bc_cats: bc_cat_str,
+                    _raw: search_str,
+                }
+
+                // test new parser
+                return !!tree?.calc(raw_row);
+            });
+        },
         [quickSearch, urls, categories],
     );
 
