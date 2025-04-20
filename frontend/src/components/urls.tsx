@@ -34,7 +34,7 @@ import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
-import {BuildSyntaxTree, TreeNode} from "../searchParser/Parser";
+import {BuildSyntaxTree, TreeNode} from "../searchParser";
 
 interface BuildRowProps {
     url: IURL,
@@ -139,7 +139,7 @@ function MatchingListPage() {
                 }
 
                 // test new parser
-                return !!tree?.calc(raw_row);
+                return !!tree?.test(raw_row);
             });
         },
         [quickSearch, urls, categories],
