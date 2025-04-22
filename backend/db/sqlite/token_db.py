@@ -21,18 +21,6 @@ def _build_token(row: any) -> Token:
 class SQLiteToken(TokenDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
-        self.create_table()
-
-    def create_table(self) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS tokens (
-                            id INTEGER PRIMARY KEY,
-                            token TEXT NOT NULL,
-                            description TEXT NOT NULL,
-                            last_use INTEGER DEFAULT 0,
-                            is_deleted INTEGER DEFAULT 0
-        )''')
-        self.get_conn().commit()
 
     def add_token(self, uuid: str, mut_tok: MutableToken) -> Token:
         cursor = self.get_conn().cursor()

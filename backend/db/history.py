@@ -24,20 +24,13 @@ class History:
         default=None,
         metadata={
             'validate': Length(max=255),
-            'description': 'Description of the category'
+            'description': 'Description of the category',
         },
     )
     atomics: List[Atomic] = field(default_factory=list)
 
 
 class HistoryDBInterface(ABC):
-    @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'history' table if it doesn't exist.
-        """
-        pass
-
     @abstractmethod
     def add_history_event(self, action: str) -> History:
         """

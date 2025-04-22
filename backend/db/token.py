@@ -62,12 +62,6 @@ class Token(MutableToken):
 
 
 class TokenDBInterface(ABC):
-    @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'tokens' table if it doesn't exist.
-        """
-        pass
 
     @abstractmethod
     def add_token(self, uuid: str, mut_tok: MutableToken) -> Token:
@@ -91,6 +85,7 @@ class TokenDBInterface(ABC):
         """
         pass
 
+    @abstractmethod
     def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
         """
         Fetch a Token based on the token.uuid string.

@@ -10,9 +10,6 @@ class MongoDBTokenCategory(TokenCategoryDBInterface):
         self.db = db
         self.collection = self.db['tokens']
 
-    def create_table(self) -> None:
-        pass
-
     def get_token_categories_by_token(self, token_id: str) -> List[str]:
         query = {'_id': ObjectId(token_id), 'is_deleted': 0}
         row = self.collection.find_one(query)

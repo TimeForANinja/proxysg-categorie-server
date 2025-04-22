@@ -95,6 +95,9 @@ def teardown(_exception: Any):
 
 def initialize_app(a: APIFlask):
     log_debug("APP", "App initialization called")
+    # force db initialization and therefore also schema migration
+    with app.app_context():
+        db_singleton.get_db()
     # start background tasks
     start_background_tasks(a)
 

@@ -11,22 +11,19 @@ class MongoDBHistory(HistoryDBInterface):
         self.db = db
         self.collection: Collection = db['history']
 
-    def create_table(self) -> None:
-        pass
-
     def add_history_event(self, action: str) -> History:
         timestamp = int(time.time())  # Current UNIX time
         result = self.collection.insert_one({
             'time': timestamp,
             'description': action,
-            'atomics': []  # Default empty atomics list
+            'atomics': [],  # Default empty atomics list
         })
 
         return History(
             id=str(result.inserted_id),
             time=timestamp,
             description=action,
-            atomics=[]
+            atomics=[],
         )
 
     def get_history_events(self) -> List[History]:

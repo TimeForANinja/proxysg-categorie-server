@@ -4,12 +4,6 @@ from typing import List
 
 class SubCategoryDBInterface(ABC):
     @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'sub_category' table if it doesn't exist.
-        """
-        pass
-
     def get_sub_categories_by_id(self, category_id: str) -> List[str]:
         """
         Get all subcategories of a category
@@ -18,6 +12,7 @@ class SubCategoryDBInterface(ABC):
         """
         pass
 
+    @abstractmethod
     def add_sub_category(self, category_id: str, sub_category_id: str) -> None:
         """
         Add a new subcategory
@@ -27,6 +22,7 @@ class SubCategoryDBInterface(ABC):
         """
         pass
 
+    @abstractmethod
     def delete_sub_category(self, category_id: str, sub_category_id: str) -> None:
         """
         Delete a mapping of a subcategory.

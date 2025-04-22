@@ -20,18 +20,6 @@ def _build_category(row: any) -> Category:
 class SQLiteCategory(CategoryDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
-        self.create_table()
-
-    def create_table(self) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS categories (
-                            id INTEGER PRIMARY KEY,
-                            name TEXT NOT NULL,
-                            description TEXT,
-                            color INTEGER NOT NULL,
-                            is_deleted INTEGER DEFAULT 0
-        )''')
-        self.get_conn().commit()
 
     def add_category(self, mut_cat: MutableCategory) -> Category:
         cursor = self.get_conn().cursor()

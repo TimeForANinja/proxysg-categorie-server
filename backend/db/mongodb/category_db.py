@@ -26,9 +26,6 @@ class MongoDBCategory(CategoryDBInterface):
         self.db = db
         self.collection = self.db['categories']
 
-    def create_table(self) -> None:
-        pass
-
     def add_category(self, category: MutableCategory) -> Category:
         result = self.collection.insert_one({
             'name': category.name,

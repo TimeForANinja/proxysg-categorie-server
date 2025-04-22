@@ -83,13 +83,6 @@ class URL(MutableURL):
 
 class URLDBInterface(ABC):
     @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'url' table if it doesn't exist.
-        """
-        pass
-
-    @abstractmethod
     def add_url(self, url: MutableURL) -> URL:
         """
         Add a new url with the given hostname.

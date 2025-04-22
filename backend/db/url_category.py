@@ -4,12 +4,6 @@ from typing import List
 
 class UrlCategoryDBInterface(ABC):
     @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'url_category' table if it doesn't exist.
-        """
-        pass
-
     def get_url_categories_by_url(self, url_id: str) -> List[str]:
         """
         Get all categories of a URL
@@ -18,6 +12,7 @@ class UrlCategoryDBInterface(ABC):
         """
         pass
 
+    @abstractmethod
     def add_url_category(self, url_id: str, category_id: str) -> None:
         """
         Add a new mapping of URL and Category
@@ -27,6 +22,7 @@ class UrlCategoryDBInterface(ABC):
         """
         pass
 
+    @abstractmethod
     def delete_url_category(self, url_id: str, category_id: str) -> None:
         """
         Delete a mapping of URL and Category.

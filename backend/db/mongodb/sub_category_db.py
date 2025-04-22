@@ -10,9 +10,6 @@ class MongoDBSubCategory(SubCategoryDBInterface):
         self.db = db
         self.collection = self.db['categories']
 
-    def create_table(self) -> None:
-        pass
-
     def get_sub_categories_by_id(self, category_id: str) -> List[str]:
         query = {'_id': ObjectId(category_id), 'is_deleted': 0}
         row = self.collection.find_one(query)

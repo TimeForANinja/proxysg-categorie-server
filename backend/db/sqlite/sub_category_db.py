@@ -7,19 +7,6 @@ from db.sub_category import SubCategoryDBInterface
 class SQLiteSubCategory(SubCategoryDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
-        self.create_table()
-
-    def create_table(self) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS sub_category (
-                            id INTEGER PRIMARY KEY,
-                            parent_id INTEGER,
-                            child_id INTEGER,
-                            is_deleted INTEGER DEFAULT 0,
-                            FOREIGN KEY (parent_id) REFERENCES categories(id),
-                            FOREIGN KEY (child_id) REFERENCES categories(id)
-        )''')
-        self.get_conn().commit()
 
     def get_sub_categories_by_id(self, category_id: str) -> List[str]:
         cursor = self.get_conn().cursor()

@@ -75,12 +75,6 @@ class Category(MutableCategory):
 
 
 class CategoryDBInterface(ABC):
-    @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'categories' table if it doesn't exist.
-        """
-        pass
 
     @abstractmethod
     def add_category(self, category: MutableCategory) -> Category:
