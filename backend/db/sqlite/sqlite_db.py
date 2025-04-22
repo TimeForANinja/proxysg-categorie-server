@@ -2,6 +2,7 @@ import os
 import sqlite3
 from flask import g
 
+from auth.auth_user import AUTH_USER_SYSTEM
 from db.db import DBInterface
 from db.sqlite.category_db import SQLiteCategory
 from db.sqlite.config_db import SQLiteConfig, CONFIG_VAR_SCHEMA_VERSION
@@ -87,7 +88,7 @@ class MySQLiteDB(DBInterface):
 
         for version, file_path in migration_files:
             if version > current_version:
-                log_info("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
+                log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
                 try:
                     # Read and execute the migration script
                     with open(file_path, 'r') as f:
@@ -99,7 +100,9 @@ class MySQLiteDB(DBInterface):
 
                     # Update schema version
                     self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version)
+
                     log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
+                    self.history.add_history_event(f"Migrated DB to version: {version}", AUTH_USER_SYSTEM)
                 except Exception as e:
                     conn.rollback()
                     log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")

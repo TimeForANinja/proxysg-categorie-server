@@ -3,6 +3,8 @@ from dataclasses import field, dataclass
 from typing import Optional, List
 from marshmallow.validate import Length
 
+from auth.auth_user import AuthUser
+
 
 @dataclass
 class Atomic:
@@ -20,6 +22,10 @@ class History:
         'required': True,
         'description': 'Timestamp of the event',
     })
+    user: str = field(metadata={
+        'required': True,
+        'description': 'User who performed the action',
+    })
     description: Optional[str] = field(
         default=None,
         metadata={
@@ -32,11 +38,12 @@ class History:
 
 class HistoryDBInterface(ABC):
     @abstractmethod
-    def add_history_event(self, action: str) -> History:
+    def add_history_event(self, action: str, user: AuthUser) -> History:
         """
         Add a new history event with the given name
 
         :param action: The action to be recorded
+        :param user: The user who performed the action
         :return: The newly created history event
         """
         pass
