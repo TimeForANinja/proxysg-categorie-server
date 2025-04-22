@@ -128,7 +128,7 @@ def add_other_bp(app):
         # ush the intermediate objects to the main db
         create_in_db(db_if, categories)
 
-        db_if.history.add_history_event('existing db imported', auth.current_user)
+        db_if.history.add_history_event('existing db imported', auth.current_user, [], [], [])
 
         return {
             'status': 'success',

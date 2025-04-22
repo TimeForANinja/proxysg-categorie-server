@@ -103,7 +103,7 @@ class MySQLiteDB(DBInterface):
                     self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version)
 
                     log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
-                    self.history.add_history_event(f"Migrated DB to version: {version}", AUTH_USER_SYSTEM)
+                    self.history.add_history_event(f"Migrated DB to version: {version}", AUTH_USER_SYSTEM, [], [], [])
                 except Exception as e:
                     conn.rollback()
                     log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")

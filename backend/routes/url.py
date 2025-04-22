@@ -39,7 +39,7 @@ def add_url_bp(app: APIFlask):
         db_if = get_db()
         new_url = db_if.urls.update_url(url_id, mut_url)
 
-        db_if.history.add_history_event(f'URL {url_id} updated', auth.current_user)
+        db_if.history.add_history_event(f'URL {url_id} updated', auth.current_user, [], [url_id], [])
 
         return {
             'status': 'success',
@@ -56,7 +56,7 @@ def add_url_bp(app: APIFlask):
         db_if = get_db()
         db_if.urls.delete_url(url_id)
 
-        db_if.history.add_history_event(f'URL {url_id} deleted', auth.current_user)
+        db_if.history.add_history_event(f'URL {url_id} deleted', auth.current_user, [], [url_id], [])
 
         return {
             'status': 'success',
@@ -73,7 +73,7 @@ def add_url_bp(app: APIFlask):
         db_if = get_db()
         new_url = db_if.urls.add_url(mut_url)
 
-        db_if.history.add_history_event(f'URL {new_url.id} created', auth.current_user)
+        db_if.history.add_history_event(f'URL {new_url.id} created', auth.current_user, [], [new_url.id], [])
 
         return {
             'status': 'success',
@@ -89,7 +89,7 @@ def add_url_bp(app: APIFlask):
         db_if = get_db()
         db_if.url_categories.add_url_category(url_id, cat_id)
 
-        db_if.history.add_history_event(f'Added cat {cat_id} to url {url_id}', auth.current_user)
+        db_if.history.add_history_event(f'Added cat {cat_id} to url {url_id}', auth.current_user, [], [url_id], [cat_id])
 
         return {
             'status': 'success',
@@ -104,7 +104,7 @@ def add_url_bp(app: APIFlask):
         db_if = get_db()
         db_if.url_categories.delete_url_category(url_id, cat_id)
 
-        db_if.history.add_history_event(f'Removed cat {cat_id} from url {url_id}', auth.current_user)
+        db_if.history.add_history_event(f'Removed cat {cat_id} from url {url_id}', auth.current_user, [], [url_id], [cat_id])
 
         return {
             'status': 'success',
@@ -132,6 +132,9 @@ def add_url_bp(app: APIFlask):
         db_if.history.add_history_event(
             f'Updated Cats for URL {url_id} from {",".join([str(c) for c in is_cats])} to {",".join([str(c) for c in set_cats.categories])}',
             auth.current_user,
+            [],
+            [url_id],
+            set_cats.categories,
         )
 
         return {

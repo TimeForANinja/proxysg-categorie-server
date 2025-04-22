@@ -30,11 +30,11 @@ class SQLiteURL(URLDBInterface):
         self.get_conn().commit()
 
         new_url = URL(
-            hostname = mut_url.hostname,
+            hostname=mut_url.hostname,
             description=mut_url.description,
-            id = str(cursor.lastrowid),
-            is_deleted = 0,
-            bc_cats= [NO_BC_CATEGORY_YET],
+            id=str(cursor.lastrowid),
+            is_deleted=0,
+            bc_cats=[NO_BC_CATEGORY_YET],
         )
         return new_url
 

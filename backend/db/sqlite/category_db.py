@@ -30,11 +30,11 @@ class SQLiteCategory(CategoryDBInterface):
         self.get_conn().commit()
 
         new_cat = Category(
-            name = mut_cat.name,
-            description = mut_cat.description,
-            color = mut_cat.color,
-            id = str(cursor.lastrowid),
-            is_deleted = 0,
+            name=mut_cat.name,
+            description=mut_cat.description,
+            color=mut_cat.color,
+            id=str(cursor.lastrowid),
+            is_deleted=0,
         )
         return new_cat
 

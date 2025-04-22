@@ -40,7 +40,7 @@ def add_token_bp(app: APIFlask):
         db_if = get_db()
         new_token = db_if.tokens.update_token(token_id, mut_tok)
 
-        db_if.history.add_history_event(f'Token {token_id} updated', auth.current_user)
+        db_if.history.add_history_event(f'Token {token_id} updated', auth.current_user, [token_id], [], [])
 
         return {
             'status': 'success',
@@ -59,7 +59,7 @@ def add_token_bp(app: APIFlask):
         db_if = get_db()
         new_token = db_if.tokens.roll_token(token_id, new_token_val)
 
-        db_if.history.add_history_event(f'Token {token_id} rolled', auth.current_user)
+        db_if.history.add_history_event(f'Token {token_id} rolled', auth.current_user, [token_id], [], [])
 
         return {
             'status': 'success',
@@ -76,7 +76,7 @@ def add_token_bp(app: APIFlask):
         db_if = get_db()
         db_if.tokens.delete_token(token_id)
 
-        db_if.history.add_history_event(f'Token {token_id} deleted', auth.current_user)
+        db_if.history.add_history_event(f'Token {token_id} deleted', auth.current_user, [token_id], [], [])
 
         return {
             'status': 'success',
@@ -95,7 +95,7 @@ def add_token_bp(app: APIFlask):
         db_if = get_db()
         new_token = db_if.tokens.add_token(new_token, mut_tok)
 
-        db_if.history.add_history_event(f'Token {new_token.id} created', auth.current_user)
+        db_if.history.add_history_event(f'Token {new_token.id} created', auth.current_user, [new_token.id], [], [])
 
         return {
             'status': 'success',
@@ -111,7 +111,7 @@ def add_token_bp(app: APIFlask):
         db_if = get_db()
         db_if.token_categories.add_token_category(token_id, cat_id)
 
-        db_if.history.add_history_event(f'Added cat {cat_id} to token {token_id}', auth.current_user)
+        db_if.history.add_history_event(f'Added cat {cat_id} to token {token_id}', auth.current_user, [token_id], [], [cat_id])
 
         return {
             'status': 'success',
@@ -126,7 +126,7 @@ def add_token_bp(app: APIFlask):
         db_if = get_db()
         db_if.token_categories.delete_token_category(token_id, cat_id)
 
-        db_if.history.add_history_event(f'Removed cat {cat_id} from token {token_id}', auth.current_user)
+        db_if.history.add_history_event(f'Removed cat {cat_id} from token {token_id}', auth.current_user, [token_id], [], [cat_id])
 
         return {
             'status': 'success',
@@ -154,6 +154,9 @@ def add_token_bp(app: APIFlask):
         db_if.history.add_history_event(
             f'Updated Cats for Token {token_id} from {",".join([str(c) for c in is_cats])} to {",".join([str(c) for c in set_cats.categories])}',
             auth.current_user,
+            [token_id],
+            [],
+            set_cats.categories,
         )
 
         return {

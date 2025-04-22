@@ -33,17 +33,30 @@ class History:
             'description': 'Description of the category',
         },
     )
+    ref_token: List[str] = field(default_factory=list)
+    ref_url: List[str] = field(default_factory=list)
+    ref_category: List[str] = field(default_factory=list)
     atomics: List[Atomic] = field(default_factory=list)
 
 
 class HistoryDBInterface(ABC):
     @abstractmethod
-    def add_history_event(self, action: str, user: AuthUser) -> History:
+    def add_history_event(
+            self,
+            action: str,
+            user: AuthUser,
+            ref_token: List[str],
+            ref_url: List[str],
+            ref_category: List[str],
+    ) -> History:
         """
         Add a new history event with the given name
 
         :param action: The action to be recorded
         :param user: The user who performed the action
+        :param ref_token: List of token IDs referenced by the action
+        :param ref_url: List of URL IDs referenced by the action
+        :param ref_category: List of category IDs referenced by the action
         :return: The newly created history event
         """
         pass

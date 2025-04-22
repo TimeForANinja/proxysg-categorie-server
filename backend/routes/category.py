@@ -39,7 +39,7 @@ def add_category_bp(app: APIFlask):
         db_if = get_db()
         new_category = db_if.categories.update_category(cat_id, mut_cat)
 
-        db_if.history.add_history_event(f'Category {cat_id} updated', auth.current_user)
+        db_if.history.add_history_event(f'Category {cat_id} updated', auth.current_user, [], [], [cat_id])
 
         return {
             'status': 'success',
@@ -56,7 +56,7 @@ def add_category_bp(app: APIFlask):
         db_if = get_db()
         db_if.categories.delete_category(cat_id)
 
-        db_if.history.add_history_event(f'Category {cat_id} deleted', auth.current_user)
+        db_if.history.add_history_event(f'Category {cat_id} deleted', auth.current_user, [], [], [cat_id])
 
         return {
             'status': 'success',
@@ -73,7 +73,7 @@ def add_category_bp(app: APIFlask):
         db_if = get_db()
         new_category = db_if.categories.add_category(mut_cat)
 
-        db_if.history.add_history_event(f'Category {new_category.id} created', auth.current_user)
+        db_if.history.add_history_event(f'Category {new_category.id} created', auth.current_user, [], [], [new_category.id])
 
         return {
             'status': 'success',
@@ -89,7 +89,7 @@ def add_category_bp(app: APIFlask):
         db_if = get_db()
         db_if.sub_categories.add_sub_category(cat_id, sub_cat_id)
 
-        db_if.history.add_history_event(f'Added sub-cat {sub_cat_id} to cat {cat_id}', auth.current_user)
+        db_if.history.add_history_event(f'Added sub-cat {sub_cat_id} to cat {cat_id}', auth.current_user, [], [], [cat_id, sub_cat_id])
 
         return {
             'status': 'success',
@@ -104,7 +104,7 @@ def add_category_bp(app: APIFlask):
         db_if = get_db()
         db_if.sub_categories.delete_sub_category(cat_id, sub_cat_id)
 
-        db_if.history.add_history_event(f'Removed sub-cat {sub_cat_id} from category {cat_id}', auth.current_user)
+        db_if.history.add_history_event(f'Removed sub-cat {sub_cat_id} from category {cat_id}', auth.current_user, [], [], [cat_id, sub_cat_id])
 
         return {
             'status': 'success',
@@ -132,6 +132,9 @@ def add_category_bp(app: APIFlask):
         db_if.history.add_history_event(
             f'Updated Sub-Cats for Category {cat_id} from {",".join([str(c) for c in is_sub_cats])} to {",".join([str(c) for c in set_cats.categories])}',
             auth.current_user,
+            [],
+            [],
+            [cat_id] + set_cats.categories,
         )
 
         return {
