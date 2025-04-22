@@ -18,6 +18,12 @@ export function CategoryPicker(props: CategoryPickerProps) {
         categories,
     } = props;
 
+    // Create the current value for the controller `Autocomplete` component
+    const selectedCategories = React.useMemo(() => {
+        return isCategories.map(c => categories[c]).filter(Boolean);
+    }, [isCategories, categories]);
+
+
     // helper function, triggered when the category selector changes
     const handleChange = (event: React.SyntheticEvent, new_cats: ICategory[]) => {
         if (Array.isArray(new_cats)) {
@@ -34,7 +40,7 @@ export function CategoryPicker(props: CategoryPickerProps) {
             size="small"
             options={getLUTValues(categories)}
             getOptionLabel={(cat) => cat.name}
-            defaultValue={isCategories.map(c => categories[c])}
+            value={selectedCategories}
             onChange={handleChange}
             renderTags={(values, getTagProps) =>
                 values.map((val, index: number) => {
