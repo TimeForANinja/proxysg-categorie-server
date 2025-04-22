@@ -35,6 +35,7 @@ function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
                 <TableCell />
                 <TableCell>{commit.id}</TableCell>
                 <TableCell>{event_time}</TableCell>
+                <TableCell>{commit.user}</TableCell>
                 <TableCell>{commit.description}</TableCell>
             </TableRow>
             {
@@ -52,6 +53,7 @@ function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
                                 {isFirstAtomic ? (<></>) : (<div className="verticalLine"/>) }
                             </TableCell>
                             <TableCell>{atomic.id}</TableCell>
+                            <TableCell />
                             <TableCell>{Date.now()}</TableCell>
                             <TableCell>{atomic.action}</TableCell>
                         </TableRow>
@@ -87,6 +89,7 @@ function HistoryPage() {
                     <TableCell />
                     <TableCell component="th" scope="row">Commit-ID</TableCell>
                     <TableCell>Time</TableCell>
+                    <TableCell>User</TableCell>
                     <TableCell>Description</TableCell>
                 </TableRow>
                 </TableHead>

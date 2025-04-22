@@ -8,6 +8,7 @@ export interface ICommits {
     id: string;
     time: number;
     description: string;
+    user: string;
     atomics: IAtomic[];
 }
 
