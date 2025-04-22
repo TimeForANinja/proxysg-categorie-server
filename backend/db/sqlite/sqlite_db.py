@@ -39,7 +39,7 @@ class MySQLiteDB(DBInterface):
     def open_con(self) -> sqlite3.Connection:
         # helper method to provide a sqlite con for an SQLite Module
         # we unfortunately need to open the connection new for each threat...
-        # flask "g" is unique for each context, so we can use it to store the connection
+        # flask 'g' is unique for each context, so we can use it to store the connection
         conn = getattr(g, '_sqlite_db', None)
         if conn is None:
             conn = g._sqlite_db = sqlite3.connect(self.filename)
@@ -60,7 +60,7 @@ class MySQLiteDB(DBInterface):
         """
         # Get current schema version
         current_version = self.config.get_schema_version()
-        log_debug("SQLITE", f"Current schema version: {current_version}")
+        log_debug('SQLITE', f'Current schema version: {current_version}')
 
         # Find migration scripts
         migration_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'migration')
@@ -95,7 +95,8 @@ class MySQLiteDB(DBInterface):
                         sql_script = f.read()
 
                     # Execute the script
-                    cursor.executescript(sql_script)
+                    # use BEGIN/COMMIT to enforce a transaction - changes are only stored if all changes succeed
+                    cursor.executescript(f"BEGIN;\n{ sql_script }\nCOMMIT;")
                     conn.commit()
 
                     # Update schema version
@@ -106,6 +107,8 @@ class MySQLiteDB(DBInterface):
                 except Exception as e:
                     conn.rollback()
                     log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
-                    break
+                    # migration failed
+                    # raise to stop the server since the DB is not as expected
+                    raise e
             else:
                 log_debug("SQLITE", f"Skipping migration: {os.path.basename(file_path)} (version {version} is older than current version {current_version})")

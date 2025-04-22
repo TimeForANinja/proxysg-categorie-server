@@ -8,7 +8,7 @@ ALTER TABLE history ADD COLUMN new_user TEXT;
 UPDATE history SET new_user = 'system' WHERE new_user IS NULL;
 
 -- Step 3: Create a new table with the desired column constraints
--- Replace "new_user" with "user" and enforce NOT NULL
+-- Replace 'new_user' with 'user' and enforce NOT NULL
 CREATE TABLE history_new (
     id INTEGER PRIMARY KEY,
     time INTEGER NOT NULL,
