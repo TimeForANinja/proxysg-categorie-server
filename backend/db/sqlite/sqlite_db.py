@@ -37,7 +37,7 @@ class MySQLiteDB(DBInterface):
         self._run_migrations()
 
     def open_con(self) -> sqlite3.Connection:
-        # helper method to provide a sqlite con for an SQLite Module
+        # helper method to provide access to a sqlite con for other SQLite Modules
         # we unfortunately need to open the connection new for each threat...
         # flask 'g' is unique for each context, so we can use it to store the connection
         conn = getattr(g, '_sqlite_db', None)

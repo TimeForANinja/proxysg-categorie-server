@@ -40,16 +40,16 @@ class JWTHandler:
         :return: Decoded payload as a dictionary if the token is valid, otherwise None.
         """
         try:
-            # Decode the token using the secret key
+            # decode the token using the secret key
             decoded_data = jwt.decode(token, self.secret_key, algorithms=['HS256'])
-            data = decoded_data.get('data')  # Return the original data (from the payload)
+            data = decoded_data.get('data')  # return the original data (from the payload)
             if not data:
-                # Token Content is invalid
+                # the token Content is invalid
                 return None
             return TokenData.from_dict(data)
         except jwt.ExpiredSignatureError:
-            # Token has expired
+            # the token has expired
             return None
         except jwt.InvalidTokenError:
-            # Token is invalid
+            # the token is invalid
             return None

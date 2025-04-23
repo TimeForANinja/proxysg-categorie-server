@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Optional, Callable
+from typing import Callable
 
 
 CONFIG_VAR_SCHEMA_VERSION = 'schema-version'

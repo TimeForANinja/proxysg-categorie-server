@@ -19,7 +19,7 @@ def find_subcategories(
     :param current_cat: The current category to start the traversal from
     :param categories_dict: A mapping of category IDs to category objects
     :param visited: A set to track already visited categories
-    :param result: A list to store the found subcategories
+    :param result: A list to store all subcategories found so far
     """
     for nested_id in current_cat.nested_categories:
         # resolve category id to category in the lookup table
@@ -34,7 +34,7 @@ def find_subcategories(
         if nested_cat.id in visited:
             continue
 
-        # store cat in visited and result list
+        # store cat in the visited and the result list
         visited.add(nested_cat.id)
         result.append(nested_cat)
 

@@ -25,7 +25,7 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
 
     A Category is unknown if:
     * no cat is set
-    * only the NO_BC_CATEGORY_YET cat is set
+    * only the NO_BC_CATEGORY_YET category is set
     * only 'unavailable' cat is set
 
     :param bc_cats: The list of BlueCoat Categories to check

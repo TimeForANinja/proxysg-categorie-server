@@ -38,7 +38,7 @@ def get_db() -> DBInterface:
 def close_connection():
     """
     Remove the current database connection.
-    Flask calls this every time a Context is being removed (e.g. end of request)
+    Flask calls this every time a Context is being removed (e.g., end of request)
     """
     db = get_db()
     if db is not None:

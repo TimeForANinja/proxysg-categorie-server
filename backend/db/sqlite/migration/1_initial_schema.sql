@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS history (
     description TEXT
 );
 
--- Create tokens table
+-- Create token table
 CREATE TABLE IF NOT EXISTS tokens (
     id INTEGER PRIMARY KEY,
     token TEXT NOT NULL,
