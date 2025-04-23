@@ -42,6 +42,18 @@ import {
     simpleStringCheck,
 } from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
+import {DATA_ROW, SearchParser} from "../searchParser";
+
+const convertKV = (x: ICategory, categories: LUT<ICategory>): DATA_ROW => {
+    const cat_str = x.nested_categories.map(c => categories[c]?.name).join(' ');
+    return {
+        id: x.id,
+        name: x.name,
+        description: x.description,
+        cats: cat_str,
+        _raw: `${x.id} ${x.name} ${x.description} ${cat_str}`,
+    };
+}
 
 interface BuildRowProps {
     category: ICategory,
@@ -102,15 +114,11 @@ function CategoriesPage() {
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
     const comparator = BY_ID;
-    const [quickSearch, setQuickSearch] = React.useState('');
+    const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
-        () =>
-            getLUTValues(categories).filter(x => {
-                // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
-                const cat_str = x.nested_categories.map(c => categories[c]?.name).join(' ');
-                const search_str = `${x.id} ${x.name} ${x.description} ${cat_str}`;
-                return search_str.toLowerCase().includes(quickSearch.toLowerCase());
-            }),
+        () => getLUTValues(categories).filter(x => {
+            return quickSearch?.test(convertKV(x, categories)) ?? true;
+        }),
         [quickSearch, categories],
     );
 

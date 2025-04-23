@@ -46,6 +46,7 @@ import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
+import {DATA_ROW, SearchParser} from "../searchParser";
 
 const TIME_SECONDS = 1000;
 
@@ -55,6 +56,17 @@ const parse_last_used = (last_use: number) => {
     } else {
         return new Date(last_use * TIME_SECONDS).toLocaleString();
     }
+}
+
+const convertKV = (x: IApiToken, categories: LUT<ICategory>): DATA_ROW => {
+    const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
+    return {
+        id: x.id,
+        description: x.description,
+        last_used: parse_last_used(x.last_use),
+        cats: cat_str,
+        _raw: `${x.id} ${x.description} ${parse_last_used(x.last_use)} ${cat_str}`,
+    };
 }
 
 interface BuildRowProps {
@@ -146,15 +158,11 @@ function ApiTokenPage() {
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
     const comparator = BY_ID;
-    const [quickSearch, setQuickSearch] = React.useState('');
+    const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
-        () =>
-            tokens.filter(x => {
-                // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
-                const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
-                const search_str = `${x.id} ${x.description} ${parse_last_used(x.last_use)} ${cat_str}`.toLowerCase();
-                return search_str.toLowerCase().includes(quickSearch.toLowerCase());
-            }),
+        () => tokens.filter(x => {
+            return quickSearch?.test(convertKV(x, categories)) ?? true;
+        }),
         [quickSearch, tokens, categories],
     );
 

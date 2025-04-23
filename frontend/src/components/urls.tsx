@@ -33,9 +33,22 @@ import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
-import {BuildSyntaxTree, TreeNode} from "../searchParser";
+import {DATA_ROW, SearchParser} from "../searchParser";
 import {getHistory, ICommits} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
+
+const convertKV = (x: IURL, categories: LUT<ICategory>): DATA_ROW => {
+    const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
+    const bc_cat_str = x.bc_cats.join(' ');
+    return {
+        id: x.id,
+        host: x.hostname,
+        description: x.description,
+        cats: cat_str,
+        bc_cats: bc_cat_str,
+        _raw: `${x.id} ${x.hostname} ${x.description} ${bc_cat_str} ${cat_str}`,
+    };
+}
 
 interface BuildRowProps {
     url: IURL,
@@ -123,33 +136,11 @@ function MatchingListPage() {
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IURL[]>([]);
     const comparator = BY_ID;
-    const [quickSearch, setQuickSearch] = React.useState('');
+    const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
-        () => {
-            let tree: TreeNode | null = null;
-            try {
-                tree = BuildSyntaxTree(quickSearch);
-                console.log("Search Query:", tree.print());
-            } catch(e: Error | any) {
-                console.log("Invalid Error:", e?.message, e?.stack);
-            }
-            return urls.filter(x => {
-                const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
-                const bc_cat_str = x.bc_cats.join(' ');
-                const search_str = `${x.id} ${x.hostname} ${x.description} ${bc_cat_str} ${cat_str}`;
-                const raw_row = {
-                    id: x.id,
-                    host: x.hostname,
-                    description: x.description,
-                    cats: cat_str,
-                    bc_cats: bc_cat_str,
-                    _raw: search_str,
-                }
-
-                // test new parser
-                return !!tree?.test(raw_row);
-            });
-        },
+        () => urls.filter(x => {
+            return quickSearch?.test(convertKV(x, categories)) ?? true;
+        }),
         [quickSearch, urls, categories],
     );
 
