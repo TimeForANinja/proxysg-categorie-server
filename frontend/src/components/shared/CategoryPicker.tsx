@@ -28,7 +28,6 @@ export function CategoryPicker(props: CategoryPickerProps) {
     const handleChange = (event: React.SyntheticEvent, new_cats: ICategory[]) => {
         if (Array.isArray(new_cats)) {
             const { added, removed } = CompareLists(isCategories, new_cats.map(c => c.id));
-
             onChange(new_cats.map(c => c.id), added, removed);
         }
     };

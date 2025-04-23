@@ -10,6 +10,9 @@ export interface ICommits {
     description: string;
     user: string;
     atomics: IAtomic[];
+    ref_token: string[];
+    ref_url: string[];
+    ref_category: string[];
 }
 
 

@@ -16,7 +16,6 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Typography,
 } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -35,6 +34,8 @@ import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
+import {getHistory, ICommits} from "../api/history";
+import HistoryTable from "./shared/HistoryTable";
 
 interface BuildRowProps {
     url: IURL,
@@ -59,6 +60,15 @@ function BuildRow(props: BuildRowProps) {
             updateURL(newURL);
         });
     };
+
+    const [myHist, setMyHist] = React.useState<ICommits[]>([]);
+    React.useEffect(() => {
+        if (!isOpen) return;
+        getHistory(authMgmt.token).then(fullHist => {
+            const newMyHist = fullHist.filter(h => h.ref_url.includes(url.id));
+            setMyHist(newMyHist);
+        });
+    }, [isOpen, authMgmt, url])
 
     return (
         <React.Fragment>
@@ -91,12 +101,10 @@ function BuildRow(props: BuildRowProps) {
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={4}>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={7}>
                     <Collapse in={isOpen} timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 1}} >
-                            <Typography variant="h6" gutterBottom component="div">
-                                History
-                            </Typography>
+                            <HistoryTable commits={myHist} />
                         </Box>
                     </Collapse>
                 </TableCell>
