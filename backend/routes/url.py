@@ -12,13 +12,14 @@ from routes.schemas.url import ListURLOutput, CreateOrUpdateURLOutput, ListURLCa
 def add_url_bp(app: APIFlask):
     log_debug('ROUTES', 'Adding URL Blueprint')
     auth_if = get_auth_if(app)
+    auth = auth_if.get_auth()
     url_bp = APIBlueprint('url', __name__)
 
     # Route to fetch all URLs
     @url_bp.get('/api/url')
     @url_bp.doc(summary='List all URLs', description='List all URLs in the database')
     @url_bp.output(ListURLOutput)
-    @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RO])
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
     def get_urls():
         db_if = get_db()
         urls = db_if.urls.get_all_urls()
@@ -33,11 +34,13 @@ def add_url_bp(app: APIFlask):
     @url_bp.doc(summary='Update URL name', description='Update the name of a URL')
     @url_bp.input(class_schema(MutableURL)(), location='json', arg_name='mut_url')
     @url_bp.output(CreateOrUpdateURLOutput)
-    @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_url(url_id: str, mut_url: MutableURL):
         db_if = get_db()
         new_url = db_if.urls.update_url(url_id, mut_url)
-        db_if.history.add_history_event(f'URL {url_id} updated')
+
+        db_if.history.add_history_event(f'URL {url_id} updated', auth.current_user, [], [url_id], [])
+
         return {
             'status': 'success',
             'message': 'URL updated successfully',
@@ -48,11 +51,13 @@ def add_url_bp(app: APIFlask):
     @url_bp.delete('/api/url/<string:url_id>')
     @url_bp.doc(summary='Delete a URL', description='Delete a URL using its ID')
     @url_bp.output(GenericOutput)
-    @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_url(url_id: str):
         db_if = get_db()
         db_if.urls.delete_url(url_id)
-        db_if.history.add_history_event(f'URL {url_id} deleted')
+
+        db_if.history.add_history_event(f'URL {url_id} deleted', auth.current_user, [], [url_id], [])
+
         return {
             'status': 'success',
             'message': 'url_id deleted successfully'
@@ -63,11 +68,12 @@ def add_url_bp(app: APIFlask):
     @url_bp.doc(summary='Create a new URL', description='Create a new URL with a given name')
     @url_bp.input(class_schema(MutableURL)(), location='json', arg_name='mut_url')
     @url_bp.output(CreateOrUpdateURLOutput)
-    @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_url(mut_url: MutableURL):
         db_if = get_db()
         new_url = db_if.urls.add_url(mut_url)
-        db_if.history.add_history_event(f'URL {new_url.id} created')
+
+        db_if.history.add_history_event(f'URL {new_url.id} created', auth.current_user, [], [new_url.id], [])
 
         return {
             'status': 'success',
@@ -78,11 +84,13 @@ def add_url_bp(app: APIFlask):
     # Route to add a Category to a URL
     @url_bp.post('/api/url/<string:url_id>/category/<string:cat_id>')
     @url_bp.doc(summary='add cat to url', description='Add the provided Category ID to the URL.Category List')
-    @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def add_token_category(url_id: str, cat_id: str):
         db_if = get_db()
         db_if.url_categories.add_url_category(url_id, cat_id)
-        db_if.history.add_history_event(f'Added cat {cat_id} to url {url_id}')
+
+        db_if.history.add_history_event(f'Added cat {cat_id} to url {url_id}', auth.current_user, [], [url_id], [cat_id])
+
         return {
             'status': 'success',
             'message': 'Category successfully added to URL'
@@ -91,11 +99,13 @@ def add_url_bp(app: APIFlask):
     # Route to delete a Category from a URL
     @url_bp.delete('/api/url/<string:url_id>/category/<string:cat_id>')
     @url_bp.doc(summary='remove cat from url', description='Remove the provided Category ID from the URL.Category List')
-    @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_token_category(url_id: str, cat_id: str):
         db_if = get_db()
         db_if.url_categories.delete_url_category(url_id, cat_id)
-        db_if.history.add_history_event(f'Removed cat {cat_id} from url {url_id}')
+
+        db_if.history.add_history_event(f'Removed cat {cat_id} from url {url_id}', auth.current_user, [], [url_id], [cat_id])
+
         return {
             'status': 'success',
             'message': 'Category successfully removed from URL'
@@ -106,7 +116,7 @@ def add_url_bp(app: APIFlask):
     @url_bp.doc(summary='overwrite url categories', description='Set the Categories of a URL to the provided list')
     @url_bp.input(class_schema(SetURLCategoriesInput)(), location='json', arg_name='set_cats')
     @url_bp.output(ListURLCategoriesOutput)
-    @url_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def set_url_categories(url_id: str, set_cats: SetURLCategoriesInput):
         db_if = get_db()
         is_cats = db_if.url_categories.get_url_categories_by_url(url_id)
@@ -119,7 +129,14 @@ def add_url_bp(app: APIFlask):
         for cat in removed:
             db_if.url_categories.delete_url_category(url_id, cat)
 
-        db_if.history.add_history_event(f'Updated Cats for URL {url_id} from {",".join([str(c) for c in is_cats])} to {",".join([str(c) for c in set_cats.categories])}')
+        db_if.history.add_history_event(
+            f'Updated Cats for URL {url_id} from {",".join([str(c) for c in is_cats])} to {",".join([str(c) for c in set_cats.categories])}',
+            auth.current_user,
+            [],
+            [url_id],
+            set_cats.categories,
+        )
+
         return {
             'status': 'success',
             'message': 'URL Categories successfully updated',

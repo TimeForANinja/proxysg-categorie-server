@@ -55,9 +55,9 @@ class RadiusAuthRealm(AuthRealmInterface):
         # Option 2: Class Attribute
         if 'Class' in response:
             # 'Class' is a common attribute often used for roles/groups
-            # group adata are typically stored as a byte object
             group_data = response['Class']
             # Decode and split by delimiter if needed
+            # it is typically stored as a byte object
             roles_from_class = group_data.decode('utf-8').split(',')
             user_roles.extend(roles_from_class)
         # Option 3: Reply-Message

@@ -20,18 +20,6 @@ def _build_url(row: any) -> URL:
 class SQLiteURL(URLDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
-        self.create_table()
-
-    def create_table(self) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS urls (
-                            id INTEGER PRIMARY KEY,
-                            hostname TEXT NOT NULL,
-                            description TEXT NOT NULL,
-                            bc_cats TEXT NOT NULL,
-                            is_deleted INTEGER DEFAULT 0
-        )''')
-        self.get_conn().commit()
 
     def add_url(self, mut_url: MutableURL) -> URL:
         cursor = self.get_conn().cursor()
@@ -42,11 +30,11 @@ class SQLiteURL(URLDBInterface):
         self.get_conn().commit()
 
         new_url = URL(
-            hostname = mut_url.hostname,
+            hostname=mut_url.hostname,
             description=mut_url.description,
-            id = str(cursor.lastrowid),
-            is_deleted = 0,
-            bc_cats= [NO_BC_CATEGORY_YET],
+            id=str(cursor.lastrowid),
+            is_deleted=0,
+            bc_cats=[NO_BC_CATEGORY_YET],
         )
         return new_url
 

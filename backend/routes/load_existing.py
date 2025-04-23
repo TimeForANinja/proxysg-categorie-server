@@ -111,6 +111,7 @@ def parse_db(db_str: str) -> List[ExistingCat]:
 def add_other_bp(app):
     log_debug('ROUTES', 'Adding other Blueprint')
     auth_if = get_auth_if(app)
+    auth = auth_if.get_auth()
     other_bp = APIBlueprint('other', __name__)
 
     # Route to upload an existing category db
@@ -118,8 +119,8 @@ def add_other_bp(app):
     @other_bp.doc(summary='Upload existing DB', description='Upload an existing database to the server')
     @other_bp.input(class_schema(ExistingDBInput)(), location='json', arg_name='existing_db')
     @other_bp.output(GenericOutput)
-    @other_bp.auth_required(auth_if.get_auth(), roles=[auth_if.AUTH_ROLES_RW])
-    def create_category(existing_db: ExistingDBInput):
+    @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
+    def load_existing(existing_db: ExistingDBInput):
         db_if = get_db()
 
         # parse db into an intermediate object
@@ -127,7 +128,7 @@ def add_other_bp(app):
         # ush the intermediate objects to the main db
         create_in_db(db_if, categories)
 
-        db_if.history.add_history_event('existing db imported')
+        db_if.history.add_history_event('existing db imported', auth.current_user, [], [], [])
 
         return {
             'status': 'success',

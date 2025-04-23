@@ -1,6 +1,7 @@
 from typing import List
 from dataclasses import dataclass, field
 
+
 # Constants
 AUTH_ROLES_RO = 'pxy_admin_ro'
 AUTH_ROLES_RW = 'pxy_admin_rw'
@@ -23,3 +24,9 @@ class AuthUser:
             'description': 'List of roles assigned to the User',
         }
     )
+
+
+AUTH_USER_SYSTEM = AuthUser(
+    username='system',
+    roles=[AUTH_ROLES_RO, AUTH_ROLES_RW],
+)

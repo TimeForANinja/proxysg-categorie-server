@@ -12,7 +12,7 @@ internal_role_map = {
 def parse_role_map(raw: str) -> Dict[str, str]:
     """
     Try to parse a User Role-Map.
-    The Role-Map allows to map external roles to internal roles.
+    The Role-Map allows mapping external roles to internal roles.
 
     The Syntax for this is a comma-separated list of role mappings in the form of:
         <external_role>=<internal_role>,<external_role>=<internal_role>
@@ -28,7 +28,7 @@ def parse_role_map(raw: str) -> Dict[str, str]:
     for part in parts:
         segments = part.split('=')
         if len(segments) != 2:
-            log_error('AUTH', 'Invalid Role-Map Fornat', { 'role_map': raw, 'segments': segments})
+            log_error('AUTH', 'Invalid Role-Map Format', { 'role_map': raw, 'segments': segments})
             continue
         if segments[1].lower() not in internal_role_map.keys():
             log_error('AUTH', 'Unknown Target Role', { 'role_map': raw, 'internal_role': segments[1].lower()})
@@ -46,7 +46,7 @@ def apply_role_map(external_roles: List[str], role_map: Dict[str, str]) -> List[
     :return: A list of internal roles, or the original list if the mapping failed.
     """
     return [
-        # default to the external role if no external role is not in map
+        # default to the external role if no external role is not in a map
         role_map.get(x, x)
         for x in external_roles
     ]

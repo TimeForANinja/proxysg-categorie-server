@@ -2,54 +2,54 @@ import sqlite3
 import time
 from typing import List, Callable
 
+from auth.auth_user import AuthUser
 from db.history import HistoryDBInterface, History
-from db.sqlite.util.metadata import fetch_table_list
+from db.sqlite.util.groups import split_opt_str_group
 
 
 class SQLiteHistory(HistoryDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
-        self.create_table()
 
-    def create_table(self) -> None:
-        has_tables = fetch_table_list(self.get_conn())
-
-        cursor = self.get_conn().cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS history (
-                            id INTEGER PRIMARY KEY,
-                            time INTEGER NOT NULL,
-                            description TEXT
-        )''')
-        self.get_conn().commit()
-
-        # if the history table did not yet exist, we enter a default event
-        if 'history' not in has_tables:
-            self.add_history_event('Database created')
-
-    def add_history_event(self, action: str) -> History:
+    def add_history_event(
+            self,
+            action: str,
+            user: AuthUser,
+            ref_token: List[str],
+            ref_url: List[str],
+            ref_category: List[str],
+    ) -> History:
         cursor = self.get_conn().cursor()
         timestamp = int(time.time())
         cursor.execute(
-            'INSERT INTO history (time, description) VALUES (?, ?)',
-            (timestamp, action)
+            'INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?)',
+            (timestamp, action, user.username, ','.join(ref_token), ','.join(ref_url), ','.join(ref_category))
         )
         self.get_conn().commit()
 
         hist = History(
-            id = str(cursor.lastrowid),
-            time = timestamp,
-            description = action,
-            atomics = [],
+            id=str(cursor.lastrowid),
+            time=timestamp,
+            description=action,
+            atomics=[],
+            user=user.username,
+            ref_token=ref_token,
+            ref_url=ref_url,
+            ref_category=ref_category,
         )
         return hist
 
     def get_history_events(self) -> List[History]:
         cursor = self.get_conn().cursor()
-        cursor.execute('SELECT id, time, description FROM history')
+        cursor.execute('SELECT id, time, description, user, ref_token, ref_url, ref_category FROM history')
         rows = cursor.fetchall()
         return [History(
-            id = row[0],
-            time = row[1],
-            description = row[2],
-            atomics = [],
+            id=row[0],
+            time=row[1],
+            description=row[2],
+            atomics=[],
+            user=row[3],
+            ref_token=split_opt_str_group(row[4]),
+            ref_url=split_opt_str_group(row[5]),
+            ref_category=split_opt_str_group(row[6]),
         ) for row in rows]

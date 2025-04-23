@@ -83,13 +83,6 @@ class URL(MutableURL):
 
 class URLDBInterface(ABC):
     @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'url' table if it doesn't exist.
-        """
-        pass
-
-    @abstractmethod
     def add_url(self, url: MutableURL) -> URL:
         """
         Add a new url with the given hostname.
@@ -127,7 +120,7 @@ class URLDBInterface(ABC):
     @abstractmethod
     def delete_url(self, url_id: str) -> None:
         """
-        Soft delete a URL by setting its `is_deleted` flag to 1.
+        Soft-delete a URL by setting its `is_deleted` flag to 1.
 
         :param url_id: The ID of the url to delete.
         """

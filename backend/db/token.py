@@ -62,12 +62,6 @@ class Token(MutableToken):
 
 
 class TokenDBInterface(ABC):
-    @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'tokens' table if it doesn't exist.
-        """
-        pass
 
     @abstractmethod
     def add_token(self, uuid: str, mut_tok: MutableToken) -> Token:
@@ -91,6 +85,7 @@ class TokenDBInterface(ABC):
         """
         pass
 
+    @abstractmethod
     def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
         """
         Fetch a Token based on the token.uuid string.
@@ -141,7 +136,7 @@ class TokenDBInterface(ABC):
     @abstractmethod
     def delete_token(self, token_id: str) -> None:
         """
-        Soft delete a token by setting its `is_deleted` flag to 1.
+        Soft-delete a token by setting its `is_deleted` flag to 1.
 
         :param token_id: The ID of the token to delete.
         """

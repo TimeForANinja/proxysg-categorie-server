@@ -10,9 +10,6 @@ class MongoDBURLCategory(UrlCategoryDBInterface):
         self.db = db
         self.collection = self.db['urls']
 
-    def create_table(self) -> None:
-        pass
-
     def get_url_categories_by_url(self, url_id: str) -> List[str]:
         query = {'_id': ObjectId(url_id), 'is_deleted': 0}
         row = self.collection.find_one(query)

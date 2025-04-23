@@ -6,6 +6,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
+from log import log_debug
 
 TIME_MINUTES = 60
 
@@ -15,8 +16,13 @@ MISFIRE_GRACE_TIME = 15 * TIME_MINUTES
 
 def start_background_tasks(app: APIFlask):
     """Initialize all background tasks"""
-    # Prepare the Scheduler
+
+    # load required config variables
     tz = app.config.get('TIMEZONE', 'Europe/Berlin')
+
+    log_debug('BACKGROUND', 'Starting Background Tasks...', { 'tz': tz })
+
+    # Prepare the Scheduler
     scheduler = BackgroundScheduler({'apscheduler.timezone': tz})
 
     # add all tasks
@@ -40,10 +46,16 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     load_existing_path = app.config.get('LOAD_EXISTING', {}).get('PATH', './data/local_db.txt')
     load_existing_prefix = app.config.get('LOAD_EXISTING', {}).get('PREFIX', '')
 
+    log_debug('BACKGROUND', 'Preparing Background Tasks "start_load_existing"', {
+        'path': load_existing_path,
+        'prefix': load_existing_prefix,
+    })
+
     # wrapper to use the app_context
     # this allows us to use the existing db_singleton stored as a flask global object
     def query_executor(a: APIFlask):
         with a.app_context():
+            log_debug('BACKGROUND', 'executing load_existing background task')
             load_existing_file(
                 filepath=load_existing_path,
                 prefix_cats=load_existing_prefix,
@@ -72,11 +84,19 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     query_bc_conf: dict = app.config.get('BC', {})
     bc_interval = query_bc_conf.get('INTERVAL', '0 3 * * *')
     bc_interval_quick = query_bc_conf.get('INTERVAL_QUICK', '0 * * * *')
-    bc_db = query_bc_conf.get('HOST')
+    bc_host = query_bc_conf.get('HOST')
     bc_user = query_bc_conf.get('USER', 'ro_admin')
     bc_password = query_bc_conf.get('PASSWORD')
     # check for false or not false, so that we default to 'true' for all other values
     bc_verify_ssl = query_bc_conf.get('VERIFY_SSL', 'true').lower() != 'false'
+
+    log_debug('BACKGROUND', 'Preparing Background Tasks "start_query_bc"', {
+        'interval': bc_interval,
+        'interval_quick': bc_interval_quick,
+        'host': bc_host,
+        'user': bc_user,
+        'verify_ssl': bc_verify_ssl,
+    })
 
     if not bc_verify_ssl:
         # hide warnings telling us to enable ssl verification
@@ -84,7 +104,7 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
 
     # build a credential object to make it easier to pass them around
     creds = ServerCredentials(
-        server=bc_db,
+        server=bc_host,
         user=bc_user,
         password=bc_password,
         verifySSL=bc_verify_ssl,
@@ -94,6 +114,7 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     # this allows us to use the existing db_singleton stored as a flask global object
     def query_executor(a: APIFlask, c: ServerCredentials, unknown_only:bool=False):
         with a.app_context():
+            log_debug('BACKGROUND', 'executing query_bc background task', { 'unknown_only': unknown_only })
             query_all(c, unknown_only)
 
     # run at the interval defined

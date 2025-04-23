@@ -15,7 +15,7 @@ from routes.history import add_history_bp
 from routes.load_existing import add_other_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
-from log import setup_logging, log_info, log_error
+from log import setup_logging, log_info, log_error, log_debug
 
 # Initialize APIFlask instead of Flask
 app = APIFlask(
@@ -88,11 +88,16 @@ def handle_error(error):
 
 @app.teardown_appcontext
 def teardown(_exception: Any):
-    # exception parameter must be defined, or else Flask crashes
+    # the exception parameter must be defined, or else Flask crashes
+    log_debug("APP", "App teardown called")
     db_singleton.close_connection()
 
 
 def initialize_app(a: APIFlask):
+    log_debug("APP", "App initialization called")
+    # force db initialization and therefore also schema migration
+    with app.app_context():
+        db_singleton.get_db()
     # start background tasks
     start_background_tasks(a)
 

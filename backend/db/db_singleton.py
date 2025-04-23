@@ -24,7 +24,7 @@ def get_db() -> DBInterface:
         elif db_type == 'sqlite':
             sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})
             database_name = sqlite_cfg.get('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')
-            log_info('DB', 'Connecting to SQLite', { 'db': database_name })
+            log_info('DB', 'Creating Standby SQLite DB', { 'db': database_name })
             db = MySQLiteDB(database_name)
         else:
             raise ValueError(f'Unsupported APP_DB_TYPE: {db_type}')
@@ -38,7 +38,7 @@ def get_db() -> DBInterface:
 def close_connection():
     """
     Remove the current database connection.
-    Flask calls this every time a Context is being removed (e.g. end of request)
+    Flask calls this every time a Context is being removed (e.g., end of request)
     """
     db = get_db()
     if db is not None:

@@ -75,12 +75,6 @@ class Category(MutableCategory):
 
 
 class CategoryDBInterface(ABC):
-    @abstractmethod
-    def create_table(self) -> None:
-        """
-        Create the 'categories' table if it doesn't exist.
-        """
-        pass
 
     @abstractmethod
     def add_category(self, category: MutableCategory) -> Category:
@@ -120,7 +114,7 @@ class CategoryDBInterface(ABC):
     @abstractmethod
     def delete_category(self, category_id: str) -> None:
         """
-        Soft delete a category by setting its `is_deleted` flag to 1.
+        Soft-delete a category by setting its `is_deleted` flag to 1.
 
         :param category_id: The ID of the category to delete.
         """

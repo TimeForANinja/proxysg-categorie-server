@@ -26,9 +26,6 @@ class MongoDBURL(URLDBInterface):
         self.db = db
         self.collection = self.db['urls']
 
-    def create_table(self) -> None:
-        pass
-
     def add_url(self, mut_url: MutableURL) -> URL:
         result = self.collection.insert_one({
             'hostname': mut_url.hostname,

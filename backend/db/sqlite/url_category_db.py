@@ -7,19 +7,6 @@ from db.url_category import UrlCategoryDBInterface
 class SQLiteURLCategory(UrlCategoryDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
-        self.create_table()
-
-    def create_table(self) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS url_categories (
-                            id INTEGER PRIMARY KEY,
-                            url_id INTEGER,
-                            category_id INTEGER,
-                            is_deleted INTEGER DEFAULT 0,
-                            FOREIGN KEY (url_id) REFERENCES urls(id),
-                            FOREIGN KEY (category_id) REFERENCES categories(id)
-        )''')
-        self.get_conn().commit()
 
     def get_url_categories_by_url(self, url_id: str) -> List[str]:
         cursor = self.get_conn().cursor()
