@@ -7,9 +7,17 @@ import { ArgType } from "./argTypes";
 import { calc_to_bool } from './utils';
 
 /**
+ * Simplified version of the TreeNode for external use
+ */
+export type SearchParser = {
+    print(): string;
+    test(row: DATA_ROW): boolean;
+}
+
+/**
  * A TreeNode is a Node in the Custom Language Tree used to calculate the values
  */
-export class TreeNode {
+export class TreeNode implements SearchParser {
     baseStr: string;
     /**
      * An array of TreeNode objects representing larger, nested Syntax Structures.
