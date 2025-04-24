@@ -3,7 +3,7 @@ import {Autocomplete, Box, Chip, TextField} from "@mui/material";
 
 import {getLUTValues, LUT} from "../../model/types/LookUpTable";
 import {ICategory} from "../../model/types/category";
-import {colors} from "../../util/colormixer";
+import {colorLUT} from "../../util/colormixer";
 import {CompareLists} from "../../util/ArrayDiff";
 
 interface CategoryPickerProps {
@@ -45,7 +45,16 @@ export function CategoryPicker(props: CategoryPickerProps) {
                 values.map((val, index: number) => {
                     const { key, ...tagProps } = getTagProps({ index });
                     return (
-                        <Chip variant="outlined" label={val.name} key={key} {...tagProps} sx={{ bgcolor: colors[val.color]}} />
+                        <Chip
+                            variant="outlined"
+                            label={val.name}
+                            key={key}
+                            {...tagProps}
+                            sx={{
+                                bgcolor: colorLUT[val.color].bg,
+                                color: colorLUT[val.color].fg,
+                            }}
+                        />
                     );
                 })
             }
@@ -64,7 +73,10 @@ export function CategoryPicker(props: CategoryPickerProps) {
                                 mr: 1,
                                 mt: '2px',
                             }}
-                            style={{ backgroundColor: colors[option.color] }}
+                            style={{
+                                backgroundColor: colorLUT[option.color].bg,
+                                color: colorLUT[option.color].fg,
+                            }}
                         />
                         <Box
                             sx={(t) => ({

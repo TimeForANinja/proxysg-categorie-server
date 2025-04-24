@@ -28,7 +28,7 @@ import {
     setSubCategory,
     updateCategory
 } from "../api/categories";
-import {colors} from "../util/colormixer";
+import {colorLUT} from "../util/colormixer";
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
@@ -87,7 +87,12 @@ function BuildRow(props: BuildRowProps) {
             <TableCell>{category.id}</TableCell>
             <TableCell>{category.name}</TableCell>
             <TableCell>
-                <div style={{backgroundColor: colors[category.color], width: '20px', height: '20px'}}/>
+                <div style={{
+                    backgroundColor: colorLUT[category.color].bg,
+                    color: colorLUT[category.color].fg,
+                    width: '20px',
+                    height: '20px',
+                }}/>
             </TableCell>
             <TableCell>{category.description}</TableCell>
             <TableCell>
@@ -311,9 +316,14 @@ function EditDialog(props: EditDialogProps) {
                         onChange={(e) => setColor(Number(e.target.value))}
                     >
                         {
-                            Object.keys(colors).map(c => Number(c)).map((key) => (
+                            Object.keys(colorLUT).map(c => Number(c)).map((key) => (
                                 <MenuItem key={key} value={key.toString()}>
-                                    <div style={{backgroundColor: colors[key], width: '20px', height: '20px'}}/>
+                                    <div style={{
+                                        backgroundColor: colorLUT[key].bg,
+                                        color: colorLUT[key].fg,
+                                        width: '20px',
+                                        height: '20px'
+                                    }}/>
                                 </MenuItem>
                             ))
                         }
