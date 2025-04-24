@@ -1,20 +1,20 @@
 import {LUT} from "./LookUpTable";
-import {StringKV} from "./str_kv";
+import {StringKV} from "./stringKV";
 import {FieldDefinition, SHARED_DEFINITIONS} from "./fieldDefinition";
 import {ICategory} from "./category";
 
-export interface IMutableURL {
+export interface IMutableUrl {
     hostname: string;
     description: string;
 }
 
-export interface IURL extends IMutableURL {
+export interface IUrl extends IMutableUrl {
     id: string;
     categories: string[];
     bc_cats: string[];
 }
 
-export const UrlToKV = (x: IURL, categories: LUT<ICategory>): StringKV => {
+export const UrlToKV = (x: IUrl, categories: LUT<ICategory>): StringKV => {
     return {
         id: x.id,
         host: x.hostname,

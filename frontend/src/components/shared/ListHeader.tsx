@@ -23,7 +23,7 @@ import {CSVLink} from "react-csv"
 
 import {bracesFunctions, BuildSyntaxTree, SearchParser} from "../../searchParser";
 import {formatDateForFilename} from "../../util/DateString";
-import {StringKV} from "../../model/types/str_kv";
+import {StringKV} from "../../model/types/stringKV";
 
 
 interface ListHeaderProps {

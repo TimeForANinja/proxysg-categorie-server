@@ -33,13 +33,13 @@ import {
     rotateToken,
     setTokenCategory,
     updateToken
-} from "../api/tokens";
-import {getCategories} from "../api/categories";
+} from "../api/token";
+import {getCategories} from "../api/category";
 import {useAuth} from "../model/AuthContext";
-import {ListHeader} from "./shared/list-header";
+import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
-import {MyPaginator} from "./shared/paginator";
+import {MyPaginator} from "./shared/Paginator";
 import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
@@ -47,7 +47,7 @@ import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
 import {IApiToken, IMutableApiToken, parseLastUsed, ApiTokenFields, ApiTokenToKV} from '../model/types/apiToken';
 import {ICategory} from "../model/types/category";
-import {KVaddRAW} from "../model/types/str_kv";
+import {KVaddRAW} from "../model/types/stringKV";
 import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
 
 const TIME_SECONDS = 1000;

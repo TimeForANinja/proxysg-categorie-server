@@ -27,13 +27,13 @@ import {
     getCategories,
     setSubCategory,
     updateCategory
-} from "../api/categories";
+} from "../api/category";
 import {colorLUT} from "../util/colormixer";
 import {useAuth} from "../model/AuthContext";
-import {ListHeader} from "./shared/list-header";
+import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
-import {MyPaginator} from "./shared/paginator";
+import {MyPaginator} from "./shared/Paginator";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../model/types/LookUpTable";
 import {
@@ -44,7 +44,7 @@ import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
 import {CategoryFields, CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
 import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
-import {KVaddRAW} from "../model/types/str_kv";
+import {KVaddRAW} from "../model/types/stringKV";
 
 interface BuildRowProps {
     category: ICategory,

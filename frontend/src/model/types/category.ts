@@ -1,5 +1,5 @@
 import {FieldDefinition, SHARED_DEFINITIONS} from "./fieldDefinition";
-import {StringKV} from "./str_kv";
+import {StringKV} from "./stringKV";
 import {LUT} from "./LookUpTable";
 import {colorLUT} from "../../util/colormixer";
 

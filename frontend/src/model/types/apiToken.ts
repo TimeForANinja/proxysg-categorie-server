@@ -1,4 +1,4 @@
-import {StringKV} from "./str_kv";
+import {StringKV} from "./stringKV";
 import {FieldDefinition, SHARED_DEFINITIONS} from "./fieldDefinition";
 import {LUT} from "./LookUpTable";
 import {ICategory} from "./category";

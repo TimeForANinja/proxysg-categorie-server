@@ -15,9 +15,10 @@ export interface ICommits {
     ref_category: string[];
 }
 
+const HISTORY_BASE_URL = '/api/history'
 
 export const getHistory = async (userToken: string): Promise<ICommits[]> => {
-    const response = await fetch('/api/history', {
+    const response = await fetch(HISTORY_BASE_URL, {
         headers: { 'jwt-token': userToken },
     });
 

@@ -23,17 +23,17 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
-import {getCategories} from "../api/categories";
+import {getCategories} from "../api/category";
 import {
     createURL,
     deleteURL,
     getURLs,
     setURLCategory,
     updateURL,
-} from "../api/urls"
+} from "../api/url"
 import {useAuth} from "../model/AuthContext";
-import {ListHeader} from "./shared/list-header";
-import {MyPaginator} from "./shared/paginator";
+import {ListHeader} from "./shared/ListHeader";
+import {MyPaginator} from "./shared/Paginator";
 import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
 import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
@@ -42,14 +42,14 @@ import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
 import {getHistory, ICommits} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
-import {KVaddRAW} from "../model/types/str_kv";
+import {KVaddRAW} from "../model/types/stringKV";
 import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
-import {IURL, IMutableURL, UrlToKV, UrlFields} from "../model/types/url";
+import {IUrl, IMutableUrl, UrlToKV, UrlFields} from "../model/types/url";
 import {ICategory} from "../model/types/category";
 
 interface BuildRowProps {
-    url: IURL,
-    updateURL: (newURL: IURL) => void,
+    url: IUrl,
+    updateURL: (newURL: IUrl) => void,
     categories: LUT<ICategory>,
     onEdit: () => void,
     onDelete: () => void,
@@ -127,11 +127,11 @@ function MatchingListPage() {
     const authMgmt = useAuth();
 
     // State info for the Page
-    const [urls, setURLs] = React.useState<IURL[]>([]);
+    const [urls, setURLs] = React.useState<IUrl[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
     // search and pagination
-    const [visibleRows, setVisibleRows] = React.useState<IURL[]>([]);
+    const [visibleRows, setVisibleRows] = React.useState<IUrl[]>([]);
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
@@ -153,8 +153,8 @@ function MatchingListPage() {
 
 
     // Edit Dialog State
-    const [editURL, setEditURL] = React.useState<TriState<IURL>>(TriState.CLOSED);
-    const handleEditOpen = (uri: IURL | null = null) => {
+    const [editURL, setEditURL] = React.useState<TriState<IUrl>>(TriState.CLOSED);
+    const handleEditOpen = (uri: IUrl | null = null) => {
         setEditURL(uri ? new TriState(uri) : TriState.NEW);
     };
     const handleEditDialogClose = () => {
@@ -162,7 +162,7 @@ function MatchingListPage() {
     };
 
     // create or edit a new object
-    const handleSave = async (urlID: string|null, uri: IMutableURL) => {
+    const handleSave = async (urlID: string|null, uri: IMutableUrl) => {
         if (urlID == null) {
             // add new URL
             const newURI = await createURL(authMgmt.token, uri);
@@ -175,7 +175,7 @@ function MatchingListPage() {
         handleEditDialogClose();
     };
 
-    const handleDelete = (remove_url: IURL) => {
+    const handleDelete = (remove_url: IUrl) => {
         deleteURL(authMgmt.token, remove_url.id).then(() => {
             // remove URL with ID from store
             setURLs(urls.filter(uri => uri.id !== remove_url.id));
@@ -244,9 +244,9 @@ function MatchingListPage() {
 }
 
 interface EditDialogProps {
-    uri: TriState<IURL>,
+    uri: TriState<IUrl>,
     onClose: () => void,
-    onSave: (id: string | null, uri: IMutableURL) => void
+    onSave: (id: string | null, uri: IMutableUrl) => void
 }
 function EditDialog(props: EditDialogProps) {
     let {uri, onClose, onSave} = props;
