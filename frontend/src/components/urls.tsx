@@ -33,7 +33,7 @@ import {
 } from "../api/url"
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/ListHeader";
-import {MyPaginator} from "./shared/Paginator";
+import {MyPaginator} from "./shared/MyPaginator";
 import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
 import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
