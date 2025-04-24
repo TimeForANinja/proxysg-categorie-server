@@ -219,7 +219,7 @@ function ApiTokenPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"Token"}
-                    downloadRows={null}
+                    downloadRows={filteredRows.map(row => ApiTokenToKV(row, categories))}
                 />
                 <Grid size={12}>
                     <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>

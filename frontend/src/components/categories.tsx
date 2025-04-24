@@ -179,7 +179,7 @@ function CategoriesPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"Category"}
-                    downloadRows={null}
+                    downloadRows={filteredRows.map(row => CategoryToKV(row, categories))}
                 />
                 <Grid size={12}>
                     <Paper>

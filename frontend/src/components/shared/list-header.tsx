@@ -15,12 +15,13 @@ import {CSVLink} from "react-csv"
 
 import {BuildSyntaxTree, SearchParser} from "../../searchParser";
 import {formatDateForFilename} from "../../util/DateString";
+import {StringKV} from "../../model/types/str_kv";
 
 interface ListHeaderProps {
     onCreate: () => void,
     setQuickSearch: (parser: SearchParser | null) => void,
     addElement: string,
-    downloadRows:  {[key: string]: string}[] | null,
+    downloadRows:  StringKV[],
 }
 export const ListHeader = (props: ListHeaderProps) => {
     const {
@@ -29,8 +30,6 @@ export const ListHeader = (props: ListHeaderProps) => {
         addElement,
         downloadRows,
     } = props;
-
-    const hasDownload = downloadRows != null && downloadRows.length > 0;
 
     const [myTree, setMyTree] = React.useState<SearchParser | null>(null);
     const [treeError, setTreeError] = React.useState<string | null>(null);
@@ -76,7 +75,8 @@ export const ListHeader = (props: ListHeaderProps) => {
                     />
                 </Box>
             </Grid>
-            <Grid size={hasDownload ? 3 : 4}>
+            { /* Add-Button */ }
+            <Grid size={3}>
                 <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
                     <Button
                         variant="outlined"
@@ -86,31 +86,32 @@ export const ListHeader = (props: ListHeaderProps) => {
                     </Button>
                 </Box>
             </Grid>
-            { hasDownload && (
-                <Grid size={1}>
-                    <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
-                        <Button
-                            aria-label="delete"
-                            color="primary"
-                            variant="outlined"
+            { /* Download Button for visible rows */ }
+            <Grid size={1}>
+                <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
+                    <Button
+                        aria-label="delete"
+                        color="primary"
+                        variant="outlined"
+                    >
+                        <CSVLink
+                            data={downloadRows!}
+                            separator={";"}
+                            filename={`download_${formatDateForFilename()}.csv`}
+                            target="_blank"
                         >
-                            <CSVLink
-                                data={downloadRows!}
-                                separator={";"}
-                                filename={`download_${formatDateForFilename()}.csv`}
-                                target="_blank"
-                            >
-                                <DownloadIcon />
-                            </CSVLink>
-                        </Button>
-                    </Box>
-                </Grid>
-            )}
+                            <DownloadIcon />
+                        </CSVLink>
+                    </Button>
+                </Box>
+            </Grid>
+            { /* Search Syntax Error (if any) */ }
             { treeError && (
                 <Grid size={12}>
                     <Alert severity="error">Invalid Search: { treeError }</Alert>
                 </Grid>
             )}
+            { /* Search Syntax Guide & Examples */ }
             { isInfoOpen && (
                 <Grid size={12}>
                     <Alert
