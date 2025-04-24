@@ -24,7 +24,13 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
 import {getCategories} from "../api/categories";
-import {createURL, deleteURL, getURLs, setURLCategory, updateURL} from "../api/urls"
+import {
+    createURL,
+    deleteURL,
+    getURLs,
+    setURLCategory,
+    updateURL,
+} from "../api/urls"
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {MyPaginator} from "./shared/paginator";
@@ -33,24 +39,12 @@ import {TriState} from "../model/types/EditDialogState";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck, simpleURLCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
-import {DATA_ROW, SearchParser} from "../searchParser";
+import {SearchParser} from "../searchParser";
 import {getHistory, ICommits} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
-import {IURL, IMutableURL} from '../model/types/url';
+import {KVaddRAW} from "../model/types/str_kv";
+import {IURL, IMutableURL, UrlToKV} from "../model/types/url";
 import {ICategory} from "../model/types/category";
-
-const convertKV = (x: IURL, categories: LUT<ICategory>): DATA_ROW => {
-    const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
-    const bc_cat_str = x.bc_cats.join(' ');
-    return {
-        id: x.id,
-        host: x.hostname,
-        description: x.description,
-        cats: cat_str,
-        bc_cats: bc_cat_str,
-        _raw: `${x.id} ${x.hostname} ${x.description} ${bc_cat_str} ${cat_str}`,
-    };
-}
 
 interface BuildRowProps {
     url: IURL,
@@ -141,7 +135,7 @@ function MatchingListPage() {
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
         () => urls.filter(x => {
-            return quickSearch?.test(convertKV(x, categories)) ?? true;
+            return quickSearch?.test(KVaddRAW(UrlToKV(x, categories))) ?? true;
         }),
         [quickSearch, urls, categories],
     );
@@ -199,14 +193,7 @@ function MatchingListPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"URL"}
-                    downloadRows={filteredRows.map(row => ({
-                        "id": row.id,
-                        "hostname": row.hostname,
-                        "description": row.description,
-                        "cat_ids": row.categories.join(','),
-                        "cats": row.categories.map(c => categories[c]?.name).join(','),
-                        "bc_cats": row.bc_cats.join(','),
-                    }))}
+                    downloadRows={filteredRows.map(row => UrlToKV(row, categories))}
                 />
                 <Grid size={12}>
                     <Paper>

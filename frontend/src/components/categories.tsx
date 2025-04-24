@@ -41,19 +41,9 @@ import {
     simpleStringCheck,
 } from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
-import {DATA_ROW, SearchParser} from "../searchParser";
-import {ICategory, IMutableCategory} from "../model/types/category";
-
-const convertKV = (x: ICategory, categories: LUT<ICategory>): DATA_ROW => {
-    const cat_str = x.nested_categories.map(c => categories[c]?.name).join(' ');
-    return {
-        id: x.id,
-        name: x.name,
-        description: x.description,
-        cats: cat_str,
-        _raw: `${x.id} ${x.name} ${x.description} ${cat_str}`,
-    };
-}
+import {SearchParser} from "../searchParser";
+import {CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
+import {KVaddRAW} from "../model/types/str_kv";
 
 interface BuildRowProps {
     category: ICategory,
@@ -122,7 +112,7 @@ function CategoriesPage() {
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
         () => getLUTValues(categories).filter(x => {
-            return quickSearch?.test(convertKV(x, categories)) ?? true;
+            return quickSearch?.test(KVaddRAW(CategoryToKV(x, categories))) ?? true;
         }),
         [quickSearch, categories],
     );

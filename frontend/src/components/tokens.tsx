@@ -44,30 +44,12 @@ import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
-import {DATA_ROW, SearchParser} from "../searchParser";
-import {IApiToken, IMutableApiToken} from '../model/types/apiToken';
+import {SearchParser} from "../searchParser";
+import {IApiToken, IMutableApiToken, parseLastUsed, ApiTokenToKV} from '../model/types/apiToken';
 import {ICategory} from "../model/types/category";
+import {KVaddRAW} from "../model/types/str_kv";
 
 const TIME_SECONDS = 1000;
-
-const parse_last_used = (last_use: number) => {
-    if (last_use === 0) {
-        return 'never';
-    } else {
-        return new Date(last_use * TIME_SECONDS).toLocaleString();
-    }
-}
-
-const convertKV = (x: IApiToken, categories: LUT<ICategory>): DATA_ROW => {
-    const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
-    return {
-        id: x.id,
-        description: x.description,
-        last_used: parse_last_used(x.last_use),
-        cats: cat_str,
-        _raw: `${x.id} ${x.description} ${parse_last_used(x.last_use)} ${cat_str}`,
-    };
-}
 
 interface BuildRowProps {
     token: IApiToken,
@@ -132,7 +114,7 @@ function BuildRow(props: BuildRowProps) {
                     {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
                 </IconButton>
             </TableCell>
-            <TableCell>{ parse_last_used(token.last_use) }</TableCell>
+            <TableCell>{ parseLastUsed(token.last_use) }</TableCell>
             <TableCell align="right">
                 <CategoryPicker
                     onChange={(newList) => handleChange(newList)}
@@ -161,7 +143,7 @@ function ApiTokenPage() {
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
         () => tokens.filter(x => {
-            return quickSearch?.test(convertKV(x, categories)) ?? true;
+            return quickSearch?.test(KVaddRAW(ApiTokenToKV(x, categories))) ?? true;
         }),
         [quickSearch, tokens, categories],
     );
