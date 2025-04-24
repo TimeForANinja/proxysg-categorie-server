@@ -22,6 +22,7 @@ interface ListHeaderProps {
     setQuickSearch: (parser: SearchParser | null) => void,
     addElement: string,
     downloadRows:  StringKV[],
+    availableFields?: {field: string, description: string}[],
 }
 export const ListHeader = (props: ListHeaderProps) => {
     const {

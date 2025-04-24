@@ -1,3 +1,4 @@
+import {FieldDefinition, SHARED_DEFINITIONS} from "./fieldDefinition";
 import {StringKV} from "./str_kv";
 import {LUT} from "./LookUpTable";
 import {colorLUT} from "../../util/colormixer";
@@ -23,3 +24,11 @@ export const CategoryToKV = (x: ICategory, categories: LUT<ICategory>): StringKV
         cat_ids: x.nested_categories.join(','),
     }
 }
+
+export const CategoryFields: FieldDefinition[] = [
+    SHARED_DEFINITIONS.id,
+    { field: "name", description: "Name" },
+    { field: "color", description: "Color" },
+    SHARED_DEFINITIONS.description,
+    SHARED_DEFINITIONS.cats,
+]

@@ -45,9 +45,10 @@ import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
-import {IApiToken, IMutableApiToken, parseLastUsed, ApiTokenToKV} from '../model/types/apiToken';
+import {IApiToken, IMutableApiToken, parseLastUsed, ApiTokenFields, ApiTokenToKV} from '../model/types/apiToken';
 import {ICategory} from "../model/types/category";
 import {KVaddRAW} from "../model/types/str_kv";
+import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
 
 const TIME_SECONDS = 1000;
 
@@ -220,6 +221,7 @@ function ApiTokenPage() {
                     setQuickSearch={setQuickSearch}
                     addElement={"Token"}
                     downloadRows={filteredRows.map(row => ApiTokenToKV(row, categories))}
+                    availableFields={[...ApiTokenFields, FIELD_DEFINITION_RAW]}
                 />
                 <Grid size={12}>
                     <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>

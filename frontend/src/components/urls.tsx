@@ -43,7 +43,8 @@ import {SearchParser} from "../searchParser";
 import {getHistory, ICommits} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
 import {KVaddRAW} from "../model/types/str_kv";
-import {IURL, IMutableURL, UrlToKV} from "../model/types/url";
+import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
+import {IURL, IMutableURL, UrlToKV, UrlFields} from "../model/types/url";
 import {ICategory} from "../model/types/category";
 
 interface BuildRowProps {
@@ -194,6 +195,7 @@ function MatchingListPage() {
                     setQuickSearch={setQuickSearch}
                     addElement={"URL"}
                     downloadRows={filteredRows.map(row => UrlToKV(row, categories))}
+                    availableFields={[...UrlFields, FIELD_DEFINITION_RAW]}
                 />
                 <Grid size={12}>
                     <Paper>

@@ -1,5 +1,6 @@
 import {LUT} from "./LookUpTable";
 import {StringKV} from "./str_kv";
+import {FieldDefinition, SHARED_DEFINITIONS} from "./fieldDefinition";
 import {ICategory} from "./category";
 
 export interface IMutableURL {
@@ -23,3 +24,11 @@ export const UrlToKV = (x: IURL, categories: LUT<ICategory>): StringKV => {
         bc_cats: x.bc_cats.join(','),
     };
 }
+
+export const UrlFields: FieldDefinition[] = [
+    SHARED_DEFINITIONS.id,
+    { field: "host", description: "Hostname/domain" },
+    SHARED_DEFINITIONS.description,
+    SHARED_DEFINITIONS.cats,
+    { field: "bc_cats", description: "Blue Coat categories" },
+]
