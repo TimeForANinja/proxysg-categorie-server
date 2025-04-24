@@ -14,19 +14,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import {CSVLink} from "react-csv"
 
 import {BuildSyntaxTree, SearchParser} from "../../searchParser";
-
-// Utility method to calculate a Date-Time-Stamp to include in filenames
-const formatDateForFilename = (): string => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed, so add 1
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
-}
+import {formatDateForFilename} from "../../util/DateString";
 
 interface ListHeaderProps {
     onCreate: () => void,
