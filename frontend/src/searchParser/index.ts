@@ -17,11 +17,14 @@ export { bracesFunctions } from './bracesFunctions'
 
 
 /**
- * Build a new Tree, ready to be calculated
+ * Build a new Tree, ready to be used for calculations
  *
  * @param baseStr the calculation
  * @returns the Root-TreeNode
  */
 export const BuildSyntaxTree = (baseStr: string): SearchParser => {
-    return new TreeNode(baseStr, ROOT_TYPE);
+    const tree = new TreeNode(baseStr, ROOT_TYPE);
+    // call build on the root node to (try to) compile the try
+    tree._buildHierarchy();
+    return tree;
 };

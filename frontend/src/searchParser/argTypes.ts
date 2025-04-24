@@ -36,7 +36,7 @@ export type ArgType = {
      * @param all - An array of TreeNode instances of the next higher level.
      * @returns {TreeNode[]} - The nested array of TreeNode instances.
      */
-    nest: (self: TreeNode, all: TreeNode[]) => TreeNode[];
+    _nest: (self: TreeNode, all: TreeNode[]) => TreeNode[];
     /**
      * Function to print the argument type for debugging.
      *
@@ -77,7 +77,7 @@ export const ROOT_TYPE: ArgType = {
             }
         }
     },
-    nest: (_, all) => all,
+    _nest: (_, all) => all,
     print: self => `root([${self.children.map(c => c.print()).join(', ')}])`,
     _calc: (self, row) => {
         if (self.children.length === 1) {
@@ -99,17 +99,38 @@ export const ARG_TYPES: ArgType[] = [
         name: 'empty',
         matches: str => str.length === 0,
         init: () => null,
-        nest: (_, all) => all,
+        _nest: (_, all) => all,
         print: () => `null()`,
         _calc: (_self, _row): string => "",
+    },
+    {
+        name: 'not',
+        matches: str => str === 'NOT',
+        init: () => null,
+        _nest: (self, all) => {
+            const idx = all.indexOf(self);
+            // Remove the next element from the "all" array and add it as a child to this NOT element
+            const next = all.splice(idx+1, 1)[0];
+            if (next === undefined) {
+                throw new Error(`NOT at the end is not allowed`)
+            }
+            // no typecast required, since they are already TreeNode's
+            self.children = [next];
+            return all;
+        },
+        print: self => `not([${self.children.map(c => c.print()).join(', ')}])`,
+        _calc: (self, row): boolean => {
+            // Invert the result of the child
+            return !calc_to_bool(row, self.children[0]._calc.bind(self.children[0]));
+        },
     },
     {
         name: 'logic',
         matches: str => ['OR', 'AND'].includes(str),
         init: () => null,
-        nest: (self, all) => {
+        _nest: (self, all) => {
             const idx = all.indexOf(self);
-            // remove the next and prev element from the "all" array since they are combined bis this logic
+            // remove the next and prev element from the "all" array since they are combined by this logic
             // add the parts as children under this logic element
             const next = all.splice(idx+1, 1)[0];
             const prev = all.splice(idx-1, 1)[0];
@@ -122,7 +143,7 @@ export const ARG_TYPES: ArgType[] = [
             if (self.baseStr === 'OR') {
                 return self.children.reduce<boolean>((current, child): boolean => {
                     return current || calc_to_bool(row, child._calc.bind(child));
-                }, true)
+                }, false)
             } else {
                 return self.children.reduce<boolean>((current, child): boolean => {
                     return current && calc_to_bool(row, child._calc.bind(child));
@@ -143,10 +164,10 @@ export const ARG_TYPES: ArgType[] = [
             self.parts = [
                 args[0], "=", args[1],
             ];
-            // then create children based of the "val" part
+            // then create children based on the "val" part
             self.children = [new TreeNode(self.parts[0], ROOT_TYPE), new TreeNode(self.parts[2], ROOT_TYPE)];
         },
-        nest: (_, all)  => all,
+        _nest: (_, all)  => all,
         print: self => `key-val(${self.children[0].print()}, ${self.children[1].print()})`,
         _calc: (self, row) => {
             return wildcard_match_str(
@@ -172,7 +193,7 @@ export const ARG_TYPES: ArgType[] = [
             }
             self.children = inner.map(i => new TreeNode(i, ROOT_TYPE));
         },
-        nest: (_, all) => all,
+        _nest: (_, all) => all,
         print: self => `func(${self.parts[0]}, [${self.children.map(c => c.print()).join(', ')}])`,
         _calc: (self, row) => {
             const func = bracesFunctions.find(bf => bf.key === self.parts[0])!
@@ -187,7 +208,7 @@ export const ARG_TYPES: ArgType[] = [
                 self.baseStr.substring(1, self.baseStr.length - 1)
             ];
         },
-        nest: (_, all) => all,
+        _nest: (_, all) => all,
         print: self => `text("${self.parts[0]}")`,
         _calc: (self, _row): string => {
             return self.parts[0];
@@ -197,7 +218,7 @@ export const ARG_TYPES: ArgType[] = [
         name: 'raw-text',
         init: () => null,
         matches: str => /^\S+$/.test(str),
-        nest: (_, all) => all,
+        _nest: (_, all) => all,
         print: self => `text_or_column("${self.baseStr}")`,
         _calc: (self, row) => {
             if (row.hasOwnProperty(self.baseStr)) {
