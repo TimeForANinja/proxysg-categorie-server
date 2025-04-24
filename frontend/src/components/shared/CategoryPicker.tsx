@@ -2,7 +2,7 @@ import React from "react";
 import {Autocomplete, Box, Chip, TextField} from "@mui/material";
 
 import {getLUTValues, LUT} from "../../model/types/LookUpTable";
-import {ICategory} from "../../api/categories";
+import {ICategory} from "../../model/types/category";
 import {colors} from "../../util/colormixer";
 import {CompareLists} from "../../util/ArrayDiff";
 

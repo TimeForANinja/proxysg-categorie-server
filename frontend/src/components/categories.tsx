@@ -25,8 +25,7 @@ import {
     createCategory,
     deleteCategory,
     getCategories,
-    ICategory,
-    IMutableCategory, setSubCategory,
+    setSubCategory,
     updateCategory
 } from "../api/categories";
 import {colors} from "../util/colormixer";
@@ -43,6 +42,7 @@ import {
 } from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {DATA_ROW, SearchParser} from "../searchParser";
+import {ICategory, IMutableCategory} from "../model/types/category";
 
 const convertKV = (x: ICategory, categories: LUT<ICategory>): DATA_ROW => {
     const cat_str = x.nested_categories.map(c => categories[c]?.name).join(' ');

@@ -1,13 +1,4 @@
-export interface IMutableCategory {
-    name: string;
-    color: number;
-    description: string;
-}
-
-export interface ICategory extends IMutableCategory {
-    id: string;
-    nested_categories: string[];
-}
+import {ICategory, IMutableCategory} from "../model/types/category";
 
 export const getCategories = async (userToken: string): Promise<ICategory[]> => {
     const response = await fetch('/api/category', {

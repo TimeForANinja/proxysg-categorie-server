@@ -23,8 +23,8 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
-import {getCategories, ICategory} from "../api/categories";
-import {createURL, deleteURL, getURLs, IMutableURL, IURL, setURLCategory, updateURL} from "../api/urls"
+import {getCategories} from "../api/categories";
+import {createURL, deleteURL, getURLs, setURLCategory, updateURL} from "../api/urls"
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {MyPaginator} from "./shared/paginator";
@@ -36,6 +36,8 @@ import {BY_ID} from "../util/comparator";
 import {DATA_ROW, SearchParser} from "../searchParser";
 import {getHistory, ICommits} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
+import {IURL, IMutableURL} from '../model/types/url';
+import {ICategory} from "../model/types/category";
 
 const convertKV = (x: IURL, categories: LUT<ICategory>): DATA_ROW => {
     const cat_str = x.categories.map(c => categories[c]?.name).join(' ');

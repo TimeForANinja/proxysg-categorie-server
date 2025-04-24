@@ -2,7 +2,7 @@ import React from "react";
 import {MenuItem, Select} from "@mui/material";
 
 import {getLUTValues, LUT} from "../../model/types/LookUpTable";
-import {ICategory} from "../../api/categories";
+import {ICategory} from "../../model/types/category";
 import {SelectChangeEvent} from "@mui/material/Select";
 import {CompareLists} from "../../util/ArrayDiff";
 

@@ -1,14 +1,5 @@
-export interface IMutableURL {
-    hostname: string;
-    description: string;
-}
+import {IURL, IMutableURL} from "../model/types/url";
 
-export interface IURL extends IMutableURL {
-    id: string;
-    categories: string[];
-    bc_cats: string[];
-}
-    
 export const getURLs = async (userToken: string): Promise<IURL[]> => {
     const response = await fetch('/api/url', {
         headers: { 'jwt-token': userToken },

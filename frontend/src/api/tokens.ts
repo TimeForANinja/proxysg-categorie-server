@@ -1,14 +1,4 @@
-export interface IMutableApiToken {
-    description: string;
-}
-
-export interface IApiToken extends IMutableApiToken {
-    id: string;
-    token: string;
-    categories: string[];
-    last_use: number;
-}
-
+import {IApiToken, IMutableApiToken} from "../model/types/apiToken";
 
 export const getAPITokens = async (userToken: string): Promise<IApiToken[]> => {
     const response = await fetch('/api/token', {

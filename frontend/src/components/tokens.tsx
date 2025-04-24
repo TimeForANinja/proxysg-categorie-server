@@ -30,13 +30,11 @@ import {
     createToken,
     deleteToken,
     getAPITokens,
-    IApiToken,
-    IMutableApiToken,
     rotateToken,
     setTokenCategory,
     updateToken
 } from "../api/tokens";
-import {getCategories, ICategory} from "../api/categories";
+import {getCategories} from "../api/categories";
 import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/list-header";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
@@ -47,6 +45,8 @@ import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {DATA_ROW, SearchParser} from "../searchParser";
+import {IApiToken, IMutableApiToken} from '../model/types/apiToken';
+import {ICategory} from "../model/types/category";
 
 const TIME_SECONDS = 1000;
 
