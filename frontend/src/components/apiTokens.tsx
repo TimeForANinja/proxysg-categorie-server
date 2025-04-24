@@ -30,32 +30,27 @@ import {
     createToken,
     deleteToken,
     getAPITokens,
-    IApiToken,
-    IMutableApiToken,
     rotateToken,
     setTokenCategory,
     updateToken
-} from "../api/tokens";
-import {getCategories, ICategory} from "../api/categories";
+} from "../api/token";
+import {getCategories} from "../api/category";
 import {useAuth} from "../model/AuthContext";
-import {ListHeader} from "./shared/list-header";
+import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
-import {MyPaginator} from "./shared/paginator";
+import {MyPaginator} from "./shared/Paginator";
 import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {simpleStringCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
+import {SearchParser} from "../searchParser";
+import {IApiToken, IMutableApiToken, parseLastUsed, ApiTokenFields, ApiTokenToKV} from '../model/types/apiToken';
+import {ICategory} from "../model/types/category";
+import {KVaddRAW} from "../model/types/stringKV";
+import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
 
 const TIME_SECONDS = 1000;
-
-const parse_last_used = (last_use: number) => {
-    if (last_use === 0) {
-        return 'never';
-    } else {
-        return new Date(last_use * TIME_SECONDS).toLocaleString();
-    }
-}
 
 interface BuildRowProps {
     token: IApiToken,
@@ -120,7 +115,7 @@ function BuildRow(props: BuildRowProps) {
                     {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
                 </IconButton>
             </TableCell>
-            <TableCell>{ parse_last_used(token.last_use) }</TableCell>
+            <TableCell>{ parseLastUsed(token.last_use) }</TableCell>
             <TableCell align="right">
                 <CategoryPicker
                     onChange={(newList) => handleChange(newList)}
@@ -146,15 +141,11 @@ function ApiTokenPage() {
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
     const comparator = BY_ID;
-    const [quickSearch, setQuickSearch] = React.useState('');
+    const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
-        () =>
-            tokens.filter(x => {
-                // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
-                const cat_str = x.categories.map(c => categories[c]?.name).join(' ');
-                const search_str = `${x.id} ${x.description} ${parse_last_used(x.last_use)} ${cat_str}`.toLowerCase();
-                return search_str.toLowerCase().includes(quickSearch.toLowerCase());
-            }),
+        () => tokens.filter(x => {
+            return quickSearch?.test(KVaddRAW(ApiTokenToKV(x, categories))) ?? true;
+        }),
         [quickSearch, tokens, categories],
     );
 
@@ -229,7 +220,8 @@ function ApiTokenPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"Token"}
-                    downloadRows={null}
+                    downloadRows={filteredRows.map(row => ApiTokenToKV(row, categories))}
+                    availableFields={[...ApiTokenFields, FIELD_DEFINITION_RAW]}
                 />
                 <Grid size={12}>
                     <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>

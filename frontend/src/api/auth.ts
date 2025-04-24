@@ -3,8 +3,10 @@ export interface IUser {
     token: string;
 }
 
+const AUTH_BASE_URL = '/api/auth'
+
 export const checkLogin = async (userToken: string): Promise<boolean> => {
-    const response = await fetch('/api/auth/verify', {
+    const response = await fetch(`${AUTH_BASE_URL}/verify`, {
         method: 'POST',
         headers: {
             'jwt-token': userToken,
@@ -21,7 +23,7 @@ export const checkLogin = async (userToken: string): Promise<boolean> => {
 };
 
 export const doLogin = async (username: string, password: string): Promise<IUser> => {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(`${AUTH_BASE_URL}/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

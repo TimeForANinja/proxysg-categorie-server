@@ -25,16 +25,15 @@ import {
     createCategory,
     deleteCategory,
     getCategories,
-    ICategory,
-    IMutableCategory, setSubCategory,
+    setSubCategory,
     updateCategory
-} from "../api/categories";
-import {colors} from "../util/colormixer";
+} from "../api/category";
+import {colorLUT} from "../util/colormixer";
 import {useAuth} from "../model/AuthContext";
-import {ListHeader} from "./shared/list-header";
+import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
-import {MyPaginator} from "./shared/paginator";
+import {MyPaginator} from "./shared/Paginator";
 import {CategoryPicker} from "./shared/CategoryPicker02";
 import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../model/types/LookUpTable";
 import {
@@ -42,6 +41,10 @@ import {
     simpleStringCheck,
 } from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
+import {SearchParser} from "../searchParser";
+import {CategoryFields, CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
+import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
+import {KVaddRAW} from "../model/types/stringKV";
 
 interface BuildRowProps {
     category: ICategory,
@@ -75,7 +78,12 @@ function BuildRow(props: BuildRowProps) {
             <TableCell>{category.id}</TableCell>
             <TableCell>{category.name}</TableCell>
             <TableCell>
-                <div style={{backgroundColor: colors[category.color], width: '20px', height: '20px'}}/>
+                <div style={{
+                    backgroundColor: colorLUT[category.color].bg,
+                    color: colorLUT[category.color].fg,
+                    width: '20px',
+                    height: '20px',
+                }}/>
             </TableCell>
             <TableCell>{category.description}</TableCell>
             <TableCell>
@@ -102,15 +110,11 @@ function CategoriesPage() {
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
     const comparator = BY_ID;
-    const [quickSearch, setQuickSearch] = React.useState('');
+    const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     const filteredRows = React.useMemo(
-        () =>
-            getLUTValues(categories).filter(x => {
-                // TODO: not sure if switching to sth. like "levenshtein distance" makes more sense?
-                const cat_str = x.nested_categories.map(c => categories[c]?.name).join(' ');
-                const search_str = `${x.id} ${x.name} ${x.description} ${cat_str}`;
-                return search_str.toLowerCase().includes(quickSearch.toLowerCase());
-            }),
+        () => getLUTValues(categories).filter(x => {
+            return quickSearch?.test(KVaddRAW(CategoryToKV(x, categories))) ?? true;
+        }),
         [quickSearch, categories],
     );
 
@@ -176,7 +180,8 @@ function CategoriesPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"Category"}
-                    downloadRows={null}
+                    downloadRows={filteredRows.map(row => CategoryToKV(row, categories))}
+                    availableFields={[...CategoryFields, FIELD_DEFINITION_RAW]}
                 />
                 <Grid size={12}>
                     <Paper>
@@ -303,9 +308,14 @@ function EditDialog(props: EditDialogProps) {
                         onChange={(e) => setColor(Number(e.target.value))}
                     >
                         {
-                            Object.keys(colors).map(c => Number(c)).map((key) => (
+                            Object.keys(colorLUT).map(c => Number(c)).map((key) => (
                                 <MenuItem key={key} value={key.toString()}>
-                                    <div style={{backgroundColor: colors[key], width: '20px', height: '20px'}}/>
+                                    <div style={{
+                                        backgroundColor: colorLUT[key].bg,
+                                        color: colorLUT[key].fg,
+                                        width: '20px',
+                                        height: '20px'
+                                    }}/>
                                 </MenuItem>
                             ))
                         }

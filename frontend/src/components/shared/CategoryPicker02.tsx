@@ -2,9 +2,10 @@ import React from "react";
 import {MenuItem, Select} from "@mui/material";
 
 import {getLUTValues, LUT} from "../../model/types/LookUpTable";
-import {ICategory} from "../../api/categories";
+import {ICategory} from "../../model/types/category";
 import {SelectChangeEvent} from "@mui/material/Select";
 import {CompareLists} from "../../util/ArrayDiff";
+import {colorLUT} from "../../util/colormixer";
 
 interface CategoryPickerProps {
     isCategories: string[],
@@ -39,7 +40,10 @@ export function CategoryPicker(props: CategoryPickerProps) {
                 getLUTValues(categories).map((cat, catIDX) => {
                     return (
                         <MenuItem key={catIDX} value={cat.id}>
-                            <div style={{ background: cat.color}}>{cat.name}</div>
+                            <div style={{
+                                background: colorLUT[cat.color].bg,
+                                color: colorLUT[cat.color].fg,
+                            }}>{cat.name}</div>
                         </MenuItem>
                     )
                 })

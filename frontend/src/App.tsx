@@ -3,7 +3,7 @@ import './App.css';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MatchingListPage from "./components/urls";
 import LoginPage from "./components/login";
-import ApiTokenPage from "./components/tokens";
+import ApiTokenPage from "./components/apiTokens";
 import CategoriesPage from "./components/categories";
 import HistoryPage from "./components/history";
 import HomePage from "./components/home";
