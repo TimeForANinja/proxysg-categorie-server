@@ -26,7 +26,7 @@ const parserTests: TestParserObject[] = [
 describe('Parser', () => {
     for (const test of parserTests) {
         it(test.description, () => {
-            const tree = BuildSyntaxTree(test.in);
+            const tree = BuildSyntaxTree(test.in, []);
             const calc = tree.print();
             expect(calc).toBe(test.out);
         });
@@ -43,7 +43,7 @@ describe('Parser - Invalid Input', () => {
     for (const test of parserInvalidTests) {
         it(test.description, () => {
             expect(
-                () => BuildSyntaxTree(test.in),
+                () => BuildSyntaxTree(test.in, []),
             ).toThrow(test.out);
         });
     }
@@ -75,9 +75,20 @@ const parserCalcTests: TestParserCalcObject[] = [
 describe('Parser:calc', () => {
     for (const test of parserCalcTests) {
         it(test.description, () => {
-            const tree = BuildSyntaxTree(test.in);
+            const tree = BuildSyntaxTree(test.in, []);
             const calc = tree.test(test.row);
             expect(calc).toBe(test.out);
         });
     }
 })
+describe('Parser:other', () => {
+    it("errors when a required row field is missing", () => {
+        expect(() => {
+            const tree = BuildSyntaxTree(
+                "a=b",
+                [{ field: "c", description: "Test field that is not part of the row"}],
+            );
+            tree.test({a: "asdf", _raw: "test"});
+        }).toThrow("Row does not contain expected field \"c\"")
+    });
+});

@@ -71,7 +71,7 @@ export const ROOT_TYPE: ArgType = {
         for (const arg of arg_strings) {
             const type = ARG_TYPES.find(at => at.matches(arg));
             if (type) {
-                self.children.push(new TreeNode(arg, type));
+                self.children.push(new TreeNode(arg, type, self.fields));
             } else {
                 throw new Error(`Unable to find a Type for "${arg}"`)
             }
@@ -160,7 +160,7 @@ export const ARG_TYPES: ArgType[] = [
                 args[0], "=", args[1],
             ];
             // then create children based on the "val" part
-            self.children = [new TreeNode(self.parts[0], ROOT_TYPE), new TreeNode(self.parts[2], ROOT_TYPE)];
+            self.children = [new TreeNode(self.parts[0], ROOT_TYPE, self.fields), new TreeNode(self.parts[2], ROOT_TYPE, self.fields)];
         },
         print: self => `key-val(${self.children[0].print()}, ${self.children[1].print()})`,
         _calc: (self, row) => {
@@ -185,7 +185,7 @@ export const ARG_TYPES: ArgType[] = [
             if (!func_name.validate(inner.length)) {
                 throw new Error(`Invalid arguments for function "${func_name.key}"`)
             }
-            self.children = inner.map(i => new TreeNode(i, ROOT_TYPE));
+            self.children = inner.map(i => new TreeNode(i, ROOT_TYPE, self.fields));
         },
         print: self => `func(${self.parts[0]}, [${self.children.map(c => c.print()).join(', ')}])`,
         _calc: (self, row) => {

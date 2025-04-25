@@ -52,7 +52,7 @@ export const ListHeader = (props: ListHeaderProps) => {
     const updateSearch = (newStr: string) => {
         let tree: SearchParser | null = null;
         try {
-            tree = BuildSyntaxTree(newStr);
+            tree = BuildSyntaxTree(newStr, availableFields);
             setTreeError(null);
         } catch(e: Error | any) {
             setTreeError(e?.message);
@@ -61,7 +61,7 @@ export const ListHeader = (props: ListHeaderProps) => {
     }
 
     // Initialize (empty) Search
-    React.useEffect(() => setMyTree(BuildSyntaxTree("")), [setMyTree]);
+    React.useEffect(() => setMyTree(BuildSyntaxTree("", [])), [setMyTree]);
 
     return (
         <>

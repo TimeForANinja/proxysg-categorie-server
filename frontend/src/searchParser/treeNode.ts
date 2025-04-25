@@ -5,6 +5,7 @@
 import {DATA_ROW, CALC_RESULT} from './types';
 import {ARG_TYPES, ArgType} from "./argTypes";
 import {calc_to_bool} from './utils';
+import {FieldDefinition} from "./fieldDefinition";
 
 /**
  * Simplified version of the TreeNode for external use
@@ -35,10 +36,15 @@ export class TreeNode implements SearchParser {
      * The ArgType of this TreeNode
      */
     type: ArgType;
+    /**
+     * The list of fields available for use in calculation
+     */
+    fields: FieldDefinition[];
 
-    constructor(baseStr: string, type: ArgType) {
+    constructor(baseStr: string, type: ArgType, fields: FieldDefinition[]) {
         this.baseStr = baseStr;
         this.type = type;
+        this.fields = fields;
 
         // Parse baseStr and allow for children and parts to be populated
         this.type.init?.(this);
@@ -119,6 +125,21 @@ export class TreeNode implements SearchParser {
      * @param row
      */
     test(row: DATA_ROW): boolean {
+        this._validate_row(row);
         return calc_to_bool(row, this._calc.bind(this));
+    }
+
+    /**
+     * Checks if the row contains all required fields.
+     * Throws an error if not.
+     *
+     * @param row
+     */
+    private _validate_row(row: DATA_ROW) {
+        for (const field of this.fields) {
+            if (!Object.hasOwnProperty.call(row, field.field)) {
+                throw new Error(`Row does not contain expected field "${field.field}"`);
+            }
+        }
     }
 }
