@@ -207,10 +207,14 @@ export const ARG_TYPES: ArgType[] = [
     {
         name: 'raw-text',
         matches: str => /^\S+$/.test(str),
-        print: self => `text_or_column("${self.baseStr}")`,
+        init: self => {
+            // Check if the baseStr is a field name
+            self.parts = [self.fields.some(field => field.field === self.baseStr) ? 'column' : 'text'];
+        },
+        print: self => `${self.parts[0]}("${self.baseStr}")`,
         _calc: (self, row) => {
-            if (row.hasOwnProperty(self.baseStr)) {
-                return row[self.baseStr]
+            if (self.parts[0] === 'column') {
+                return row[self.baseStr];
             }
             return self.baseStr;
         },
