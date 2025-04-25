@@ -73,3 +73,4 @@ CREATE TABLE IF NOT EXISTS url_categories (
 
 -- Insert initial values
 INSERT INTO history (time, description) VALUES (strftime('%s', 'now'), 'Database created');
+INSERT INTO history (time, description) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 1');

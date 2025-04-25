@@ -10,3 +10,4 @@ ALTER TABLE history ADD COLUMN ref_category TEXT NOT NULL DEFAULT '';
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added ref_token column to history table', 'system');
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added ref_url column to history table', 'system');
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added ref_category column to history table', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 3', 'system');

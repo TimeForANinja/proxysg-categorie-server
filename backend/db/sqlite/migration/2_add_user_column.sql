@@ -27,5 +27,6 @@ DROP TABLE history;
 -- Step 6: Rename the new table to the original table name
 ALTER TABLE history_new RENAME TO history;
 
--- Insert a record to mark the migration
+-- Insert records to mark the migration
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added user column to history table', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 2', 'system');

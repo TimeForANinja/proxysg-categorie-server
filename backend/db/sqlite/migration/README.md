@@ -43,7 +43,14 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 -- Add default preferences for existing users
 INSERT INTO user_preferences (user_id)
 SELECT id FROM users WHERE id NOT IN (SELECT user_id FROM user_preferences);
+
+-- Record this migration in the history table
+-- Note: Always include this at the end of your migration script
+INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) 
+VALUES (strftime('%s', 'now'), 'Migrated DB to version: 3', 'system', '', '', '');
 ```
+
+> **Important**: Always include a history record at the end of each migration script to document the version change. This replaces the previous automatic history recording that was done in the Python code.
 
 ## Troubleshooting
 
