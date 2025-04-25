@@ -22,6 +22,9 @@ const normalizationTests: TestNormalizeObject[] = [
     { description: "Removes spaces around math operations =", in: "foo  a = b  bar", out: "foo a=b bar"},
     { description: "Removes spaces around math operations <", in: "foo  a < b  bar", out: "foo a<b bar"},
     { description: "Removes spaces around math operations >", in: "foo  a > b  bar", out: "foo a>b bar"},
+    { description: "Removes spaces around math operations !=", in: "foo  a != b  bar", out: "foo a!=b bar"},
+    { description: "Removes spaces around math operations >=", in: "foo  a >= b  bar", out: "foo a>=b bar"},
+    { description: "Removes spaces around math operations <=", in: "foo  a <= b  bar", out: "foo a<=b bar"},
     { description: "Does not remove spaces around math operation in quotes", in: "foo\"  yes = boy  \"bar", out: "foo\"  yes = boy  \"bar"},
 ]
 describe('Normalize', () => {
@@ -278,6 +281,97 @@ const getArgsTests: TestSplitArgsObject[] = [
         separator: ',',
         out: ['"arg"']
     },
+    // Test Cases for Multi Character Separator
+    {
+        description: 'Multi Character Separator',
+        in: 'ab==cd',
+        separator: '==',
+        out: ['ab','cd']
+    },
+    {
+        description: 'Arrow operator as separator',
+        in: 'a->b->c',
+        separator: '->',
+        out: ['a', 'b', 'c']
+    },
+    {
+        description: 'Multi-char separator with nested parentheses',
+        in: 'func(x->y)->value->result(a->b)',
+        separator: '->',
+        out: ['func(x->y)', 'value', 'result(a->b)']
+    },
+    {
+        description: 'Multi-char separator with quotes',
+        in: '"text->inside"->normal->\"quoted->text\"',
+        separator: '->',
+        out: ['"text->inside"', 'normal', '"quoted->text"']
+    },
+    {
+        description: 'Separator that includes special regex characters',
+        in: 'x|*|y|*|z',
+        separator: '|*|',
+        out: ['x', 'y', 'z']
+    },
+    {
+        description: 'Multiple consecutive separators',
+        in: 'a-->-->b-->-->c',
+        separator: '-->',
+        out: ['a', '', 'b', '', 'c']
+    },
+    {
+        description: 'Separator with whitespace',
+        in: 'first &&& second &&& third',
+        separator: ' &&& ',
+        out: ['first', 'second', 'third']
+    },
+    {
+        description: 'JSON-like separator',
+        in: '{"key": "value"}|||{"key2": "value2"}',
+        separator: '|||',
+        out: ['{"key": "value"}', '{"key2": "value2"}']
+    },
+    {
+        description: 'Separator that could be part of other separators',
+        in: 'a====b==c====d',
+        separator: '====',
+        out: ['a', 'b==c', 'd']
+    },
+    {
+        description: 'HTML-like separator with nested content',
+        in: '<div>content</div><!--><div>other</div><!--><div>last</div>',
+        separator: '<!-->',
+        out: ['<div>content</div>', '<div>other</div>', '<div>last</div>']
+    },
+    {
+        description: 'Leading and trailing multi-char separators',
+        in: '-->a-->b-->c-->',
+        separator: '-->',
+        out: ['a', 'b', 'c']
+    },
+    {
+        description: 'Complex nested structure with multi-char separator',
+        in: 'func("x-->y", (a-->b))-->value-->"x-->y"',
+        separator: '-->',
+        out: ['func("x-->y", (a-->b))', 'value', '"x-->y"']
+    },
+    {
+        description: 'Partial separator matches',
+        in: 'a->->b->->->c',
+        separator: '->->',
+        out: ['a', 'b', '->c']
+    },
+    {
+        description: 'Empty segments with multi-char separator',
+        in: '==||====||==',
+        separator: '==||==',
+        out: []
+    },
+    {
+        description: 'Unicode separator',
+        in: 'a🎈🎪b🎈🎪c',
+        separator: '🎈🎪',
+        out: ['a', 'b', 'c']
+    }
 ];
 describe('splitArgs', () => {
     for (const test of getArgsTests) {

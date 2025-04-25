@@ -27,6 +27,12 @@ export const bracesFunctions: BracesFunc[] = [
         calc: (...args: CALC_RESULT[]): number => Math.abs(Number(args[0])),
     },
     {
+        key: 'num',
+        description: 'typecast string to a number',
+        validate: (argCount: number): boolean => argCount === 1,
+        calc: (...args: CALC_RESULT[]): number => Number(args[0]),
+    },
+    {
         key: '',
         description: 'simple braces to prioritise segments',
         validate: (argCount: number): boolean => argCount === 1,

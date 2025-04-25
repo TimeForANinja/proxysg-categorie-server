@@ -9,17 +9,17 @@ type TestParserObject = {
 };
 const parserTests: TestParserObject[] = [
     {description: 'only text', in: 'asdf', out: 'root([text("asdf")])'},
-    {description: 'key-val-pair', in: 'key=val', out: 'root([key-val(root([column("key")]), root([text("val")]))])'},
-    {description: 'key-val-pair with spaces', in: 'key = val', out: 'root([key-val(root([column("key")]), root([text("val")]))])'},
-    {description: 'mixed use of text and key = Val', in: 'asdf key = val', out: 'root([text("asdf"), key-val(root([column("key")]), root([text("val")]))])'},
-    {description: 'mixed use of text and key = Val', in: 'key = val asdf', out: 'root([key-val(root([column("key")]), root([text("val")])), text("asdf")])'},
-    {description: 'handles braces', in: '(asdf) key = val', out: 'root([func(, [root([text("asdf")])]), key-val(root([column("key")]), root([text("val")]))])'},
+    {description: 'key-val-pair', in: 'key=val', out: 'root([key-val(root([column("key")]), =, root([text("val")]))])'},
+    {description: 'key-val-pair with spaces', in: 'key = val', out: 'root([key-val(root([column("key")]), =, root([text("val")]))])'},
+    {description: 'mixed use of text and key = Val', in: 'asdf key = val', out: 'root([text("asdf"), key-val(root([column("key")]), =, root([text("val")]))])'},
+    {description: 'mixed use of text and key = Val', in: 'key = val asdf', out: 'root([key-val(root([column("key")]), =, root([text("val")])), text("asdf")])'},
+    {description: 'handles braces', in: '(asdf) key = val', out: 'root([func(, [root([text("asdf")])]), key-val(root([column("key")]), =, root([text("val")]))])'},
     {description: 'handles quotes', in: '"asdf yey"', out: 'root([text("asdf yey")])'},
-    {description: 'handles quoted and key=val', in: '"asdf yey" key=val', out: 'root([text("asdf yey"), key-val(root([column("key")]), root([text("val")]))])'},
+    {description: 'handles quoted and key=val', in: '"asdf yey" key=val', out: 'root([text("asdf yey"), key-val(root([column("key")]), =, root([text("val")]))])'},
     {description: 'handles chained AND', in: 'a AND b AND c AND d AND e', out: 'root([logic(AND, [logic(AND, [logic(AND, [logic(AND, [text("a"), text("b")]), text("c")]), text("d")]), text("e")])])'},
     {description: 'handles AND and OR', in: 'a AND b OR c', out: 'root([logic(OR, [logic(AND, [text("a"), text("b")]), text("c")])])'},
     {description: 'handles NOT', in: 'NOT a', out: 'root([not([text("a")])])'},
-    {description: 'handles NOT with complex expressions', in: 'NOT key = val', out: 'root([not([key-val(root([column("key")]), root([text("val")]))])])'},
+    {description: 'handles NOT with complex expressions', in: 'NOT key = val', out: 'root([not([key-val(root([column("key")]), =, root([text("val")]))])])'},
     {description: 'handles NOT with AND', in: 'NOT a AND b', out: 'root([logic(AND, [not([text("a")]), text("b")])])'},
     {description: 'handles NOT with OR', in: 'a OR NOT b', out: 'root([logic(OR, [text("a"), not([text("b")])])])'},
 ];
@@ -79,7 +79,6 @@ describe('Parser:calc', () => {
                 test.in,
                 Object.keys(test.row).map(x => ({ field: x })),
             );
-            console.log({ in: test.in, print: tree.print(), out: tree.test(test.row) });
             const calc = tree.test(test.row);
             expect(calc).toBe(test.out);
         });
@@ -100,14 +99,14 @@ describe('Parser:other', () => {
     describe("raw-text argtype differentiates between string and column", () => {
         it("identifies as string if no column what that name is found", () => {
             const tree = BuildSyntaxTree("a=b", []);
-            expect(tree.print()).toBe("root([key-val(root([text(\"a\")]), root([text(\"b\")]))])");
+            expect(tree.print()).toBe("root([key-val(root([text(\"a\")]), =, root([text(\"b\")]))])");
         })
         it("identifies column if field name is known", () => {
             const tree = BuildSyntaxTree(
                 "a=b",
                 [{ field: "a", description: "Test field"}],
             );
-            expect(tree.print()).toBe("root([key-val(root([column(\"a\")]), root([text(\"b\")]))])");
+            expect(tree.print()).toBe("root([key-val(root([column(\"a\")]), =, root([text(\"b\")]))])");
         })
     })
 });

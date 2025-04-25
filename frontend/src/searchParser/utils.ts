@@ -62,8 +62,8 @@ export const normalize = (baseStr: string) :string => {
         }
     }
 
-    // get all cases of spaces around math actions (<, =, >)
-    const matches02 = Array.from(escaped.matchAll(/\s+([=<>])\s+/g));
+    // get all cases of spaces around comparators (<=, !=, >=, =, <, >)
+    const matches02 = Array.from(escaped.matchAll(/\s+([<>]|[<>!]?=)\s+/g));
     for (const match of matches02.reverse()) {
         // create vars to make our live easier
         const math_start = match.index!;
@@ -155,20 +155,33 @@ export const getParenthesisEnd = (baseStr: string, startIDX: number): number => 
 };
 
 /**
+ * Escapes special characters in a string to safely use it within a regular expression.
+ *
+ * @param {string} string - The input string that may contain special regex characters.
+ * @return {string} A new string with special characters escaped for regex usage.
+ */
+function escapeRegex(string: string): string {
+    return string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+/**
  * Cut into arguments based on the provided separator.
  *
  * Supports both braces (and nested braces) as well as explicit strings in quotations,
  * by using the getQuoteEnd() and ParenthesisEnd() functions
  *
  * @param baseStr the string inside the braces
- * @param separator the character(s) used to split the baseStr
+ * @param separator the string used to split the baseStr
  * @returns an array of arguments
  */
 export const splitArgs = (baseStr: string, separator: string): string[] => {
-    console.assert(separator.length === 1, 'separator must be a single character');
+    if (!separator) throw new Error('separator cannot be empty');
 
     // Custom trim to remove leading and trailing spaces and separators
-    const baseStrTrimmed = baseStr.replace(new RegExp(`^[\\s${separator}]*(.*?)[\\s${separator}]*$`), '$1');
+    const baseStrTrimmed = baseStr.replace(
+        new RegExp(`^(\\s|${escapeRegex(separator)})*(.*?)(\\s|${escapeRegex(separator)})*$`),
+        '$2'
+    );
 
     // Holds the indices where the current split starts
     let startIndex = 0;
@@ -178,9 +191,6 @@ export const splitArgs = (baseStr: string, separator: string): string[] => {
 
     // Initialize loop counter
     let currentIndex = 0;
-
-    // Convert separator to regex
-    let separatorRegex = new RegExp(`[${separator}]`);
 
     while (currentIndex < baseStrTrimmed.length) {
         // Handle nested parenthesis
@@ -196,10 +206,11 @@ export const splitArgs = (baseStr: string, separator: string): string[] => {
 
         if (currentIndex === -1) break;
 
-        // Check for the separator match
-        if (separatorRegex.test(baseStrTrimmed[currentIndex])) {
+        // Check for the multi-character separator
+        if (baseStrTrimmed.startsWith(separator, currentIndex)) {
             splits.push(baseStrTrimmed.substring(startIndex, currentIndex));
-            startIndex = currentIndex + 1;
+            startIndex = currentIndex + separator.length;
+            currentIndex += separator.length - 1; // -1 because the loop will increment currentIndex
         }
 
         currentIndex++;
@@ -213,6 +224,28 @@ export const splitArgs = (baseStr: string, separator: string): string[] => {
     // Trim each split segment
     return splits.map(segment => segment.trim());
 };
+
+/**
+ * Determines whether a string can be split into arguments using a specified separator
+ * and validates the result based on the provided argument count validation function.
+ *
+ * @param {string} baseStr - The string to be split.
+ * @param {string} separator - The separator used to split the string.
+ * @param {(argCount: number) => boolean} validateArgCount - A function to validate the number of resulting arguments.
+ * @returns {boolean} Returns true if the string can be split and the resulting number of arguments passes validation, otherwise false.
+ */
+export const canSplitArgs = (
+    baseStr: string,
+    separator:string,
+    validateArgCount: (argCount: number) => boolean
+): boolean => {
+    try {
+        const args = splitArgs(baseStr, separator);
+        return validateArgCount(args.length);
+    } catch (e) {
+        return false;
+    }
+}
 
 /**
  * Matches a string against a pattern with wildcard support.

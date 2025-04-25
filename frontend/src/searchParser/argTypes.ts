@@ -1,5 +1,5 @@
 import {CALC_RESULT, DATA_ROW} from './types';
-import { FUNC_ARG_SEPARATOR, calc_to_bool, normalize, splitArgs, wildcard_match_str } from './utils';
+import {FUNC_ARG_SEPARATOR, calc_to_bool, normalize, splitArgs, wildcard_match_str, canSplitArgs} from './utils';
 import { TreeNode } from './treeNode'
 import { bracesFunctions } from './bracesFunctions';
 
@@ -148,27 +148,60 @@ export const ARG_TYPES: ArgType[] = [
     },
     {
         name: 'key-val-pair',
-        matches: str => {
-            const args = splitArgs(str, "=");
-            return args.length === 2;
-        },
+        matches: str => canSplitArgs(str, "=", x => x === 2) ||
+            canSplitArgs(str, "!=", x => x === 2) ||
+            canSplitArgs(str, ">=", x => x === 2) ||
+            canSplitArgs(str, "<=", x => x === 2) ||
+            canSplitArgs(str, "<", x => x === 2) ||
+            canSplitArgs(str, ">", x => x === 2),
         init: self => {
-            const args = splitArgs(self.baseStr, "=");
-            // split into (key, operation, val) using a regex
-            // store all of them inside parts
+            // Extract the operator from the string
+            let operator = "=";
+            if (canSplitArgs(self.baseStr, "!=", x => x === 2)) {
+                operator = "!=";
+            } else if (canSplitArgs(self.baseStr, ">=", x => x === 2)) {
+                operator = ">=";
+            } else if (canSplitArgs(self.baseStr, "<=", x => x === 2)) {
+                operator = "<=";
+            } else if (canSplitArgs(self.baseStr, "<", x => x === 2)) {
+                operator = "<";
+            } else if (canSplitArgs(self.baseStr, ">", x => x === 2)) {
+                operator = ">";
+            }
+
+            // Split the string based on the operator
+            const args = splitArgs(self.baseStr, operator);
+
+            // Store key, operator, and value in parts
             self.parts = [
-                args[0], "=", args[1],
+                args[0], operator, args[1],
             ];
-            // then create children based on the "val" part
+
+            // Create children based on the key and value parts
             self.children = [new TreeNode(self.parts[0], ROOT_TYPE, self.fields), new TreeNode(self.parts[2], ROOT_TYPE, self.fields)];
         },
-        print: self => `key-val(${self.children[0].print()}, ${self.children[1].print()})`,
-        _calc: (self, row) => {
-            return wildcard_match_str(
-                self.children[1]._calc(row).toString().toLowerCase(),
-                self.children[0]._calc(row).toString().toLowerCase(),
-                false
-            )
+        print: self => `key-val(${self.children[0].print()}, ${self.parts[1]}, ${self.children[1].print()})`,
+        _calc: (self, row): boolean => {
+            const leftValue = self.children[0]._calc(row);
+            const rightValue = self.children[1]._calc(row);
+            const operator = self.parts[1];
+
+            switch (operator) {
+                case "=":
+                    return wildcard_match_str(rightValue.toString().toLowerCase(), leftValue.toString().toLowerCase(), false);
+                case "!=":
+                    return !wildcard_match_str(rightValue.toString().toLowerCase(), leftValue.toString().toLowerCase(), false);
+                case ">=":
+                    return leftValue >= rightValue;
+                case "<=":
+                    return leftValue <= rightValue;
+                case "<":
+                    return leftValue < rightValue;
+                case ">":
+                    return leftValue > rightValue;
+                default:
+                    return false;
+            }
         },
     },
     {
