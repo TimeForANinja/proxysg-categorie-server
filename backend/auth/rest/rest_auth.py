@@ -1,14 +1,20 @@
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, Any
 import requests
 from flask import request
 
 from auth.auth_user import AuthUser
 from auth.auth_realm import AuthRealmInterface
-from auth.util.role_map import parse_role_map, apply_role_map
+from auth.util.role_map import parse_role_map, apply_role_map, RoleMap
 from log import log_info, log_error
 
 
 class RESTAuthRealm(AuthRealmInterface):
+    verify_url: str
+    auth_url: str
+    ssl_verify: bool
+    paths: Dict[str, str]
+    role_map: RoleMap
+
     def __init__(
             self,
             auth_url: str,
@@ -36,7 +42,7 @@ class RESTAuthRealm(AuthRealmInterface):
         self.role_map = parse_role_map(role_map)
 
     @staticmethod
-    def _get_json_key(json_obj: Dict, key: str) -> any:
+    def _get_json_key(json_obj: Dict[str, Any], key: str) -> Any:
         """
         Recursively retrieves a value from a JSON object using a dot-separated path.
 

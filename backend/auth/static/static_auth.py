@@ -8,6 +8,10 @@ from auth.util.jwt_handler import JWTHandler
 
 
 class StaticAuthRealm(AuthRealmInterface):
+    jwt: JWTHandler
+    auth_user: str
+    auth_password: str
+
     def __init__(self, jwt: JWTHandler, user: str, password: str):
         self.jwt = jwt
         self.auth_user = user

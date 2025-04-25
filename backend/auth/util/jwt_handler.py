@@ -28,7 +28,7 @@ class JWTHandler:
             'exp': expiration_time
         }
         # Encode the token using the secret key
-        token = jwt.encode(payload, self.secret_key, algorithm='HS256')
+        token: str = jwt.encode(payload, self.secret_key, algorithm='HS256')
         return token
 
 

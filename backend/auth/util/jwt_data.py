@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 from dataclasses import dataclass
 
 from auth.auth_user import AuthUser
@@ -14,7 +14,7 @@ class TokenData:
     realm: str
     date_of_creation: int
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the TokenData object to a dictionary."""
         return {
             'username': self.username,
@@ -24,7 +24,7 @@ class TokenData:
         }
 
     @staticmethod
-    def from_dict(data: dict) -> 'TokenData':
+    def from_dict(data: Dict[str, Any]) -> 'TokenData':
         """Create a TokenData object from a dictionary."""
         return TokenData(
             username=data.get('username'),

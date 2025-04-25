@@ -3,13 +3,16 @@ from typing import Dict, List
 from auth.auth_user import AUTH_ROLES_RO, AUTH_ROLES_RW
 from log import log_error
 
-internal_role_map = {
+# Define a type alias for the role map
+RoleMap = Dict[str, str]
+
+internal_role_map: Dict[str, str] = {
     'ro': AUTH_ROLES_RO,
     'rw': AUTH_ROLES_RW,
 }
 
 
-def parse_role_map(raw: str) -> Dict[str, str]:
+def parse_role_map(raw: str) -> RoleMap:
     """
     Try to parse a User Role-Map.
     The Role-Map allows mapping external roles to internal roles.
@@ -23,7 +26,7 @@ def parse_role_map(raw: str) -> Dict[str, str]:
     :param raw: The raw Role-Map string
     :return: A dictionary mapping external roles to internal roles, or an empty dictionary if parsing failed.
     """
-    parsed_map: Dict[str, str] = {}
+    parsed_map: RoleMap = {}
     parts = raw.split(',')
     for part in parts:
         segments = part.split('=')
@@ -37,7 +40,7 @@ def parse_role_map(raw: str) -> Dict[str, str]:
     return parsed_map
 
 
-def apply_role_map(external_roles: List[str], role_map: Dict[str, str]) -> List[str]:
+def apply_role_map(external_roles: List[str], role_map: RoleMap) -> List[str]:
     """
     Apply a Role-Map to a list of external roles.
 

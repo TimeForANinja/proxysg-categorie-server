@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Union, ByteString
 from pyrad.client import Client
 from pyrad.dictionary import Dictionary
 from pyrad.packet import AccessRequest, AccessAccept
@@ -8,11 +8,15 @@ from auth.auth_user import AuthUser
 from auth.auth_realm import AuthRealmInterface
 from auth.util.jwt_data import TokenData
 from auth.util.jwt_handler import JWTHandler
-from auth.util.role_map import parse_role_map, apply_role_map
+from auth.util.role_map import parse_role_map, apply_role_map, RoleMap
 from auth.util.server_ip import get_server_ip
 
 
 class RadiusAuthRealm(AuthRealmInterface):
+    jwt: JWTHandler
+    role_map: RoleMap
+    client: Client
+
     def __init__(self, jwt: JWTHandler, server: str, secret: str, role_map: str):
         self.jwt = jwt
         self.role_map = parse_role_map(role_map)
@@ -40,13 +44,13 @@ class RadiusAuthRealm(AuthRealmInterface):
             return None  # Login failed
 
         # default to no permissions
-        user_roles = []
+        user_roles: List[str] = []
 
         # (Try to) Extract groups/roles from the RADIUS response (adjust based on your server's attributes)
         # TODO: check if this works
         # Option 1: Cisco-AVPair Attribute
         if 'Cisco-AVPair' in response:
-            av_pairs = response['Cisco-AVPair']
+            av_pairs: Union[ByteString, List[ByteString]] = response['Cisco-AVPair']
             if isinstance(av_pairs, list):
                 for pair in av_pairs:
                     if pair.startswith(b'group-name='):
@@ -55,7 +59,7 @@ class RadiusAuthRealm(AuthRealmInterface):
         # Option 2: Class Attribute
         if 'Class' in response:
             # 'Class' is a common attribute often used for roles/groups
-            group_data = response['Class']
+            group_data: ByteString = response['Class']
             # Decode and split by delimiter if needed
             # it is typically stored as a byte object
             roles_from_class = group_data.decode('utf-8').split(',')
