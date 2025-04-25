@@ -43,7 +43,7 @@ import {
 import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
 import {CategoryFields, CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
-import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
+import {FIELD_DEFINITION_RAW} from "../searchParser/fieldDefinition";
 import {KVaddRAW} from "../model/types/stringKV";
 
 interface BuildRowProps {

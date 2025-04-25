@@ -48,7 +48,7 @@ import {SearchParser} from "../searchParser";
 import {IApiToken, IMutableApiToken, parseLastUsed, ApiTokenFields, ApiTokenToKV} from '../model/types/apiToken';
 import {ICategory} from "../model/types/category";
 import {KVaddRAW} from "../model/types/stringKV";
-import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
+import {FIELD_DEFINITION_RAW} from "../searchParser/fieldDefinition";
 
 const TIME_SECONDS = 1000;
 

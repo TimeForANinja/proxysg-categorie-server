@@ -5,7 +5,7 @@
  */
 export type FieldDefinition = {
     field: string,
-    description: string,
+    description?: string,
 }
 
 /**
@@ -39,9 +39,17 @@ export const FIELD_DEFINITION_DESCRIPTION: FieldDefinition = {
  * Shared FieldDefinitions for common fields.
  * The Categories field is used to store (sub)categories the URL / TOKEN / CAT belongs to
  */
-export const FIELD_DEFINITION_CATS: FieldDefinition = {
+export const FIELD_DEFINITION_CATEGORIES: FieldDefinition = {
     field: "categories",
     description: "List of Categories the object belongs to",
+}
+
+/**
+ * Shorthand for categories
+ */
+export const FIELD_DEFINITION_CATS: FieldDefinition = {
+    field: "cats",
+    description: "Shorthand for categories",
 }
 
 /**
@@ -51,5 +59,6 @@ export const SHARED_DEFINITIONS = {
     raw: FIELD_DEFINITION_RAW,
     id: FIELD_DEFINITION_ID,
     description: FIELD_DEFINITION_DESCRIPTION,
+    categories: FIELD_DEFINITION_CATEGORIES,
     cats: FIELD_DEFINITION_CATS,
 }

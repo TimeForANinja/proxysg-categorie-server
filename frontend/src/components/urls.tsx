@@ -43,7 +43,7 @@ import {SearchParser} from "../searchParser";
 import {getHistory, ICommits} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
 import {KVaddRAW} from "../model/types/stringKV";
-import {FIELD_DEFINITION_RAW} from "../model/types/fieldDefinition";
+import {FIELD_DEFINITION_RAW} from "../searchParser/fieldDefinition";
 import {IUrl, IMutableUrl, UrlToKV, UrlFields} from "../model/types/url";
 import {ICategory} from "../model/types/category";
 

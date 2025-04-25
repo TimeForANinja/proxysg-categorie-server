@@ -24,6 +24,7 @@ import {CSVLink} from "react-csv"
 import {bracesFunctions, BuildSyntaxTree, SearchParser} from "../../searchParser";
 import {formatDateForFilename} from "../../util/DateString";
 import {StringKV} from "../../model/types/stringKV";
+import {FieldDefinition} from "../../searchParser/fieldDefinition";
 
 
 interface ListHeaderProps {
@@ -31,7 +32,7 @@ interface ListHeaderProps {
     setQuickSearch: (parser: SearchParser | null) => void,
     addElement: string,
     downloadRows:  StringKV[],
-    availableFields?: {field: string, description: string}[],
+    availableFields: FieldDefinition[],
 }
 export const ListHeader = (props: ListHeaderProps) => {
     const {
