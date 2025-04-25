@@ -74,7 +74,7 @@ export class TreeNode implements SearchParser {
      * Iterates through each child element and applies a nesting operation
      * this allows for modifying the list of children by putting them "under" another child of the array.
      *
-     * (e.g. changing [A, OR, B] to [OR(A, B)])
+     * (e.g., changing [A, OR, B] to [OR(A, B)])
      *
      * @return {void}
      */

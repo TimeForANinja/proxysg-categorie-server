@@ -61,11 +61,19 @@ interface BuildRowProps {
     token: IApiToken,
     updateToken: (newToken: IApiToken) => void,
     categories: LUT<ICategory>,
-    onEdit: () => void,
-    onShuffle: () => void,
-    onDelete: () => void,
+    onEdit: (token: IApiToken) => void,
+    onShuffle: (token: IApiToken) => void,
+    onDelete: (token: IApiToken) => void,
 }
-function BuildRow(props: BuildRowProps) {
+/**
+ * Renders a table row for an ApiToken entry.
+ *
+ * Wrapped in React.memo to prevent unnecessary re-renders in the ApiToken table.
+ * This works as long as none of the props passed to the Component change
+ *
+ * The caching also requires us to ensure that all callbacks passed are constants (e.g. wrapped in useCallable)
+ */
+const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
         token,
         updateToken,
@@ -113,7 +121,7 @@ function BuildRow(props: BuildRowProps) {
                 <IconButton onClick={() => setHideToken(!hideToken)}>
                     { hideToken ? <VisibilityIcon /> : <VisibilityOffIcon /> }
                 </IconButton>
-                <IconButton onClick={onShuffle}>
+                <IconButton onClick={() => onShuffle(token)}>
                     <ShuffleIcon />
                 </IconButton>
                 <IconButton onClick={handleCopy}>
@@ -129,12 +137,12 @@ function BuildRow(props: BuildRowProps) {
                 />
             </TableCell>
             <TableCell>
-                <EditIcon onClick={onEdit}/>
-                <DeleteIcon onClick={onDelete}/>
+                <EditIcon onClick={() => onEdit(token)}/>
+                <DeleteIcon onClick={() => onDelete(token)}/>
             </TableCell>
         </TableRow>
     )
-}
+});
 
 function ApiTokenPage() {
     const authMgmt = useAuth();
@@ -147,11 +155,18 @@ function ApiTokenPage() {
     const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
+    // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => tokens.filter(x => {
             return quickSearch?.test(KVaddRAW(ApiTokenToKV(x, categories))) ?? true;
         }),
         [quickSearch, tokens, categories],
+    );
+
+    // Memoize the download rows to avoid unnecessary transformations
+    const downloadRows = React.useMemo(
+        () => filteredRows.map(row => ApiTokenToKV(row, categories)),
+        [filteredRows, categories],
     );
 
     // Track the object (if any) for which a delete confirmation is open
@@ -169,9 +184,9 @@ function ApiTokenPage() {
 
     // Edit Dialog State
     const [editToken, setEditToken] = React.useState<TriState<IApiToken>>(TriState.CLOSED);
-    const handleEditOpen = (token: IApiToken | null = null) => {
+    const handleEditOpen = React.useCallback((token: IApiToken | null = null) => {
         setEditToken(token ? new TriState(token) : TriState.NEW);
-    };
+    }, []);
     const handleEditDialogClose = () => {
         setEditToken(TriState.CLOSED);
     };
@@ -190,10 +205,10 @@ function ApiTokenPage() {
         handleEditDialogClose();
     };
 
-    const handleDelete = (token: IApiToken) => {
+    const handleDelete = React.useCallback((token: IApiToken) => {
         // show the dialogue to confirm the deletion
         setDeleteDialogOpen(token);
-    }
+    }, []);
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
@@ -206,12 +221,18 @@ function ApiTokenPage() {
     }
 
     // generate a new token
-    const handleOnShuffle = (token: IApiToken) => {
+    const handleOnShuffle = React.useCallback((token: IApiToken) => {
         rotateToken(authMgmt.token, token.id).then(newTok => {
             // "replace" existing token if id matches
             setTokens(tokens.map(tok => tok.id === token.id ? newTok : tok));
         })
-    }
+    }, [authMgmt, tokens]);
+
+    // save an updated URL object in the urls cache
+    const handleUpdateToken = React.useCallback(
+        (newToken: IApiToken) => setTokens(tokens.map(t => t.id === newToken.id ? newToken : t)),
+        [tokens]
+    );
 
     return (
         <>
@@ -225,7 +246,7 @@ function ApiTokenPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"Token"}
-                    downloadRows={filteredRows.map(row => ApiTokenToKV(row, categories))}
+                    downloadRows={downloadRows}
                     availableFields={ApiTokenFieldsRaw}
                 />
                 <Grid size={12}>
@@ -233,8 +254,8 @@ function ApiTokenPage() {
                 </Grid>
                 <Grid size={12}>
                     <Paper>
-                        <TableContainer component={Paper}>
-                            <Table sx={{ minWidth: 650 }} size="small">
+                        <TableContainer component={Paper} style={{maxHeight: 'calc(100vh - 190px)', overflow: 'auto'}}>
+                            <Table sx={{ minWidth: 650 }} size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell component="th" scope="row">ID</TableCell>
@@ -250,10 +271,10 @@ function ApiTokenPage() {
                                         <BuildRow
                                             key={token.id}
                                             token={token}
-                                            updateToken={newToken => setTokens(tokens.map(t => t.id === newToken.id ? newToken : t))}
+                                            updateToken={handleUpdateToken}
                                             categories={categories}
-                                            onEdit={() => handleEditOpen(token)}
-                                            onShuffle={() => handleOnShuffle(token)}
+                                            onEdit={handleEditOpen}
+                                            onShuffle={handleOnShuffle}
                                             onDelete={() => handleDelete(token)}
                                         />
                                     )}

@@ -4,7 +4,7 @@ import { TreeNode } from './treeNode'
 import { bracesFunctions } from './bracesFunctions';
 
 /**
- * ArgType represents any recognised syntax expression of a parseable search query
+ * ArgType represents any recognized syntax expression of a parseable search query
  */
 export type ArgType = {
     /**
@@ -29,7 +29,7 @@ export type ArgType = {
     /**
      * Function to nest the argument type within other TreeNodes.
      *
-     * this allows to transform e.g. [A, OR, C] into a nested [OR(A, B)]
+     * this allows transforming e.g. [A, OR, C] into a nested [OR(A, B)]
      * by moving arguments from a higher level to the children level of the current (self) instance
      *
      * @param self - The TreeNode instance to nest.

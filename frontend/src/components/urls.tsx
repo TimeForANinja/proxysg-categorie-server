@@ -43,18 +43,25 @@ import {SearchParser} from "../searchParser";
 import {getHistory, ICommits} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
 import {KVaddRAW} from "../model/types/stringKV";
-import {FIELD_DEFINITION_RAW} from "../searchParser/fieldDefinition";
-import {IUrl, IMutableUrl, UrlToKV, UrlFields, UrlFieldsRaw} from "../model/types/url";
+import {IUrl, IMutableUrl, UrlToKV, UrlFieldsRaw} from "../model/types/url";
 import {ICategory} from "../model/types/category";
 
 interface BuildRowProps {
     url: IUrl,
     updateURL: (newURL: IUrl) => void,
     categories: LUT<ICategory>,
-    onEdit: () => void,
-    onDelete: () => void,
+    onEdit: (url: IUrl) => void,
+    onDelete: (url: IUrl) => void,
 }
-function BuildRow(props: BuildRowProps) {
+/**
+ * Renders a table row for a URL entry.
+ *
+ * Wrapped in React.memo to prevent unnecessary re-renders in the URL table.
+ * This works as long as none of the props passed to the Component change
+ *
+ * The caching also requires us to ensure that all callbacks passed are constants (e.g. wrapped in useCallable)
+ */
+const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const { url, updateURL, categories, onEdit, onDelete } = props;
     const authMgmt = useAuth();
 
@@ -106,8 +113,8 @@ function BuildRow(props: BuildRowProps) {
                     <div key={index}>{cat}</div>
                 ))}</TableCell>
                 <TableCell>
-                    <EditIcon onClick={onEdit}/>
-                    <DeleteIcon onClick={onDelete}/>
+                    <EditIcon onClick={() => onEdit(url)}/>
+                    <DeleteIcon onClick={() => onDelete(url)}/>
                 </TableCell>
             </TableRow>
             <TableRow>
@@ -121,7 +128,7 @@ function BuildRow(props: BuildRowProps) {
             </TableRow>
         </React.Fragment>
     )
-}
+});
 
 function MatchingListPage() {
     const authMgmt = useAuth();
@@ -134,11 +141,18 @@ function MatchingListPage() {
     const [visibleRows, setVisibleRows] = React.useState<IUrl[]>([]);
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
+    // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => urls.filter(x => {
             return quickSearch?.test(KVaddRAW(UrlToKV(x, categories))) ?? true;
         }),
         [quickSearch, urls, categories],
+    );
+
+    // Memoize the download rows to avoid unnecessary transformations
+    const downloadRows = React.useMemo(
+        () => filteredRows.map(row => UrlToKV(row, categories)),
+        [filteredRows, categories],
     );
 
     // Load urls (& Categories) From backend
@@ -151,12 +165,11 @@ function MatchingListPage() {
             .catch((error) => console.error("Error:", error));
     }, [authMgmt]);
 
-
     // Edit Dialog State
     const [editURL, setEditURL] = React.useState<TriState<IUrl>>(TriState.CLOSED);
-    const handleEditOpen = (uri: IUrl | null = null) => {
+    const handleEditOpen = React.useCallback((uri: IUrl | null = null) => {
         setEditURL(uri ? new TriState(uri) : TriState.NEW);
-    };
+    }, [setEditURL]);
     const handleEditDialogClose = () => {
         setEditURL(TriState.CLOSED);
     };
@@ -175,12 +188,18 @@ function MatchingListPage() {
         handleEditDialogClose();
     };
 
-    const handleDelete = (remove_url: IUrl) => {
+    const handleDelete = React.useCallback((remove_url: IUrl) => {
         deleteURL(authMgmt.token, remove_url.id).then(() => {
             // remove URL with ID from store
             setURLs(urls.filter(uri => uri.id !== remove_url.id));
         });
-    }
+    }, [deleteURL, setURLs, authMgmt]);
+
+    // save an updated URL object in the urls cache
+    const handleUpdateURL = React.useCallback((newURL: IUrl) =>
+            setURLs(urls.map(u => u.id === newURL.id ? newURL : u)),
+        [urls]
+    );
 
     return (
         <>
@@ -194,12 +213,12 @@ function MatchingListPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"URL"}
-                    downloadRows={filteredRows.map(row => UrlToKV(row, categories))}
+                    downloadRows={downloadRows}
                     availableFields={UrlFieldsRaw}
                 />
                 <Grid size={12}>
                     <Paper>
-                        <TableContainer component={Paper} style={{maxHeight: '100%'}}>
+                        <TableContainer component={Paper} style={{maxHeight: 'calc(100vh - 190px)', overflow: 'auto'}}>
                             <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table" stickyHeader>
                                 <TableHead>
                                     <TableRow>
@@ -217,10 +236,10 @@ function MatchingListPage() {
                                         <BuildRow
                                             key={url.id}
                                             url={url}
-                                            updateURL={newURL => setURLs(urls.map(u => u.id === newURL.id ? newURL : u))}
+                                            updateURL={handleUpdateURL}
                                             categories={categories}
-                                            onEdit={() => handleEditOpen(url)}
-                                            onDelete={() => handleDelete(url)}
+                                            onEdit={handleEditOpen}
+                                            onDelete={handleDelete}
                                         />
                                     )}
                                 </TableBody>

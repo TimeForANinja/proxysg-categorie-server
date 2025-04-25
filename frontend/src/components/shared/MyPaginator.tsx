@@ -34,13 +34,19 @@ export function MyPaginator<T>(props: MyPaginatorProps<T>) {
         setRowsPerPage(newPerPage);
     };
 
-    // calculate the rows selected by paginator
+    // Memoize the sorted rows to avoid sorting on every render
+    const sortedRows = React.useMemo(
+        () => [...filteredRows].sort(comparator),
+        [filteredRows, comparator]
+    );
+
+    // Calculate the rows selected by paginator from the sorted rows
     const visibleRows = React.useMemo(
-        () => filteredRows.sort(comparator).slice(
+        () => sortedRows.slice(
             clippedPage * rowsPerPage,
             clippedPage * rowsPerPage + rowsPerPage,
         ),
-        [comparator, filteredRows, clippedPage, rowsPerPage],
+        [sortedRows, clippedPage, rowsPerPage],
     );
 
     // notify the parent about changes to the visible rows

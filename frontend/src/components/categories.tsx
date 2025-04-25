@@ -49,10 +49,18 @@ interface BuildRowProps {
     category: ICategory,
     updateCategory: (newCategory: ICategory) => void,
     categories: LUT<ICategory>,
-    onEdit: () => void,
-    onDelete: () => void,
+    onEdit: (cat: ICategory) => void,
+    onDelete: (cat: ICategory) => void,
 }
-function BuildRow(props: BuildRowProps) {
+/**
+ * Renders a table row for a Category entry.
+ *
+ * Wrapped in React.memo to prevent unnecessary re-renders in the Category table.
+ * This works as long as none of the props passed to the Component change
+ *
+ * The caching also requires us to ensure that all callbacks passed are constants (e.g. wrapped in useCallable)
+ */
+const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
         category,
         updateCategory,
@@ -93,12 +101,12 @@ function BuildRow(props: BuildRowProps) {
                 />
             </TableCell>
             <TableCell>
-                <EditIcon onClick={onEdit}/>
-                <DeleteIcon onClick={onDelete}/>
+                <EditIcon onClick={() => onEdit(category)}/>
+                <DeleteIcon onClick={() => onDelete(category)}/>
             </TableCell>
         </TableRow>
     );
-}
+});
 
 function CategoriesPage() {
     const authMgmt = useAuth();
@@ -110,11 +118,18 @@ function CategoriesPage() {
     const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
     const comparator = BY_ID;
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
+    // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => getLUTValues(categories).filter(x => {
             return quickSearch?.test(KVaddRAW(CategoryToKV(x, categories))) ?? true;
         }),
         [quickSearch, categories],
+    );
+
+    // Memoize the download rows to avoid unnecessary transformations
+    const downloadRows = React.useMemo(
+        () => filteredRows.map(row => CategoryToKV(row, categories)),
+        [filteredRows, categories],
     );
 
     // Track the object (if any) for which a delete confirmation is open
@@ -131,9 +146,9 @@ function CategoriesPage() {
 
     // Edit Dialog State
     const [editCategory, setEditCategory] = React.useState<TriState<ICategory>>(TriState.CLOSED);
-    const handleEditOpen = (category: ICategory | null = null) => {
+    const handleEditOpen = React.useCallback((category: ICategory | null = null) => {
         setEditCategory(category ? new TriState(category) : TriState.NEW);
-    };
+    }, []);
     const handleEditDialogClose = () => {
         setEditCategory(TriState.CLOSED);
     };
@@ -152,10 +167,10 @@ function CategoriesPage() {
         handleEditDialogClose();
     };
 
-    const handleDelete = (category: ICategory) => {
+    const handleDelete = React.useCallback((category: ICategory) => {
         // show the dialogue to confirm the deletion
         setDeleteDialogOpen(category);
-    }
+    }, []);
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
@@ -166,6 +181,12 @@ function CategoriesPage() {
         }
         setDeleteDialogOpen(null);
     }
+
+    // save an updated URL object in the urls cache
+    const handleUpdateCategory = React.useCallback(
+        (newCat: ICategory) => setCategory(mapLUT(categories, (cat => cat.id === newCat.id ? newCat : cat))),
+        [categories]
+    );
 
     return (
         <>
@@ -179,13 +200,13 @@ function CategoriesPage() {
                     onCreate={handleEditOpen}
                     setQuickSearch={setQuickSearch}
                     addElement={"Category"}
-                    downloadRows={filteredRows.map(row => CategoryToKV(row, categories))}
+                    downloadRows={downloadRows}
                     availableFields={CategoryFieldsRaw}
                 />
                 <Grid size={12}>
                     <Paper>
-                        <TableContainer component={Paper}>
-                            <Table sx={{minWidth: 650}} size="small">
+                        <TableContainer component={Paper} style={{maxHeight: 'calc(100vh - 190px)', overflow: 'auto'}}>
+                            <Table sx={{minWidth: 650}} size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell component="th" scope="row">ID</TableCell>
@@ -201,10 +222,10 @@ function CategoriesPage() {
                                         <BuildRow
                                             key={cat.id}
                                             categories={categories}
-                                            updateCategory={newCat => setCategory(mapLUT(categories, (cat => cat.id === newCat.id ? newCat : cat)))}
+                                            updateCategory={handleUpdateCategory}
                                             category={cat}
-                                            onEdit={() => handleEditOpen(cat)}
-                                            onDelete={() => handleDelete(cat)}
+                                            onEdit={handleEditOpen}
+                                            onDelete={handleDelete}
                                         />
                                     )}
                                 </TableBody>

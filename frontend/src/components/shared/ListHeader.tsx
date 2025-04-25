@@ -25,6 +25,7 @@ import {bracesFunctions, BuildSyntaxTree, SearchParser} from "../../searchParser
 import {formatDateForFilename} from "../../util/DateString";
 import {StringKV} from "../../model/types/stringKV";
 import {FieldDefinition} from "../../searchParser/fieldDefinition";
+import {useDebounce} from "../../hooks/useDebounce";
 
 
 interface ListHeaderProps {
@@ -46,13 +47,16 @@ export const ListHeader = (props: ListHeaderProps) => {
     const [myTree, setMyTree] = React.useState<SearchParser | null>(null);
     const [treeError, setTreeError] = React.useState<string | null>(null);
     const [isInfoOpen, setIsInfoOpen] = React.useState<boolean>(false);
-    const [isSearchString, setSearchString] = React.useState<string>("");
+    const [searchStringInput, setSearchStringInput] = React.useState<string>("");
+
+    // Debounce the search string to avoid rebuilding the tree on every keystroke
+    const debouncedSearchString = useDebounce(searchStringInput, 300);
 
     // Parse Search Tree
     React.useEffect(() => {
         let tree: SearchParser | null = null;
         try {
-            tree = BuildSyntaxTree(isSearchString, availableFields);
+            tree = BuildSyntaxTree(debouncedSearchString, availableFields);
             setTreeError(null);
         } catch(e: Error | any) {
             setTreeError(e?.message);
@@ -60,7 +64,7 @@ export const ListHeader = (props: ListHeaderProps) => {
         setMyTree(tree);
         // propagate changes to the parent component
         setQuickSearch(tree);
-    }, [isSearchString, setQuickSearch, availableFields]);
+    }, [debouncedSearchString, setQuickSearch, availableFields]);
 
     return (
         <>
@@ -72,7 +76,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                         label="Quick Search"
                         size="small"
                         variant="filled"
-                        onChange={event => setSearchString(event.target.value)}
+                        onChange={event => setSearchStringInput(event.target.value)}
                         slotProps={{
                             input: {
                                 endAdornment: <InputAdornment position="end">

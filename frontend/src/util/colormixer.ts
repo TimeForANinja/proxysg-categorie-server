@@ -21,7 +21,7 @@ const getForegroundColor = (backgroundColor: string): string => {
     const contrastWithWhite = chroma.contrast(backgroundColor, '#FFFFFF');
     const contrastWithBlack = chroma.contrast(backgroundColor, '#000000');
 
-    // Return black or white based on which has better contrast
+    // Return black or white based on which has the better contrast
     return contrastWithWhite > contrastWithBlack ? '#FFFFFF' : '#000000';
 };
 

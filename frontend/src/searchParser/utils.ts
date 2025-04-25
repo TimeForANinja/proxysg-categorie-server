@@ -5,7 +5,7 @@
 import { CALC_RESULT, DATA_ROW } from './types';
 
 /**
- * The Character splitting Function Parameters
+ * The Character-splitting Function Parameters
  */
 export const FUNC_ARG_SEPARATOR = Object.freeze(',');
 
@@ -22,7 +22,7 @@ export const FUNC_ARG_SEPARATOR = Object.freeze(',');
  *                     while preserving quoted sections.
  *
  * @example
- * // returns 'a = "quoted text with  spaces" < b'
+ * // returns 'a = "quoted text with spaces" < b'
  * normalize('  a   =   "quoted text with  spaces"   <   b  ');
  */
 export const normalize = (baseStr: string) :string => {
@@ -88,7 +88,7 @@ export const normalize = (baseStr: string) :string => {
 }
 
 /**
- * Get the closing position based of a string start.
+ * Get the closing position based on a string start.
  *
  * This method respects escaped characters (e.g. \")
  *
@@ -134,7 +134,7 @@ export const getParenthesisEnd = (baseStr: string, startIDX: number): number => 
         }
 
         if (baseStr[end] === "\"") {
-            // skip to end of string
+            // skip to the end of string
             end = getQuoteEnd(baseStr, end);
             if (end === -1) throw new Error('Mismatched quotes');
             continue;
@@ -146,7 +146,7 @@ export const getParenthesisEnd = (baseStr: string, startIDX: number): number => 
         } else if (baseStr[end] === ")") {
             stack--;
         }
-        // Check for end of stack
+        // Check for the end of stack
         if (stack === 0) {
             break;
         }
