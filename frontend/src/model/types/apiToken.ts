@@ -45,3 +45,7 @@ export const ApiTokenFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
 ]
+export const ApiTokenFieldsRaw: FieldDefinition[] = [
+    ...ApiTokenFields,
+    SHARED_DEFINITIONS.raw,
+]

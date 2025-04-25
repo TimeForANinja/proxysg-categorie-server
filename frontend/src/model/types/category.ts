@@ -35,3 +35,7 @@ export const CategoryFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
 ]
+export const CategoryFieldsRaw: FieldDefinition[] = [
+    ...CategoryFields,
+    SHARED_DEFINITIONS.raw,
+]

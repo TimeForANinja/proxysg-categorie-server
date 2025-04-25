@@ -44,24 +44,23 @@ export const ListHeader = (props: ListHeaderProps) => {
     } = props;
 
     const [myTree, setMyTree] = React.useState<SearchParser | null>(null);
-    // propagate changes to the parent component
-    React.useEffect(() => setQuickSearch(myTree), [myTree, setQuickSearch]);
     const [treeError, setTreeError] = React.useState<string | null>(null);
     const [isInfoOpen, setIsInfoOpen] = React.useState<boolean>(false);
+    const [isSearchString, setSearchString] = React.useState<string>("");
 
-    const updateSearch = (newStr: string) => {
+    // Parse Search Tree
+    React.useEffect(() => {
         let tree: SearchParser | null = null;
         try {
-            tree = BuildSyntaxTree(newStr, availableFields);
+            tree = BuildSyntaxTree(isSearchString, availableFields);
             setTreeError(null);
         } catch(e: Error | any) {
             setTreeError(e?.message);
         }
         setMyTree(tree);
-    }
-
-    // Initialize (empty) Search
-    React.useEffect(() => setMyTree(BuildSyntaxTree("", [])), [setMyTree]);
+        // propagate changes to the parent component
+        setQuickSearch(tree);
+    }, [isSearchString, setQuickSearch, availableFields]);
 
     return (
         <>
@@ -73,7 +72,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                         label="Quick Search"
                         size="small"
                         variant="filled"
-                        onChange={event => updateSearch(event.target.value)}
+                        onChange={event => setSearchString(event.target.value)}
                         slotProps={{
                             input: {
                                 endAdornment: <InputAdornment position="end">
@@ -170,7 +169,6 @@ export const ListHeader = (props: ListHeaderProps) => {
                                     </Box>
                                 </Paper>
                             </Grid>
-
                             {/* Available Fields */}
                             <Grid size={6}>
                                 <Paper elevation={1} sx={{ p: 2, height: '100%' }}>
@@ -224,7 +222,6 @@ export const ListHeader = (props: ListHeaderProps) => {
                                     </TableContainer>
                                 </Paper>
                             </Grid>
-
                             {/* Available Functions */}
                             <Grid size={6}>
                                 <Paper elevation={1} sx={{ p: 2, height: '100%' }}>
@@ -251,7 +248,6 @@ export const ListHeader = (props: ListHeaderProps) => {
                                     </TableContainer>
                                 </Paper>
                             </Grid>
-
                             {/* Examples */}
                             <Grid size={12}>
                                 <Paper elevation={1} sx={{ p: 2, mt: 2 }}>

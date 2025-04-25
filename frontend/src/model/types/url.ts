@@ -35,3 +35,7 @@ export const UrlFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.categories,
     { field: "bc_cats", description: "Blue Coat categories" },
 ]
+export const UrlFieldsRaw: FieldDefinition[] = [
+    ...UrlFields,
+    SHARED_DEFINITIONS.raw,
+]

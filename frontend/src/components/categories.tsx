@@ -42,8 +42,7 @@ import {
 } from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
-import {CategoryFields, CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
-import {FIELD_DEFINITION_RAW} from "../searchParser/fieldDefinition";
+import {CategoryFieldsRaw, CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
 import {KVaddRAW} from "../model/types/stringKV";
 
 interface BuildRowProps {
@@ -181,7 +180,7 @@ function CategoriesPage() {
                     setQuickSearch={setQuickSearch}
                     addElement={"Category"}
                     downloadRows={filteredRows.map(row => CategoryToKV(row, categories))}
-                    availableFields={[...CategoryFields, FIELD_DEFINITION_RAW]}
+                    availableFields={CategoryFieldsRaw}
                 />
                 <Grid size={12}>
                     <Paper>
