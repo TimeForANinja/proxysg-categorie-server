@@ -31,5 +31,5 @@ class MyMongoDB(DBInterface):
 
     def close(self):
         # no call to self.client.close() required after each context closure
-        # since the DB is external we do not need to worry about thread safety here
+        # since the DB is external, we do not need to worry about thread safety here
         pass

@@ -1,13 +1,13 @@
 -- Migration script: 1_initial_schema.sql
 -- Initial database schema creation
 
--- Create config table
+-- Create a config table
 CREATE TABLE IF NOT EXISTS config (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
 
--- Create categories table
+-- Create category table
 CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS categories (
     is_deleted INTEGER DEFAULT 0
 );
 
--- Create sub_category table
+-- Create a sub_category table
 CREATE TABLE IF NOT EXISTS sub_category (
     id INTEGER PRIMARY KEY,
     parent_id INTEGER,
@@ -26,14 +26,14 @@ CREATE TABLE IF NOT EXISTS sub_category (
     FOREIGN KEY (child_id) REFERENCES categories(id)
 );
 
--- Create history table
+-- Create a history table
 CREATE TABLE IF NOT EXISTS history (
     id INTEGER PRIMARY KEY,
     time INTEGER NOT NULL,
     description TEXT
 );
 
--- Create token table
+-- Create a token table
 CREATE TABLE IF NOT EXISTS tokens (
     id INTEGER PRIMARY KEY,
     token TEXT NOT NULL,
