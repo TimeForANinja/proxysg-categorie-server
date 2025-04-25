@@ -1,42 +1,19 @@
 from typing import List, Mapping, Any
-from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
 from db.token_category import TokenCategoryDBInterface
+from db.mongodb.base_category_db import MongoDBBaseCategory
 
 
-class MongoDBTokenCategory(TokenCategoryDBInterface):
+class MongoDBTokenCategory(TokenCategoryDBInterface, MongoDBBaseCategory):
     def __init__(self, db: Database[Mapping[str, Any] | Any]):
-        self.db = db
-        self.collection = self.db['tokens']
+        super().__init__(db, 'tokens', 'Token')
 
     def get_token_categories_by_token(self, token_id: str) -> List[str]:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
-        row = self.collection.find_one(query)
-        if not row:
-            return []
-
-        return [
-            x['cat']
-            for x in row.get('categories', [])
-            if x['is_deleted'] == 0
-        ]
+        return self.get_categories_by_item(token_id)
 
     def add_token_category(self, token_id: str, category_id: str) -> None:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
-        update = {'$addToSet': {'categories': {'cat': category_id, 'is_deleted': 0}}}
-
-        result = self.collection.update_one(query, update)
-
-        if result.modified_count == 0:
-            raise ValueError(f'Token with id {token_id} not found or is deleted.')
+        self.add_item_category(token_id, category_id)
 
     def delete_token_category(self, token_id: str, category_id: str) -> None:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
-        update = {'$set': {'categories.$[elem].is_deleted': 1}}
-        array_filters = [{'elem.cat': category_id, 'elem.is_deleted': 0}]
-
-        result = self.collection.update_one(query, update, array_filters=array_filters)
-
-        if result.modified_count == 0:
-            raise ValueError(f'Token with id {token_id} not found or is deleted.')
+        self.delete_item_category(token_id, category_id)
