@@ -34,7 +34,7 @@ import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
 import {MyPaginator} from "./shared/MyPaginator";
-import {CategoryPicker} from "./shared/CategoryPicker02";
+import {CategoryPicker} from "./shared/CategoryPicker";
 import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../model/types/LookUpTable";
 import {
     simpleNameCheck,

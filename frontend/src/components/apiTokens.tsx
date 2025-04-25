@@ -41,7 +41,7 @@ import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
 import {MyPaginator} from "./shared/MyPaginator";
 import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
-import {CategoryPicker} from "./shared/CategoryPicker02";
+import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
