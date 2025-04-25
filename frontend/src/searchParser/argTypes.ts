@@ -25,7 +25,7 @@ export type ArgType = {
      *
      * @param self - The TreeNode instance to initialize.
      */
-    init: (self: TreeNode) => void;
+    init?: (self: TreeNode) => void;
     /**
      * Function to nest the argument type within other TreeNodes.
      *
@@ -36,7 +36,7 @@ export type ArgType = {
      * @param all - An array of TreeNode instances of the next higher level.
      * @returns {TreeNode[]} - The nested array of TreeNode instances.
      */
-    _nest: (self: TreeNode, all: TreeNode[]) => TreeNode[];
+    _nest?: (self: TreeNode, all: TreeNode[]) => TreeNode[];
     /**
      * Function to print the argument type for debugging.
      *
@@ -77,7 +77,6 @@ export const ROOT_TYPE: ArgType = {
             }
         }
     },
-    _nest: (_, all) => all,
     print: self => `root([${self.children.map(c => c.print()).join(', ')}])`,
     _calc: (self, row) => {
         if (self.children.length === 1) {
@@ -98,15 +97,12 @@ export const ARG_TYPES: ArgType[] = [
     {
         name: 'empty',
         matches: str => str.length === 0,
-        init: () => null,
-        _nest: (_, all) => all,
         print: () => `null()`,
         _calc: (_self, _row): string => "",
     },
     {
         name: 'not',
         matches: str => str === 'NOT',
-        init: () => null,
         _nest: (self, all) => {
             const idx = all.indexOf(self);
             // Remove the next element from the "all" array and add it as a child to this NOT element
@@ -127,7 +123,6 @@ export const ARG_TYPES: ArgType[] = [
     {
         name: 'logic',
         matches: str => ['OR', 'AND'].includes(str),
-        init: () => null,
         _nest: (self, all) => {
             const idx = all.indexOf(self);
             // remove the next and prev element from the "all" array since they are combined by this logic
@@ -167,7 +162,6 @@ export const ARG_TYPES: ArgType[] = [
             // then create children based on the "val" part
             self.children = [new TreeNode(self.parts[0], ROOT_TYPE), new TreeNode(self.parts[2], ROOT_TYPE)];
         },
-        _nest: (_, all)  => all,
         print: self => `key-val(${self.children[0].print()}, ${self.children[1].print()})`,
         _calc: (self, row) => {
             return wildcard_match_str(
@@ -193,7 +187,6 @@ export const ARG_TYPES: ArgType[] = [
             }
             self.children = inner.map(i => new TreeNode(i, ROOT_TYPE));
         },
-        _nest: (_, all) => all,
         print: self => `func(${self.parts[0]}, [${self.children.map(c => c.print()).join(', ')}])`,
         _calc: (self, row) => {
             const func = bracesFunctions.find(bf => bf.key === self.parts[0])!
@@ -204,11 +197,8 @@ export const ARG_TYPES: ArgType[] = [
         name: 'quoted-text',
         matches: str => str.startsWith('"') && str.endsWith('"'),
         init: self => {
-            self.parts = [
-                self.baseStr.substring(1, self.baseStr.length - 1)
-            ];
+            self.parts = [self.baseStr.substring(1, self.baseStr.length - 1)];
         },
-        _nest: (_, all) => all,
         print: self => `text("${self.parts[0]}")`,
         _calc: (self, _row): string => {
             return self.parts[0];
@@ -216,9 +206,7 @@ export const ARG_TYPES: ArgType[] = [
     },
     {
         name: 'raw-text',
-        init: () => null,
         matches: str => /^\S+$/.test(str),
-        _nest: (_, all) => all,
         print: self => `text_or_column("${self.baseStr}")`,
         _calc: (self, row) => {
             if (row.hasOwnProperty(self.baseStr)) {

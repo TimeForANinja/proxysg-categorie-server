@@ -42,14 +42,9 @@ const parserInvalidTests: TestParserObject[] = [
 describe('Parser - Invalid Input', () => {
     for (const test of parserInvalidTests) {
         it(test.description, () => {
-            let error = "";
-            try {
-                const tree = BuildSyntaxTree(test.in);
-                error = "NO ERROR - " + tree?.print()
-            } catch (e: Error | any) {
-                error = e?.message;
-            }
-            expect(error).toBe(test.out);
+            expect(
+                () => BuildSyntaxTree(test.in),
+            ).toThrow(test.out);
         });
     }
 });

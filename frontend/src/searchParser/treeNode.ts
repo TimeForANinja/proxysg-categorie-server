@@ -41,7 +41,7 @@ export class TreeNode implements SearchParser {
         this.type = type;
 
         // Parse baseStr and allow for children and parts to be populated
-        this.type.init(this);
+        this.type.init?.(this);
     }
 
     /**
@@ -60,7 +60,7 @@ export class TreeNode implements SearchParser {
      */
     nest(all: TreeNode[]): TreeNode[] {
         this.has_nested = true;
-        return this.type._nest(this, all);
+        return this.type._nest?.(this, all) ?? all;
     }
 
     /**
