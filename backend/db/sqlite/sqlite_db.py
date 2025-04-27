@@ -2,7 +2,6 @@ import os
 import sqlite3
 from flask import g
 
-from auth.auth_user import AUTH_USER_SYSTEM
 from db.db import DBInterface
 from db.sqlite.category_db import SQLiteCategory
 from db.sqlite.config_db import SQLiteConfig, CONFIG_VAR_SCHEMA_VERSION

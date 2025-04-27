@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from db.db_singleton import get_db
+from db.util.parse_existing_db import parse_db, create_in_db
 from log import log_info
-from routes.load_existing import parse_db, create_in_db
 
 
 def load_existing_file(filepath='./data/local_db.txt', prefix_cats=''):
@@ -28,13 +28,8 @@ def load_existing_file(filepath='./data/local_db.txt', prefix_cats=''):
     # and push the parsed URLs and Cats to the DB
     file_str = existing_local_db.read_text(encoding='utf-8')
     db_if = get_db()
-    new_cats = parse_db(file_str)
-
-    # add prefix to all cats
-    for cat in new_cats:
-        cat.name = prefix_cats + cat.name
-
-    create_in_db(db_if, new_cats)
+    new_cats, _ = parse_db(file_str)
+    create_in_db(db_if, new_cats, prefix_cats)
 
     log_info(
         'background',

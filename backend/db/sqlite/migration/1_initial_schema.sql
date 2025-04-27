@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS config (
     value TEXT NOT NULL
 );
 
--- Create category table
+-- Create a category table
 CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,

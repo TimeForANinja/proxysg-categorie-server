@@ -50,7 +50,7 @@ INSERT INTO history (time, description, user, ref_token, ref_url, ref_category)
 VALUES (strftime('%s', 'now'), 'Migrated DB to version: 3', 'system', '', '', '');
 ```
 
-> **Important**: Always include a history record at the end of each migration script to document the version change. This replaces the previous automatic history recording that was done in the Python code.
+> **Important**: Always include a history record at the end of each migration script to document the version change.
 
 ## Troubleshooting
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Mapping, Any
 import time
 from pymongo.collection import Collection
 from pymongo.database import Database
@@ -8,7 +8,7 @@ from db.history import HistoryDBInterface, History
 
 
 class MongoDBHistory(HistoryDBInterface):
-    def __init__(self, db: Database):
+    def __init__(self, db: Database[Mapping[str, Any] | Any]):
         self.db = db
         self.collection: Collection = db['history']
 

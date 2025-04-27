@@ -8,7 +8,7 @@ class MongoDBBaseCategory(Generic[T]):
     """
     Base class for MongoDB category implementations to reduce code duplication.
 
-    It allows to interact with simple XYZ <-> Category mappings.
+    It allows interacting with simple XYZ <-> Category mappings.
     """
     def __init__(self, db: Database[Mapping[str, Any] | Any], collection_name: str, item_type: str):
         self.db = db
