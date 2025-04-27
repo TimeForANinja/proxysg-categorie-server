@@ -193,7 +193,7 @@ function MatchingListPage() {
             // remove URL with ID from store
             setURLs(urls.filter(uri => uri.id !== remove_url.id));
         });
-    }, [deleteURL, setURLs, authMgmt]);
+    }, [setURLs, authMgmt, urls]);
 
     // save an updated URL object in the urls cache
     const handleUpdateURL = React.useCallback((newURL: IUrl) =>
