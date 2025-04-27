@@ -1,8 +1,6 @@
 import React from 'react'
 
-
 const HomePage = () => {
-
     return (
         <div className="mainContainer">
             <div className={'titleContainer'}>

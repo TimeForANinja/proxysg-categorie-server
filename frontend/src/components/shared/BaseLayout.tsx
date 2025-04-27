@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 import {OptBoolean} from "../../model/types/OptionalBool";
 import {useAuth} from "../../model/AuthContext";
@@ -67,6 +68,14 @@ const BaseLayout = () => {
                             <Badge badgeContent={17} color="error">
                                 <NotificationsIcon />
                             </Badge>
+                        </IconButton>
+                        <IconButton
+                            size="large"
+                            aria-label="upload files or text"
+                            color="inherit"
+                            onClick={() => navigate("/upload")}
+                        >
+                            <CloudUploadIcon />
                         </IconButton>
                         <IconButton ref={menuRef}
                             size="large"

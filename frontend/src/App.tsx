@@ -7,6 +7,7 @@ import ApiTokenPage from "./components/apiTokens";
 import CategoriesPage from "./components/categories";
 import HistoryPage from "./components/history";
 import HomePage from "./components/home";
+import UploadPage from "./components/upload";
 import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
 import {AuthProvider} from "./model/AuthContext";
@@ -31,6 +32,10 @@ function App() {
                 {
                     path: "/url",
                     element: <MatchingListPage/>,
+                },
+                {
+                    path: "/upload",
+                    element: <UploadPage/>,
                 },
                 {
                     path: "/",

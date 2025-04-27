@@ -10,3 +10,11 @@ export const formatDateForFilename = (date: Date = new Date()): string => {
 
     return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }
+
+export const formatDateString = (date: Date = new Date()): string => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
