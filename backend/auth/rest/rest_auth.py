@@ -100,11 +100,12 @@ class RESTAuthRealm(AuthRealmInterface):
                 return None
 
             resp_obj = r.json()
-            log_info('AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', resp_obj)
             raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
+            mapped_roles = apply_role_map(raw_roles, self.role_map)
+            log_info('AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', resp_obj, {'mappedRoles': mapped_roles})
             user = AuthUser(
                 username = self._get_json_key(resp_obj, self.paths.get('username')),
-                roles = apply_role_map(raw_roles, self.role_map),
+                roles = mapped_roles,
             )
             rest_token = self._get_json_key(resp_obj, self.paths.get('token'))
             return rest_token, user
