@@ -62,25 +62,30 @@ class RESTAuthRealm(AuthRealmInterface):
         payload = {
             'token': token,
         }
-        r = requests.post(
-            self.verify_url,
-            verify=self.ssl_verify,
-            json=payload,
-        )
 
-        if r.status_code != 200:
-            log_error( 'AUTH', f'Authentication error: SRC_IP:{request.remote_addr}', r.json())
+        try:
+            r = requests.post(
+                self.verify_url,
+                verify=self.ssl_verify,
+                json=payload,
+            )
+
+            if r.status_code != 200:
+                log_error( 'AUTH', f'Authentication error: SRC_IP:{request.remote_addr}', r.json())
+                return None
+
+            resp_obj = r.json()
+            log_info( 'AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', r.json())
+            raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
+            user = AuthUser(
+                username = self._get_json_key(resp_obj, self.paths.get('username')),
+                roles = apply_role_map(raw_roles, self.role_map),
+            )
+
+            return user
+        except requests.RequestException as e:
+            log_error('Auth', f'Authentication error: SRC_IP:{request.remote_addr}', e)
             return None
-
-        resp_obj = r.json()
-        log_info( 'AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', r.json())
-        raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
-        user = AuthUser(
-            username = self._get_json_key(resp_obj, self.paths.get('username')),
-            roles = apply_role_map(raw_roles, self.role_map),
-        )
-
-        return user
 
     def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
         payload = {
