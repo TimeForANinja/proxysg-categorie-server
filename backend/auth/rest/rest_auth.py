@@ -1,3 +1,4 @@
+import copy
 from typing import Optional, Tuple, Dict, Any
 import requests
 from flask import request
@@ -55,8 +56,33 @@ class RESTAuthRealm(AuthRealmInterface):
             if isinstance(value, dict) and k in value:
                 value = value[k]
             else:
+                # If the path is invalid, return none
                 return None
         return value
+
+    @staticmethod
+    def _update_json_key(json_obj: Dict[str, Any], key: str, new_value: Any = "*") -> None:
+        """
+        Recursively updates a key's value in a JSON object using a dot-separated path.
+
+        :param json_obj: The JSON object to modify
+        :param key: The dot-separated path to the key to be updated
+        :param new_value: The value to set for the specified key (default is "*")
+        """
+        keys = key.split('.')
+        value = json_obj
+
+        # traverse to the second-to-last level
+        for k in keys[:-1]:
+            if isinstance(value, dict) and k in value:
+                value = value[k]
+            else:
+                # If the path is invalid, do nothing
+                return
+
+        # Update the value of the final key
+        if isinstance(value, dict):
+            value[keys[-1]] = new_value
 
     def verify_token(self, token: str) -> Optional[AuthUser]:
         payload = {
@@ -108,7 +134,13 @@ class RESTAuthRealm(AuthRealmInterface):
             resp_obj = r.json()
             raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
             mapped_roles = apply_role_map(raw_roles, self.role_map)
-            log_info('AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', resp_obj, {'mappedRoles': mapped_roles})
+            # !! WATCH OUT !!
+            # we should never log the token
+            resp_obj_clean = copy.deepcopy(resp_obj)
+            resp_obj_clean['mappedRoles'] = mapped_roles
+            self._update_json_key(resp_obj_clean, self.paths.get('token'), "*****")
+            log_info('AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', resp_obj_clean)
+
             user = AuthUser(
                 username = self._get_json_key(resp_obj, self.paths.get('username')),
                 roles = mapped_roles,
