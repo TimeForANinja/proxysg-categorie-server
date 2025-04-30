@@ -59,13 +59,13 @@ class RESTAuthRealm(AuthRealmInterface):
         return value
 
     def verify_token(self, token: str) -> Optional[AuthUser]:
-        h = {
-            'Authorization': f'Bearer {token}'
+        payload = {
+            'token': token,
         }
-        r = requests.get(
+        r = requests.post(
             self.verify_url,
-            headers=h,
-            verify=self.ssl_verify
+            verify=self.ssl_verify,
+            json=payload,
         )
 
         if r.status_code != 200:
