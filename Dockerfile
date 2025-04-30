@@ -34,8 +34,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy built React code from the previous stage
 COPY --from=frontend-builder /frontend/build ./dist
 
+# create start-script to start the server with Gunicorn
+RUN <<EOF cat >> /backend/start.sh
+#!/bin/sh
+set -e
+exec gunicorn -c gunicorn_config.py -w 4 -b 0.0.0.0:8080 app:app
+EOF
+RUN chmod +x /backend/start.sh
+
 # Expose the port for Flask (optional, adjust as necessary)
 EXPOSE 8080
 
-# Start the server with Gunicorn
-CMD ["gunicorn", "-c", "gunicorn_config.py", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["/backend/start.sh"]
