@@ -5,7 +5,7 @@ from flask import request
 from auth.auth_user import AuthUser
 from auth.auth_realm import AuthRealmInterface
 from auth.util.role_map import parse_role_map, apply_role_map, RoleMap
-from log import log_info, log_error
+from log import log_info, log_error, log_debug
 
 
 class RESTAuthRealm(AuthRealmInterface):
@@ -75,11 +75,12 @@ class RESTAuthRealm(AuthRealmInterface):
                 return None
 
             resp_obj = r.json()
-            log_info( 'AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', r.json())
             raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
+            mapped_roles = apply_role_map(raw_roles, self.role_map)
+            log_debug( 'AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', r.json(), {'mappedRoles': mapped_roles})
             user = AuthUser(
                 username = self._get_json_key(resp_obj, self.paths.get('username')),
-                roles = apply_role_map(raw_roles, self.role_map),
+                roles = mapped_roles,
             )
 
             return user

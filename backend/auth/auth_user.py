@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 
 
 # Constants
-AUTH_ROLES_RO = 'pxy_admin_ro'
-AUTH_ROLES_RW = 'pxy_admin_rw'
+AUTH_ROLES_RO = 'app_admin_ro'
+AUTH_ROLES_RW = 'app_admin_rw'
 
 
 @dataclass(kw_only=True)

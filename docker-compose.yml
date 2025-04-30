@@ -32,11 +32,13 @@ services:
       APP_DB__MONGO__CON_HOST: mongodb:27017
       APP_PORT: 8080
 
-# Info you want a custom root ca you need to alter two sections:
+# Info you want a custom root ca you need to alter three sections:
 #   volumes:
 #     - ./my-custom-ca.crt:/usr/local/share/ca-certificates/my-custom-ca.crt:ro
 #   entrypoint: >
-#     sh -c "update-ca-certificates && exec /start.sh"
+#     sh -c "update-ca-certificates && exec /backend/start.sh"
+#   environment:
+#     REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
 
 
   mongodb:
