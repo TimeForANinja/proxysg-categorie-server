@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
@@ -96,8 +97,8 @@ class SQLiteCategory(CategoryDBInterface):
     def delete_category(self, category_id: str) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'UPDATE categories SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
-            (int(category_id),)
+            'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
+            (int(time.time()), int(category_id),)
         )
         self.get_conn().commit()
 

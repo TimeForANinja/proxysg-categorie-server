@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from typing import List, Callable
 
 from db.token_category import TokenCategoryDBInterface
@@ -33,7 +34,7 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
     def delete_token_category(self, token_id: str, category_id: str) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'UPDATE token_categories SET is_deleted = 1 WHERE token_id = ? AND category_id = ? AND is_deleted = 0',
-            (int(token_id), int(category_id),)
+            'UPDATE token_categories SET is_deleted = ? WHERE token_id = ? AND category_id = ? AND is_deleted = 0',
+            (int(time.time()), int(token_id), int(category_id),)
         )
         self.get_conn().commit()

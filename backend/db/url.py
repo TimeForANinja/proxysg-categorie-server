@@ -120,7 +120,7 @@ class URLDBInterface(ABC):
     @abstractmethod
     def delete_url(self, url_id: str) -> None:
         """
-        Soft-delete a URL by setting its `is_deleted` flag to 1.
+        Soft-delete a URL by setting its `is_deleted` flag to the current timestamp.
 
         :param url_id: The ID of the url to delete.
         """

@@ -1,4 +1,5 @@
 from typing import List, Mapping, Any
+import time
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
@@ -33,7 +34,7 @@ class MongoDBSubCategory(SubCategoryDBInterface):
 
     def delete_sub_category(self, category_id: str, sub_category_id: str) -> None:
         query = {'_id': ObjectId(category_id), 'is_deleted': 0}
-        update = {'$set': {'nested_categories.$[elem].is_deleted': 1}}
+        update = {'$set': {'nested_categories.$[elem].is_deleted': int(time.time())}}
         array_filters = [{'elem.cat': sub_category_id, 'elem.is_deleted': 0}]
 
         result = self.collection.update_one(query, update, array_filters=array_filters)

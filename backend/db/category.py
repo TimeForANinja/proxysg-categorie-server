@@ -114,7 +114,7 @@ class CategoryDBInterface(ABC):
     @abstractmethod
     def delete_category(self, category_id: str) -> None:
         """
-        Soft-delete a category by setting its `is_deleted` flag to 1.
+        Soft-delete a category by setting its `is_deleted` flag to the current timestamp.
 
         :param category_id: The ID of the category to delete.
         """

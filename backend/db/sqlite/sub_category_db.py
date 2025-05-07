@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from typing import List, Callable
 
 from db.sub_category import SubCategoryDBInterface
@@ -33,7 +34,7 @@ class SQLiteSubCategory(SubCategoryDBInterface):
     def delete_sub_category(self, category_id: str, sub_category_id: str) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'UPDATE sub_category SET is_deleted = 1 WHERE parent_id = ? AND child_id = ? AND is_deleted = 0',
-            (int(category_id), int(sub_category_id),)
+            'UPDATE sub_category SET is_deleted = ? WHERE parent_id = ? AND child_id = ? AND is_deleted = 0',
+            (int(time.time()), int(category_id), int(sub_category_id),)
         )
         self.get_conn().commit()

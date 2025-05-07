@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from typing import List, Callable
 
 from db.url_category import UrlCategoryDBInterface
@@ -33,7 +34,7 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
     def delete_url_category(self, url_id: str, category_id: str) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'UPDATE url_categories SET is_deleted = 1 WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
-            (int(url_id), int(category_id),)
+            'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
+            (int(time.time()), int(url_id), int(category_id),)
         )
         self.get_conn().commit()

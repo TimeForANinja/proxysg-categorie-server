@@ -1,4 +1,5 @@
 from typing import List, Mapping, Any, TypeVar, Generic
+import time
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
@@ -18,7 +19,7 @@ class MongoDBBaseCategory(Generic[T]):
     def get_categories_by_item(self, item_id: str) -> List[str]:
         """
         Get all categories of an item
-        
+
         :param item_id: The ID of the item
         """
         query = {'_id': ObjectId(item_id), 'is_deleted': 0}
@@ -35,7 +36,7 @@ class MongoDBBaseCategory(Generic[T]):
     def add_item_category(self, item_id: str, category_id: str) -> None:
         """
         Add a new mapping of item and Category
-        
+
         :param item_id: The ID of the item
         :param category_id: The ID of the Category
         """
@@ -51,12 +52,12 @@ class MongoDBBaseCategory(Generic[T]):
     def delete_item_category(self, item_id: str, category_id: str) -> None:
         """
         Delete a mapping of item and Category.
-        
+
         :param item_id: The ID of the item
         :param category_id: The ID of the Category
         """
         query = {'_id': ObjectId(item_id), 'is_deleted': 0}
-        update = {'$set': {'categories.$[elem].is_deleted': 1}}
+        update = {'$set': {'categories.$[elem].is_deleted': int(time.time())}}
         array_filters = [{'elem.cat': category_id, 'elem.is_deleted': 0}]
 
         result = self.collection.update_one(query, update, array_filters=array_filters)

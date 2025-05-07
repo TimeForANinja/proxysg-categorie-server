@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
@@ -97,8 +98,8 @@ class SQLiteURL(URLDBInterface):
     def delete_url(self, url_id: str) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'UPDATE urls SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
-            (int(url_id),)
+            'UPDATE urls SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
+            (int(time.time()), int(url_id),)
         )
         self.get_conn().commit()
 

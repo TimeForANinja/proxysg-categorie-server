@@ -137,8 +137,8 @@ class SQLiteToken(TokenDBInterface):
     def delete_token(self, token_id: str) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'UPDATE tokens SET is_deleted = 1 WHERE id = ? AND is_deleted = 0',
-            (int(token_id),)
+            'UPDATE tokens SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
+            (int(time.time()), int(token_id),)
         )
         self.get_conn().commit()
 

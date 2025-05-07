@@ -1,3 +1,4 @@
+import time
 from typing import Optional, List, Mapping, Any
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
@@ -69,16 +70,18 @@ class MongoDBCategory(CategoryDBInterface):
         return self.get_category(cat_id)
 
     def delete_category(self, category_id: str) -> None:
+        current_timestamp = int(time.time())
+
         query = {'_id': ObjectId(category_id), 'is_deleted': 0}
-        update = {'$set': {'is_deleted': 1}}
+        update = {'$set': {'is_deleted': current_timestamp}}
         result = self.collection.update_one(query, update)
 
         if result.matched_count == 0:
             raise ValueError(f'Category with ID {category_id} not found or already deleted.')
 
         # delete it from all other collections
-        update2 = {'$set': {'nested_categories.$[elem].is_deleted': 1}}
-        update3 = {'$set': {'categories.$[elem].is_deleted': 1}}
+        update2 = {'$set': {'nested_categories.$[elem].is_deleted': current_timestamp}}
+        update3 = {'$set': {'categories.$[elem].is_deleted': current_timestamp}}
         array_filters2 = [{'elem.cat': category_id, 'elem.is_deleted': 0}]
 
         self.db['categories'].update_many({}, update2, array_filters=array_filters2)

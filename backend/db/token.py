@@ -136,7 +136,7 @@ class TokenDBInterface(ABC):
     @abstractmethod
     def delete_token(self, token_id: str) -> None:
         """
-        Soft-delete a token by setting its `is_deleted` flag to 1.
+        Soft-delete a token by setting its `is_deleted` flag to the current timestamp.
 
         :param token_id: The ID of the token to delete.
         """
