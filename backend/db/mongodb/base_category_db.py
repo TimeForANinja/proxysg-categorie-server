@@ -40,6 +40,7 @@ class MongoDBBaseCategory(Generic[T]):
         :param category_id: The ID of the Category
         """
         query = {'_id': ObjectId(item_id), 'is_deleted': 0}
+        # add-to-set only adds if it is not already a member of the array
         update = {'$addToSet': {'categories': {'cat': category_id, 'is_deleted': 0}}}
 
         result = self.collection.update_one(query, update)
