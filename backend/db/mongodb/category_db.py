@@ -3,7 +3,7 @@ from typing import Optional, List, Mapping, Any
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
-from db.category import CategoryDBInterface, MutableCategory, Category
+from db.abc.category import CategoryDBInterface, MutableCategory, Category
 
 
 def _build_category(row: Mapping[str, Any]) -> Category:

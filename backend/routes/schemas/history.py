@@ -2,7 +2,7 @@ from apiflask.fields import List, Nested
 from marshmallow_dataclass import class_schema
 from typing import List as tList
 
-from db.history import History
+from db.abc.history import History
 from routes.schemas.generic_output import GenericOutput
 
 

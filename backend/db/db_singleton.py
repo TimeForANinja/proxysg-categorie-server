@@ -1,16 +1,16 @@
 from flask import current_app
 
-from db.db import DBInterface
-from db.mongodb.mongo_db import MyMongoDB
-from db.sqlite.sqlite_db import MySQLiteDB
+from db.mongodb.db import MyMongoDB
+from db.sqlite.db import MySQLiteDB
+from db.stagingdb.db import StagingDB
 from log import log_info
 
 
-def get_db() -> DBInterface:
+def get_db() -> StagingDB:
     """Get a unique DB instance."""
-    db = current_app.config.get('SINGLETONS', {}).get('DB', None)
+    staging_db = current_app.config.get('SINGLETONS', {}).get('DB', None)
 
-    if db is None:
+    if staging_db is None:
         db_type = current_app.config.get('DB', {}).get('TYPE', 'sqlite').lower()
         if db_type == 'mongodb':
             mongo_cfg: dict = current_app.config.get('DB', {}).get('MONGO', {})
@@ -29,10 +29,12 @@ def get_db() -> DBInterface:
         else:
             raise ValueError(f'Unsupported APP_DB_TYPE: {db_type}')
 
-        current_app.config.setdefault('SINGLETONS', {})
-        current_app.config['SINGLETONS']['DB'] = db
+        staging_db = StagingDB(db)
 
-    return db
+        current_app.config.setdefault('SINGLETONS', {})
+        current_app.config['SINGLETONS']['DB'] = staging_db
+
+    return staging_db
 
 
 def close_connection():

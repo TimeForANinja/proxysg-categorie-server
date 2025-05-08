@@ -2,7 +2,7 @@ import sqlite3
 import time
 from typing import List, Callable
 
-from db.token_category import TokenCategoryDBInterface
+from db.abc.token_category import TokenCategoryDBInterface
 
 
 class SQLiteTokenCategory(TokenCategoryDBInterface):

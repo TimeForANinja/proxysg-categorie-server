@@ -103,7 +103,7 @@ def initialize_app(a: APIFlask):
 
 
 if __name__ == '__main__':
-    # initialize background tasks
+    # initialize background tasks.
     # we keep this in the __main__ and manually trigger it for gunicorn with the on_starting
     # to prevent the background tasks being run on multiple workers
     initialize_app(app)

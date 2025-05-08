@@ -3,7 +3,7 @@ import time
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
-from db.sub_category import SubCategoryDBInterface
+from db.abc.sub_category import SubCategoryDBInterface
 
 
 class MongoDBSubCategory(SubCategoryDBInterface):

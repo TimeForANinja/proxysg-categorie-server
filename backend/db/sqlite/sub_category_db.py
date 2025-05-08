@@ -2,7 +2,7 @@ import sqlite3
 import time
 from typing import List, Callable
 
-from db.sub_category import SubCategoryDBInterface
+from db.abc.sub_category import SubCategoryDBInterface
 
 
 class SQLiteSubCategory(SubCategoryDBInterface):

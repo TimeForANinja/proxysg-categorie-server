@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 
-from db.category import CategoryDBInterface
-from db.history import HistoryDBInterface
-from db.sub_category import SubCategoryDBInterface
-from db.token_category import TokenCategoryDBInterface
-from db.token import TokenDBInterface
-from db.url_category import UrlCategoryDBInterface
-from db.url import URLDBInterface
+from db.abc.category import CategoryDBInterface
+from db.abc.history import HistoryDBInterface
+from db.abc.staging import StagingDBInterface
+from db.abc.sub_category import SubCategoryDBInterface
+from db.abc.token_category import TokenCategoryDBInterface
+from db.abc.token import TokenDBInterface
+from db.abc.url_category import UrlCategoryDBInterface
+from db.abc.url import URLDBInterface
 
 
 class DBInterface(ABC):
@@ -17,6 +18,7 @@ class DBInterface(ABC):
     token_categories: TokenCategoryDBInterface
     urls: URLDBInterface
     url_categories: UrlCategoryDBInterface
+    staging: StagingDBInterface
 
     @abstractmethod
     def close(self):

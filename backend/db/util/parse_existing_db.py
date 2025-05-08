@@ -2,9 +2,9 @@ import re
 import time
 from typing import List, Tuple
 
-from db.category import MutableCategory, Category
-from db.db import DBInterface
-from db.url import MutableURL, URL
+from db.abc.category import MutableCategory, Category
+from db.abc.db import DBInterface
+from db.abc.url import MutableURL, URL
 
 
 class ExistingCat:

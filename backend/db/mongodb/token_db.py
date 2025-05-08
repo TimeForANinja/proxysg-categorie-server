@@ -3,7 +3,7 @@ from typing import Optional, List, Mapping, Any
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
-from db.token import TokenDBInterface, MutableToken, Token
+from db.abc.token import TokenDBInterface, MutableToken, Token
 
 
 def _build_token(row: Mapping[str, Any]) -> Token:

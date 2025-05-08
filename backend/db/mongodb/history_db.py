@@ -4,7 +4,7 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 
 from auth.auth_user import AuthUser
-from db.history import HistoryDBInterface, History
+from db.abc.history import HistoryDBInterface, History
 
 
 class MongoDBHistory(HistoryDBInterface):
@@ -20,6 +20,16 @@ class MongoDBHistory(HistoryDBInterface):
             ref_url: List[str],
             ref_category: List[str],
     ) -> History:
+        """
+        Add a new history event with the given name
+
+        :param action: The action to be recorded
+        :param user: The user who performed the action
+        :param ref_token: List of token IDs referenced by the action
+        :param ref_url: List of URL IDs referenced by the action
+        :param ref_category: List of category IDs referenced by the action
+        :return: The newly created history event
+        """
         timestamp = int(time.time())  # Current UNIX time
         result = self.collection.insert_one({
             'time': timestamp,

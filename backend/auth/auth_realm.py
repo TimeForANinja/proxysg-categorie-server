@@ -26,7 +26,7 @@ class AuthRealmInterface(ABC):
     @abstractmethod
     def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
         """
-        Check login attempt
+        Check a login attempt
 
         Custom function to resolve User to Token, which will then be used for API calls
 

@@ -4,7 +4,7 @@ from marshmallow_dataclass import class_schema
 from typing import List as tList
 from dataclasses import field, dataclass
 
-from db.url import URL
+from db.abc.url import URL
 from routes.schemas.generic_output import GenericOutput
 
 

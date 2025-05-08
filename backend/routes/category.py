@@ -3,7 +3,7 @@ from marshmallow_dataclass import class_schema
 
 from db.db_singleton import get_db
 from auth.auth_singleton import get_auth_if
-from db.category import MutableCategory
+from db.abc.category import MutableCategory
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 from routes.schemas.category import ListCategoriesResponseOutput, CreateOrUpdateCategoryOutput, ListSubCategoriesOutput, SetSubCategoriesInput
@@ -36,11 +36,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(CreateOrUpdateCategoryOutput)
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_category(cat_id: str, mut_cat: MutableCategory):
-        db_if = get_db()
-        new_category = db_if.categories.update_category(cat_id, mut_cat)
-
-        db_if.history.add_history_event(f'Category {cat_id} updated', auth.current_user, [], [], [cat_id])
-
+        new_category = get_db().categories.update_category(auth.current_user, cat_id, mut_cat)
         return {
             'status': 'success',
             'message': 'Category updated successfully',
@@ -53,11 +49,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(GenericOutput)
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_category(cat_id: str):
-        db_if = get_db()
-        db_if.categories.delete_category(cat_id)
-
-        db_if.history.add_history_event(f'Category {cat_id} deleted', auth.current_user, [], [], [cat_id])
-
+        get_db().categories.delete_category(auth.current_user, cat_id)
         return {
             'status': 'success',
             'message': 'Category deleted successfully'
@@ -70,11 +62,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(CreateOrUpdateCategoryOutput)
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_category(mut_cat: MutableCategory):
-        db_if = get_db()
-        new_category = db_if.categories.add_category(mut_cat)
-
-        db_if.history.add_history_event(f'Category {new_category.id} created', auth.current_user, [], [], [new_category.id])
-
+        new_category = get_db().categories.add_category(auth.current_user, mut_cat)
         return {
             'status': 'success',
             'message': 'Category successfully created',
@@ -86,11 +74,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.doc(summary='add sub-cat to cat', description='Add the provided Category ID to the Category.Category List')
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def add_sub_category(cat_id: str, sub_cat_id: str):
-        db_if = get_db()
-        db_if.sub_categories.add_sub_category(cat_id, sub_cat_id)
-
-        db_if.history.add_history_event(f'Added sub-cat {sub_cat_id} to cat {cat_id}', auth.current_user, [], [], [cat_id, sub_cat_id])
-
+        get_db().sub_categories.add_sub_category(auth.current_user, cat_id, sub_cat_id)
         return {
             'status': 'success',
             'message': 'Sub-Category successfully added to Category'
@@ -101,11 +85,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.doc(summary='remove cat from token', description='Remove the provided Category ID from the Category.Category List')
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_sub_category(cat_id: str, sub_cat_id: str):
-        db_if = get_db()
-        db_if.sub_categories.delete_sub_category(cat_id, sub_cat_id)
-
-        db_if.history.add_history_event(f'Removed sub-cat {sub_cat_id} from category {cat_id}', auth.current_user, [], [], [cat_id, sub_cat_id])
-
+        get_db().sub_categories.delete_sub_category(auth.current_user, cat_id, sub_cat_id)
         return {
             'status': 'success',
             'message': 'Sub-Category successfully removed from Category'
@@ -118,25 +98,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(ListSubCategoriesOutput)
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def set_sub_categories(cat_id: str, set_cats: SetSubCategoriesInput):
-        db_if = get_db()
-        is_sub_cats = db_if.sub_categories.get_sub_categories_by_id(cat_id)
-
-        added = list(set(set_cats.categories) - set(is_sub_cats))
-        removed = list(set(is_sub_cats) - set(set_cats.categories))
-
-        for cat in added:
-            db_if.sub_categories.add_sub_category(cat_id, cat)
-        for cat in removed:
-            db_if.sub_categories.delete_sub_category(cat_id, cat)
-
-        db_if.history.add_history_event(
-            f'Updated Sub-Cats for Category {cat_id} from {",".join([str(c) for c in is_sub_cats])} to {",".join([str(c) for c in set_cats.categories])}',
-            auth.current_user,
-            [],
-            [],
-            [cat_id] + set_cats.categories,
-        )
-
+        get_db().sub_categories.set_sub_categories(auth.current_user, cat_id, set_cats.categories)
         return {
             'status': 'success',
             'message': 'Sub-Categories successfully updated',

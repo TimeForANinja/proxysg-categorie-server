@@ -1,7 +1,7 @@
 from typing import List, Mapping, Any
 from pymongo.synchronous.database import Database
 
-from db.token_category import TokenCategoryDBInterface
+from db.abc.token_category import TokenCategoryDBInterface
 from db.mongodb.base_category_db import MongoDBBaseCategory
 
 

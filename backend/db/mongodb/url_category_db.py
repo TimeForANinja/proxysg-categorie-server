@@ -1,7 +1,7 @@
 from typing import List, Mapping, Any
 from pymongo.synchronous.database import Database
 
-from db.url_category import UrlCategoryDBInterface
+from db.abc.url_category import UrlCategoryDBInterface
 from db.mongodb.base_category_db import MongoDBBaseCategory
 
 

@@ -44,8 +44,8 @@ def apply_role_map(external_roles: List[str], role_map: RoleMap) -> List[str]:
     """
     Apply a Role-Map to a list of external roles.
 
-    :param external_roles: A list of external roles
-    :param role_map: A dictionary mapping external roles to internal roles
+    :param external_roles: A list of external roles.
+    :param role_map: A dictionary mapping external roles to internal roles.
     :return: A list of internal roles, or the original list if the mapping failed.
     """
     return [

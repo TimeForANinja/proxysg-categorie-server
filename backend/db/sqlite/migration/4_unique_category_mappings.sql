@@ -1,6 +1,6 @@
 -- Migration script: 4_category_constraints.sql
 -- Add UNIQUE INDEX to sub_category, token_categories, and url_categories
--- prevents multiple pairs of <obj> - category - is_deleted to exist
+-- prevents multiple pairs of (<obj> - categories - is_deleted) to exist
 
 -- Step 1: Add UNIQUE INDEX to sub_category
 CREATE UNIQUE INDEX IF NOT EXISTS unique_parent_child_deleted ON sub_category (parent_id, child_id, is_deleted);

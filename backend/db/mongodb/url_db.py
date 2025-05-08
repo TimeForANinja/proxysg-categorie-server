@@ -2,7 +2,7 @@ from typing import Optional, List, Mapping, Any
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
-from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
+from db.abc.url import MutableURL, URL, NO_BC_CATEGORY_YET, URLDBInterface
 
 
 def _build_url(row: Mapping[str, Any]) -> URL:

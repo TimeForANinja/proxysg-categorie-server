@@ -3,7 +3,7 @@ import time
 from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
-from db.category import CategoryDBInterface, MutableCategory, Category
+from db.abc.category import CategoryDBInterface, MutableCategory, Category
 
 
 def _build_category(row: any) -> Category:

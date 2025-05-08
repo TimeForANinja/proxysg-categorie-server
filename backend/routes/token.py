@@ -4,7 +4,7 @@ from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
-from db.token import MutableToken
+from db.abc.token import MutableToken
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 from routes.schemas.token import ListTokenOutput, CreateOrUpdateTokenOutput, ListTokenCategoriesOutput, SetTokenCategoriesInput
@@ -22,8 +22,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(ListTokenOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
     def get_tokens():
-        db_if = get_db()
-        tokens = db_if.tokens.get_all_tokens()
+        tokens = get_db().tokens.get_all_tokens()
         return {
             'status': 'success',
             'message': 'Tokens fetched successfully',
@@ -37,11 +36,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_token(token_id: str, mut_tok: MutableToken):
-        db_if = get_db()
-        new_token = db_if.tokens.update_token(token_id, mut_tok)
-
-        db_if.history.add_history_event(f'Token {token_id} updated', auth.current_user, [token_id], [], [])
-
+        new_token = get_db().tokens.update_token(auth.current_user, token_id, mut_tok)
         return {
             'status': 'success',
             'message': 'Token updated successfully',
@@ -55,12 +50,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def roll_token(token_id: str):
         new_token_val = str(uuid.uuid4())
-
-        db_if = get_db()
-        new_token = db_if.tokens.roll_token(token_id, new_token_val)
-
-        db_if.history.add_history_event(f'Token {token_id} rolled', auth.current_user, [token_id], [], [])
-
+        new_token = get_db().tokens.roll_token(auth.current_user, token_id, new_token_val)
         return {
             'status': 'success',
             'message': 'Token rolled successfully',
@@ -73,11 +63,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(GenericOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_token(token_id: str):
-        db_if = get_db()
-        db_if.tokens.delete_token(token_id)
-
-        db_if.history.add_history_event(f'Token {token_id} deleted', auth.current_user, [token_id], [], [])
-
+        get_db().tokens.delete_token(auth.current_user, token_id)
         return {
             'status': 'success',
             'message': 'Token deleted successfully'
@@ -90,13 +76,8 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_token(mut_tok: MutableToken):
-        new_token = str(uuid.uuid4())
-
-        db_if = get_db()
-        new_token = db_if.tokens.add_token(new_token, mut_tok)
-
-        db_if.history.add_history_event(f'Token {new_token.id} created', auth.current_user, [new_token.id], [], [])
-
+        new_token_val = str(uuid.uuid4())
+        new_token = get_db().tokens.add_token(auth.current_user, new_token_val, mut_tok)
         return {
             'status': 'success',
             'message': 'Token successfully created',
@@ -108,11 +89,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.doc(summary='add cat to token', description='Add the provided Category ID to the Token.Category List')
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def add_token_category(token_id: str, cat_id: str):
-        db_if = get_db()
-        db_if.token_categories.add_token_category(token_id, cat_id)
-
-        db_if.history.add_history_event(f'Added cat {cat_id} to token {token_id}', auth.current_user, [token_id], [], [cat_id])
-
+        get_db().token_categories.add_token_category(auth.current_user, token_id, cat_id)
         return {
             'status': 'success',
             'message': 'Category successfully added to token'
@@ -123,11 +100,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.doc(summary='remove cat from token', description='Remove the provided Category ID from the Token.Category List')
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_token_category(token_id: str, cat_id: str):
-        db_if = get_db()
-        db_if.token_categories.delete_token_category(token_id, cat_id)
-
-        db_if.history.add_history_event(f'Removed cat {cat_id} from token {token_id}', auth.current_user, [token_id], [], [cat_id])
-
+        get_db().token_categories.delete_token_category(auth.current_user, token_id, cat_id)
         return {
             'status': 'success',
             'message': 'Category successfully removed from token'
@@ -140,25 +113,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(ListTokenCategoriesOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def set_token_categories(token_id: str, set_cats: SetTokenCategoriesInput):
-        db_if = get_db()
-        is_cats = db_if.token_categories.get_token_categories_by_token(token_id)
-
-        added = list(set(set_cats.categories) - set(is_cats))
-        removed = list(set(is_cats) - set(set_cats.categories))
-
-        for cat in added:
-            db_if.token_categories.add_token_category(token_id, cat)
-        for cat in removed:
-            db_if.token_categories.delete_token_category(token_id, cat)
-
-        db_if.history.add_history_event(
-            f'Updated Cats for Token {token_id} from {",".join([str(c) for c in is_cats])} to {",".join([str(c) for c in set_cats.categories])}',
-            auth.current_user,
-            [token_id],
-            [],
-            set_cats.categories,
-        )
-
+        get_db().token_categories.set_token_categories(auth.current_user, token_id, set_cats.categories)
         return {
             'status': 'success',
             'message': 'Token Categories successfully updated',

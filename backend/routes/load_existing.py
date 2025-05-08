@@ -3,7 +3,7 @@ from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
-from db.util.parse_existing_db import parse_db, create_in_db, create_urls_db
+from db.util.parse_existing_db import parse_db
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 from routes.schemas.load_existing import ExistingDBInput
@@ -28,10 +28,7 @@ def add_other_bp(app):
         categories, uncategorized = parse_db(existing_db.categoryDB, True)
 
         # push the intermediate objects to the main db
-        create_in_db(db_if, categories, existing_db.prefix)
-        create_urls_db(db_if, uncategorized)
-
-        db_if.history.add_history_event('existing db imported', auth.current_user, [], [], [])
+        db_if.existing.save_existing(auth.current_user, categories, existing_db.prefix, uncategorized)
 
         return {
             'status': 'success',

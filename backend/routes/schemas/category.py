@@ -4,7 +4,7 @@ from apiflask.fields import List, Nested
 from typing import List as tList
 from dataclasses import field, dataclass
 
-from db.category import Category
+from db.abc.category import Category
 from routes.schemas.generic_output import GenericOutput
 
 

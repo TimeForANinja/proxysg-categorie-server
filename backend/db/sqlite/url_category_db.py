@@ -2,7 +2,7 @@ import sqlite3
 import time
 from typing import List, Callable
 
-from db.url_category import UrlCategoryDBInterface
+from db.abc.url_category import UrlCategoryDBInterface
 
 
 class SQLiteURLCategory(UrlCategoryDBInterface):

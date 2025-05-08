@@ -3,7 +3,7 @@ import time
 from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
-from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
+from db.abc.url import MutableURL, URL, NO_BC_CATEGORY_YET, URLDBInterface
 
 
 def _build_url(row: any) -> URL:
