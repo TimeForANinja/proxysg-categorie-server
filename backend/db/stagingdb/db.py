@@ -7,6 +7,7 @@ from db.stagingdb.token_category_db import StagingDBTokenCategory
 from db.stagingdb.token_db import StagingDBToken
 from db.stagingdb.url_category_db import StagingDBURLCategory
 from db.stagingdb.url_db import StagingDBURL
+from db.stagingdb.cache import StagedCollection, StagedChangeTable
 
 
 class StagingDB:
@@ -26,11 +27,12 @@ class StagingDB:
         super().__init__()
 
         self._main_db = main_db
+        self._staged: StagedCollection = StagedCollection()
 
         self.categories = StagingDBCategory(self._main_db)
         self.sub_categories = StagingDBSubCategory(self._main_db)
         self.history = StagingDBHistory(self._main_db)
-        self.tokens = StagingDBToken(self._main_db)
+        self.tokens = StagingDBToken(self._main_db, self._staged)
         self.token_categories = StagingDBTokenCategory(self._main_db)
         self.urls = StagingDBURL(self._main_db)
         self.url_categories = StagingDBURLCategory(self._main_db)
@@ -38,3 +40,13 @@ class StagingDB:
 
     def close(self):
         self._main_db.close()
+
+    def commit(self):
+        """
+        Push all staged changes to the main database.
+        """
+        for change in self._staged.iter():
+            if change.table == StagedChangeTable.TOKEN:
+                self.tokens.commit(change)
+
+        self._staged.clear()

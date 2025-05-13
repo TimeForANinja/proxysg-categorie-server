@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import sys
 
@@ -31,15 +32,24 @@ def setup_logging(app: apiflask):
         handler = SysLogHandler(address=(syslog_server, syslog_port))
         logger.add(handler)
 
+# custom json encoder to handle dataclasses and other objects that can't be serialized by default'
+class EnhancedJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        return super().default(o)
+
+def _to_json(attachment: any):
+    return json.dumps(attachment, cls=EnhancedJSONEncoder)
 
 def log_debug(module: str, message: str, *attachment: any):
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).debug(f'{module} | {message} | {json.dumps(attachment)}')
+    logger.opt(depth=1).debug(f'{module} | {message} | {_to_json(attachment)}')
 
 def log_error(module: str, message: str, *attachment: any):
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).error(f'{module} | {message} | {json.dumps(attachment)}')
+    logger.opt(depth=1).error(f'{module} | {message} | {_to_json(attachment)}')
 
 def log_info(module: str, message: str, *attachment: any):
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).info(f'{module} | {message} | {json.dumps(attachment)}')
+    logger.opt(depth=1).info(f'{module} | {message} | {_to_json(attachment)}')

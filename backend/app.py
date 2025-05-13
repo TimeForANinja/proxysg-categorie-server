@@ -12,7 +12,7 @@ from routes.auth import add_auth_bp
 from routes.category import add_category_bp
 from routes.compile import add_compile_bp
 from routes.history import add_history_bp
-from routes.load_existing import add_other_bp
+from routes.other import add_other_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
 from log import setup_logging, log_info, log_error, log_debug

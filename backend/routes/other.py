@@ -35,4 +35,16 @@ def add_other_bp(app):
             'message': 'Database successfully loaded',
         }
 
+    @other_bp.post('/api/commit')
+    @other_bp.doc(summary='Commit Staged Changes', description='Commit all staged changes to the database')
+    @other_bp.output(GenericOutput)
+    @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
+    def handle_commit():
+        # Call the commit method to push staged changes to the database
+        get_db().commit()
+        return {
+            'status': 'success',
+            'message': 'All staged changes have been committed to the database'
+        }
+
     app.register_blueprint(other_bp)
