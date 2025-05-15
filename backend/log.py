@@ -1,4 +1,5 @@
 import dataclasses
+import io
 import json
 import sys
 
@@ -39,8 +40,12 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return dataclasses.asdict(o)
         return super().default(o)
 
-def _to_json(attachment: any):
-    return json.dumps(attachment, cls=EnhancedJSONEncoder)
+def _to_json(attachment: any) -> str:
+    try:
+        return json.dumps(attachment, cls=EnhancedJSONEncoder)
+    except:
+        return str(attachment)
+
 
 def log_debug(module: str, message: str, *attachment: any):
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
