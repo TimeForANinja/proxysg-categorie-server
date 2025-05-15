@@ -15,7 +15,8 @@ class StagingDBToken:
         self._staged = staged
 
     def add_token(self, auth: AuthUser, token: str, mut_tok: MutableToken) -> Token:
-        temp_id = str(uuid.uuid4())
+        # TODO: switch to pregenerated str for IDs
+        temp_id = '1337' # str(uuid.uuid4())
         token_data = asdict(mut_tok)
         token_data.update({
             'id': temp_id,
@@ -34,19 +35,21 @@ class StagingDBToken:
         self._staged.add(staged_change)
 
         # Create a Token object to return
-        new_token = Token(**token_data)
-        return new_token
+        return Token(**token_data)
 
     def get_token(self, token_id: str) -> Optional[Token]:
-        # If not in staged tokens, get it from the database
-        token: Token | StagedChange = self._db.tokens.get_token(token_id)
+        # try getting it from the database
+        db_token: Token = self._db.tokens.get_token(token_id)
+        # convert to dict
+        token: Dict[str, Any] = asdict(db_token) if db_token is not None else None
 
         if token is None:
-            # no filter in DB, so check if we have an "add" filter
-            token = self._staged.first_or_none(
+            # no token in DB, so check if we have an "add" event
+            add_token = self._staged.first_or_none(
                 StageFilter.fac_filter_table_id(StagedChangeTable.TOKEN, token_id),
                 StageFilter.filter_add,
             )
+            token = add_token.data if add_token is not None else None
 
         # overload any staged changes
         for staged_change in self._staged.iter_filter(
@@ -55,11 +58,9 @@ class StagingDBToken:
             if staged_change.data.get('is_deleted', 0) != 0:
                 return None
 
-            tmp = asdict(token)
-            tmp.update(staged_change.data)
-            token = Token(**tmp)
+            token.update(staged_change.data)
 
-        return token
+        return Token(**token)
 
     def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
         # fetching by UUID goes straight to DB
@@ -119,34 +120,34 @@ class StagingDBToken:
 
     def get_all_tokens(self) -> List[Token]:
         # Get all tokens from the database
-        raw_db_tokens: List[Token | StagedChange] = self._db.tokens.get_all_tokens()
+        db_tokens: List[Token] = self._db.tokens.get_all_tokens()
+        # convert to dict
+        tokens: List[Dict[str, Any]] = [asdict(token) for token in db_tokens]
 
         # append all "added" tokens from cache
-        raw_db_tokens.extend(
-            self._staged.iter_filter(
-                StageFilter.filter_add,
-                StageFilter.fac_filter_table(StagedChangeTable.TOKEN),
-            )
+        tokens.extend(
+            [
+                t.data for t in
+                self._staged.iter_filter(
+                    StageFilter.filter_add,
+                    StageFilter.fac_filter_table(StagedChangeTable.TOKEN),
+                )
+            ]
         )
 
         staged_tokens: List[Token] = []
 
-        for raw_token in raw_db_tokens:
+        for raw_token in tokens:
             token = raw_token
 
             # overload any staged changes
-            for staged_change in self._staged.iter():
-                if staged_change.table != StagedChangeTable.TOKEN:
-                    continue
-                if staged_change.id != token.id:
-                    continue
+            for staged_change in self._staged.iter_filter(
+                StageFilter.fac_filter_table_id(StagedChangeTable.TOKEN, token.get('id'))
+            ):
+                token.update(staged_change.data)
 
-                tmp = asdict(token)
-                tmp.update(staged_change.data)
-                token = Token(**tmp)
-
-            if token.is_deleted == 0:
-                staged_tokens.append(token)
+            if token.get('is_deleted', 0) == 0:
+                staged_tokens.append(Token(**token))
 
         return staged_tokens
 

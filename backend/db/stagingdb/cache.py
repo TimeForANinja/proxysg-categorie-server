@@ -80,5 +80,6 @@ class StageFilter:
     def fac_filter_id(id: str) -> Callable[[StagedChange], bool]:
         return lambda change: change.id == id
 
-    def fac_filter_table_id(self, table: StagedChangeTable, id: str) -> Callable[[StagedChange], bool]:
+    @staticmethod
+    def fac_filter_table_id(table: StagedChangeTable, id: str) -> Callable[[StagedChange], bool]:
         return lambda change: change.table == table and change.id == id
