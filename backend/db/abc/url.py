@@ -83,11 +83,12 @@ class URL(MutableURL):
 
 class URLDBInterface(ABC):
     @abstractmethod
-    def add_url(self, url: MutableURL) -> URL:
+    def add_url(self, url: MutableURL, url_id: str) -> URL:
         """
         Add a new url with the given hostname.
 
         :param url: The (partial) url to add.
+        :param url_id: The ID of the url to add. This is used to identify the url in the database.
         :return: The newly created url.
         """
         pass

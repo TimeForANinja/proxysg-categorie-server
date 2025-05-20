@@ -1,4 +1,5 @@
 from typing import Optional, List
+import uuid
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
@@ -10,7 +11,8 @@ class StagingDBURL:
         self._db = db
 
     def add_url(self, auth: AuthUser, mut_url: MutableURL) -> URL:
-        new_url = self._db.urls.add_url(mut_url)
+        url_id = str(uuid.uuid4())
+        new_url = self._db.urls.add_url(mut_url, url_id)
         self._db.history.add_history_event(f'URL {new_url.id} created', auth, [], [new_url.id], [])
         return new_url
 
@@ -18,7 +20,7 @@ class StagingDBURL:
         return self._db.urls.get_url(url_id)
 
     def update_url(self, auth: AuthUser, url_id: str, mut_url: MutableURL) -> URL:
-        new_url = self._db.urls.add_url(mut_url)
+        new_url = self._db.urls.update_url(url_id, mut_url)
         self._db.history.add_history_event(f'URL {url_id} updated', auth, [], [url_id], [])
         return new_url
 

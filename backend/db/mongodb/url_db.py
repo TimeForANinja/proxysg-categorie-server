@@ -26,8 +26,9 @@ class MongoDBURL(URLDBInterface):
         self.db = db
         self.collection = self.db['urls']
 
-    def add_url(self, mut_url: MutableURL) -> URL:
-        result = self.collection.insert_one({
+    def add_url(self, mut_url: MutableURL, url_id: str) -> URL:
+        self.collection.insert_one({
+            '_id': ObjectId(url_id),
             'hostname': mut_url.hostname,
             'description': mut_url.description,
             'is_deleted': 0,
@@ -36,7 +37,7 @@ class MongoDBURL(URLDBInterface):
         })
 
         return URL(
-            id=str(result.inserted_id),
+            id=url_id,
             hostname=mut_url.hostname,
             description=mut_url.description,
             is_deleted=0,

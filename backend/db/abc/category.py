@@ -77,11 +77,12 @@ class Category(MutableCategory):
 class CategoryDBInterface(ABC):
 
     @abstractmethod
-    def add_category(self, category: MutableCategory) -> Category:
+    def add_category(self, category: MutableCategory, category_id: str) -> Category:
         """
         Add a new category with the given name, color, and an optional description.
 
         :param category: The (partial) category to add.
+        :param category_id: The ID of the category to add. This is used to identify the category in the database.
         :return: The newly created category.
         """
         pass

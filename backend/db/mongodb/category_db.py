@@ -27,8 +27,9 @@ class MongoDBCategory(CategoryDBInterface):
         self.db = db
         self.collection = self.db['categories']
 
-    def add_category(self, category: MutableCategory) -> Category:
-        result = self.collection.insert_one({
+    def add_category(self, category: MutableCategory, category_id: str) -> Category:
+        self.collection.insert_one({
+            '_id': ObjectId(category_id),
             'name': category.name,
             'color': category.color,
             'description': category.description,
@@ -37,7 +38,7 @@ class MongoDBCategory(CategoryDBInterface):
         })
 
         return Category(
-            id=str(result.inserted_id),
+            id=category_id,
             name=category.name,
             color=category.color,
             description=category.description,

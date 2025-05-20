@@ -1,4 +1,5 @@
 from typing import Optional, List
+import uuid
 
 from auth.auth_user import AuthUser
 from db.abc.category import MutableCategory, Category
@@ -10,7 +11,8 @@ class StagingDBCategory:
         self._db = db
 
     def add_category(self, auth: AuthUser, category: MutableCategory) -> Category:
-        new_category = self._db.categories.add_category(category)
+        category_id = str(uuid.uuid4())
+        new_category = self._db.categories.add_category(category, category_id)
         self._db.history.add_history_event(f'Category {new_category.id} created', auth, [], [], [new_category.id])
         return new_category
 

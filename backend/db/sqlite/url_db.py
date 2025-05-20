@@ -22,18 +22,18 @@ class SQLiteURL(URLDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_url(self, mut_url: MutableURL) -> URL:
+    def add_url(self, mut_url: MutableURL, url_id: str) -> URL:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'INSERT INTO urls (hostname, description, bc_cats) VALUES (?, ?, ?)',
-            (mut_url.hostname,mut_url.description, NO_BC_CATEGORY_YET)
+            'INSERT INTO urls (id, hostname, description, bc_cats) VALUES (?, ?, ?, ?)',
+            (int(url_id), mut_url.hostname, mut_url.description, NO_BC_CATEGORY_YET)
         )
         self.get_conn().commit()
 
         new_url = URL(
             hostname=mut_url.hostname,
             description=mut_url.description,
-            id=str(cursor.lastrowid),
+            id=url_id,
             is_deleted=0,
             bc_cats=[NO_BC_CATEGORY_YET],
         )

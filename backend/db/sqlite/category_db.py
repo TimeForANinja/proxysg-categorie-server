@@ -22,11 +22,11 @@ class SQLiteCategory(CategoryDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_category(self, mut_cat: MutableCategory) -> Category:
+    def add_category(self, mut_cat: MutableCategory, category_id: str) -> Category:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'INSERT INTO categories (name, description, color) VALUES (?, ?, ?)',
-            (mut_cat.name, mut_cat.description, mut_cat.color)
+            'INSERT INTO categories (id, name, description, color) VALUES (?, ?, ?, ?)',
+            (int(category_id), mut_cat.name, mut_cat.description, mut_cat.color)
         )
         self.get_conn().commit()
 
@@ -34,7 +34,7 @@ class SQLiteCategory(CategoryDBInterface):
             name=mut_cat.name,
             description=mut_cat.description,
             color=mut_cat.color,
-            id=str(cursor.lastrowid),
+            id=category_id,
             is_deleted=0,
         )
         return new_cat
