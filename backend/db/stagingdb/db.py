@@ -30,12 +30,12 @@ class StagingDB:
         self._staged: StagedCollection = StagedCollection()
 
         self.categories = StagingDBCategory(self._main_db, self._staged)
-        self.sub_categories = StagingDBSubCategory(self._main_db)
+        self.sub_categories = StagingDBSubCategory(self._main_db, self._staged, self.categories)
         self.history = StagingDBHistory(self._main_db)
         self.tokens = StagingDBToken(self._main_db, self._staged)
-        self.token_categories = StagingDBTokenCategory(self._main_db)
+        self.token_categories = StagingDBTokenCategory(self._main_db, self._staged, self.tokens)
         self.urls = StagingDBURL(self._main_db, self._staged)
-        self.url_categories = StagingDBURLCategory(self._main_db)
+        self.url_categories = StagingDBURLCategory(self._main_db, self._staged, self.urls)
         self.existing = StagingDBExisting(self._main_db)
 
     def close(self):
