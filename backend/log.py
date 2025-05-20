@@ -1,5 +1,4 @@
 import dataclasses
-import io
 import json
 import sys
 
@@ -33,7 +32,7 @@ def setup_logging(app: apiflask):
         handler = SysLogHandler(address=(syslog_server, syslog_port))
         logger.add(handler)
 
-# custom json encoder to handle dataclasses and other objects that can't be serialized by default'
+# custom JSON encoder to handle dataclasses and other objects that can't be serialized by default
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o):

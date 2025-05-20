@@ -24,19 +24,21 @@ class StagedChange:
 
     def __init__(
             self,
-            type: StagedChangeAction,
+            action_type: StagedChangeAction,
             table: StagedChangeTable,
             auth: AuthUser,
-            id: str,
+            uid: str,
             data: Optional[Dict[str, Any]],
     ):
-        self.type = type
+        self.type = action_type
         self.table = table
         self.auth = auth
-        self.id = id
+        self.id = uid
         self.data = data
 
 
+# TODO: global objects only work in the test-environment
+# multi-threaded gunicorn breaks this way -> move to redis or the DB backend
 items: List[StagedChange] = []
 class StagedCollection:
     # for now a simple array, later a redis cache
@@ -77,9 +79,9 @@ class StageFilter:
         return lambda change: change.table == table
 
     @staticmethod
-    def fac_filter_id(id: str) -> Callable[[StagedChange], bool]:
-        return lambda change: change.id == id
+    def fac_filter_id(uid: str) -> Callable[[StagedChange], bool]:
+        return lambda change: change.id == uid
 
     @staticmethod
-    def fac_filter_table_id(table: StagedChangeTable, id: str) -> Callable[[StagedChange], bool]:
-        return lambda change: change.table == table and change.id == id
+    def fac_filter_table_id(table: StagedChangeTable, uid: str) -> Callable[[StagedChange], bool]:
+        return lambda change: change.table == table and change.id == uid

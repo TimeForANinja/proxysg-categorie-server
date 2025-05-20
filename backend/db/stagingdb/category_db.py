@@ -98,7 +98,7 @@ class StagingDBCategory:
         # convert to dict
         categories: List[Dict[str, Any]] = [asdict(category) for category in db_categories]
 
-        # append all "added" categories from cache
+        # append all "added" categories from the cache
         categories.extend(
             [
                 c.data for c in

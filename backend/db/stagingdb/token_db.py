@@ -125,7 +125,7 @@ class StagingDBToken:
         # convert to dict
         tokens: List[Dict[str, Any]] = [asdict(token) for token in db_tokens]
 
-        # append all "added" tokens from cache
+        # append all "added" tokens from the cache
         tokens.extend(
             [
                 t.data for t in

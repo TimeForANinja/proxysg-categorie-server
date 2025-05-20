@@ -102,7 +102,7 @@ class StagingDBURL:
         # convert to dict
         urls: List[Dict[str, Any]] = [asdict(url) for url in db_urls]
 
-        # append all "added" urls from cache
+        # append all "added" urls from the cache
         urls.extend(
             [
                 u.data for u in

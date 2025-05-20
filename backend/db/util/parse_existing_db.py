@@ -1,5 +1,6 @@
 import re
 import time
+import uuid
 from typing import List, Tuple
 
 from db.abc.category import MutableCategory, Category
@@ -82,7 +83,7 @@ def _find_or_create_cat(db: DBInterface, new_cat_candidate: ExistingCat, existin
         name=new_cat_candidate.name,
         color=1,
         description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ))
+    ), str(uuid.uuid4()))
     return new_cat, True
 
 def _find_or_create_url(db: DBInterface, new_url_candidate: str, existing_urls: List[URL]) -> Tuple[URL, bool]:
@@ -97,7 +98,7 @@ def _find_or_create_url(db: DBInterface, new_url_candidate: str, existing_urls: 
     new_url = db.urls.add_url(MutableURL(
         hostname=new_url_candidate,
         description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ))
+    ), str(uuid.uuid4()))
     return new_url, True
 
 def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[ExistingCat], List[str]]:
