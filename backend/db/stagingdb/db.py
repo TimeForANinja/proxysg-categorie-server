@@ -29,12 +29,12 @@ class StagingDB:
         self._main_db = main_db
         self._staged: StagedCollection = StagedCollection()
 
-        self.categories = StagingDBCategory(self._main_db)
+        self.categories = StagingDBCategory(self._main_db, self._staged)
         self.sub_categories = StagingDBSubCategory(self._main_db)
         self.history = StagingDBHistory(self._main_db)
         self.tokens = StagingDBToken(self._main_db, self._staged)
         self.token_categories = StagingDBTokenCategory(self._main_db)
-        self.urls = StagingDBURL(self._main_db)
+        self.urls = StagingDBURL(self._main_db, self._staged)
         self.url_categories = StagingDBURLCategory(self._main_db)
         self.existing = StagingDBExisting(self._main_db)
 
@@ -48,5 +48,9 @@ class StagingDB:
         for change in self._staged.iter():
             if change.table == StagedChangeTable.TOKEN:
                 self.tokens.commit(change)
+            elif change.table == StagedChangeTable.URL:
+                self.urls.commit(change)
+            elif change.table == StagedChangeTable.CATEGORY:
+                self.categories.commit(change)
 
         self._staged.clear()

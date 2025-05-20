@@ -15,10 +15,9 @@ class StagingDBToken:
         self._staged = staged
 
     def add_token(self, auth: AuthUser, mut_tok: MutableToken) -> Token:
-        # TODO: switch to pregenerated str for IDs
         token_id = str(uuid.uuid4())
-        token_data = asdict(mut_tok)
         token = str(uuid.uuid4())
+        token_data = asdict(mut_tok)
         token_data.update({
             'id': token_id,
             'token': token,
