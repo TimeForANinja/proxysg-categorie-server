@@ -64,12 +64,13 @@ class Token(MutableToken):
 class TokenDBInterface(ABC):
 
     @abstractmethod
-    def add_token(self, uuid: str, mut_tok: MutableToken) -> Token:
+    def add_token(self, uuid: str, mut_tok: MutableToken, token_id: str) -> Token:
         """
         Add a new token with the given name, and an optional description.
 
         :param uuid: The UUID (token) of the token.
         :param mut_tok: The (partial) token to add.
+        :param token_id: The ID of the token to add. This is used to identify the token in the database.
         :return: The newly created token.
         """
         pass

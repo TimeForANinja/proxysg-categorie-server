@@ -14,12 +14,13 @@ class StagingDBToken:
         self._db = db
         self._staged = staged
 
-    def add_token(self, auth: AuthUser, token: str, mut_tok: MutableToken) -> Token:
+    def add_token(self, auth: AuthUser, mut_tok: MutableToken) -> Token:
         # TODO: switch to pregenerated str for IDs
-        temp_id = '1337' # str(uuid.uuid4())
+        token_id = str(uuid.uuid4())
         token_data = asdict(mut_tok)
+        token = str(uuid.uuid4())
         token_data.update({
-            'id': temp_id,
+            'id': token_id,
             'token': token,
         })
 
@@ -28,7 +29,7 @@ class StagingDBToken:
             type=StagedChangeAction.ADD,
             table=StagedChangeTable.TOKEN,
             auth=auth,
-            id=temp_id,
+            id=token_id,
             data=token_data,
         )
         # Add the staged change to the staging DB
@@ -86,8 +87,9 @@ class StagingDBToken:
         # Usage updates go straight to DB
         self._db.tokens.update_usage(token_id)
 
-    def roll_token(self, auth: AuthUser, token_id: str, new_uuid: str) -> Token:
-        update_data = {'token': new_uuid}
+    def roll_token(self, auth: AuthUser, token_id: str) -> Token:
+        new_token_val = str(uuid.uuid4())
+        update_data = {'token': new_token_val}
 
         # Create a staged change
         staged_change = StagedChange(

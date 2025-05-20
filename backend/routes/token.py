@@ -1,4 +1,3 @@
-import uuid
 from apiflask import APIBlueprint, APIFlask
 from marshmallow_dataclass import class_schema
 
@@ -49,8 +48,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def roll_token(token_id: str):
-        new_token_val = str(uuid.uuid4())
-        new_token = get_db().tokens.roll_token(auth.current_user, token_id, new_token_val)
+        new_token = get_db().tokens.roll_token(auth.current_user, token_id)
         return {
             'status': 'success',
             'message': 'Token rolled successfully',
@@ -76,8 +74,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_token(mut_tok: MutableToken):
-        new_token_val = str(uuid.uuid4())
-        new_token = get_db().tokens.add_token(auth.current_user, new_token_val, mut_tok)
+        new_token = get_db().tokens.add_token(auth.current_user, mut_tok)
         return {
             'status': 'success',
             'message': 'Token successfully created',

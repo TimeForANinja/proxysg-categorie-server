@@ -22,16 +22,16 @@ class SQLiteToken(TokenDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_token(self, uuid: str, mut_tok: MutableToken) -> Token:
+    def add_token(self, uuid: str, mut_tok: MutableToken, token_id: str) -> Token:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            'INSERT INTO tokens (token, description) VALUES (?, ?)',
-            (uuid, mut_tok.description)
+            'INSERT INTO tokens (id, token, description) VALUES (?, ?, ?)',
+            (int(token_id), uuid, mut_tok.description)
         )
         self.get_conn().commit()
 
         new_token = Token(
-            id=str(cursor.lastrowid),
+            id=token_id,
             token=uuid,
             description=mut_tok.description,
             last_use=0,
