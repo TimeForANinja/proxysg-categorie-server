@@ -25,10 +25,10 @@ class StagingDBTokenCategory:
 
             # Create a staged change for the TOKEN table
             staged_change = StagedChange(
-                type=StagedChangeAction.UPDATE,
+                action_type=StagedChangeAction.UPDATE,
                 table=StagedChangeTable.TOKEN,
                 auth=auth,
-                id=token_id,
+                uid=token_id,
                 data={
                     'categories': new_categories
                 },
@@ -46,10 +46,10 @@ class StagingDBTokenCategory:
 
             # Create a staged change for the TOKEN table
             staged_change = StagedChange(
-                type=StagedChangeAction.UPDATE,
+                action_type=StagedChangeAction.UPDATE,
                 table=StagedChangeTable.TOKEN,
                 auth=auth,
-                id=token_id,
+                uid=token_id,
                 data={
                     'categories': new_categories
                 },
@@ -60,10 +60,10 @@ class StagingDBTokenCategory:
     def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]) -> None:
         # Create a staged change for the TOKEN table with the new categories
         staged_change = StagedChange(
-            type=StagedChangeAction.UPDATE,
+            action_type=StagedChangeAction.UPDATE,
             table=StagedChangeTable.TOKEN,
             auth=auth,
-            id=token_id,
+            uid=token_id,
             data={
                 'categories': cat_ids
             },

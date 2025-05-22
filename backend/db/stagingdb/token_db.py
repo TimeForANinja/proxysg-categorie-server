@@ -25,10 +25,10 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.ADD,
+            action_type=StagedChangeAction.ADD,
             table=StagedChangeTable.TOKEN,
             auth=auth,
-            id=token_id,
+            uid=token_id,
             data=token_data,
         )
         # Add the staged change to the staging DB
@@ -71,10 +71,10 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.UPDATE,
+            action_type=StagedChangeAction.UPDATE,
             table=StagedChangeTable.TOKEN,
             auth=auth,
-            id=token_id,
+            uid=token_id,
             data=update_data,
         )
         # Add the staged change to the staging DB
@@ -92,10 +92,10 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.UPDATE,
+            action_type=StagedChangeAction.UPDATE,
             table=StagedChangeTable.TOKEN,
             auth=auth,
-            id=token_id,
+            uid=token_id,
             data=update_data,
         )
         # Add the staged change to the staging DB
@@ -108,10 +108,10 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.DELETE,
+            action_type=StagedChangeAction.DELETE,
             table=StagedChangeTable.TOKEN,
             auth=auth,
-            id=token_id,
+            uid=token_id,
             data=update_data,
         )
         # Add the staged change to the staging DB

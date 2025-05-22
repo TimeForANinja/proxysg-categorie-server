@@ -48,9 +48,15 @@ class StagingDB:
         for change in self._staged.iter():
             if change.table == StagedChangeTable.TOKEN:
                 self.tokens.commit(change)
+                # Also commit token-category relationships if needed
+                self.token_categories.commit(change)
             elif change.table == StagedChangeTable.URL:
                 self.urls.commit(change)
+                # Also commit url-category relationships if needed
+                self.url_categories.commit(change)
             elif change.table == StagedChangeTable.CATEGORY:
                 self.categories.commit(change)
+                # Also commit sub-category relationships if needed
+                self.sub_categories.commit(change)
 
         self._staged.clear()

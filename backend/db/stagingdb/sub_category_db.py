@@ -25,10 +25,10 @@ class StagingDBSubCategory:
 
             # Create a staged change for the CATEGORY table
             staged_change = StagedChange(
-                type=StagedChangeAction.UPDATE,
+                action_type=StagedChangeAction.UPDATE,
                 table=StagedChangeTable.CATEGORY,
                 auth=auth,
-                id=cat_id,
+                uid=cat_id,
                 data={
                     'nested_categories': new_sub_cats
                 },
@@ -46,10 +46,10 @@ class StagingDBSubCategory:
 
             # Create a staged change for the CATEGORY table
             staged_change = StagedChange(
-                type=StagedChangeAction.UPDATE,
+                action_type=StagedChangeAction.UPDATE,
                 table=StagedChangeTable.CATEGORY,
                 auth=auth,
-                id=cat_id,
+                uid=cat_id,
                 data={
                     'nested_categories': new_sub_cats
                 },
@@ -60,10 +60,10 @@ class StagingDBSubCategory:
     def set_sub_categories(self, auth: AuthUser, cat_id: str, cat_ids: List[str]) -> None:
         # Create a staged change for the CATEGORY table with the new nested_categories
         staged_change = StagedChange(
-            type=StagedChangeAction.UPDATE,
+            action_type=StagedChangeAction.UPDATE,
             table=StagedChangeTable.CATEGORY,
             auth=auth,
-            id=cat_id,
+            uid=cat_id,
             data={
                 'nested_categories': cat_ids
             },

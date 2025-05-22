@@ -25,10 +25,10 @@ class StagingDBURLCategory:
 
             # Create a staged change for the URL table
             staged_change = StagedChange(
-                type=StagedChangeAction.UPDATE,
+                action_type=StagedChangeAction.UPDATE,
                 table=StagedChangeTable.URL,
                 auth=auth,
-                id=url_id,
+                uid=url_id,
                 data={
                     'categories': new_categories
                 },
@@ -46,10 +46,10 @@ class StagingDBURLCategory:
 
             # Create a staged change for the URL table
             staged_change = StagedChange(
-                type=StagedChangeAction.UPDATE,
+                action_type=StagedChangeAction.UPDATE,
                 table=StagedChangeTable.URL,
                 auth=auth,
-                id=url_id,
+                uid=url_id,
                 data={
                     'categories': new_categories
                 },
@@ -60,10 +60,10 @@ class StagingDBURLCategory:
     def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]) -> None:
         # Create a staged change for the URL table with the new categories
         staged_change = StagedChange(
-            type=StagedChangeAction.UPDATE,
+            action_type=StagedChangeAction.UPDATE,
             table=StagedChangeTable.URL,
             auth=auth,
-            id=url_id,
+            uid=url_id,
             data={
                 'categories': cat_ids
             },

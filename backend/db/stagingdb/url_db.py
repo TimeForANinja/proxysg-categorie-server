@@ -23,10 +23,10 @@ class StagingDBURL:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.ADD,
+            action_type=StagedChangeAction.ADD,
             table=StagedChangeTable.URL,
             auth=auth,
-            id=url_id,
+            uid=url_id,
             data=url_data,
         )
         # Add the staged change to the staging DB
@@ -65,10 +65,10 @@ class StagingDBURL:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.UPDATE,
+            action_type=StagedChangeAction.UPDATE,
             table=StagedChangeTable.URL,
             auth=auth,
-            id=url_id,
+            uid=url_id,
             data=update_data,
         )
         # Add the staged change to the staging DB
@@ -85,10 +85,10 @@ class StagingDBURL:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.DELETE,
+            action_type=StagedChangeAction.DELETE,
             table=StagedChangeTable.URL,
             auth=auth,
-            id=url_id,
+            uid=url_id,
             data=update_data,
         )
         # Add the staged change to the staging DB

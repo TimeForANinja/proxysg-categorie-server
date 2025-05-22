@@ -23,10 +23,10 @@ class StagingDBCategory:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.ADD,
+            action_type=StagedChangeAction.ADD,
             table=StagedChangeTable.CATEGORY,
             auth=auth,
-            id=category_id,
+            uid=category_id,
             data=category_data,
         )
         # Add the staged change to the staging DB
@@ -65,10 +65,10 @@ class StagingDBCategory:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.UPDATE,
+            action_type=StagedChangeAction.UPDATE,
             table=StagedChangeTable.CATEGORY,
             auth=auth,
-            id=cat_id,
+            uid=cat_id,
             data=update_data,
         )
         # Add the staged change to the staging DB
@@ -81,10 +81,10 @@ class StagingDBCategory:
 
         # Create a staged change
         staged_change = StagedChange(
-            type=StagedChangeAction.DELETE,
+            action_type=StagedChangeAction.DELETE,
             table=StagedChangeTable.CATEGORY,
             auth=auth,
-            id=cat_id,
+            uid=cat_id,
             data=update_data,
         )
         # Add the staged change to the staging DB
