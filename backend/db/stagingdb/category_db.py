@@ -126,5 +126,57 @@ class StagingDBCategory:
         return staged_categories
 
     def commit(self, change: StagedChange) -> None:
-        # TODO: implement
-        pass
+        """
+        Apply the staged change to the persistent database.
+
+        :param change: The staged change to apply.
+        """
+        if change.table != StagedChangeTable.CATEGORY:
+            return
+
+        # Apply the change to the persistent database based on the action type
+        if change.type == StagedChangeAction.ADD:
+            # Create a MutableCategory from the data
+            category_data = change.data.copy()
+            category_id = category_data.pop('id')
+            mutable_category = MutableCategory(**category_data)
+
+            # Add the category to the persistent database
+            self._db.categories.add_category(mutable_category, category_id)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Added category {category_data.get('name')}",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[],
+                ref_category=[category_id],
+            )
+        elif change.type == StagedChangeAction.UPDATE:
+            # Create a MutableCategory from the data
+            category_data = change.data.copy()
+            mutable_category = MutableCategory(**category_data)
+
+            # Update the category in the persistent database
+            self._db.categories.update_category(change.id, mutable_category)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Updated category {category_data.get('name')}",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[],
+                ref_category=[change.id],
+            )
+        elif change.type == StagedChangeAction.DELETE:
+            # Delete the category from the persistent database
+            self._db.categories.delete_category(change.id)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Deleted category",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[],
+                ref_category=[change.id],
+            )

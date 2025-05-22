@@ -70,8 +70,3 @@ class StagingDBSubCategory:
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
-
-    def commit(self, change: StagedChange) -> None:
-        # This is no longer needed as changes are stored in the CATEGORY table
-        # and will be committed by the category_db.py commit method
-        pass

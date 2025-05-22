@@ -70,8 +70,3 @@ class StagingDBTokenCategory:
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
-
-    def commit(self, change: StagedChange) -> None:
-        # This is no longer needed as changes are stored in the TOKEN table
-        # and will be committed by the token_db.py commit method
-        pass

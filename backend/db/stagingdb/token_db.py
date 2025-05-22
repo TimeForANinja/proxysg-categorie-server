@@ -153,5 +153,74 @@ class StagingDBToken:
         return staged_tokens
 
     def commit(self, change: StagedChange) -> None:
-        # TODO: implement
-        pass
+        """
+        Apply the staged change to the persistent database.
+
+        :param change: The staged change to apply.
+        """
+        if change.table != StagedChangeTable.TOKEN:
+            return
+
+        # Apply the change to the persistent database based on the action type
+        if change.type == StagedChangeAction.ADD:
+            # Create a MutableToken from the data
+            token_data = change.data.copy()
+            token_id = token_data.pop('id')
+            token_value = token_data.pop('token')
+            mutable_token = MutableToken(**token_data)
+
+            # Add the token to the persistent database
+            self._db.tokens.add_token(token_id, mutable_token, token_value)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Added token {token_data.get('name')}",
+                user=change.auth,
+                ref_token=[token_id],
+                ref_url=[],
+                ref_category=[],
+            )
+        elif change.type == StagedChangeAction.UPDATE:
+            # Create a MutableToken from the data
+            token_data = change.data.copy()
+
+            # Check if this is a token roll update (only contains the 'token' field)
+            if 'token' in token_data and len(token_data) == 1:
+                # Roll the token in the persistent database
+                self._db.tokens.roll_token(change.id, token_data['token'])
+
+                # Create a history event
+                self._db.history.add_history_event(
+                    action=f"Rolled token",
+                    user=change.auth,
+                    ref_token=[change.id],
+                    ref_url=[],
+                    ref_category=[],
+                )
+            else:
+                # Create a MutableToken from the data
+                mutable_token = MutableToken(**token_data)
+
+                # Update the token in the persistent database
+                self._db.tokens.update_token(change.id, mutable_token)
+
+                # Create a history event
+                self._db.history.add_history_event(
+                    action=f"Updated token {token_data.get('name')}",
+                    user=change.auth,
+                    ref_token=[change.id],
+                    ref_url=[],
+                    ref_category=[],
+                )
+        elif change.type == StagedChangeAction.DELETE:
+            # Delete the token from the persistent database
+            self._db.tokens.delete_token(change.id)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Deleted token",
+                user=change.auth,
+                ref_token=[change.id],
+                ref_url=[],
+                ref_category=[],
+            )

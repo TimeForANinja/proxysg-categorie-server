@@ -130,5 +130,57 @@ class StagingDBURL:
         return staged_urls
 
     def commit(self, change: StagedChange) -> None:
-        # TODO: implement
-        pass
+        """
+        Apply the staged change to the persistent database.
+
+        :param change: The staged change to apply.
+        """
+        if change.table != StagedChangeTable.URL:
+            return
+
+        # Apply the change to the persistent database based on the action type
+        if change.type == StagedChangeAction.ADD:
+            # Create a MutableURL from the data
+            url_data = change.data.copy()
+            url_id = url_data.pop('id')
+            mutable_url = MutableURL(**url_data)
+
+            # Add the URL to the persistent database
+            self._db.urls.add_url(mutable_url, url_id)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Added URL {url_data.get('url')}",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[url_id],
+                ref_category=[],
+            )
+        elif change.type == StagedChangeAction.UPDATE:
+            # Create a MutableURL from the data
+            url_data = change.data.copy()
+            mutable_url = MutableURL(**url_data)
+
+            # Update the URL in the persistent database
+            self._db.urls.update_url(change.id, mutable_url)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Updated URL {url_data.get('url')}",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[change.id],
+                ref_category=[],
+            )
+        elif change.type == StagedChangeAction.DELETE:
+            # Delete the URL from the persistent database
+            self._db.urls.delete_url(change.id)
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Deleted URL",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[change.id],
+                ref_category=[],
+            )
