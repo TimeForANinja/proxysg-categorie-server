@@ -1,6 +1,5 @@
 import time
 from typing import Optional, List, Mapping, Any
-from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
 from db.abc.category import CategoryDBInterface, MutableCategory, Category
@@ -29,7 +28,7 @@ class MongoDBCategory(CategoryDBInterface):
 
     def add_category(self, category: MutableCategory, category_id: str) -> Category:
         self.collection.insert_one({
-            '_id': ObjectId(category_id),
+            '_id': category_id,
             'name': category.name,
             'color': category.color,
             'description': category.description,
@@ -47,7 +46,7 @@ class MongoDBCategory(CategoryDBInterface):
         )
 
     def get_category(self, category_id: str) -> Optional[Category]:
-        query = {'_id': ObjectId(category_id), 'is_deleted': 0}
+        query = {'_id': category_id, 'is_deleted': 0}
         row = self.collection.find_one(query)
         if not row:
             return None
@@ -55,7 +54,7 @@ class MongoDBCategory(CategoryDBInterface):
         return _build_category(row)
 
     def update_category(self, cat_id: str, category: MutableCategory) -> Category:
-        query = {'_id': ObjectId(cat_id), 'is_deleted': 0}
+        query = {'_id': cat_id, 'is_deleted': 0}
         update_fields = {
             'name': category.name,
             'color': category.color,
@@ -73,7 +72,7 @@ class MongoDBCategory(CategoryDBInterface):
     def delete_category(self, category_id: str) -> None:
         current_timestamp = int(time.time())
 
-        query = {'_id': ObjectId(category_id), 'is_deleted': 0}
+        query = {'_id': category_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': current_timestamp}}
         result = self.collection.update_one(query, update)
 

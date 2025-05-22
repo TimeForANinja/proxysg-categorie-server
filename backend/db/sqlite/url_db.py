@@ -26,7 +26,7 @@ class SQLiteURL(URLDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO urls (id, hostname, description, bc_cats) VALUES (?, ?, ?, ?)',
-            (int(url_id), mut_url.hostname, mut_url.description, NO_BC_CATEGORY_YET)
+            (url_id, mut_url.hostname, mut_url.description, NO_BC_CATEGORY_YET)
         )
         self.get_conn().commit()
 
@@ -61,7 +61,7 @@ class SQLiteURL(URLDBInterface):
             ON u.id = uc.url_id
             WHERE u.is_deleted = 0 AND u.id = ?
             GROUP BY u.id''',
-            (int(url_id),)
+            (url_id,)
         )
         row = cursor.fetchone()
         if row:
@@ -82,7 +82,7 @@ class SQLiteURL(URLDBInterface):
 
         if updates:
             query = f'UPDATE urls SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
-            params.append(int(url_id))
+            params.append(url_id)
             cursor = self.get_conn().cursor()
             cursor.execute(query, params)
             self.get_conn().commit()
@@ -92,14 +92,14 @@ class SQLiteURL(URLDBInterface):
     def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
         query = 'UPDATE urls SET bc_cats = ? WHERE id = ? AND is_deleted = 0'
         cursor = self.get_conn().cursor()
-        cursor.execute(query, (','.join(bc_cats), int(url_id)))
+        cursor.execute(query, (','.join(bc_cats), url_id))
         self.get_conn().commit()
 
     def delete_url(self, url_id: str) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE urls SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-            (int(time.time()), int(url_id),)
+            (int(time.time()), url_id,)
         )
         self.get_conn().commit()
 

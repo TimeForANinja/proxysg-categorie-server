@@ -18,7 +18,7 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
             INNER JOIN categories c
             ON uc.category_id = c.id AND c.is_deleted = 0
             WHERE uc.url_id = ? AND uc.is_deleted = 0''',
-            (int(url_id),)
+            (url_id,)
         )
         rows = cursor.fetchall()
         return [str(row[0]) for row in rows]
@@ -27,7 +27,7 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
-            (int(url_id), int(category_id),)
+            (url_id, category_id,)
         )
         self.get_conn().commit()
 
@@ -35,6 +35,6 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
-            (int(time.time()), int(url_id), int(category_id),)
+            (int(time.time()), url_id, category_id,)
         )
         self.get_conn().commit()

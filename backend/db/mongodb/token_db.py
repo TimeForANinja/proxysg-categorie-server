@@ -1,6 +1,5 @@
 import time
 from typing import Optional, List, Mapping, Any
-from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
 from db.abc.token import TokenDBInterface, MutableToken, Token
@@ -31,7 +30,7 @@ class MongoDBToken(TokenDBInterface):
 
     def add_token(self, uuid: str, mut_tok: MutableToken, token_id: str) -> Token:
         self.collection.insert_one({
-            '_id': ObjectId(token_id),
+            '_id': token_id,
             'token': uuid,
             'description': mut_tok.description,
             'last_use': 0,
@@ -49,7 +48,7 @@ class MongoDBToken(TokenDBInterface):
         )
 
     def get_token(self, token_id: str) -> Optional[Token]:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
+        query = {'_id': token_id, 'is_deleted': 0}
         row = self.collection.find_one(query)
         if not row:
             return None
@@ -65,7 +64,7 @@ class MongoDBToken(TokenDBInterface):
         return _build_token(row)
 
     def update_token(self, token_id: str, token: MutableToken) -> Token:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
+        query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'description': token.description,
         }
@@ -78,7 +77,7 @@ class MongoDBToken(TokenDBInterface):
         return self.get_token(token_id)
 
     def update_usage(self, token_id: str) -> None:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
+        query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'last_use': int(time.time()),
         }
@@ -89,7 +88,7 @@ class MongoDBToken(TokenDBInterface):
             raise ValueError(f'Token with ID {token_id} not found or is deleted.')
 
     def roll_token(self, token_id: str, uuid: str) -> Token:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
+        query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'token': uuid,
         }
@@ -102,7 +101,7 @@ class MongoDBToken(TokenDBInterface):
         return self.get_token(token_id)
 
     def delete_token(self, token_id: str) -> None:
-        query = {'_id': ObjectId(token_id), 'is_deleted': 0}
+        query = {'_id': token_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': 1}}
         result = self.collection.update_one(query, update)
 

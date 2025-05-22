@@ -26,7 +26,7 @@ class SQLiteToken(TokenDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO tokens (id, token, description) VALUES (?, ?, ?)',
-            (int(token_id), uuid, mut_tok.description)
+            (token_id, uuid, mut_tok.description)
         )
         self.get_conn().commit()
 
@@ -61,7 +61,7 @@ class SQLiteToken(TokenDBInterface):
             ON t.id = tc.token_id
             WHERE t.is_deleted = 0 AND t.id = ?
             GROUP BY t.id''',
-            (int(token_id),)
+            (token_id,)
         )
         row = cursor.fetchone()
         if row:
@@ -120,7 +120,7 @@ class SQLiteToken(TokenDBInterface):
         timestamp = int(time.time())
         cursor.execute(
             'UPDATE tokens SET last_use = ? WHERE id = ? AND is_deleted = 0',
-            (timestamp, int(token_id),)
+            (timestamp, token_id,)
         )
         self.get_conn().commit()
 
@@ -128,7 +128,7 @@ class SQLiteToken(TokenDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE tokens SET token = ? WHERE id = ? AND is_deleted = 0',
-            (uuid, int(token_id),)
+            (uuid, token_id,)
         )
         self.get_conn().commit()
 
@@ -138,7 +138,7 @@ class SQLiteToken(TokenDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE tokens SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-            (int(time.time()), int(token_id),)
+            (int(time.time()), token_id,)
         )
         self.get_conn().commit()
 

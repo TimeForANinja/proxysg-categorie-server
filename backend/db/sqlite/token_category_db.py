@@ -18,7 +18,7 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
             INNER JOIN categories c
             ON tc.category_id = c.id AND c.is_deleted = 0
             WHERE tc.token_id = ? AND tc.is_deleted = 0''',
-            (int(token_id),)
+            (token_id,)
         )
         rows = cursor.fetchall()
         return [str(row[0]) for row in rows]
@@ -27,7 +27,7 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO token_categories (token_id, category_id) VALUES (?, ?)',
-            (int(token_id), int(category_id),)
+            (token_id, category_id,)
         )
         self.get_conn().commit()
 
@@ -35,6 +35,6 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE token_categories SET is_deleted = ? WHERE token_id = ? AND category_id = ? AND is_deleted = 0',
-            (int(time.time()), int(token_id), int(category_id),)
+            (int(time.time()), token_id, category_id,)
         )
         self.get_conn().commit()

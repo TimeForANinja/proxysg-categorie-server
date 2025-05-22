@@ -54,7 +54,7 @@ class SQLiteHistory(HistoryDBInterface):
         cursor.execute('SELECT id, time, description, user, ref_token, ref_url, ref_category FROM history')
         rows = cursor.fetchall()
         return [History(
-            id=row[0],
+            id=str(row[0]),
             time=row[1],
             description=row[2],
             atomics=[],

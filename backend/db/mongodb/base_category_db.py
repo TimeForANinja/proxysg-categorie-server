@@ -1,6 +1,5 @@
 from typing import List, Mapping, Any, TypeVar, Generic
 import time
-from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
 T = TypeVar('T')
@@ -22,7 +21,7 @@ class MongoDBBaseCategory(Generic[T]):
 
         :param item_id: The ID of the item
         """
-        query = {'_id': ObjectId(item_id), 'is_deleted': 0}
+        query = {'_id': item_id, 'is_deleted': 0}
         row = self.collection.find_one(query)
         if not row:
             return []
@@ -40,7 +39,7 @@ class MongoDBBaseCategory(Generic[T]):
         :param item_id: The ID of the item
         :param category_id: The ID of the Category
         """
-        query = {'_id': ObjectId(item_id), 'is_deleted': 0}
+        query = {'_id': item_id, 'is_deleted': 0}
         # add-to-set only adds if it is not already a member of the array
         update = {'$addToSet': {'categories': {'cat': category_id, 'is_deleted': 0}}}
 
@@ -56,7 +55,7 @@ class MongoDBBaseCategory(Generic[T]):
         :param item_id: The ID of the item
         :param category_id: The ID of the Category
         """
-        query = {'_id': ObjectId(item_id), 'is_deleted': 0}
+        query = {'_id': item_id, 'is_deleted': 0}
         update = {'$set': {'categories.$[elem].is_deleted': int(time.time())}}
         array_filters = [{'elem.cat': category_id, 'elem.is_deleted': 0}]
 

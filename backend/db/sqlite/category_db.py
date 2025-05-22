@@ -26,7 +26,7 @@ class SQLiteCategory(CategoryDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO categories (id, name, description, color) VALUES (?, ?, ?, ?)',
-            (int(category_id), mut_cat.name, mut_cat.description, mut_cat.color)
+            (category_id, mut_cat.name, mut_cat.description, mut_cat.color)
         )
         self.get_conn().commit()
 
@@ -61,7 +61,7 @@ class SQLiteCategory(CategoryDBInterface):
             ON c.id = sc.parent_id
             WHERE id = ? AND is_deleted = 0
             GROUP BY c.id''',
-            (int(category_id),)
+            (category_id,)
         )
         row = cursor.fetchone()
         if row:
@@ -87,7 +87,7 @@ class SQLiteCategory(CategoryDBInterface):
 
         if updates:
             query = f'UPDATE categories SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
-            params.append(int(cat_id))
+            params.append(cat_id)
             cursor = self.get_conn().cursor()
             cursor.execute(query, params)
             self.get_conn().commit()
@@ -98,7 +98,7 @@ class SQLiteCategory(CategoryDBInterface):
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-            (int(time.time()), int(category_id),)
+            (int(time.time()), category_id,)
         )
         self.get_conn().commit()
 

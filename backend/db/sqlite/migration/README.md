@@ -30,24 +30,17 @@ Migration scripts should follow these guidelines:
 ## Example Migration Script
 
 ```sql
--- Migration script: 3_add_user_preferences.sql
--- Add user preferences table
+-- Migration script: 7_add_last_seen_to_urls.sql
+-- Add last_seen column to urls table
 
-CREATE TABLE IF NOT EXISTS user_preferences (
-    user_id INTEGER PRIMARY KEY,
-    theme TEXT DEFAULT 'light',
-    notifications BOOLEAN DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
--- Add default preferences for existing users
-INSERT INTO user_preferences (user_id)
-SELECT id FROM users WHERE id NOT IN (SELECT user_id FROM user_preferences);
+-- Add the new column to the urls table
+ALTER TABLE urls ADD COLUMN last_seen INTEGER DEFAULT 0;
 
 -- Record this migration in the history table
 -- Note: Always include this at the end of your migration script
-INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) 
-VALUES (strftime('%s', 'now'), 'Migrated DB to version: 3', 'system', '', '', '');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added last_seen column to urls table', 'system');
+
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 7', 'system');
 ```
 
 > **Important**: Always include a history record at the end of each migration script to document the version change.
