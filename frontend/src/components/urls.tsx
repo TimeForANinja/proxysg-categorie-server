@@ -306,8 +306,14 @@ function EditDialog(props: EditDialogProps) {
         setDescription("");
     };
 
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter') {
+            handleSave();
+        }
+    };
+
     return (
-        <Dialog open={uri.isOpen()} onClose={onClose}>
+        <Dialog open={uri.isOpen()} onClose={onClose} onKeyDown={handleKeyDown}>
             <DialogTitle>Edit URL</DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>

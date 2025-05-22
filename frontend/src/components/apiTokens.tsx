@@ -340,8 +340,14 @@ function EditDialog(props: EditDialogProps) {
         setDescription("");
     };
 
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter') {
+            handleSave();
+        }
+    };
+
     return (
-        <Dialog open={token.isOpen()} onClose={onClose}>
+        <Dialog open={token.isOpen()} onClose={onClose} onKeyDown={handleKeyDown}>
             <DialogTitle>Edit API Token</DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>

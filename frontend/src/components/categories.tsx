@@ -302,8 +302,14 @@ function EditDialog(props: EditDialogProps) {
         setColor(1)
     };
 
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter') {
+            handleSave();
+        }
+    };
+
     return (
-        <Dialog open={category.isOpen()} onClose={onClose}>
+        <Dialog open={category.isOpen()} onClose={onClose} onKeyDown={handleKeyDown}>
             <DialogTitle>Edit Category</DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2}>
