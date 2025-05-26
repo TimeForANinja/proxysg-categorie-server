@@ -18,7 +18,7 @@ def get_db() -> DBInterface:
             connection_user = mongo_cfg.get('CON_USER', 'admin')
             connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
             connection_host = mongo_cfg.get('CON_HOST', 'localhost:27017')
-            connection_uri = f'mongodb://{connection_user}:{connection_password}@{connection_host}/'
+            connection_uri = f'mongodb://{connection_user}:{connection_password}@{connection_host}/?authSource={database_name}'
             log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'user': connection_user, 'host': connection_host })
             db = MyMongoDB(database_name, connection_uri)
         elif db_type == 'sqlite':
