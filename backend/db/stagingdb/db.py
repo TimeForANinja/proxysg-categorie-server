@@ -1,4 +1,5 @@
 from db.abc.db import DBInterface
+from db.abc.staging import ActionTable
 from db.stagingdb.category_db import StagingDBCategory
 from db.stagingdb.existing import StagingDBExisting
 from db.stagingdb.history_db import StagingDBHistory
@@ -7,7 +8,7 @@ from db.stagingdb.token_category_db import StagingDBTokenCategory
 from db.stagingdb.token_db import StagingDBToken
 from db.stagingdb.url_category_db import StagingDBURLCategory
 from db.stagingdb.url_db import StagingDBURL
-from db.stagingdb.cache import StagedCollection, StagedChangeTable
+from db.stagingdb.cache import StagedCollection
 
 
 class StagingDB:
@@ -25,9 +26,8 @@ class StagingDB:
             main_db: DBInterface,
     ):
         super().__init__()
-
         self._main_db = main_db
-        self._staged: StagedCollection = StagedCollection()
+        self._staged = StagedCollection(self._main_db)
 
         self.categories = StagingDBCategory(self._main_db, self._staged)
         self.sub_categories = StagingDBSubCategory(self._main_db, self._staged, self.categories)
@@ -46,11 +46,11 @@ class StagingDB:
         Push all staged changes to the main database.
         """
         for change in self._staged.iter():
-            if change.table == StagedChangeTable.TOKEN:
+            if change.action_table == ActionTable.TOKEN:
                 self.tokens.commit(change)
-            elif change.table == StagedChangeTable.URL:
+            elif change.action_table == ActionTable.URL:
                 self.urls.commit(change)
-            elif change.table == StagedChangeTable.CATEGORY:
+            elif change.action_table == ActionTable.CATEGORY:
                 self.categories.commit(change)
 
         self._staged.clear()

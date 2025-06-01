@@ -1,47 +1,39 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from typing import List, Optional, Dict, Any
+
+from auth.auth_user import AuthUser
 
 
 class ActionType(Enum):
     """Helper class to represent the different types of staged changes."""
-    CREATE = "create"
-    DELETE = "delete"
+    ADD = "add"
+    REMOVE = "remove"
     UPDATE = "update"
-    SET_CATEGORIES = "set_categories"
+    DELETE = "delete"
 
 class ActionTable(Enum):
     """Helper class to represent the different tables that can be modified by staged changes."""
-    CATEGORIES = "categories"
-    TOKENS = "tokens"
-    URLS = "urls"
+    CATEGORY = "category"
+    TOKEN = "token"
+    URL = "url"
 
 
 @dataclass(kw_only=True)
-class MutableStagedChange:
-    """Struct to represent the mutable parts of a staged change."""
-    action: ActionType
-    user: str
-    table: ActionTable
-    entity_id: str
-    data: dict
-
-@dataclass(kw_only=True)
-class StagedChange(MutableStagedChange):
+class StagedChange:
     """Struct to represent a staged change."""
-    id: str
-    action: ActionType
-    user: str
-    time: int
-    table: ActionTable
-    entity_id: str
-    data: dict
+    action_type: ActionType
+    action_table: ActionTable
+    auth: AuthUser
+    uid: str
+    data: Optional[Dict[str, Any]]
+    timestamp: int = 0
 
 
 class StagingDBInterface(ABC):
     @abstractmethod
-    def store_staged_change(self, change: MutableStagedChange) -> None:
+    def store_staged_change(self, change: StagedChange) -> None:
         """
         Store a staged change in the database.
 

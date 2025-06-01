@@ -1,8 +1,10 @@
+import time
 from typing import List
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
-from db.stagingdb.cache import StagedChange, StagedChangeAction, StagedCollection, StagedChangeTable
+from db.abc.staging import ActionType, ActionTable
+from db.stagingdb.cache import StagedChange, StagedCollection
 from db.stagingdb.token_db import StagingDBToken
 
 
@@ -25,13 +27,14 @@ class StagingDBTokenCategory:
 
             # Create a staged change for the TOKEN table
             staged_change = StagedChange(
-                action_type=StagedChangeAction.UPDATE,
-                table=StagedChangeTable.TOKEN,
+                action_type=ActionType.UPDATE,
+                action_table=ActionTable.TOKEN,
                 auth=auth,
                 uid=token_id,
                 data={
                     'categories': new_categories
                 },
+                timestamp=int(time.time()),
             )
             # Add the staged change to the staging DB
             self._staged.add(staged_change)
@@ -46,13 +49,14 @@ class StagingDBTokenCategory:
 
             # Create a staged change for the TOKEN table
             staged_change = StagedChange(
-                action_type=StagedChangeAction.UPDATE,
-                table=StagedChangeTable.TOKEN,
+                action_type=ActionType.UPDATE,
+                action_table=ActionTable.TOKEN,
                 auth=auth,
                 uid=token_id,
                 data={
                     'categories': new_categories
                 },
+                timestamp=int(time.time()),
             )
             # Add the staged change to the staging DB
             self._staged.add(staged_change)
@@ -60,13 +64,14 @@ class StagingDBTokenCategory:
     def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]) -> None:
         # Create a staged change for the TOKEN table with the new categories
         staged_change = StagedChange(
-            action_type=StagedChangeAction.UPDATE,
-            table=StagedChangeTable.TOKEN,
+            action_type=ActionType.UPDATE,
+            action_table=ActionTable.TOKEN,
             auth=auth,
             uid=token_id,
             data={
                 'categories': cat_ids
             },
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)

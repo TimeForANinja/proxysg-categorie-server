@@ -1,8 +1,10 @@
+import time
 from typing import List
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
-from db.stagingdb.cache import StagedChange, StagedChangeAction, StagedCollection, StagedChangeTable
+from db.abc.staging import ActionType, ActionTable
+from db.stagingdb.cache import StagedChange, StagedCollection
 from db.stagingdb.category_db import StagingDBCategory
 
 
@@ -25,13 +27,14 @@ class StagingDBSubCategory:
 
             # Create a staged change for the CATEGORY table
             staged_change = StagedChange(
-                action_type=StagedChangeAction.UPDATE,
-                table=StagedChangeTable.CATEGORY,
+                action_type=ActionType.UPDATE,
+                action_table=ActionTable.CATEGORY,
                 auth=auth,
                 uid=cat_id,
                 data={
                     'nested_categories': new_sub_cats
                 },
+                timestamp=int(time.time()),
             )
             # Add the staged change to the staging DB
             self._staged.add(staged_change)
@@ -46,13 +49,14 @@ class StagingDBSubCategory:
 
             # Create a staged change for the CATEGORY table
             staged_change = StagedChange(
-                action_type=StagedChangeAction.UPDATE,
-                table=StagedChangeTable.CATEGORY,
+                action_type=ActionType.UPDATE,
+                action_table=ActionTable.CATEGORY,
                 auth=auth,
                 uid=cat_id,
                 data={
                     'nested_categories': new_sub_cats
                 },
+                timestamp=int(time.time()),
             )
             # Add the staged change to the staging DB
             self._staged.add(staged_change)
@@ -60,13 +64,14 @@ class StagingDBSubCategory:
     def set_sub_categories(self, auth: AuthUser, cat_id: str, cat_ids: List[str]) -> None:
         # Create a staged change for the CATEGORY table with the new nested_categories
         staged_change = StagedChange(
-            action_type=StagedChangeAction.UPDATE,
-            table=StagedChangeTable.CATEGORY,
+            action_type=ActionType.UPDATE,
+            action_table=ActionTable.CATEGORY,
             auth=auth,
             uid=cat_id,
             data={
                 'nested_categories': cat_ids
             },
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)

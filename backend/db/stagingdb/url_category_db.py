@@ -1,8 +1,10 @@
+import time
 from typing import List
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
-from db.stagingdb.cache import StagedChange, StagedChangeAction, StagedCollection, StagedChangeTable
+from db.abc.staging import ActionType, ActionTable
+from db.stagingdb.cache import StagedChange, StagedCollection
 from db.stagingdb.url_db import StagingDBURL
 
 
@@ -25,13 +27,14 @@ class StagingDBURLCategory:
 
             # Create a staged change for the URL table
             staged_change = StagedChange(
-                action_type=StagedChangeAction.UPDATE,
-                table=StagedChangeTable.URL,
+                action_type=ActionType.UPDATE,
+                action_table=ActionTable.URL,
                 auth=auth,
                 uid=url_id,
                 data={
                     'categories': new_categories
                 },
+                timestamp=int(time.time()),
             )
             # Add the staged change to the staging DB
             self._staged.add(staged_change)
@@ -46,13 +49,14 @@ class StagingDBURLCategory:
 
             # Create a staged change for the URL table
             staged_change = StagedChange(
-                action_type=StagedChangeAction.UPDATE,
-                table=StagedChangeTable.URL,
+                action_type=ActionType.UPDATE,
+                action_table=ActionTable.URL,
                 auth=auth,
                 uid=url_id,
                 data={
                     'categories': new_categories
                 },
+                timestamp=int(time.time()),
             )
             # Add the staged change to the staging DB
             self._staged.add(staged_change)
@@ -60,13 +64,14 @@ class StagingDBURLCategory:
     def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]) -> None:
         # Create a staged change for the URL table with the new categories
         staged_change = StagedChange(
-            action_type=StagedChangeAction.UPDATE,
-            table=StagedChangeTable.URL,
+            action_type=ActionType.UPDATE,
+            action_table=ActionTable.URL,
             auth=auth,
             uid=url_id,
             data={
                 'categories': cat_ids
             },
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)

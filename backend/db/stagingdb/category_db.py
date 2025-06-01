@@ -6,7 +6,8 @@ import uuid
 from auth.auth_user import AuthUser
 from db.abc.category import MutableCategory, Category
 from db.abc.db import DBInterface
-from db.stagingdb.cache import StagedChange, StagedChangeAction, StagedCollection, StagedChangeTable, StageFilter
+from db.abc.staging import ActionType, ActionTable
+from db.stagingdb.cache import StagedChange, StageFilter, StagedCollection
 
 
 class StagingDBCategory:
@@ -23,11 +24,12 @@ class StagingDBCategory:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.ADD,
-            table=StagedChangeTable.CATEGORY,
+            action_type=ActionType.ADD,
+            action_table=ActionTable.CATEGORY,
             auth=auth,
             uid=category_id,
             data=category_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -44,14 +46,14 @@ class StagingDBCategory:
         if category is None:
             # no category in DB, so check if we have an "add" event
             add_category = self._staged.first_or_none(
-                StageFilter.fac_filter_table_id(StagedChangeTable.CATEGORY, category_id),
+                StageFilter.fac_filter_table_id(ActionTable.CATEGORY, category_id),
                 StageFilter.filter_add,
             )
             category = add_category.data if add_category is not None else None
 
         # overload any staged changes
         for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(StagedChangeTable.CATEGORY, category_id),
+                StageFilter.fac_filter_table_id(ActionTable.CATEGORY, category_id),
         ):
             if staged_change.data.get('is_deleted', 0) != 0:
                 return None
@@ -65,11 +67,12 @@ class StagingDBCategory:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.UPDATE,
-            table=StagedChangeTable.CATEGORY,
+            action_type=ActionType.UPDATE,
+            action_table=ActionTable.CATEGORY,
             auth=auth,
             uid=cat_id,
             data=update_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -81,11 +84,12 @@ class StagingDBCategory:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.DELETE,
-            table=StagedChangeTable.CATEGORY,
+            action_type=ActionType.DELETE,
+            action_table=ActionTable.CATEGORY,
             auth=auth,
             uid=cat_id,
             data=update_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -104,7 +108,7 @@ class StagingDBCategory:
                 c.data for c in
                 self._staged.iter_filter(
                     StageFilter.filter_add,
-                    StageFilter.fac_filter_table(StagedChangeTable.CATEGORY),
+                    StageFilter.fac_filter_table(ActionTable.CATEGORY),
                 )
             ]
         )
@@ -116,7 +120,7 @@ class StagingDBCategory:
 
             # overload any staged changes
             for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(StagedChangeTable.CATEGORY, category.get('id'))
+                StageFilter.fac_filter_table_id(ActionTable.CATEGORY, category.get('uid'))
             ):
                 category.update(staged_change.data)
 
@@ -131,11 +135,11 @@ class StagingDBCategory:
 
         :param change: The staged change to apply.
         """
-        if change.table != StagedChangeTable.CATEGORY:
+        if change.action_table != ActionTable.CATEGORY:
             return
 
         # Apply the change to the persistent database based on the action type
-        if change.type == StagedChangeAction.ADD:
+        if change.action_type == ActionType.ADD:
             # Create a MutableCategory from the data
             category_data = change.data.copy()
             category_id = category_data.pop('id')
@@ -152,13 +156,13 @@ class StagingDBCategory:
                 ref_url=[],
                 ref_category=[category_id],
             )
-        elif change.type == StagedChangeAction.UPDATE:
+        elif change.action_type == ActionType.UPDATE:
             # Create a MutableCategory from the data
             category_data = change.data.copy()
             mutable_category = MutableCategory(**category_data)
 
             # Update the category in the persistent database
-            self._db.categories.update_category(change.id, mutable_category)
+            self._db.categories.update_category(change.uid, mutable_category)
 
             # Create a history event
             self._db.history.add_history_event(
@@ -166,11 +170,11 @@ class StagingDBCategory:
                 user=change.auth,
                 ref_token=[],
                 ref_url=[],
-                ref_category=[change.id],
+                ref_category=[change.uid],
             )
-        elif change.type == StagedChangeAction.DELETE:
+        elif change.action_type == ActionType.DELETE:
             # Delete the category from the persistent database
-            self._db.categories.delete_category(change.id)
+            self._db.categories.delete_category(change.uid)
 
             # Create a history event
             self._db.history.add_history_event(
@@ -178,5 +182,5 @@ class StagingDBCategory:
                 user=change.auth,
                 ref_token=[],
                 ref_url=[],
-                ref_category=[change.id],
+                ref_category=[change.uid],
             )

@@ -5,8 +5,9 @@ import uuid
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
+from db.abc.staging import ActionType, ActionTable
 from db.abc.url import MutableURL, URL
-from db.stagingdb.cache import StagedChange, StagedChangeAction, StagedCollection, StagedChangeTable, StageFilter
+from db.stagingdb.cache import StagedChange, StageFilter, StagedCollection
 
 
 class StagingDBURL:
@@ -23,11 +24,12 @@ class StagingDBURL:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.ADD,
-            table=StagedChangeTable.URL,
+            action_type=ActionType.ADD,
+            action_table=ActionTable.URL,
             auth=auth,
             uid=url_id,
             data=url_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -44,14 +46,14 @@ class StagingDBURL:
         if url is None:
             # no url in DB, so check if we have an "add" event
             add_url = self._staged.first_or_none(
-                StageFilter.fac_filter_table_id(StagedChangeTable.URL, url_id),
+                StageFilter.fac_filter_table_id(ActionTable.URL, url_id),
                 StageFilter.filter_add,
             )
             url = add_url.data if add_url is not None else None
 
         # overload any staged changes
         for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(StagedChangeTable.URL, url_id),
+                StageFilter.fac_filter_table_id(ActionTable.URL, url_id),
         ):
             if staged_change.data.get('is_deleted', 0) != 0:
                 return None
@@ -65,11 +67,12 @@ class StagingDBURL:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.UPDATE,
-            table=StagedChangeTable.URL,
+            action_type=ActionType.UPDATE,
+            action_table=ActionTable.URL,
             auth=auth,
             uid=url_id,
             data=update_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -85,11 +88,12 @@ class StagingDBURL:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.DELETE,
-            table=StagedChangeTable.URL,
+            action_type=ActionType.DELETE,
+            action_table=ActionTable.URL,
             auth=auth,
             uid=url_id,
             data=update_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -108,7 +112,7 @@ class StagingDBURL:
                 u.data for u in
                 self._staged.iter_filter(
                     StageFilter.filter_add,
-                    StageFilter.fac_filter_table(StagedChangeTable.URL),
+                    StageFilter.fac_filter_table(ActionTable.URL),
                 )
             ]
         )
@@ -120,7 +124,7 @@ class StagingDBURL:
 
             # overload any staged changes
             for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(StagedChangeTable.URL, url.get('id'))
+                StageFilter.fac_filter_table_id(ActionTable.URL, url.get('uid'))
             ):
                 url.update(staged_change.data)
 
@@ -135,11 +139,11 @@ class StagingDBURL:
 
         :param change: The staged change to apply.
         """
-        if change.table != StagedChangeTable.URL:
+        if change.action_table != ActionTable.URL:
             return
 
         # Apply the change to the persistent database based on the action type
-        if change.type == StagedChangeAction.ADD:
+        if change.action_type == ActionType.ADD:
             # Create a MutableURL from the data
             url_data = change.data.copy()
             url_id = url_data.pop('id')
@@ -156,31 +160,31 @@ class StagingDBURL:
                 ref_url=[url_id],
                 ref_category=[],
             )
-        elif change.type == StagedChangeAction.UPDATE:
+        elif change.action_type == ActionType.UPDATE:
             # Create a MutableURL from the data
             url_data = change.data.copy()
             mutable_url = MutableURL(**url_data)
 
             # Update the URL in the persistent database
-            self._db.urls.update_url(change.id, mutable_url)
+            self._db.urls.update_url(change.uid, mutable_url)
 
             # Create a history event
             self._db.history.add_history_event(
                 action=f"Updated URL {url_data.get('url')}",
                 user=change.auth,
                 ref_token=[],
-                ref_url=[change.id],
+                ref_url=[change.uid],
                 ref_category=[],
             )
-        elif change.type == StagedChangeAction.DELETE:
+        elif change.action_type == ActionType.DELETE:
             # Delete the URL from the persistent database
-            self._db.urls.delete_url(change.id)
+            self._db.urls.delete_url(change.uid)
 
             # Create a history event
             self._db.history.add_history_event(
                 action=f"Deleted URL",
                 user=change.auth,
                 ref_token=[],
-                ref_url=[change.id],
+                ref_url=[change.uid],
                 ref_category=[],
             )

@@ -5,8 +5,9 @@ import uuid
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
+from db.abc.staging import ActionType, ActionTable
 from db.abc.token import MutableToken, Token
-from db.stagingdb.cache import StagedChange, StagedChangeAction, StagedCollection, StagedChangeTable, StageFilter
+from db.stagingdb.cache import StagedChange, StageFilter, StagedCollection
 
 
 class StagingDBToken:
@@ -25,11 +26,12 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.ADD,
-            table=StagedChangeTable.TOKEN,
+            action_type=ActionType.ADD,
+            action_table=ActionTable.TOKEN,
             auth=auth,
             uid=token_id,
             data=token_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -46,14 +48,14 @@ class StagingDBToken:
         if token is None:
             # no token in DB, so check if we have an "add" event
             add_token = self._staged.first_or_none(
-                StageFilter.fac_filter_table_id(StagedChangeTable.TOKEN, token_id),
+                StageFilter.fac_filter_table_id(ActionTable.TOKEN, token_id),
                 StageFilter.filter_add,
             )
             token = add_token.data if add_token is not None else None
 
         # overload any staged changes
         for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(StagedChangeTable.TOKEN, token_id),
+                StageFilter.fac_filter_table_id(ActionTable.TOKEN, token_id),
         ):
             if staged_change.data.get('is_deleted', 0) != 0:
                 return None
@@ -71,11 +73,12 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.UPDATE,
-            table=StagedChangeTable.TOKEN,
+            action_type=ActionType.UPDATE,
+            action_table=ActionTable.TOKEN,
             auth=auth,
             uid=token_id,
             data=update_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -92,11 +95,12 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.UPDATE,
-            table=StagedChangeTable.TOKEN,
+            action_type=ActionType.UPDATE,
+            action_table=ActionTable.TOKEN,
             auth=auth,
             uid=token_id,
             data=update_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -108,11 +112,12 @@ class StagingDBToken:
 
         # Create a staged change
         staged_change = StagedChange(
-            action_type=StagedChangeAction.DELETE,
-            table=StagedChangeTable.TOKEN,
+            action_type=ActionType.DELETE,
+            action_table=ActionTable.TOKEN,
             auth=auth,
             uid=token_id,
             data=update_data,
+            timestamp=int(time.time()),
         )
         # Add the staged change to the staging DB
         self._staged.add(staged_change)
@@ -131,7 +136,7 @@ class StagingDBToken:
                 t.data for t in
                 self._staged.iter_filter(
                     StageFilter.filter_add,
-                    StageFilter.fac_filter_table(StagedChangeTable.TOKEN),
+                    StageFilter.fac_filter_table(ActionTable.TOKEN),
                 )
             ]
         )
@@ -143,7 +148,7 @@ class StagingDBToken:
 
             # overload any staged changes
             for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(StagedChangeTable.TOKEN, token.get('id'))
+                StageFilter.fac_filter_table_id(ActionTable.TOKEN, token.get('uid'))
             ):
                 token.update(staged_change.data)
 
@@ -158,11 +163,11 @@ class StagingDBToken:
 
         :param change: The staged change to apply.
         """
-        if change.table != StagedChangeTable.TOKEN:
+        if change.action_table != ActionTable.TOKEN:
             return
 
         # Apply the change to the persistent database based on the action type
-        if change.type == StagedChangeAction.ADD:
+        if change.action_type == ActionType.ADD:
             # Create a MutableToken from the data
             token_data = change.data.copy()
             token_id = token_data.pop('id')
@@ -180,20 +185,20 @@ class StagingDBToken:
                 ref_url=[],
                 ref_category=[],
             )
-        elif change.type == StagedChangeAction.UPDATE:
+        elif change.action_type == ActionType.UPDATE:
             # Create a MutableToken from the data
             token_data = change.data.copy()
 
             # Check if this is a token roll update (only contains the 'token' field)
             if 'token' in token_data and len(token_data) == 1:
                 # Roll the token in the persistent database
-                self._db.tokens.roll_token(change.id, token_data['token'])
+                self._db.tokens.roll_token(change.uid, token_data['token'])
 
                 # Create a history event
                 self._db.history.add_history_event(
                     action=f"Rolled token",
                     user=change.auth,
-                    ref_token=[change.id],
+                    ref_token=[change.uid],
                     ref_url=[],
                     ref_category=[],
                 )
@@ -202,25 +207,25 @@ class StagingDBToken:
                 mutable_token = MutableToken(**token_data)
 
                 # Update the token in the persistent database
-                self._db.tokens.update_token(change.id, mutable_token)
+                self._db.tokens.update_token(change.uid, mutable_token)
 
                 # Create a history event
                 self._db.history.add_history_event(
                     action=f"Updated token {token_data.get('name')}",
                     user=change.auth,
-                    ref_token=[change.id],
+                    ref_token=[change.uid],
                     ref_url=[],
                     ref_category=[],
                 )
-        elif change.type == StagedChangeAction.DELETE:
+        elif change.action_type == ActionType.DELETE:
             # Delete the token from the persistent database
-            self._db.tokens.delete_token(change.id)
+            self._db.tokens.delete_token(change.uid)
 
             # Create a history event
             self._db.history.add_history_event(
                 action=f"Deleted token",
                 user=change.auth,
-                ref_token=[change.id],
+                ref_token=[change.uid],
                 ref_url=[],
                 ref_category=[],
             )
