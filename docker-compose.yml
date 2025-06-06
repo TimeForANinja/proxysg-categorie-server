@@ -6,11 +6,11 @@ version: "3.8"
 services:
   proxysg-category-server:
     # use the preexisting image
-    image: ghcr.io/timeforaninja/proxysg-categorie-server:main
+    #image: ghcr.io/timeforaninja/proxysg-categorie-server:main
     # __OR__ build new from local Dockerfile
-    #build:
-    #  context: .
-    #  dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
 
     container_name: proxysg-category-server
     ports:
