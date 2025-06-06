@@ -35,11 +35,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --from=frontend-builder /frontend/build ./dist
 
 # create start-script to start the server with Gunicorn
-RUN <<EOF cat >> /backend/start.sh
-#!/bin/sh
-set -e
-exec gunicorn -c gunicorn_config.py -w 4 -b 0.0.0.0:8080 app:app
-EOF
+RUN echo '#!/bin/sh' > /backend/start.sh && \
+    echo 'set -e' >> /backend/start.sh && \
+    echo 'exec gunicorn -c gunicorn_config.py -w 4 -b 0.0.0.0:8080 app:app' >> /backend/start.sh
 RUN chmod +x /backend/start.sh
 
 # Expose the port for Flask (optional, adjust as necessary)
