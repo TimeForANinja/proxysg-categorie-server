@@ -13,12 +13,12 @@ from db.mongodb.url_category_db import MongoDBURLCategory
 class MyMongoDB(DBInterface):
     def __init__(
             self,
+            client: MongoClient,
             database_name: str,
-            connection_uri: str,
     ):
         super().__init__()
 
-        self.client = MongoClient(connection_uri)
+        self.client = client
         self.db = self.client[database_name]
 
         self.categories = MongoDBCategory(self.db)
