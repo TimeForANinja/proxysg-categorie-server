@@ -1,6 +1,7 @@
 from typing import List, Mapping, Any, TypeVar, Generic
 import time
 from bson.objectid import ObjectId
+from pymongo import UpdateOne
 from pymongo.synchronous.database import Database
 
 T = TypeVar('T')
@@ -40,14 +41,26 @@ class MongoDBBaseCategory(Generic[T]):
         :param item_id: The ID of the item
         :param category_id: The ID of the Category
         """
-        query = {'_id': ObjectId(item_id), 'is_deleted': 0}
-        # add-to-set only adds if it is not already a member of the array
-        update = {'$addToSet': {'categories': {'cat': category_id, 'is_deleted': 0}}}
+        return self.bulk_add_item_category([(item_id, category_id)])
 
-        result = self.collection.update_one(query, update)
+    def bulk_add_item_category(self, sets: List[tuple[str, str]]) -> None:
+        """
+        Bulk add item and Category mappings.
 
-        if result.modified_count == 0:
-            raise ValueError(f'{self.item_type} with id {item_id} not found or is deleted.')
+        :param sets: A list of tuples (item_id, category_id)
+        """
+        operations = []
+        for item_id, category_id in sets:
+            operations.append(UpdateOne(
+                {'_id': ObjectId(item_id), 'is_deleted': 0},
+                {'$addToSet': {'categories': {'cat': category_id, 'is_deleted': 0}}},
+                upsert=True,
+            ))
+
+        results = self.collection.bulk_write(operations)
+
+        if results.modified_count != len(operations):
+            raise ValueError(f'Some {self.item_type}s were not found or are deleted.')
 
     def delete_item_category(self, item_id: str, category_id: str) -> None:
         """

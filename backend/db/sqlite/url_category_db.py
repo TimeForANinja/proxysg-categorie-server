@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from typing import List, Callable
+from typing import List, Callable, Tuple
 
 from db.url_category import UrlCategoryDBInterface
 
@@ -24,10 +24,13 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
         return [str(row[0]) for row in rows]
 
     def add_url_category(self, url_id: str, category_id: str) -> None:
+        self.bulk_add_url_category([(url_id, category_id)])
+
+    def bulk_add_url_category(self, sets: List[Tuple[str, str]]) -> None:
         cursor = self.get_conn().cursor()
-        cursor.execute(
+        cursor.executemany(
             'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
-            (int(url_id), int(category_id),)
+            [(int(url_id), int(category_id)) for url_id, category_id in sets]
         )
         self.get_conn().commit()
 

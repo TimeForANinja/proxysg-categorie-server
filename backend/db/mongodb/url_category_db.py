@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any
+from typing import List, Mapping, Any, Tuple
 from pymongo.synchronous.database import Database
 
 from db.url_category import UrlCategoryDBInterface
@@ -13,7 +13,10 @@ class MongoDBURLCategory(UrlCategoryDBInterface, MongoDBBaseCategory):
         return self.get_categories_by_item(url_id)
 
     def add_url_category(self, url_id: str, category_id: str) -> None:
-        self.add_item_category(url_id, category_id)
+        self.bulk_add_url_category([(url_id, category_id)])
+
+    def bulk_add_url_category(self, sets: List[Tuple[str, str]]) -> None:
+        self.bulk_add_item_category(sets)
 
     def delete_url_category(self, url_id: str, category_id: str) -> None:
         self.delete_item_category(url_id, category_id)

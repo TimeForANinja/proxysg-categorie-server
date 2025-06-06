@@ -75,14 +75,23 @@ class Category(MutableCategory):
 
 
 class CategoryDBInterface(ABC):
-
     @abstractmethod
-    def add_category(self, category: MutableCategory) -> Category:
+    def add_category(self, mut_cat: MutableCategory) -> Category:
         """
         Add a new category with the given name, color, and an optional description.
 
-        :param category: The (partial) category to add.
+        :param mut_cat: The (partial) category to add.
         :return: The newly created category.
+        """
+        pass
+
+    @abstractmethod
+    def bulk_add_category(self, mut_cats: List[MutableCategory]) -> List[Category]:
+        """
+        Add a list of categories to the database.
+
+        :param mut_cats: A list of categories to add.
+        :return: A list of newly created categories.
         """
         pass
 

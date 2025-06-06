@@ -27,22 +27,31 @@ class MongoDBURL(URLDBInterface):
         self.collection = self.db['urls']
 
     def add_url(self, mut_url: MutableURL) -> URL:
-        result = self.collection.insert_one({
-            'hostname': mut_url.hostname,
-            'description': mut_url.description,
-            'is_deleted': 0,
-            'categories': [],
-            'bc_cats': [NO_BC_CATEGORY_YET],
-        })
+        return self.bulk_add_url([mut_url])[0]
 
-        return URL(
-            id=str(result.inserted_id),
-            hostname=mut_url.hostname,
-            description=mut_url.description,
-            is_deleted=0,
-            categories=[],
-            bc_cats=[NO_BC_CATEGORY_YET],
-        )
+    def bulk_add_url(self, mut_urls: List[MutableURL]):
+        results = self.collection.insert_many([
+            {
+                'hostname': mut_url.hostname,
+                'description': mut_url.description,
+                'is_deleted': 0,
+                'categories': [],
+                'bc_cats': [NO_BC_CATEGORY_YET],
+            }
+            for mut_url in mut_urls
+        ])
+
+        return [
+            URL(
+                id=str(new_id),
+                hostname=mut_urls[idx].hostname,
+                description=mut_urls[idx].description,
+                is_deleted=0,
+                categories=[],
+                bc_cats=[NO_BC_CATEGORY_YET],
+            )
+            for idx, new_id in enumerate(results.inserted_ids)
+        ]
 
     def get_url(self, url_id: str) -> Optional[URL]:
         query = {'_id': ObjectId(url_id), 'is_deleted': 0}

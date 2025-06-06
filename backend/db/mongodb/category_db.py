@@ -27,23 +27,32 @@ class MongoDBCategory(CategoryDBInterface):
         self.db = db
         self.collection = self.db['categories']
 
-    def add_category(self, category: MutableCategory) -> Category:
-        result = self.collection.insert_one({
-            'name': category.name,
-            'color': category.color,
-            'description': category.description,
-            'is_deleted': 0,
-            'nested_categories': []
-        })
+    def add_category(self, mut_cat: MutableCategory) -> Category:
+        return self.bulk_add_category([mut_cat])[0]
 
-        return Category(
-            id=str(result.inserted_id),
-            name=category.name,
-            color=category.color,
-            description=category.description,
-            is_deleted=0,
-            nested_categories=[]
-        )
+    def bulk_add_category(self, mut_cats: List[MutableCategory]) -> List[Category]:
+        results = self.collection.insert_many([
+            {
+                'name': mut_cat.name,
+                'color': mut_cat.color,
+                'description': mut_cat.description,
+                'is_deleted': 0,
+                'nested_categories': []
+            }
+            for mut_cat in mut_cats
+        ])
+
+        return [
+            Category(
+                id=str(new_id),
+                name=mut_cats[idx].name,
+                color=mut_cats[idx].color,
+                description=mut_cats[idx].description,
+                is_deleted=0,
+                nested_categories=[]
+            )
+            for idx, new_id in enumerate(results.inserted_ids)
+        ]
 
     def get_category(self, category_id: str) -> Optional[Category]:
         query = {'_id': ObjectId(category_id), 'is_deleted': 0}

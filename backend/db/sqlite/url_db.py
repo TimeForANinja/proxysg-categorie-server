@@ -23,21 +23,37 @@ class SQLiteURL(URLDBInterface):
         self.get_conn = get_conn
 
     def add_url(self, mut_url: MutableURL) -> URL:
+        return self.bulk_add_url([mut_url])[0]
+
+    def bulk_add_url(self, mut_urls: List[MutableURL]) -> List[URL]:
         cursor = self.get_conn().cursor()
-        cursor.execute(
+        cursor.executemany(
             'INSERT INTO urls (hostname, description, bc_cats) VALUES (?, ?, ?)',
-            (mut_url.hostname,mut_url.description, NO_BC_CATEGORY_YET)
+            [
+                (mut_url.hostname, mut_url.description, NO_BC_CATEGORY_YET)
+                for mut_url in mut_urls
+            ]
         )
         self.get_conn().commit()
 
-        new_url = URL(
-            hostname=mut_url.hostname,
-            description=mut_url.description,
-            id=str(cursor.lastrowid),
-            is_deleted=0,
-            bc_cats=[NO_BC_CATEGORY_YET],
-        )
-        return new_url
+        # ID of the last row inserted as part of the batch
+        first_id = cursor.lastrowid
+        # Total rows affected by the operation
+        row_count = cursor.rowcount
+        # Generate all inserted IDs starting from the first one (SQLite uses auto-increment)
+        inserted_ids = range(first_id - row_count + 1, first_id + 1)
+
+        return [
+            URL(
+                id=str(inserted_id),
+                hostname=mut_urls[idx].hostname,
+                description=mut_urls[idx].description,
+                is_deleted=0,
+                categories=[],
+                bc_cats=[NO_BC_CATEGORY_YET],
+            )
+            for idx, inserted_id in enumerate(inserted_ids)
+        ]
 
     def get_url(self, url_id: str) -> Optional[URL]:
         cursor = self.get_conn().cursor()

@@ -23,21 +23,36 @@ class SQLiteCategory(CategoryDBInterface):
         self.get_conn = get_conn
 
     def add_category(self, mut_cat: MutableCategory) -> Category:
+        return self.bulk_add_category([mut_cat])[0]
+
+    def bulk_add_category(self, mut_cats: List[MutableCategory]) -> List[Category]:
         cursor = self.get_conn().cursor()
-        cursor.execute(
+        cursor.executemany(
             'INSERT INTO categories (name, description, color) VALUES (?, ?, ?)',
-            (mut_cat.name, mut_cat.description, mut_cat.color)
+            [
+                (mut_cat.name, mut_cat.description, mut_cat.color)
+                for mut_cat in mut_cats
+            ]
         )
         self.get_conn().commit()
 
-        new_cat = Category(
-            name=mut_cat.name,
-            description=mut_cat.description,
-            color=mut_cat.color,
-            id=str(cursor.lastrowid),
-            is_deleted=0,
-        )
-        return new_cat
+        # ID of the last row inserted as part of the batch
+        first_id = cursor.lastrowid
+        # Total rows affected by the operation
+        row_count = cursor.rowcount
+        # Generate all inserted IDs starting from the first one (SQLite uses auto-increment)
+        inserted_ids = range(first_id - row_count + 1, first_id + 1)
+
+        return [
+            Category(
+                id=str(inserted_id),
+                name=mut_cats[idx].name,
+                description=mut_cats[idx].description,
+                color=mut_cats[idx].color,
+                is_deleted=0,
+            )
+            for idx, inserted_id in enumerate(inserted_ids)
+        ]
 
     def get_category(self, category_id: str) -> Optional[Category]:
         cursor = self.get_conn().cursor()

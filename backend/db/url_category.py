@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Tuple
 
 
 class UrlCategoryDBInterface(ABC):
@@ -19,6 +19,15 @@ class UrlCategoryDBInterface(ABC):
 
         :param url_id: The ID of the URL
         :param category_id: The ID of the Category
+        """
+        pass
+
+    @abstractmethod
+    def bulk_add_url_category(self, sets: List[Tuple[str, str]]) -> None:
+        """
+        Bulk add URL and Category mapping.
+
+        :param sets: A list of tuples (url_id, category_id)
         """
         pass
 

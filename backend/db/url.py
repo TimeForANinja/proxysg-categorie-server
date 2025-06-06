@@ -83,12 +83,22 @@ class URL(MutableURL):
 
 class URLDBInterface(ABC):
     @abstractmethod
-    def add_url(self, url: MutableURL) -> URL:
+    def add_url(self, mut_url: MutableURL) -> URL:
         """
         Add a new url with the given hostname.
 
-        :param url: The (partial) url to add.
+        :param mut_url: The (partial) url to add.
         :return: The newly created url.
+        """
+        pass
+
+    @abstractmethod
+    def bulk_add_url(self, mut_urls: List[MutableURL]) -> List[URL]:
+        """
+        Add a list of urls to the database.
+
+        :param mut_urls: A list of urls to add.
+        :return: A list of newly created urls.
         """
         pass
 
