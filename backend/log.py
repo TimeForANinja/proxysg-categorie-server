@@ -1,10 +1,8 @@
 import json
-import sys
-import io
-
-import apiflask
 import logging
+import sys
 from logging.handlers import SysLogHandler
+import apiflask
 from loguru import logger
 
 
