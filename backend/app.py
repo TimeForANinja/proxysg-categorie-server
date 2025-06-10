@@ -1,4 +1,5 @@
 import os
+import traceback
 from os.path import abspath
 from typing import Any
 from apiflask import APIFlask
@@ -77,6 +78,7 @@ def handle_error(error):
         'status_code': error.status_code,
         'message': error.message,
         'detail': error.detail,
+        'traceback': traceback.format_exc(),
     })
     return {
         'status': 'failed',
