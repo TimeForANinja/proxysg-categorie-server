@@ -142,8 +142,8 @@ def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[Exist
                 # End the current category
                 categories.append(current_cat)
                 current_cat = None
-            else:
-                # Add the line as a URL to the current category
+            elif clean_line not in current_cat:
+                # Add the line as a URL to the current category if it's not already in there
                 current_cat.urls.append(clean_line)
 
     if current_cat is not None:
