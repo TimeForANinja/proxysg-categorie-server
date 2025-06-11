@@ -6,7 +6,7 @@ from db.db_singleton import get_db
 from db.task import MutableTask
 from log import log_debug
 from routes.schemas.load_existing import ExistingDBInput
-from routes.schemas.tasks import ListTaskOutput, CreatedTaskOutput
+from routes.schemas.tasks import ListTaskOutput, CreatedTaskOutput, SingleTaskOutput
 
 
 def add_other_bp(app):
@@ -38,7 +38,7 @@ def add_other_bp(app):
         }
 
     # Route to get all tasks
-    @other_bp.get('/api/tasks')
+    @other_bp.get('/api/task')
     @other_bp.doc(summary='Get all tasks', description='Get a list of all tasks and their status')
     @other_bp.output(ListTaskOutput)
     @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
@@ -49,6 +49,27 @@ def add_other_bp(app):
             'status': 'success',
             'message': 'Tasks fetched successfully',
             'data': tasks,
+        }
+
+    # Route to get a single task by ID
+    @other_bp.get('/api/task/<string:task_id>')
+    @other_bp.doc(summary='Get a single task', description='Get details of a specific task by its ID')
+    @other_bp.output(SingleTaskOutput)
+    @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
+    def get_task(task_id):
+        db_if = get_db()
+        task = db_if.tasks.get_task(task_id)
+
+        if task is None:
+            return {
+                'status': 'failed',
+                'message': 'Task not found',
+            }, 404
+
+        return {
+            'status': 'success',
+            'message': 'Task fetched successfully',
+            'data': task,
         }
 
     app.register_blueprint(other_bp)

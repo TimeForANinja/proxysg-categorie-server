@@ -15,6 +15,15 @@ class ListTaskOutput(GenericOutput):
     )
 
 
+class SingleTaskOutput(GenericOutput):
+    """Class representing a single task"""
+    data: Task = Nested(
+        class_schema(Task)(),
+        required=True,
+        description='Task details',
+    )
+
+
 class CreatedTaskOutput(GenericOutput):
     """Class representing a newly created task"""
     data: str = String(
