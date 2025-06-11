@@ -4,6 +4,7 @@ from db.db import DBInterface
 from db.mongodb.category_db import MongoDBCategory
 from db.mongodb.history_db import MongoDBHistory
 from db.mongodb.sub_category_db import MongoDBSubCategory
+from db.mongodb.task_db import MongoDBTask
 from db.mongodb.token_category_db import MongoDBTokenCategory
 from db.mongodb.token_db import MongoDBToken
 from db.mongodb.url_db import MongoDBURL
@@ -28,6 +29,7 @@ class MyMongoDB(DBInterface):
         self.token_categories = MongoDBTokenCategory(self.db)
         self.urls = MongoDBURL(self.db)
         self.url_categories = MongoDBURLCategory(self.db)
+        self.tasks = MongoDBTask(self.db)
 
     def close(self):
         # no call to self.client.close() required after each context closure

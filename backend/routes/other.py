@@ -7,6 +7,7 @@ from db.util.parse_existing_db import parse_db, create_in_db, create_urls_db
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 from routes.schemas.load_existing import ExistingDBInput
+from routes.schemas.tasks import ListTaskOutput
 
 
 def add_other_bp(app):
@@ -36,6 +37,20 @@ def add_other_bp(app):
         return {
             'status': 'success',
             'message': 'Database successfully loaded',
+        }
+
+    # Route to get all tasks
+    @other_bp.get('/api/tasks')
+    @other_bp.doc(summary='Get all tasks', description='Get a list of all tasks and their status')
+    @other_bp.output(ListTaskOutput)
+    @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
+    def get_tasks():
+        db_if = get_db()
+        tasks = db_if.tasks.get_all_tasks()
+        return {
+            'status': 'success',
+            'message': 'Tasks fetched successfully',
+            'data': tasks,
         }
 
     app.register_blueprint(other_bp)

@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from db.category import CategoryDBInterface
 from db.history import HistoryDBInterface
 from db.sub_category import SubCategoryDBInterface
+from db.task import TaskDBInterface
 from db.token_category import TokenCategoryDBInterface
 from db.token import TokenDBInterface
 from db.url_category import UrlCategoryDBInterface
@@ -17,6 +18,7 @@ class DBInterface(ABC):
     token_categories: TokenCategoryDBInterface
     urls: URLDBInterface
     url_categories: UrlCategoryDBInterface
+    tasks: TaskDBInterface
 
     @abstractmethod
     def close(self):
