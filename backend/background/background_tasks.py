@@ -1,5 +1,3 @@
-from time import sleep
-
 import urllib3
 from datetime import timedelta, datetime, timezone
 from apiflask import APIFlask
@@ -8,6 +6,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
+from background.tasks import execute_load_existing_task
 from db.db_singleton import get_db
 from log import log_debug
 
@@ -95,15 +94,12 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
             if not task:
                 return
 
-            log_debug('BACKGROUND', f'Starting task {task.id}: {task.name}')
-            # Update task status to running
-            db_if.tasks.update_task_status(task.id, 'running')
-
-            # Here you would normally execute the task based on its parameters
-            # For now, we'll just wait a bit and set the status to success
-            sleep(120)
-            db_if.tasks.update_task_status(task.id, 'success')
-            log_debug('BACKGROUND', f'Task {task.id} completed successfully')
+            match task.name:
+                case 'load_existing':
+                    execute_load_existing_task(db_if, task)
+                case _:
+                    log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
+                    db_if.tasks.update_task_status(task.id, 'unknown')
 
     # run every 30 seconds
     scheduler.add_job(

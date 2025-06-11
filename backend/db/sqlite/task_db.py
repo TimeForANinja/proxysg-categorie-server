@@ -3,6 +3,7 @@ import sqlite3
 import time
 from typing import Optional, List, Callable
 
+from auth.auth_user import AuthUser
 from db.task import TaskDBInterface, MutableTask, Task
 
 
@@ -13,6 +14,7 @@ def _build_task(row: any) -> Task:
     return Task(
         id=str(row[0]),
         name=row[1],
+        user=row[2],
         parameters=param_obj,
         status=row[4],
         created_at=row[5],
@@ -24,22 +26,23 @@ class SQLiteTask(TaskDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_task(self, task: MutableTask) -> Task:
+    def add_task(self, user: AuthUser, task: MutableTask) -> Task:
         current_timestamp = int(time.time())
         param_str = json.dumps(task.parameters)
 
         cursor = self.get_conn().cursor()
         cursor.execute(
             '''INSERT INTO tasks 
-               (name, parameters, status, created_at, updated_at) 
-               VALUES (?, ?, ?, ?, ?)''',
-            (task.name, param_str, 'pending', current_timestamp, current_timestamp)
+               (name, user, parameters, status, created_at, updated_at) 
+               VALUES (?, ?, ?, ?, ?, ?)''',
+            (task.name, user.username, param_str, 'pending', current_timestamp, current_timestamp)
         )
         self.get_conn().commit()
 
         new_task = Task(
             id=str(cursor.lastrowid),
             name=task.name,
+            user=user.username,
             parameters=task.parameters,
             status='pending',
             created_at=current_timestamp,
@@ -50,7 +53,7 @@ class SQLiteTask(TaskDBInterface):
     def get_task(self, task_id: str) -> Optional[Task]:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            '''SELECT id, name, parameters, status, created_at, updated_at
+            '''SELECT id, name, user, parameters, status, created_at, updated_at
                FROM tasks
                WHERE id = ?''',
             (int(task_id),)
@@ -76,7 +79,7 @@ class SQLiteTask(TaskDBInterface):
     def get_all_tasks(self) -> List[Task]:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            '''SELECT id, name, parameters, status, created_at, updated_at
+            '''SELECT id, name, user, parameters, status, created_at, updated_at
                FROM tasks'''
         )
         rows = cursor.fetchall()
@@ -85,7 +88,7 @@ class SQLiteTask(TaskDBInterface):
     def get_next_pending_task(self) -> Optional[Task]:
         cursor = self.get_conn().cursor()
         cursor.execute(
-            '''SELECT id, name, parameters, status, created_at, updated_at
+            '''SELECT id, name, user, parameters, status, created_at, updated_at
                FROM tasks
                WHERE status = 'pending' '''
         )

@@ -3,6 +3,7 @@ from dataclasses import field, dataclass
 from typing import Optional, List
 from marshmallow.validate import Length
 
+from auth.auth_user import AuthUser
 from db.util.validators import simpleNameValidator
 
 
@@ -40,6 +41,10 @@ class Task(MutableTask):
         ],
         'description': 'Name of the task',
     })
+    user: str = field(metadata={
+        'required': True,
+        'description': 'User who performed the action',
+    })
     parameters: List[str] = field(
         default_factory=list,
         metadata={
@@ -68,10 +73,11 @@ class Task(MutableTask):
 
 class TaskDBInterface(ABC):
     @abstractmethod
-    def add_task(self, task: MutableTask) -> Task:
+    def add_task(self, user: AuthUser, task: MutableTask) -> Task:
         """
         Add a new task with the given name, description, and parameters.
 
+        :param user: The user who performed the action.
         :param task: The (partial) task to add.
         :return: The newly created task.
         """

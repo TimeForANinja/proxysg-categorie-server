@@ -1,4 +1,4 @@
-from apiflask.fields import Nested, List
+from apiflask.fields import Nested, List, Integer
 from dataclasses import dataclass
 from marshmallow_dataclass import class_schema
 from typing import List as tList
@@ -14,4 +14,13 @@ class ListTaskOutput(GenericOutput):
         Nested(class_schema(Task)()),
         required=True,
         description='List of tasks',
+    )
+
+
+@dataclass
+class CreatedTaskOutput(GenericOutput):
+    """Class representing a newly created task"""
+    data: int = Integer(
+        required=True,
+        description='ID of the newly created task',
     )

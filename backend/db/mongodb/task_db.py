@@ -3,6 +3,7 @@ from typing import Optional, List, Mapping, Any
 from bson.objectid import ObjectId
 from pymongo.synchronous.database import Database
 
+from auth.auth_user import AuthUser
 from db.task import TaskDBInterface, MutableTask, Task
 
 
@@ -11,6 +12,7 @@ def _build_task(row: Mapping[str, Any]) -> Task:
     return Task(
         id=str(row['_id']),
         name=row['name'],
+        user=row['user'],
         parameters=row.get('parameters'),
         status=row['status'],
         created_at=row['created_at'],
@@ -23,10 +25,11 @@ class MongoDBTask(TaskDBInterface):
         self.db = db
         self.collection = self.db['tasks']
 
-    def add_task(self, task: MutableTask) -> Task:
+    def add_task(self, user: AuthUser, task: MutableTask) -> Task:
         current_timestamp = int(time.time())
         result = self.collection.insert_one({
             'name': task.name,
+            'user': user.username,
             'parameters': task.parameters,
             'status': 'pending',
             'created_at': current_timestamp,
@@ -36,6 +39,7 @@ class MongoDBTask(TaskDBInterface):
         return Task(
             id=str(result.inserted_id),
             name=task.name,
+            user=user.username,
             parameters=task.parameters,
             status='pending',
             created_at=current_timestamp,
