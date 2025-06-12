@@ -4,7 +4,7 @@ export const loadExisting = async (
     userToken: string,
     text: string,
     prefix: string,
-): Promise<void> => {
+): Promise<string> => {
     // Create the request body as JSON
     const requestBody: { categoryDB: string; prefix: string } = {
         categoryDB: text,
@@ -28,4 +28,7 @@ export const loadExisting = async (
     if (data.status === "failed") {
         throw new Error(data.message);
     }
+
+    // Return the task ID
+    return data.data;
 }
