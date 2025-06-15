@@ -6,6 +6,8 @@ from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
+from background.tasks import execute_load_existing_task
+from db.db_singleton import get_db
 from log import log_debug
 
 TIME_MINUTES = 60
@@ -28,6 +30,7 @@ def start_background_tasks(app: APIFlask):
     # add all tasks
     start_query_bc(scheduler, app, tz)
     start_load_existing(scheduler, app)
+    start_task_scheduler(scheduler, app)
 
     # Start the Scheduler
     scheduler.start()
@@ -66,6 +69,43 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
         lambda: query_executor(app),
         'date',
         run_date=datetime.now(timezone.utc) + timedelta(seconds=1*TIME_MINUTES),
+        misfire_grace_time=MISFIRE_GRACE_TIME,
+    )
+
+
+def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
+    """
+    Initialize the background task to check for pending tasks and start them.
+
+    :param scheduler: The scheduler to use
+    :param app: The flask app to use
+    """
+    log_debug('BACKGROUND', 'Preparing Background Tasks "start_task_scheduler"')
+
+    # wrapper to use the app_context
+    # this allows us to use the existing db_singleton stored as a flask global object
+    def task_executor(a: APIFlask):
+        with a.app_context():
+            log_debug('BACKGROUND', 'executing task_scheduler background task')
+            db_if = get_db()
+
+            # try to fetch the next pending task from the DB
+            task = db_if.tasks.get_next_pending_task()
+            if not task:
+                return
+
+            match task.name:
+                case 'load_existing':
+                    execute_load_existing_task(db_if, task)
+                case _:
+                    log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
+                    db_if.tasks.update_task_status(task.id, 'unknown')
+
+    # run every 30 seconds
+    scheduler.add_job(
+        lambda: task_executor(app),
+        'interval',
+        seconds=30,
         misfire_grace_time=MISFIRE_GRACE_TIME,
     )
 
