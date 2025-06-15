@@ -4,6 +4,7 @@ from db.stagingdb.category_db import StagingDBCategory
 from db.stagingdb.existing import StagingDBExisting
 from db.stagingdb.history_db import StagingDBHistory
 from db.stagingdb.sub_category_db import StagingDBSubCategory
+from db.stagingdb.task_db import StagingDBTask
 from db.stagingdb.token_category_db import StagingDBTokenCategory
 from db.stagingdb.token_db import StagingDBToken
 from db.stagingdb.url_category_db import StagingDBURLCategory
@@ -20,6 +21,7 @@ class StagingDB:
     urls: StagingDBURL
     url_categories: StagingDBURLCategory
     existing: StagingDBExisting
+    tasks: StagingDBTask
 
     def __init__(
             self,
@@ -36,7 +38,8 @@ class StagingDB:
         self.token_categories = StagingDBTokenCategory(self._main_db, self._staged, self.tokens)
         self.urls = StagingDBURL(self._main_db, self._staged)
         self.url_categories = StagingDBURLCategory(self._main_db, self._staged, self.urls)
-        self.existing = StagingDBExisting(self._main_db)
+        self.existing = StagingDBExisting(self.urls, self.categories, self.url_categories)
+        self.tasks = StagingDBTask(self._main_db, self._staged)
 
     def close(self):
         self._main_db.close()

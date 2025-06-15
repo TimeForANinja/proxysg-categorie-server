@@ -8,6 +8,7 @@ from db.abc.token_category import TokenCategoryDBInterface
 from db.abc.token import TokenDBInterface
 from db.abc.url_category import UrlCategoryDBInterface
 from db.abc.url import URLDBInterface
+from db.abc.task import TaskDBInterface
 
 
 class DBInterface(ABC):
@@ -18,6 +19,7 @@ class DBInterface(ABC):
     token_categories: TokenCategoryDBInterface
     urls: URLDBInterface
     url_categories: UrlCategoryDBInterface
+    tasks: TaskDBInterface
     staging: StagingDBInterface
 
     @abstractmethod

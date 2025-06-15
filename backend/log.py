@@ -1,7 +1,6 @@
 import dataclasses
 import json
 import sys
-
 import apiflask
 import logging
 from logging.handlers import SysLogHandler

@@ -26,17 +26,15 @@ class AuthUser:
         }
     )
 
-    @staticmethod
-    def serialize(auth_user: 'AuthUser') -> str:
+    def serialize(self) -> str:
         """
         Serialize an AuthUser object to a dictionary that can be converted to JSON.
 
-        :param auth_user: The AuthUser object to serialize
         :return: A dictionary representation of the AuthUser
         """
         return json.dumps({
-            'username': auth_user.username,
-            'roles': auth_user.roles
+            'username': self.username,
+            'roles': self.roles
         })
 
     @staticmethod

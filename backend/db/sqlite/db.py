@@ -8,6 +8,7 @@ from db.sqlite.config_db import SQLiteConfig, CONFIG_VAR_SCHEMA_VERSION
 from db.sqlite.history_db import SQLiteHistory
 from db.sqlite.staging_db import SQLiteStaging
 from db.sqlite.sub_category_db import SQLiteSubCategory
+from db.sqlite.task_db import SQLiteTask
 from db.sqlite.token_db import SQLiteToken
 from db.sqlite.token_category_db import SQLiteTokenCategory
 from db.sqlite.url_db import SQLiteURL
@@ -32,6 +33,7 @@ class MySQLiteDB(DBInterface):
         self.token_categories = SQLiteTokenCategory(self.open_con)
         self.urls = SQLiteURL(self.open_con)
         self.url_categories = SQLiteURLCategory(self.open_con)
+        self.tasks = SQLiteTask(self.open_con)
         self.staging = SQLiteStaging(self.open_con)
 
         # Run migrations if needed

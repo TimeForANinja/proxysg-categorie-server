@@ -1,11 +1,13 @@
 import re
 import time
-import uuid
 from typing import List, Tuple
 
+from auth.auth_user import AuthUser
 from db.abc.category import MutableCategory, Category
-from db.abc.db import DBInterface
 from db.abc.url import MutableURL, URL
+from db.stagingdb.category_db import StagingDBCategory
+from db.stagingdb.url_category_db import StagingDBURLCategory
+from db.stagingdb.url_db import StagingDBURL
 
 
 class ExistingCat:
@@ -18,13 +20,23 @@ class ExistingCat:
 
 
 # TODO: input validation for both Categories and URLs
-def create_in_db(db: DBInterface, new_cat_candidates: List[ExistingCat], category_prefix: str):
+def create_in_db(
+        db_url: StagingDBURL,
+        db_cats: StagingDBCategory,
+        db_url_cats: StagingDBURLCategory,
+        auth: AuthUser,
+        new_cat_candidates: List[ExistingCat],
+        category_prefix: str
+    ):
     """
     This method creates a DB as read from an existing file in the provided DB.
 
     If cats / urls already exist, we'll only map them.
 
-    :param db: The DBInterface to use for the DB operations
+    :param db_url: The StagingDBURL to use for the DB operations
+    :param db_cats: The StagingDBCategory to use for the DB operations
+    :param db_url_cats: The StagingDBURLCategory to use for the DB operations
+    :param auth: The AuthUser to use for the DB operations
     :param new_cat_candidates: The list of categories to import
     :param category_prefix: The prefix to use for the new categories
     """
@@ -33,72 +45,85 @@ def create_in_db(db: DBInterface, new_cat_candidates: List[ExistingCat], categor
         cat.name = category_prefix + cat.name
 
     # get existing data from db
-    existing_cats = db.categories.get_all_categories()
-    existing_urls = db.urls.get_all_urls()
+    existing_cats = db_cats.get_all_categories()
+    existing_urls = db_url.get_all_urls()
 
     # create all entries and mappings for existing customDB in db
     for new_cat_candidate in new_cat_candidates:
         # identify a cat or create a new one
-        new_cat, cat_created = _find_or_create_cat(db, new_cat_candidate, existing_cats)
+        new_cat, cat_created = _find_or_create_cat(db_cats, auth, new_cat_candidate, existing_cats)
         if cat_created:
             existing_cats.append(new_cat)
 
         for new_url_candidate in new_cat_candidate.urls:
             # identify url or create a new one
-            new_url, url_created = _find_or_create_url(db, new_url_candidate, existing_urls)
+            new_url, url_created = _find_or_create_url(db_url, auth, new_url_candidate, existing_urls)
             if url_created:
                 existing_urls.append(new_url)
 
             # map url to cat, if not already done
             if not new_cat.id in new_url.categories:
-                db.url_categories.add_url_category(new_url.id, new_cat.id)
+                db_url_cats.add_url_category(auth, new_url.id, new_cat.id)
 
-def create_urls_db(db: DBInterface, new_urls: List[str]):
+def create_urls_db(db_url: StagingDBURL, auth: AuthUser, new_urls: List[str]):
     """
     This method ensures a list of URLs is in the DB.
 
     If urls already exist, we'll simply ignore them.
 
-    :param db: The DBInterface to use for the DB operations
+    :param db_url: The DBInterface to use for the DB operations
+    :param auth: The AuthUser to use for the DB operations
     :param new_urls: The list of urls to import
     """
     # get existing data from db
-    existing_urls = db.urls.get_all_urls()
+    existing_urls = db_url.get_all_urls()
 
     for new_url_candidate in new_urls:
         # identify url or create a new one
-        new_url, url_created = _find_or_create_url(db, new_url_candidate, existing_urls)
+        new_url, url_created = _find_or_create_url(db_url, auth, new_url_candidate, existing_urls)
         if url_created:
             existing_urls.append(new_url)
 
-def _find_or_create_cat(db: DBInterface, new_cat_candidate: ExistingCat, existing_cats: List[Category]) -> Tuple[Category, bool]:
+def _find_or_create_cat(db_cats: StagingDBCategory, auth: AuthUser, new_cat_candidate: ExistingCat, existing_cats: List[Category]) -> Tuple[Category, bool]:
     """
     Utility method to find or create a category in the DB.
     It returns the category and a boolean indicating if it was created or not.
+
+    :param db_cats: The StagingDBCategory to use for the DB operations
+    :param auth: The AuthUser to use for the DB operations
+    :param new_cat_candidate: The category to import
+    :param existing_cats: The list of existing categories to check against
+    :return: A tuple containing the category and a boolean indicating if it was created or not.
     """
     for ec in existing_cats:
         if ec.name == new_cat_candidate.name:
             return ec, False
-    new_cat = db.categories.add_category(MutableCategory(
+    new_cat = db_cats.add_category(auth, MutableCategory(
         name=new_cat_candidate.name,
         color=1,
         description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ), str(uuid.uuid4()))
+    ))
     return new_cat, True
 
-def _find_or_create_url(db: DBInterface, new_url_candidate: str, existing_urls: List[URL]) -> Tuple[URL, bool]:
+def _find_or_create_url(db_url: StagingDBURL, auth: AuthUser, new_url_candidate: str, existing_urls: List[URL]) -> Tuple[URL, bool]:
     """
     Utility method to find or create a URL in the DB.
     It returns the URL and a boolean indicating if it was created or not.
+
+    :param db_url: The StagingDBURL to use for the DB operations
+    :param auth: The AuthUser to use for the DB operations
+    :param new_url_candidate: The URL to import
+    :param existing_urls: The list of existing URLs to check against
+    :return: A tuple containing the URL and a boolean indicating if it was created or not.
     """
     for eu in existing_urls:
         if eu.hostname == new_url_candidate:
             return eu, False
     # not found, so create a new one
-    new_url = db.urls.add_url(MutableURL(
+    new_url = db_url.add_url(auth, MutableURL(
         hostname=new_url_candidate,
         description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ), str(uuid.uuid4()))
+    ))
     return new_url, True
 
 def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[ExistingCat], List[str]]:
@@ -143,8 +168,8 @@ def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[Exist
                 # End the current category
                 categories.append(current_cat)
                 current_cat = None
-            else:
-                # Add the line as a URL to the current category
+            elif clean_line not in current_cat.urls:
+                # Add the line as a URL to the current category if it's not already in there
                 current_cat.urls.append(clean_line)
 
     if current_cat is not None:

@@ -1,4 +1,4 @@
--- Migration script: 6_string_ids.sql
+-- Migration script: 7_string_ids.sql
 -- Convert all ID columns from INTEGER to TEXT
 
 -- Step 1: Create new tables with TEXT IDs
@@ -115,4 +115,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_url_category_deleted ON url_categories 
 
 -- Insert records to mark the migration
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Converted all ID columns from INTEGER to TEXT', 'system');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 6', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 7', 'system');

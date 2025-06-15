@@ -77,7 +77,8 @@ def handle_error(error):
     log_error('APP', 'FLASK Error', {
         'status_code': error.status_code,
         'message': error.message,
-        'detail': traceback.format_exc(),
+        'detail': error.detail,
+        'traceback': traceback.format_exc(),
     })
     return {
         'status': 'failed',

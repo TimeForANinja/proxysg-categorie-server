@@ -104,6 +104,7 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
         )
         return []
     except requests.RequestException as e:
+        # TODO: this logs user/password as part of the request URL
         log_error(
             'background',
             'Error fetching BlueCoat Categories',

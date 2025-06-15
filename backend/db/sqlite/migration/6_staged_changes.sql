@@ -1,4 +1,4 @@
--- Migration script: 5_staged_changes.sql
+-- Migration script: 6_staged_changes.sql
 -- Add a new table to track staged (atomic) changes
 
 -- Step 1: Create the new staged_changes table
@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS staged_changes (
 
 -- Insert records to mark the migration
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Created Table staged_changes', 'system');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 5', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 6', 'system');

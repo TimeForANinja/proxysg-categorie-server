@@ -4,6 +4,7 @@ from db.mongodb.db import MyMongoDB
 from db.sqlite.db import MySQLiteDB
 from db.stagingdb.db import StagingDB
 from log import log_info
+from pymongo import MongoClient
 
 
 def get_db() -> StagingDB:
@@ -15,12 +16,19 @@ def get_db() -> StagingDB:
         if db_type == 'mongodb':
             mongo_cfg: dict = current_app.config.get('DB', {}).get('MONGO', {})
             database_name = mongo_cfg.get('DBNAME', 'proxysg_localdb')
+            connection_auth_real = mongo_cfg.get('DBAUTH', database_name)
             connection_user = mongo_cfg.get('CON_USER', 'admin')
             connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
-            connection_host = mongo_cfg.get('CON_HOST', 'localhost:27017')
-            connection_uri = f'mongodb://{connection_user}:{connection_password}@{connection_host}/'
-            log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'user': connection_user, 'host': connection_host })
-            db = MyMongoDB(database_name, connection_uri)
+            connection_host = mongo_cfg.get('CON_HOST', 'localhost')
+            connection_port = mongo_cfg.get('CON_PORT', 27017)
+            log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'auth_db': connection_auth_real, 'user': connection_user, 'host': f'{connection_host}:{connection_port}' })
+            db = MyMongoDB(MongoClient(
+                connection_host,
+                connection_port,
+                username=connection_user,
+                password=connection_password,
+                authSource=connection_auth_real
+            ), database_name)
         elif db_type == 'sqlite':
             sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})
             database_name = sqlite_cfg.get('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')

@@ -1,17 +1,18 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import {loadExisting} from '../api/load_existing';
+import {getTaskByID} from '../api/task';
 import {useAuth} from '../model/AuthContext';
-import { 
-    Button, 
-    TextField, 
-    Typography, 
-    Box, 
-    Container, 
-    Paper, 
-    ToggleButtonGroup, 
-    ToggleButton, 
-    Alert, 
+import {
+    Button,
+    TextField,
+    Typography,
+    Box,
+    Container,
+    Paper,
+    ToggleButtonGroup,
+    ToggleButton,
+    Alert,
     CircularProgress,
     List,
     ListItem,
@@ -24,6 +25,9 @@ import TextFieldsIcon from '@mui/icons-material/TextFields';
 import CloseIcon from '@mui/icons-material/Close';
 import {formatDateString} from "../util/DateString";
 
+const TIME_SECONDS = 1000;
+const TIME_CHECK_TASKS = 1 * TIME_SECONDS;
+
 const UploadPage = () => {
     const navigate = useNavigate();
     const { token } = useAuth();
@@ -32,9 +36,13 @@ const UploadPage = () => {
     const [text, setText] = React.useState<string>('');
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [warning, setWarning] = React.useState<string | null>(null);
     const [success, setSuccess] = React.useState<string | null>(null);
     const [uploadType, setUploadType] = React.useState<'file' | 'text'>('file');
     const [prefix, setPrefix] = React.useState<string>(`IMPORTED_${formatDateString()}_`);
+
+    // Params changed after creation of fetchTaskStatus need to be passed by-ref
+    const [taskId, setTaskId] = React.useState<string>("");
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -63,8 +71,54 @@ const UploadPage = () => {
         setSuccess(null);
     };
 
+    // (wrapper for an) interval to check for the state of the upload task
+    React.useEffect(() => {
+        const timer = setInterval(async () => {
+            // only (continue to) check status if we have a pending task
+            if (!taskId || !token) return;
+            try {
+                // fetch the task and set the success / warning / error banner accordingly
+                const taskData = await getTaskByID(token, taskId);
+                switch (taskData.status) {
+                    case 'success':
+                        setSuccess('URLs uploaded successfully!');
+                        setWarning(null);
+                        setError(null);
+                        // clear the taskID
+                        setTaskId("");
+                        break
+                    case 'failed':
+                        setSuccess(null);
+                        setWarning(null);
+                        setError('Upload failed. Please try again.');
+                        // clear the taskID
+                        setTaskId("");
+                        break
+                    case 'running':
+                        setSuccess(null);
+                        setWarning('Waiting for execution to finish...');
+                        setError(null);
+                        break
+                    default:
+                    case 'pending':
+                        setSuccess(null);
+                        setWarning('Waiting for execution to start...');
+                        setError(null);
+                        break
+                }
+            } catch (err) {
+                setSuccess(null);
+                setWarning(null);
+                setError(`Failed to get task status: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            }
+        }, TIME_CHECK_TASKS);
+        // return a function that gets called to "cleanup" the effect
+        return () => clearInterval(timer);
+    }, [taskId, token])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Reset states
         setIsLoading(true);
         setError(null);
         setSuccess(null);
@@ -79,16 +133,18 @@ const UploadPage = () => {
                 const fileContents = await Promise.all(
                     files.map(file => file.text())
                 );
-                // send the array of files
-                await loadExisting(token, fileContents.join('\n\n'), prefix);
+                // send the array of files and get task ID
+                const newTaskId = await loadExisting(token, fileContents.join('\n\n'), prefix);
+                setTaskId(newTaskId);
             } else if (uploadType === 'text' && text.trim()) {
-                await loadExisting(token, text, prefix);
+                // send the text and get task ID
+                const newTaskId = await loadExisting(token, text, prefix);
+                setTaskId(newTaskId);
             } else {
                 throw new Error('Please provide a file or text to upload');
             }
 
-            // Show success message and reset form
-            setSuccess('URLs uploaded successfully!');
+            // Reset form
             setFiles([]);
             setText('');
             setPrefix(`IMPORTED_${formatDateString()}_`);
@@ -218,6 +274,12 @@ const UploadPage = () => {
                         {error && (
                             <Grid size={12}>
                                 <Alert severity="error">{error}</Alert>
+                            </Grid>
+                        )}
+
+                        {warning && (
+                            <Grid size={12}>
+                                <Alert severity="warning">{warning}</Alert>
                             </Grid>
                         )}
 
