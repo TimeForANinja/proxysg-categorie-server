@@ -91,15 +91,14 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
 
             # try to fetch the next pending task from the DB
             task = db_if.tasks.get_next_pending_task()
-            if not task:
-                return
 
-            match task.name:
-                case 'load_existing':
-                    execute_load_existing_task(db_if, task)
-                case _:
-                    log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
-                    db_if.tasks.update_task_status(task.id, 'unknown')
+            # if a task is defined go based on the task.name
+            # if no task is defined, we do nothing
+            if task and task.name == "load_existing":
+                execute_load_existing_task(db_if, task)
+            elif task:
+                log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
+                db_if.tasks.update_task_status(task.id, 'unknown')
 
     # run every 30 seconds
     scheduler.add_job(
