@@ -1,13 +1,14 @@
 import time
 from dataclasses import asdict
-from typing import Optional, List, Dict, Any
-import uuid
+from typing import Optional, List
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
 from db.abc.staging import ActionType, ActionTable
 from db.abc.url import MutableURL, URL
-from db.stagingdb.cache import StagedChange, StageFilter, StagedCollection
+from db.stagingdb.cache import StagedChange, StagedCollection
+from db.stagingdb.utils.add_uid import add_uid_to_object
+from db.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
 
 
 class StagingDBURL:
@@ -16,66 +17,39 @@ class StagingDBURL:
         self._staged = staged
 
     def add_url(self, auth: AuthUser, mut_url: MutableURL) -> URL:
-        url_id = str(uuid.uuid4())
-        url_data = asdict(mut_url)
-        url_data.update({
-            'id': url_id,
-        })
+        # Generate a UUID and add it to the URL data
+        url_id, url_data = add_uid_to_object(mut_url)
 
-        # Create a staged change
-        staged_change = StagedChange(
+        add_staged_change(
             action_type=ActionType.ADD,
             action_table=ActionTable.URL,
             auth=auth,
-            uid=url_id,
-            data=url_data,
-            timestamp=int(time.time()),
+            obj_id=url_id,
+            update_data=url_data,
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)
 
         # Create a URL object to return
         return URL(**url_data)
 
     def get_url(self, url_id: str) -> Optional[URL]:
-        # try getting it from the database
-        db_url: URL = self._db.urls.get_url(url_id)
-        # convert to dict
-        url: Dict[str, Any] = asdict(db_url) if db_url is not None else None
-
-        if url is None:
-            # no url in DB, so check if we have an "add" event
-            add_url = self._staged.first_or_none(
-                StageFilter.fac_filter_table_id(ActionTable.URL, url_id),
-                StageFilter.filter_add,
-            )
-            url = add_url.data if add_url is not None else None
-
-        # overload any staged changes
-        for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(ActionTable.URL, url_id),
-        ):
-            if staged_change.data.get('is_deleted', 0) != 0:
-                return None
-
-            url.update(staged_change.data)
-
-        return URL(**url)
+        return get_and_overload_object(
+            db_getter=self._db.urls.get_url,
+            staged=self._staged,
+            action_table=ActionTable.URL,
+            obj_id=url_id,
+            obj_class=URL
+        )
 
     def update_url(self, auth: AuthUser, url_id: str, mut_url: MutableURL) -> URL:
-        update_data = asdict(mut_url)
-
-        # Create a staged change
-        staged_change = StagedChange(
+        add_staged_change(
             action_type=ActionType.UPDATE,
             action_table=ActionTable.URL,
             auth=auth,
-            uid=url_id,
-            data=update_data,
-            timestamp=int(time.time()),
+            obj_id=url_id,
+            update_data=asdict(mut_url),
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)
 
         return self.get_url(url_id)
 
@@ -84,54 +58,22 @@ class StagingDBURL:
         return self._db.urls.set_bc_cats(url_id, bc_cats)
 
     def delete_url(self, auth: AuthUser, url_id: str) -> None:
-        update_data = {'is_deleted': int(time.time())}
-
-        # Create a staged change
-        staged_change = StagedChange(
+        add_staged_change(
             action_type=ActionType.DELETE,
             action_table=ActionTable.URL,
             auth=auth,
-            uid=url_id,
-            data=update_data,
-            timestamp=int(time.time()),
+            obj_id=url_id,
+            update_data={'is_deleted': int(time.time())},
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)
-
-        return self.get_url(url_id)
 
     def get_all_urls(self) -> List[URL]:
-        # Get all urls from the database
-        db_urls: List[URL] = self._db.urls.get_all_urls()
-        # convert to dict
-        urls: List[Dict[str, Any]] = [asdict(url) for url in db_urls]
-
-        # append all "added" urls from the cache
-        urls.extend(
-            [
-                u.data for u in
-                self._staged.iter_filter(
-                    StageFilter.filter_add,
-                    StageFilter.fac_filter_table(ActionTable.URL),
-                )
-            ]
+        return get_and_overload_all_objects(
+            db_getter=self._db.urls.get_all_urls,
+            staged=self._staged,
+            action_table=ActionTable.URL,
+            obj_class=URL
         )
-
-        staged_urls: List[URL] = []
-
-        for raw_url in urls:
-            url = raw_url
-
-            # overload any staged changes
-            for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(ActionTable.URL, url.get('uid'))
-            ):
-                url.update(staged_change.data)
-
-            if url.get('is_deleted', 0) == 0:
-                staged_urls.append(URL(**url))
-
-        return staged_urls
 
     def commit(self, change: StagedChange) -> None:
         """

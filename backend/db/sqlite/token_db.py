@@ -4,6 +4,7 @@ from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.abc.token import TokenDBInterface, MutableToken, Token
+from db.sqlite.util.query_builder import build_update_query
 
 
 def _build_token(row: any) -> Token:
@@ -98,13 +99,9 @@ class SQLiteToken(TokenDBInterface):
         return None
 
     def update_token(self, token_id: str, token: MutableToken) -> Token:
-        updates = []
-        params = []
-
-        # Prepare an update query based on non-None fields
-        if token.description is not None:
-            updates.append('description = ?')
-            params.append(token.description)
+        updates, params = build_update_query(token, {
+            'description': 'description',
+        })
 
         if updates:
             query = f'UPDATE tokens SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'

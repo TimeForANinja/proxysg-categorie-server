@@ -1,11 +1,11 @@
-import time
 from typing import List
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
 from db.abc.staging import ActionType, ActionTable
-from db.stagingdb.cache import StagedChange, StagedCollection
+from db.stagingdb.cache import StagedCollection
 from db.stagingdb.token_db import StagingDBToken
+from db.stagingdb.utils.overloading import add_staged_change
 
 
 class StagingDBTokenCategory:
@@ -25,19 +25,17 @@ class StagingDBTokenCategory:
         if cat_id not in current_categories:
             new_categories = current_categories + [cat_id]
 
-            # Create a staged change for the TOKEN table
-            staged_change = StagedChange(
+            # Use stage_update to create and add the staged change
+            add_staged_change(
                 action_type=ActionType.UPDATE,
                 action_table=ActionTable.TOKEN,
                 auth=auth,
-                uid=token_id,
-                data={
+                obj_id=token_id,
+                update_data={
                     'categories': new_categories
                 },
-                timestamp=int(time.time()),
+                staged=self._staged,
             )
-            # Add the staged change to the staging DB
-            self._staged.add(staged_change)
 
     def delete_token_category(self, auth: AuthUser, token_id: str, cat_id: str) -> None:
         # Get current categories
@@ -47,31 +45,27 @@ class StagingDBTokenCategory:
         if cat_id in current_categories:
             new_categories = [c for c in current_categories if c != cat_id]
 
-            # Create a staged change for the TOKEN table
-            staged_change = StagedChange(
+            # Use stage_update to create and add the staged change
+            add_staged_change(
                 action_type=ActionType.UPDATE,
                 action_table=ActionTable.TOKEN,
                 auth=auth,
-                uid=token_id,
-                data={
+                obj_id=token_id,
+                update_data={
                     'categories': new_categories
                 },
-                timestamp=int(time.time()),
+                staged=self._staged,
             )
-            # Add the staged change to the staging DB
-            self._staged.add(staged_change)
 
     def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]) -> None:
-        # Create a staged change for the TOKEN table with the new categories
-        staged_change = StagedChange(
+        # Use stage_update to create and add the staged change
+        add_staged_change(
             action_type=ActionType.UPDATE,
             action_table=ActionTable.TOKEN,
             auth=auth,
-            uid=token_id,
-            data={
+            obj_id=token_id,
+            update_data={
                 'categories': cat_ids
             },
-            timestamp=int(time.time()),
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)

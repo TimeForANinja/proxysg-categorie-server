@@ -4,6 +4,7 @@ from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.abc.category import CategoryDBInterface, MutableCategory, Category
+from db.sqlite.util.query_builder import build_update_query
 
 
 def _build_category(row: any) -> Category:
@@ -69,21 +70,11 @@ class SQLiteCategory(CategoryDBInterface):
         return None
 
     def update_category(self, cat_id: str, category: MutableCategory) -> Category:
-        updates = []
-        params = []
-
-        # Prepare an update query based on non-None fields
-        if category.name is not None:
-            updates.append('name = ?')
-            params.append(category.name)
-
-        if category.description is not None:
-            updates.append('description = ?')
-            params.append(category.description)
-
-        if category.color is not None:
-            updates.append('color = ?')
-            params.append(category.color)
+        updates, params = build_update_query(category, {
+            'name': 'name',
+            'description': 'description',
+            'color': 'color',
+        })
 
         if updates:
             query = f'UPDATE categories SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'

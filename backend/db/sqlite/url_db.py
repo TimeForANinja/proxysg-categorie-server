@@ -4,6 +4,7 @@ from typing import Optional, List, Callable
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.abc.url import MutableURL, URL, NO_BC_CATEGORY_YET, URLDBInterface
+from db.sqlite.util.query_builder import build_update_query
 
 
 def _build_url(row: any) -> URL:
@@ -69,16 +70,10 @@ class SQLiteURL(URLDBInterface):
         return None
 
     def update_url(self, url_id: str, mut_url: MutableURL) -> URL:
-        updates = []
-        params = []
-
-        # Prepare an update query based on non-None fields
-        if mut_url.hostname is not None:
-            updates.append('hostname = ?')
-            params.append(mut_url.hostname)
-        if mut_url.description is not None:
-            updates.append('description = ?')
-            params.append(mut_url.description)
+        updates, params = build_update_query(mut_url, {
+            'hostname': 'hostname',
+            'description': 'description',
+        })
 
         if updates:
             query = f'UPDATE urls SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'

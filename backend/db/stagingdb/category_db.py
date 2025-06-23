@@ -1,13 +1,14 @@
 import time
 from dataclasses import asdict
-from typing import Optional, List, Dict, Any
-import uuid
+from typing import Optional, List
 
 from auth.auth_user import AuthUser
 from db.abc.category import MutableCategory, Category
 from db.abc.db import DBInterface
 from db.abc.staging import ActionType, ActionTable
-from db.stagingdb.cache import StagedChange, StageFilter, StagedCollection
+from db.stagingdb.cache import StagedChange, StagedCollection
+from db.stagingdb.utils.add_uid import add_uid_to_object
+from db.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
 
 
 class StagingDBCategory:
@@ -16,118 +17,59 @@ class StagingDBCategory:
         self._staged = staged
 
     def add_category(self, auth: AuthUser, category: MutableCategory) -> Category:
-        category_id = str(uuid.uuid4())
-        category_data = asdict(category)
-        category_data.update({
-            'id': category_id,
-        })
+        # Generate a UUID and add it to the category data
+        category_id, category_data = add_uid_to_object(category)
 
-        # Create a staged change
-        staged_change = StagedChange(
+        add_staged_change(
             action_type=ActionType.ADD,
             action_table=ActionTable.CATEGORY,
             auth=auth,
-            uid=category_id,
-            data=category_data,
-            timestamp=int(time.time()),
+            obj_id=category_id,
+            update_data=category_data,
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)
 
         # Create a Category object to return
         return Category(**category_data)
 
     def get_category(self, category_id: str) -> Optional[Category]:
-        # try getting it from the database
-        db_category: Category = self._db.categories.get_category(category_id)
-        # convert to dict
-        category: Dict[str, Any] = asdict(db_category) if db_category is not None else None
-
-        if category is None:
-            # no category in DB, so check if we have an "add" event
-            add_category = self._staged.first_or_none(
-                StageFilter.fac_filter_table_id(ActionTable.CATEGORY, category_id),
-                StageFilter.filter_add,
-            )
-            category = add_category.data if add_category is not None else None
-
-        # overload any staged changes
-        for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(ActionTable.CATEGORY, category_id),
-        ):
-            if staged_change.data.get('is_deleted', 0) != 0:
-                return None
-
-            category.update(staged_change.data)
-
-        return Category(**category)
+        return get_and_overload_object(
+            db_getter=self._db.categories.get_category,
+            staged=self._staged,
+            action_table=ActionTable.CATEGORY,
+            obj_id=category_id,
+            obj_class=Category
+        )
 
     def update_category(self, auth: AuthUser, cat_id: str, category: MutableCategory) -> Category:
-        update_data = asdict(category)
-
-        # Create a staged change
-        staged_change = StagedChange(
+        add_staged_change(
             action_type=ActionType.UPDATE,
             action_table=ActionTable.CATEGORY,
             auth=auth,
-            uid=cat_id,
-            data=update_data,
-            timestamp=int(time.time()),
+            obj_id=cat_id,
+            update_data=asdict(category),
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)
 
         return self.get_category(cat_id)
 
     def delete_category(self, auth: AuthUser, cat_id: str) -> None:
-        update_data = {'is_deleted': int(time.time())}
-
-        # Create a staged change
-        staged_change = StagedChange(
+        add_staged_change(
             action_type=ActionType.DELETE,
             action_table=ActionTable.CATEGORY,
             auth=auth,
-            uid=cat_id,
-            data=update_data,
-            timestamp=int(time.time()),
+            obj_id=cat_id,
+            update_data={'is_deleted': int(time.time())},
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)
-
-        return self.get_category(cat_id)
 
     def get_all_categories(self) -> List[Category]:
-        # Get all categories from the database
-        db_categories: List[Category] = self._db.categories.get_all_categories()
-        # convert to dict
-        categories: List[Dict[str, Any]] = [asdict(category) for category in db_categories]
-
-        # append all "added" categories from the cache
-        categories.extend(
-            [
-                c.data for c in
-                self._staged.iter_filter(
-                    StageFilter.filter_add,
-                    StageFilter.fac_filter_table(ActionTable.CATEGORY),
-                )
-            ]
+        return get_and_overload_all_objects(
+            db_getter=self._db.categories.get_all_categories,
+            staged=self._staged,
+            action_table=ActionTable.CATEGORY,
+            obj_class=Category
         )
-
-        staged_categories: List[Category] = []
-
-        for raw_category in categories:
-            category = raw_category
-
-            # overload any staged changes
-            for staged_change in self._staged.iter_filter(
-                StageFilter.fac_filter_table_id(ActionTable.CATEGORY, category.get('uid'))
-            ):
-                category.update(staged_change.data)
-
-            if category.get('is_deleted', 0) == 0:
-                staged_categories.append(Category(**category))
-
-        return staged_categories
 
     def commit(self, change: StagedChange) -> None:
         """

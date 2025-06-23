@@ -6,7 +6,7 @@ from flask import request
 from auth.auth_user import AuthUser
 from auth.auth_realm import AuthRealmInterface
 from auth.util.role_map import parse_role_map, apply_role_map, RoleMap
-from log import log_info, log_error, log_debug
+from log import log_info, log_error
 
 
 class RESTAuthRealm(AuthRealmInterface):
@@ -84,6 +84,37 @@ class RESTAuthRealm(AuthRealmInterface):
         if isinstance(value, dict):
             value[keys[-1]] = new_value
 
+    def _process_auth_response(self, response) -> Tuple[Optional[str], Optional[AuthUser]]:
+        """
+        Process authentication response and extract user information.
+
+        :param response: The response object from the authentication request
+        :return: A tuple of (rest_token, AuthUser), where rest_token may be None if not present
+        """
+        if response.status_code != 200:
+            log_error('AUTH', f'Authentication error: SRC_IP:{request.remote_addr}', response.json())
+            return None, None
+
+        resp_obj = response.json()
+        raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
+        mapped_roles = apply_role_map(raw_roles, self.role_map)
+
+        user = AuthUser(
+            username=self._get_json_key(resp_obj, self.paths.get('username')),
+            roles=mapped_roles,
+        )
+
+        # Always extract the token (or return "None" if not present)
+        rest_token = self._get_json_key(resp_obj, self.paths.get('token'))
+
+        # Create a clean copy for logging (without the token)
+        resp_obj_clean = copy.deepcopy(resp_obj)
+        resp_obj_clean['mappedRoles'] = mapped_roles
+        self._update_json_key(resp_obj_clean, self.paths.get('token'), "*****")
+        log_info('AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', resp_obj_clean)
+
+        return rest_token, user
+
     def verify_token(self, token: str) -> Optional[AuthUser]:
         payload = {
             'token': token,
@@ -96,19 +127,7 @@ class RESTAuthRealm(AuthRealmInterface):
                 json=payload,
             )
 
-            if r.status_code != 200:
-                log_error( 'AUTH', f'Authentication error: SRC_IP:{request.remote_addr}', r.json())
-                return None
-
-            resp_obj = r.json()
-            raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
-            mapped_roles = apply_role_map(raw_roles, self.role_map)
-            log_debug( 'AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', r.json(), {'mappedRoles': mapped_roles})
-            user = AuthUser(
-                username = self._get_json_key(resp_obj, self.paths.get('username')),
-                roles = mapped_roles,
-            )
-
+            _, user = self._process_auth_response(r)
             return user
         except requests.RequestException as e:
             log_error('Auth', f'Authentication error: SRC_IP:{request.remote_addr}', e)
@@ -127,26 +146,7 @@ class RESTAuthRealm(AuthRealmInterface):
                 verify=self.ssl_verify,
             )
 
-            if r.status_code != 200:
-                log_error( 'AUTH', f'Authentication error: SRC_IP:{request.remote_addr}', r.json())
-                return None
-
-            resp_obj = r.json()
-            raw_roles = self._get_json_key(resp_obj, self.paths.get('groups'))
-            mapped_roles = apply_role_map(raw_roles, self.role_map)
-            # !! WATCH OUT !!
-            # we should never log the token
-            resp_obj_clean = copy.deepcopy(resp_obj)
-            resp_obj_clean['mappedRoles'] = mapped_roles
-            self._update_json_key(resp_obj_clean, self.paths.get('token'), "*****")
-            log_info('AUTH', f'Auth successfully: SRC_IP:{request.remote_addr}', resp_obj_clean)
-
-            user = AuthUser(
-                username = self._get_json_key(resp_obj, self.paths.get('username')),
-                roles = mapped_roles,
-            )
-            rest_token = self._get_json_key(resp_obj, self.paths.get('token'))
-            return rest_token, user
+            return self._process_auth_response(r)
         except requests.RequestException as e:
             log_error('Auth', f'Authentication error: SRC_IP:{request.remote_addr}', e)
             return None

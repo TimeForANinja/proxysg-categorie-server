@@ -1,11 +1,11 @@
-import time
 from typing import List
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
 from db.abc.staging import ActionType, ActionTable
-from db.stagingdb.cache import StagedChange, StagedCollection
+from db.stagingdb.cache import StagedCollection
 from db.stagingdb.url_db import StagingDBURL
+from db.stagingdb.utils.overloading import add_staged_change
 
 
 class StagingDBURLCategory:
@@ -25,19 +25,17 @@ class StagingDBURLCategory:
         if cat_id not in current_categories:
             new_categories = current_categories + [cat_id]
 
-            # Create a staged change for the URL table
-            staged_change = StagedChange(
+            # Use stage_update to create and add the staged change
+            add_staged_change(
                 action_type=ActionType.UPDATE,
                 action_table=ActionTable.URL,
                 auth=auth,
-                uid=url_id,
-                data={
+                obj_id=url_id,
+                update_data={
                     'categories': new_categories
                 },
-                timestamp=int(time.time()),
+                staged=self._staged,
             )
-            # Add the staged change to the staging DB
-            self._staged.add(staged_change)
 
     def delete_url_category(self, auth: AuthUser, url_id: str, cat_id: str) -> None:
         # Get current categories
@@ -47,31 +45,27 @@ class StagingDBURLCategory:
         if cat_id in current_categories:
             new_categories = [c for c in current_categories if c != cat_id]
 
-            # Create a staged change for the URL table
-            staged_change = StagedChange(
+            # Use stage_update to create and add the staged change
+            add_staged_change(
                 action_type=ActionType.UPDATE,
                 action_table=ActionTable.URL,
                 auth=auth,
-                uid=url_id,
-                data={
+                obj_id=url_id,
+                update_data={
                     'categories': new_categories
                 },
-                timestamp=int(time.time()),
+                staged=self._staged,
             )
-            # Add the staged change to the staging DB
-            self._staged.add(staged_change)
 
     def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]) -> None:
-        # Create a staged change for the URL table with the new categories
-        staged_change = StagedChange(
+        # Use stage_update to create and add the staged change
+        add_staged_change(
             action_type=ActionType.UPDATE,
             action_table=ActionTable.URL,
             auth=auth,
-            uid=url_id,
-            data={
+            obj_id=url_id,
+            update_data={
                 'categories': cat_ids
             },
-            timestamp=int(time.time()),
+            staged=self._staged,
         )
-        # Add the staged change to the staging DB
-        self._staged.add(staged_change)
