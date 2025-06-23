@@ -12,7 +12,7 @@ def _build_task(row: Mapping[str, Any]) -> Task:
     return Task(
         id=str(row['_id']),
         name=row['name'],
-        user=row['user'],
+        user=AuthUser.unserialize(row['user']).username,
         parameters=row.get('parameters'),
         status=row['status'],
         created_at=row['created_at'],
@@ -29,7 +29,7 @@ class MongoDBTask(TaskDBInterface):
         current_timestamp = int(time.time())
         result = self.collection.insert_one({
             'name': task.name,
-            'user': user.username,
+            'user': AuthUser.serialize(user),
             'parameters': task.parameters,
             'status': 'pending',
             'created_at': current_timestamp,

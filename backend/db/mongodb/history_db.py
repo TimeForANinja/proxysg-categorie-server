@@ -35,7 +35,7 @@ class MongoDBHistory(HistoryDBInterface):
             'time': timestamp,
             'description': action,
             'atomics': [],  # Default empty atomics list
-            'user': user.username,
+            'user': AuthUser.serialize(user),
             'ref_token': ref_token,
             'ref_url': ref_url,
             'ref_category': ref_category,
@@ -60,7 +60,7 @@ class MongoDBHistory(HistoryDBInterface):
                 time=event['time'],
                 description=event.get('description'),
                 atomics=event.get('atomics', []),
-                user=event['user'],
+                user=AuthUser.unserialize(event['user']).username,
                 ref_token=event['ref_token'],
                 ref_url=event['ref_url'],
                 ref_category=event['ref_category'],

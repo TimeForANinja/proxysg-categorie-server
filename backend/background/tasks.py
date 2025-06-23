@@ -1,3 +1,5 @@
+import traceback
+
 from auth.auth_user import AuthUser
 from db.abc.task import Task
 from db.stagingdb.db import StagingDB
@@ -29,13 +31,15 @@ def execute_load_existing_task(db_if: StagingDB, task: Task):
         categories, uncategorized = parse_db(category_db, True)
 
         # Push the intermediate objects to the main DB
-        create_in_db(db_if.urls, db_if.categories, db_if.url_categories, AuthUser.unserialize(task.user), categories, prefix)
-        create_urls_db(db_if.urls, AuthUser.unserialize(task.user), uncategorized)
+        user = AuthUser.unserialize(task.user)
+        create_in_db(db_if.urls, db_if.categories, db_if.url_categories, user, categories, prefix)
+        create_urls_db(db_if.urls, user, uncategorized)
 
         log_info('BACKGROUND', f'Load existing task {task.id} completed successfully')
         db_if.tasks.update_task_status(task.id, 'success')
     except Exception as e:
         log_info('BACKGROUND', f'Error executing load_existing task {task.id}', {
-            'error': str(e)
+            'error': str(e),
+            'traceback': traceback.format_exc(),
         })
         db_if.tasks.update_task_status(task.id, 'failed')

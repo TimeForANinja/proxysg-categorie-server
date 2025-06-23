@@ -33,7 +33,7 @@ class SQLiteHistory(HistoryDBInterface):
         timestamp = int(time.time())
         cursor.execute(
             'INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?)',
-            (timestamp, action, user.username, ','.join(ref_token), ','.join(ref_url), ','.join(ref_category))
+            (timestamp, action, AuthUser.serialize(user), ','.join(ref_token), ','.join(ref_url), ','.join(ref_category))
         )
         self.get_conn().commit()
 
@@ -58,7 +58,7 @@ class SQLiteHistory(HistoryDBInterface):
             time=row[1],
             description=row[2],
             atomics=[],
-            user=row[3],
+            user=AuthUser.unserialize(row[3]).username,
             ref_token=split_opt_str_group(row[4]),
             ref_url=split_opt_str_group(row[5]),
             ref_category=split_opt_str_group(row[6]),

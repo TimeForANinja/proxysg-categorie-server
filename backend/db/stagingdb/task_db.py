@@ -15,7 +15,7 @@ class StagingDBTask:
         return self._db.tasks.add_task(user, task)
 
     def get_task(self, task_id: str) -> Optional[Task]:
-        self._db.tasks.get_task(task_id)
+        return self._db.tasks.get_task(task_id)
 
     def update_task_status(
             self,

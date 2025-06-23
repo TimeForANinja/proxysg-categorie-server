@@ -14,7 +14,7 @@ def _build_task(row: any) -> Task:
     return Task(
         id=str(row[0]),
         name=row[1],
-        user=row[2],
+        user=AuthUser.unserialize(row[2]).username,
         parameters=param_obj,
         status=row[4],
         created_at=row[5],
@@ -35,7 +35,7 @@ class SQLiteTask(TaskDBInterface):
             '''INSERT INTO tasks 
                (name, user, parameters, status, created_at, updated_at) 
                VALUES (?, ?, ?, ?, ?, ?)''',
-            (task.name, user.username, param_str, 'pending', current_timestamp, current_timestamp)
+            (task.name, AuthUser.serialize(user), param_str, 'pending', current_timestamp, current_timestamp)
         )
         self.get_conn().commit()
 

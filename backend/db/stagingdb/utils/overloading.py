@@ -98,7 +98,7 @@ def get_and_overload_all_objects(
 
         # Overload any staged changes
         for staged_change in staged.iter_filter(
-            StageFilter.fac_filter_table_id(action_table, obj.get('uid'))
+            StageFilter.fac_filter_table_id(action_table, obj.get('id'))
         ):
             obj.update(staged_change.data)
 

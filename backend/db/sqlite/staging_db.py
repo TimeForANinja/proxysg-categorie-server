@@ -10,8 +10,8 @@ def _build_change(row: Tuple) -> StagedChange:
     """Parse SQLite row into a StagedChange object."""
     data = json.loads(row[5]) if row[5] else None
     return StagedChange(
-        action_type=ActionType(int(row[0])),
-        action_table=ActionTable(int(row[1])),
+        action_type=ActionType(row[0]),
+        action_table=ActionTable(row[1]),
         auth=AuthUser.unserialize(row[2]),
         uid=row[3],
         timestamp=int(row[4]),
