@@ -27,7 +27,7 @@ class StagingDBSubCategory:
 
             # Use stage_update to create and add the staged change
             add_staged_change(
-                action_type=ActionType.UPDATE,
+                action_type=ActionType.SET_CATS,
                 action_table=ActionTable.CATEGORY,
                 auth=auth,
                 obj_id=cat_id,
@@ -47,7 +47,7 @@ class StagingDBSubCategory:
 
             # Use stage_update to create and add the staged change
             add_staged_change(
-                action_type=ActionType.UPDATE,
+                action_type=ActionType.SET_CATS,
                 action_table=ActionTable.CATEGORY,
                 auth=auth,
                 obj_id=cat_id,
@@ -60,7 +60,7 @@ class StagingDBSubCategory:
     def set_sub_categories(self, auth: AuthUser, cat_id: str, cat_ids: List[str]) -> None:
         # Use stage_update to create and add the staged change
         add_staged_change(
-            action_type=ActionType.UPDATE,
+            action_type=ActionType.SET_CATS,
             action_table=ActionTable.CATEGORY,
             auth=auth,
             obj_id=cat_id,

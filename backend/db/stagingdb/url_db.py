@@ -9,6 +9,7 @@ from db.abc.url import MutableURL, URL
 from db.stagingdb.cache import StagedChange, StagedCollection
 from db.stagingdb.utils.add_uid import add_uid_to_object
 from db.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
+from db.stagingdb.utils.update_cats import set_categories
 
 
 class StagingDBURL:
@@ -96,7 +97,7 @@ class StagingDBURL:
 
             # Create a history event
             self._db.history.add_history_event(
-                action=f"Added URL {url_data.get('url')}",
+                action=f"Added URL {url_data.get('hostname')}",
                 user=change.auth,
                 ref_token=[],
                 ref_url=[url_id],
@@ -112,7 +113,26 @@ class StagingDBURL:
 
             # Create a history event
             self._db.history.add_history_event(
-                action=f"Updated URL {url_data.get('url')}",
+                action=f"Updated URL {url_data.get('hostname')}",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[change.uid],
+                ref_category=[],
+            )
+        elif change.action_type == ActionType.SET_CATS:
+            url_data = change.data.copy()
+            # Update the URL in the persistent database
+            current_cats = self._db.urls.get_url(change.uid)
+            added, removed = set_categories(
+                current_cats.categories,
+                url_data['categories'],
+                lambda cid: self._db.url_categories.add_url_category(change.uid, cid),
+                lambda cid: self._db.url_categories.delete_url_category(change.uid, cid),
+            )
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Updated Categories for URL {url_data.get('hostname')}, added {added}, removed {removed}",
                 user=change.auth,
                 ref_token=[],
                 ref_url=[change.uid],

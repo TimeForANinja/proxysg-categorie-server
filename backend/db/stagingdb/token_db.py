@@ -10,6 +10,7 @@ from db.abc.token import MutableToken, Token
 from db.stagingdb.cache import StagedChange, StagedCollection
 from db.stagingdb.utils.add_uid import add_uid_to_object
 from db.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
+from db.stagingdb.utils.update_cats import set_categories
 
 
 class StagingDBToken:
@@ -134,7 +135,7 @@ class StagingDBToken:
 
                 # Create a history event
                 self._db.history.add_history_event(
-                    action=f"Rolled token",
+                    action=f"Rolled token {token_data.get('name')}",
                     user=change.auth,
                     ref_token=[change.uid],
                     ref_url=[],
@@ -155,6 +156,25 @@ class StagingDBToken:
                     ref_url=[],
                     ref_category=[],
                 )
+        elif change.action_type == ActionType.SET_CATS:
+            token_data = change.data.copy()
+            # Update the token in the persistent database
+            current_cats = self._db.tokens.get_token(change.uid)
+            added, removed = set_categories(
+                current_cats.categories,
+                token_data['categories'],
+                lambda cid: self._db.token_categories.add_token_category(change.uid, cid),
+                lambda cid: self._db.token_categories.delete_token_category(change.uid, cid),
+            )
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Updated Categories for Token {token_data.get('name')}, added {added}, removed {removed}",
+                user=change.auth,
+                ref_token=[change.uid],
+                ref_url=[],
+                ref_category=[],
+            )
         elif change.action_type == ActionType.DELETE:
             # Delete the token from the persistent database
             self._db.tokens.delete_token(change.uid)

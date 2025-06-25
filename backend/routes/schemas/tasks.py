@@ -2,14 +2,14 @@ from apiflask.fields import Nested, List, String
 from marshmallow_dataclass import class_schema
 from typing import List as tList
 
-from db.abc.task import Task
+from db.abc.task import RESTTask
 from routes.schemas.generic_output import GenericOutput
 
 
 class ListTaskOutput(GenericOutput):
     """Class representing a list of tasks"""
-    data: tList[Task] = List(
-        Nested(class_schema(Task)()),
+    data: tList[RESTTask] = List(
+        Nested(class_schema(RESTTask)()),
         required=True,
         description='List of tasks',
     )
@@ -17,8 +17,8 @@ class ListTaskOutput(GenericOutput):
 
 class SingleTaskOutput(GenericOutput):
     """Class representing a single task"""
-    data: Task = Nested(
-        class_schema(Task)(),
+    data: RESTTask = Nested(
+        class_schema(RESTTask)(),
         required=True,
         description='Task details',
     )

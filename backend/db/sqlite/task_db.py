@@ -14,7 +14,7 @@ def _build_task(row: any) -> Task:
     return Task(
         id=str(row[0]),
         name=row[1],
-        user=AuthUser.unserialize(row[2]).username,
+        user=AuthUser.unserialize(row[2]),
         parameters=param_obj,
         status=row[4],
         created_at=row[5],
@@ -42,7 +42,7 @@ class SQLiteTask(TaskDBInterface):
         new_task = Task(
             id=str(cursor.lastrowid),
             name=task.name,
-            user=user.username,
+            user=user,
             parameters=task.parameters,
             status='pending',
             created_at=current_timestamp,

@@ -27,7 +27,7 @@ class StagingDBTokenCategory:
 
             # Use stage_update to create and add the staged change
             add_staged_change(
-                action_type=ActionType.UPDATE,
+                action_type=ActionType.SET_CATS,
                 action_table=ActionTable.TOKEN,
                 auth=auth,
                 obj_id=token_id,
@@ -47,7 +47,7 @@ class StagingDBTokenCategory:
 
             # Use stage_update to create and add the staged change
             add_staged_change(
-                action_type=ActionType.UPDATE,
+                action_type=ActionType.SET_CATS,
                 action_table=ActionTable.TOKEN,
                 auth=auth,
                 obj_id=token_id,
@@ -60,7 +60,7 @@ class StagingDBTokenCategory:
     def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]) -> None:
         # Use stage_update to create and add the staged change
         add_staged_change(
-            action_type=ActionType.UPDATE,
+            action_type=ActionType.SET_CATS,
             action_table=ActionTable.TOKEN,
             auth=auth,
             obj_id=token_id,

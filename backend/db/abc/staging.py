@@ -9,7 +9,7 @@ from auth.auth_user import AuthUser
 class ActionType(Enum):
     """Helper class to represent the different types of staged changes."""
     ADD = "add"
-    REMOVE = "remove"
+    SET_CATS = "set_cats"
     UPDATE = "update"
     DELETE = "delete"
 

@@ -22,7 +22,7 @@ def add_history_bp(app: APIFlask):
         return {
             'status': 'success',
             'message': 'History fetched successfully',
-            'data': histories,
+            'data': [x.to_rest() for x in histories],
         }
 
     app.register_blueprint(history_bp)

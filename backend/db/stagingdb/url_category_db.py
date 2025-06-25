@@ -27,7 +27,7 @@ class StagingDBURLCategory:
 
             # Use stage_update to create and add the staged change
             add_staged_change(
-                action_type=ActionType.UPDATE,
+                action_type=ActionType.SET_CATS,
                 action_table=ActionTable.URL,
                 auth=auth,
                 obj_id=url_id,
@@ -47,7 +47,7 @@ class StagingDBURLCategory:
 
             # Use stage_update to create and add the staged change
             add_staged_change(
-                action_type=ActionType.UPDATE,
+                action_type=ActionType.SET_CATS,
                 action_table=ActionTable.URL,
                 auth=auth,
                 obj_id=url_id,
@@ -60,7 +60,7 @@ class StagingDBURLCategory:
     def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]) -> None:
         # Use stage_update to create and add the staged change
         add_staged_change(
-            action_type=ActionType.UPDATE,
+            action_type=ActionType.SET_CATS,
             action_table=ActionTable.URL,
             auth=auth,
             obj_id=url_id,

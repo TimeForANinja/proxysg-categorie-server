@@ -5,7 +5,6 @@ from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
 from db.abc.task import MutableTask
 from log import log_debug
-from routes.schemas.generic_output import GenericOutput
 from routes.schemas.load_existing import ExistingDBInput
 from routes.schemas.tasks import ListTaskOutput, CreatedTaskOutput, SingleTaskOutput
 
@@ -49,7 +48,7 @@ def add_other_bp(app):
         return {
             'status': 'success',
             'message': 'Tasks fetched successfully',
-            'data': tasks,
+            'data': [x.to_rest() for x in tasks],
         }
 
     # Route to get a single task by ID
@@ -70,19 +69,27 @@ def add_other_bp(app):
         return {
             'status': 'success',
             'message': 'Task fetched successfully',
-            'data': task,
+            'data': task.to_rest(),
         }
 
     @other_bp.post('/api/commit')
     @other_bp.doc(summary='Commit Staged Changes', description='Commit all staged changes to the database')
-    @other_bp.output(GenericOutput)
+    @other_bp.output(CreatedTaskOutput)
     @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def handle_commit():
-        # Call the commit method to push staged changes to the database
-        get_db().commit()
+        db_if = get_db()
+
+        # Create a background task to process the database
+        task = db_if.tasks.add_task(auth.current_user, MutableTask(
+            name='commit',
+            parameters=['commit']
+        ))
+        log_debug('API', f'Created commit task {task.id}')
+
         return {
             'status': 'success',
-            'message': 'All staged changes have been committed to the database'
+            'message': 'Commit task created successfully',
+            'data': task.id,
         }
 
     app.register_blueprint(other_bp)

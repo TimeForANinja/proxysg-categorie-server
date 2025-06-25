@@ -24,8 +24,32 @@ class MutableTask:
         },
     )
 
+
+@dataclass
+class Task:
+    """Helper class to represent a task."""
+    id: str
+    name: str
+    user: AuthUser
+    parameters: List[str]
+    status: str
+    created_at: int
+    updated_at: int
+
+    def to_rest(self) -> 'RESTTask':
+        return RESTTask(
+            id=self.id,
+            name=self.name,
+            user=self.user.username,
+            parameters=self.parameters,
+            status=self.status,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
+
 @dataclass(kw_only=True)
-class Task(MutableTask):
+class RESTTask(MutableTask):
     """
     Helper class to represent a task.
     """

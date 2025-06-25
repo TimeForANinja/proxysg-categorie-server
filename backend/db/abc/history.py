@@ -14,6 +14,31 @@ class Atomic:
 @dataclass
 class History:
     """Helper class to represent a category."""
+    id: str
+    time: int
+    user: AuthUser
+    description: Optional[str]
+    ref_token: List[str]
+    ref_url: List[str]
+    ref_category: List[str]
+    atomics: List[Atomic]
+
+    def to_rest(self) -> 'RESTHistory':
+        return RESTHistory(
+            id=self.id,
+            time=self.time,
+            user=self.user.username,
+            description=self.description,
+            ref_token=self.ref_token,
+            ref_url=self.ref_url,
+            ref_category=self.ref_category,
+            atomics=self.atomics,
+        )
+
+
+@dataclass
+class RESTHistory:
+    """Helper class to represent a category."""
     id: str = field(metadata={
         'required': True,
         'description': 'ID of the category',

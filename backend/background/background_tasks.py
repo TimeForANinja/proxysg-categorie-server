@@ -6,7 +6,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
-from background.tasks import execute_load_existing_task
+from background.tasks import execute_load_existing_task, execute_commit
 from db.db_singleton import get_db
 from log import log_debug
 
@@ -91,11 +91,14 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
 
             # try to fetch the next pending task from the DB
             task = db_if.tasks.get_next_pending_task()
+            log_debug("BACKGROUND", "next pending task", task)
 
             # if a task is defined go based on the task.name
             # if no task is defined, we do nothing
             if task and task.name == "load_existing":
                 execute_load_existing_task(db_if, task)
+            elif task and task.name == "commit":
+                execute_commit(db_if, task)
             elif task:
                 log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
                 db_if.tasks.update_task_status(task.id, 'unknown')

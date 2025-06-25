@@ -9,6 +9,7 @@ from db.abc.staging import ActionType, ActionTable
 from db.stagingdb.cache import StagedChange, StagedCollection
 from db.stagingdb.utils.add_uid import add_uid_to_object
 from db.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
+from db.stagingdb.utils.update_cats import set_categories
 
 
 class StagingDBCategory:
@@ -109,6 +110,25 @@ class StagingDBCategory:
             # Create a history event
             self._db.history.add_history_event(
                 action=f"Updated category {category_data.get('name')}",
+                user=change.auth,
+                ref_token=[],
+                ref_url=[],
+                ref_category=[change.uid],
+            )
+        elif change.action_type == ActionType.SET_CATS:
+            category_data = change.data.copy()
+            # Update the category mappings in the persistent database
+            current_cats = self._db.categories.get_category(change.uid)
+            added, removed = set_categories(
+                current_cats.nested_categories,
+                category_data['nested_categories'],
+                lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid),
+                lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid),
+            )
+
+            # Create a history event
+            self._db.history.add_history_event(
+                action=f"Updated sub-categories for category {category_data.get('name')}, added {added}, removed {removed}",
                 user=change.auth,
                 ref_token=[],
                 ref_url=[],

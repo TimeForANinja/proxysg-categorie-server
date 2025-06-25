@@ -1,6 +1,5 @@
 import traceback
 
-from auth.auth_user import AuthUser
 from db.abc.task import Task
 from db.stagingdb.db import StagingDB
 from db.util.parse_existing_db import parse_db, create_in_db, create_urls_db
@@ -31,14 +30,36 @@ def execute_load_existing_task(db_if: StagingDB, task: Task):
         categories, uncategorized = parse_db(category_db, True)
 
         # Push the intermediate objects to the main DB
-        user = AuthUser.unserialize(task.user)
-        create_in_db(db_if.urls, db_if.categories, db_if.url_categories, user, categories, prefix)
-        create_urls_db(db_if.urls, user, uncategorized)
+        create_in_db(db_if.urls, db_if.categories, db_if.url_categories, task.user, categories, prefix)
+        create_urls_db(db_if.urls, task.user, uncategorized)
 
         log_info('BACKGROUND', f'Load existing task {task.id} completed successfully')
         db_if.tasks.update_task_status(task.id, 'success')
     except Exception as e:
         log_info('BACKGROUND', f'Error executing load_existing task {task.id}', {
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+        })
+        db_if.tasks.update_task_status(task.id, 'failed')
+
+def execute_commit(db_if: StagingDB, task: Task):
+    """
+    Execute a commit task.
+
+    :param db_if: The database interface to use
+    :param task: the task to execute
+    """
+    log_debug('BACKGROUND', f'Executing commit task {task.id}')
+
+    # Update task status to running
+    db_if.tasks.update_task_status(task.id, 'running')
+
+    try:
+        db_if.commit()
+        log_info('BACKGROUND', f'Commit task {task.id} completed successfully')
+        db_if.tasks.update_task_status(task.id, 'success')
+    except Exception as e:
+        log_info('BACKGROUND', f'Error executing commit task {task.id}', {
             'error': str(e),
             'traceback': traceback.format_exc(),
         })
