@@ -1,8 +1,8 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import {loadExisting} from '../api/load_existing';
-import {getTaskByID} from '../api/task';
 import {useAuth} from '../model/AuthContext';
+import TaskStatus from './shared/TaskStatus';
 import {
     Button,
     TextField,
@@ -12,7 +12,6 @@ import {
     Paper,
     ToggleButtonGroup,
     ToggleButton,
-    Alert,
     CircularProgress,
     List,
     ListItem,
@@ -25,8 +24,6 @@ import TextFieldsIcon from '@mui/icons-material/TextFields';
 import CloseIcon from '@mui/icons-material/Close';
 import {formatDateString} from "../util/DateString";
 
-const TIME_SECONDS = 1000;
-const TIME_CHECK_TASKS = 1 * TIME_SECONDS;
 
 const UploadPage = () => {
     const navigate = useNavigate();
@@ -35,9 +32,6 @@ const UploadPage = () => {
     const [files, setFiles] = React.useState<File[]>([]);
     const [text, setText] = React.useState<string>('');
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
-    const [error, setError] = React.useState<string | null>(null);
-    const [warning, setWarning] = React.useState<string | null>(null);
-    const [success, setSuccess] = React.useState<string | null>(null);
     const [uploadType, setUploadType] = React.useState<'file' | 'text'>('file');
     const [prefix, setPrefix] = React.useState<string>(`IMPORTED_${formatDateString()}_`);
 
@@ -54,74 +48,22 @@ const UploadPage = () => {
                 const updatedFiles = [...prevFiles, ...newFiles];
                 return updatedFiles.slice(0, 5);
             });
-
-            setError(null);
-            setSuccess(null);
         }
     };
 
     const handleRemoveFile = (index: number) => {
         setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-        setSuccess(null);
     };
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value);
-        setError(null);
-        setSuccess(null);
     };
 
-    // (wrapper for an) interval to check for the state of the upload task
-    React.useEffect(() => {
-        const timer = setInterval(async () => {
-            // only (continue to) check status if we have a pending task
-            if (!taskId || !token) return;
-            try {
-                // fetch the task and set the success / warning / error banner accordingly
-                const taskData = await getTaskByID(token, taskId);
-                switch (taskData.status) {
-                    case 'success':
-                        setSuccess('URLs uploaded successfully!');
-                        setWarning(null);
-                        setError(null);
-                        // clear the taskID
-                        setTaskId("");
-                        break
-                    case 'failed':
-                        setSuccess(null);
-                        setWarning(null);
-                        setError('Upload failed. Please try again.');
-                        // clear the taskID
-                        setTaskId("");
-                        break
-                    case 'running':
-                        setSuccess(null);
-                        setWarning('Waiting for execution to finish...');
-                        setError(null);
-                        break
-                    default:
-                    case 'pending':
-                        setSuccess(null);
-                        setWarning('Waiting for execution to start...');
-                        setError(null);
-                        break
-                }
-            } catch (err) {
-                setSuccess(null);
-                setWarning(null);
-                setError(`Failed to get task status: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            }
-        }, TIME_CHECK_TASKS);
-        // return a function that gets called to "cleanup" the effect
-        return () => clearInterval(timer);
-    }, [taskId, token])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         // Reset states
         setIsLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
             if (!token) {
@@ -149,7 +91,7 @@ const UploadPage = () => {
             setText('');
             setPrefix(`IMPORTED_${formatDateString()}_`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+            console.error("Error uploading:", err);
         } finally {
             setIsLoading(false);
         }
@@ -169,7 +111,6 @@ const UploadPage = () => {
                         onChange={(_e, newValue) => {
                             if (newValue !== null) {
                                 setUploadType(newValue);
-                                setSuccess(null);
                             }
                         }}
                         aria-label="upload type"
@@ -194,7 +135,6 @@ const UploadPage = () => {
                                 value={prefix}
                                 onChange={(e) => {
                                     setPrefix(e.target.value);
-                                    setSuccess(null);
                                 }}
                                 helperText="This prefix will be prepended to all categories read from the file"
                                 margin="normal"
@@ -271,23 +211,14 @@ const UploadPage = () => {
                             </Grid>
                         )}
 
-                        {error && (
-                            <Grid size={12}>
-                                <Alert severity="error">{error}</Alert>
-                            </Grid>
-                        )}
-
-                        {warning && (
-                            <Grid size={12}>
-                                <Alert severity="warning">{warning}</Alert>
-                            </Grid>
-                        )}
-
-                        {success && (
-                            <Grid size={12}>
-                                <Alert severity="success">{success}</Alert>
-                            </Grid>
-                        )}
+                        <Grid size={12}>
+                            <TaskStatus 
+                                taskId={taskId} 
+                                successMessage="URLs uploaded successfully!" 
+                                failureMessage="Upload failed. Please try again."
+                                onTaskComplete={() => setTaskId("")}
+                            />
+                        </Grid>
 
                         <Grid size={12}>
                             <Button

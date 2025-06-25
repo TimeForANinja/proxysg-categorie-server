@@ -47,3 +47,27 @@ export const getTaskByID = async (
 
   return data.data;
 };
+
+export const startCommit = async (
+    userToken: string,
+): Promise<string> => {
+  const response = await fetch(`/api/commit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'jwt-token': userToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get task status: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  if (data.status === "failed") {
+    throw new Error(data.message);
+  }
+
+  // Return the task ID
+  return data.data;
+}
