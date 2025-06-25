@@ -1,3 +1,4 @@
+from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
 from db.abc.staging import ActionTable
 from db.stagingdb.category_db import StagingDBCategory
@@ -44,16 +45,47 @@ class StagingDB:
     def close(self):
         self._main_db.close()
 
-    def commit(self):
+    def commit(self, user: AuthUser):
         """
         Push all staged changes to the main database.
-        """
-        for change in self._staged.iter():
-            if change.action_table == ActionTable.TOKEN:
-                self.tokens.commit(change)
-            elif change.action_table == ActionTable.URL:
-                self.urls.commit(change)
-            elif change.action_table == ActionTable.CATEGORY:
-                self.categories.commit(change)
 
+        :param user: User object for the user who is committing the changes
+        """
+        # Collect atomics from for all changes
+        atomics = []
+        ref_token = []
+        ref_url = []
+        ref_category = []
+
+        # apply changes to the database
+        for change in self._staged.iter():
+            atomic = None
+            if change.action_table == ActionTable.TOKEN:
+                atomic = self.tokens.commit(change)
+            elif change.action_table == ActionTable.URL:
+                atomic = self.urls.commit(change)
+            elif change.action_table == ActionTable.CATEGORY:
+                atomic = self.categories.commit(change)
+
+            # if a change was done, store the atomic
+            if atomic:
+                atomics.append(atomic)
+                # also store the refs to skip one loop
+                ref_token.append(atomic.ref_token)
+                ref_url.append(atomic.ref_url)
+                ref_category.append(atomic.ref_category)
+
+        # Create a single history event with all atomics
+        if atomics:
+            self._main_db.history.add_history_event(
+                action="Commit",
+                user=user,
+                # use list(set(xxx)) to remove duplicates
+                ref_token=list(set(ref_token)),
+                ref_url=list(set(ref_url)),
+                ref_category=list(set(ref_category)),
+                atomics=atomics,
+            )
+
+        # remove all staged events, now that they are committed
         self._staged.clear()

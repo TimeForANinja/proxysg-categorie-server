@@ -17,8 +17,8 @@ def set_categories(
     :param add_cat: Function to add a category
     :param remove_cat: Function to remove a category
     """
-    added = set(should_cats) - set(is_cats)
-    removed = set(is_cats) - set(should_cats)
+    added = list(set(should_cats) - set(is_cats))
+    removed = list(set(is_cats) - set(should_cats))
 
     log_debug("DEBUG", "set_categories", {
         "is_cats": is_cats,

@@ -55,7 +55,7 @@ def execute_commit(db_if: StagingDB, task: Task):
     db_if.tasks.update_task_status(task.id, 'running')
 
     try:
-        db_if.commit()
+        db_if.commit(task.user)
         log_info('BACKGROUND', f'Commit task {task.id} completed successfully')
         db_if.tasks.update_task_status(task.id, 'success')
     except Exception as e:

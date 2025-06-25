@@ -1,9 +1,9 @@
 import sqlite3
 import time
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 from auth.auth_user import AuthUser
-from db.abc.history import HistoryDBInterface, History
+from db.abc.history import HistoryDBInterface, History, Atomic
 from db.sqlite.util.groups import split_opt_str_group
 
 
@@ -18,6 +18,7 @@ class SQLiteHistory(HistoryDBInterface):
             ref_token: List[str],
             ref_url: List[str],
             ref_category: List[str],
+            atomics: Optional[List[Atomic]] = None,
     ) -> History:
         """
         Add a new history event with the given name
@@ -27,6 +28,7 @@ class SQLiteHistory(HistoryDBInterface):
         :param ref_token: List of token IDs referenced by the action
         :param ref_url: List of URL IDs referenced by the action
         :param ref_category: List of category IDs referenced by the action
+        :param atomics: Optional list of atomic changes
         :return: The newly created history event
         """
         cursor = self.get_conn().cursor()
@@ -35,13 +37,23 @@ class SQLiteHistory(HistoryDBInterface):
             'INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?)',
             (timestamp, action, AuthUser.serialize(user), ','.join(ref_token), ','.join(ref_url), ','.join(ref_category))
         )
+        history_id = cursor.lastrowid
+
+        # Add atomics if provided
+        atomics_list = atomics or []
+        for atomic in atomics_list:
+            cursor.execute(
+                'INSERT INTO atomics (user, history_id, action, description, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (AuthUser.serialize(atomic.user), history_id, atomic.action, atomic.description or '', ','.join(atomic.ref_token), ','.join(atomic.ref_url), ','.join(atomic.ref_category))
+            )
+
         self.get_conn().commit()
 
         hist = History(
-            id=str(cursor.lastrowid),
+            id=str(history_id),
             time=timestamp,
             description=action,
-            atomics=[],
+            atomics=atomics_list,
             user=user,
             ref_token=ref_token,
             ref_url=ref_url,
@@ -51,15 +63,43 @@ class SQLiteHistory(HistoryDBInterface):
 
     def get_history_events(self) -> List[History]:
         cursor = self.get_conn().cursor()
+
+        # Get all history events
         cursor.execute('SELECT id, time, description, user, ref_token, ref_url, ref_category FROM history')
-        rows = cursor.fetchall()
-        return [History(
-            id=str(row[0]),
-            time=row[1],
-            description=row[2],
-            atomics=[],
-            user=AuthUser.unserialize(row[3]),
-            ref_token=split_opt_str_group(row[4]),
-            ref_url=split_opt_str_group(row[5]),
-            ref_category=split_opt_str_group(row[6]),
-        ) for row in rows]
+        history_rows = cursor.fetchall()
+
+        # Get all atomics in a single query
+        cursor.execute('SELECT history_id, user, action, description, ref_token, ref_url, ref_category FROM atomics')
+        atomics_rows = cursor.fetchall()
+
+        # Group atomics by history_id
+        atomics_by_history = {}
+        for atomic_row in atomics_rows:
+            history_id = atomic_row[0]
+            atomic = Atomic(
+                user=AuthUser.unserialize(atomic_row[1]),
+                action=atomic_row[2],
+                description=atomic_row[3] if atomic_row[3] else None,
+                ref_token=split_opt_str_group(atomic_row[4]),
+                ref_url=split_opt_str_group(atomic_row[5]),
+                ref_category=split_opt_str_group(atomic_row[6]),
+            )
+            atomics_by_history.setdefault(history_id, []).append(atomic)
+
+        # Create History objects with their associated atomics
+        result = []
+        for row in history_rows:
+            history_id = row[0]
+            result.append(History(
+                id=str(history_id),
+                time=row[1],
+                description=row[2],
+                atomics=atomics_by_history.get(history_id, []),
+                user=AuthUser.unserialize(row[3]),
+                ref_token=split_opt_str_group(row[4]),
+                ref_url=split_opt_str_group(row[5]),
+                ref_category=split_opt_str_group(row[6]),
+            ))
+
+        return result
+

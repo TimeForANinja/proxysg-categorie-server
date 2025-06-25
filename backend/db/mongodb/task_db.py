@@ -12,7 +12,7 @@ def _build_task(row: Mapping[str, Any]) -> Task:
     return Task(
         id=str(row['_id']),
         name=row['name'],
-        user=AuthUser.unserialize(row['user']).username,
+        user=AuthUser.unserialize(row['user']),
         parameters=row.get('parameters'),
         status=row['status'],
         created_at=row['created_at'],
@@ -39,7 +39,7 @@ class MongoDBTask(TaskDBInterface):
         return Task(
             id=str(result.inserted_id),
             name=task.name,
-            user=user.username,
+            user=user,
             parameters=task.parameters,
             status='pending',
             created_at=current_timestamp,

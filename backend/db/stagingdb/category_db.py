@@ -5,6 +5,7 @@ from typing import Optional, List
 from auth.auth_user import AuthUser
 from db.abc.category import MutableCategory, Category
 from db.abc.db import DBInterface
+from db.abc.history import Atomic
 from db.abc.staging import ActionType, ActionTable
 from db.stagingdb.cache import StagedChange, StagedCollection
 from db.stagingdb.utils.add_uid import add_uid_to_object
@@ -72,14 +73,15 @@ class StagingDBCategory:
             obj_class=Category
         )
 
-    def commit(self, change: StagedChange) -> None:
+    def commit(self, change: StagedChange) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.CATEGORY:
-            return
+            return None
 
         # Apply the change to the persistent database based on the action type
         if change.action_type == ActionType.ADD:
@@ -91,10 +93,11 @@ class StagingDBCategory:
             # Add the category to the persistent database
             self._db.categories.add_category(mutable_category, category_id)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Added category {category_data.get('name')}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Add",
+                description=f"Added category {category_data.get('name')}",
                 ref_token=[],
                 ref_url=[],
                 ref_category=[category_id],
@@ -107,10 +110,11 @@ class StagingDBCategory:
             # Update the category in the persistent database
             self._db.categories.update_category(change.uid, mutable_category)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Updated category {category_data.get('name')}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Update",
+                description=f"Updated category {category_data.get('name')}",
                 ref_token=[],
                 ref_url=[],
                 ref_category=[change.uid],
@@ -126,10 +130,11 @@ class StagingDBCategory:
                 lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid),
             )
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Updated sub-categories for category {category_data.get('name')}, added {added}, removed {removed}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Set Categories",
+                description=f"Updated sub-categories for category {category_data.get('name')}, added {added}, removed {removed}",
                 ref_token=[],
                 ref_url=[],
                 ref_category=[change.uid],
@@ -138,11 +143,15 @@ class StagingDBCategory:
             # Delete the category from the persistent database
             self._db.categories.delete_category(change.uid)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Deleted category",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Delete",
+                description=f"Deleted category {change.data.get('name')}",
                 ref_token=[],
                 ref_url=[],
                 ref_category=[change.uid],
             )
+
+        # Unknown action_type
+        return None

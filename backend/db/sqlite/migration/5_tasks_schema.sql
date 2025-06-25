@@ -1,7 +1,7 @@
 -- Migration script: 5_tasks_schema.sql
 -- Add tasks table for background task management
 
--- Create tasks table
+-- Create the tasks table
 CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,

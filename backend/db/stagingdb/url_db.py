@@ -4,6 +4,7 @@ from typing import Optional, List
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
+from db.abc.history import Atomic
 from db.abc.staging import ActionType, ActionTable
 from db.abc.url import MutableURL, URL
 from db.stagingdb.cache import StagedChange, StagedCollection
@@ -76,14 +77,15 @@ class StagingDBURL:
             obj_class=URL
         )
 
-    def commit(self, change: StagedChange) -> None:
+    def commit(self, change: StagedChange) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.URL:
-            return
+            return None
 
         # Apply the change to the persistent database based on the action type
         if change.action_type == ActionType.ADD:
@@ -95,10 +97,11 @@ class StagingDBURL:
             # Add the URL to the persistent database
             self._db.urls.add_url(mutable_url, url_id)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Added URL {url_data.get('hostname')}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Add",
+                description=f"Added URL {url_data.get('hostname')}",
                 ref_token=[],
                 ref_url=[url_id],
                 ref_category=[],
@@ -111,10 +114,11 @@ class StagingDBURL:
             # Update the URL in the persistent database
             self._db.urls.update_url(change.uid, mutable_url)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Updated URL {url_data.get('hostname')}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Update",
+                description=f"Updated URL {url_data.get('hostname')}",
                 ref_token=[],
                 ref_url=[change.uid],
                 ref_category=[],
@@ -130,10 +134,11 @@ class StagingDBURL:
                 lambda cid: self._db.url_categories.delete_url_category(change.uid, cid),
             )
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Updated Categories for URL {url_data.get('hostname')}, added {added}, removed {removed}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Set Categories",
+                description=f"Updated Categories for URL {url_data.get('hostname')}, added {added}, removed {removed}",
                 ref_token=[],
                 ref_url=[change.uid],
                 ref_category=[],
@@ -142,11 +147,15 @@ class StagingDBURL:
             # Delete the URL from the persistent database
             self._db.urls.delete_url(change.uid)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Deleted URL",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Delete",
+                description=f"Deleted URL {change.data.get('hostname')}",
                 ref_token=[],
                 ref_url=[change.uid],
                 ref_category=[],
             )
+
+        # Unknown action_type
+        return None

@@ -8,7 +8,23 @@ from auth.auth_user import AuthUser
 
 @dataclass
 class Atomic:
-    pass
+    """Helper class to represent an atomic change within a history event."""
+    user: AuthUser
+    action: str
+    description: str
+    ref_token: List[str] = field(default_factory=list)
+    ref_url: List[str] = field(default_factory=list)
+    ref_category: List[str] = field(default_factory=list)
+
+    def to_rest(self) -> 'RESTAtomic':
+        return RESTAtomic(
+            user=self.user.username,
+            action=self.action,
+            ref_token=self.ref_token,
+            ref_url=self.ref_url,
+            ref_category=self.ref_category,
+            description=self.description,
+        )
 
 
 @dataclass
@@ -32,8 +48,28 @@ class History:
             ref_token=self.ref_token,
             ref_url=self.ref_url,
             ref_category=self.ref_category,
-            atomics=self.atomics,
+            atomics=[x.to_rest() for x in self.atomics],
         )
+
+
+@dataclass
+class RESTAtomic:
+    """Helper class to represent an atomic change within a history event."""
+    user: str = field(metadata={
+        'required': True,
+        'description': 'User who performed the action',
+    })
+    description: str = field(metadata={
+        'required': True,
+        'description': 'Description of the category',
+    })
+    action: str = field(metadata={
+        'required': True,
+        'description': 'Action performed by the user',
+    })
+    ref_token: List[str] = field(default_factory=list)
+    ref_url: List[str] = field(default_factory=list)
+    ref_category: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -61,7 +97,7 @@ class RESTHistory:
     ref_token: List[str] = field(default_factory=list)
     ref_url: List[str] = field(default_factory=list)
     ref_category: List[str] = field(default_factory=list)
-    atomics: List[Atomic] = field(default_factory=list)
+    atomics: List[RESTAtomic] = field(default_factory=list)
 
 
 class HistoryDBInterface(ABC):
@@ -73,6 +109,7 @@ class HistoryDBInterface(ABC):
             ref_token: List[str],
             ref_url: List[str],
             ref_category: List[str],
+            atomics: Optional[List[Atomic]] = None,
     ) -> History:
         """
         Add a new history event with the given name
@@ -82,6 +119,7 @@ class HistoryDBInterface(ABC):
         :param ref_token: List of token IDs referenced by the action
         :param ref_url: List of URL IDs referenced by the action
         :param ref_category: List of category IDs referenced by the action
+        :param atomics: Optional list of atomic changes
         :return: The newly created history event
         """
         pass

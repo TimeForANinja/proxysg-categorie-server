@@ -1,10 +1,10 @@
-from typing import List, Mapping, Any
+from typing import List, Mapping, Any, Optional
 import time
 from pymongo.collection import Collection
 from pymongo.database import Database
 
 from auth.auth_user import AuthUser
-from db.abc.history import HistoryDBInterface, History
+from db.abc.history import HistoryDBInterface, History, Atomic
 
 
 class MongoDBHistory(HistoryDBInterface):
@@ -19,6 +19,7 @@ class MongoDBHistory(HistoryDBInterface):
             ref_token: List[str],
             ref_url: List[str],
             ref_category: List[str],
+            atomics: Optional[List[Atomic]] = None,
     ) -> History:
         """
         Add a new history event with the given name
@@ -28,13 +29,28 @@ class MongoDBHistory(HistoryDBInterface):
         :param ref_token: List of token IDs referenced by the action
         :param ref_url: List of URL IDs referenced by the action
         :param ref_category: List of category IDs referenced by the action
+        :param atomics: Optional list of atomic changes
         :return: The newly created history event
         """
         timestamp = int(time.time())  # Current UNIX time
+
+        # Convert atomics to dictionaries for MongoDB storage
+        atomics_list = []
+        if atomics:
+            for atomic in atomics:
+                atomics_list.append({
+                    'user': AuthUser.serialize(atomic.user),
+                    'action': atomic.action,
+                    'description': atomic.description,
+                    'ref_token': atomic.ref_token,
+                    'ref_url': atomic.ref_url,
+                    'ref_category': atomic.ref_category,
+                })
+
         result = self.collection.insert_one({
             'time': timestamp,
             'description': action,
-            'atomics': [],  # Default empty atomics list
+            'atomics': atomics_list,
             'user': AuthUser.serialize(user),
             'ref_token': ref_token,
             'ref_url': ref_url,
@@ -45,8 +61,8 @@ class MongoDBHistory(HistoryDBInterface):
             id=str(result.inserted_id),
             time=timestamp,
             description=action,
-            atomics=[],
-            user=user.username,
+            atomics=atomics or [],
+            user=user,
             ref_token=ref_token,
             ref_url=ref_url,
             ref_category=ref_category,
@@ -54,16 +70,31 @@ class MongoDBHistory(HistoryDBInterface):
 
     def get_history_events(self) -> List[History]:
         events = self.collection.find({})
-        result = [
-            History(
-                id=event['_id'],
+        result = []
+
+        for event in events:
+            # Convert atomics dictionaries to Atomic objects
+            atomics_list = [
+                Atomic(
+                    user=AuthUser.unserialize(atomic_dict['user']),
+                    action=atomic_dict['action'],
+                    description=atomic_dict.get('description'),
+                    ref_token=atomic_dict.get('ref_token', []),
+                    ref_url=atomic_dict.get('ref_url', []),
+                    ref_category=atomic_dict.get('ref_category', []),
+                )
+                for atomic_dict in event.get('atomics', [])
+            ]
+
+            result.append(History(
+                id=str(event['_id']),
                 time=event['time'],
                 description=event.get('description'),
-                atomics=event.get('atomics', []),
-                user=AuthUser.unserialize(event['user']).username,
+                atomics=atomics_list,
+                user=AuthUser.unserialize(event['user']),
                 ref_token=event['ref_token'],
                 ref_url=event['ref_url'],
                 ref_category=event['ref_category'],
-            ) for event in events
-        ]
+            ))
+
         return result

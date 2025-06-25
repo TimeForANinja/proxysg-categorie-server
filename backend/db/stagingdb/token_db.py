@@ -5,6 +5,7 @@ import uuid
 
 from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
+from db.abc.history import Atomic
 from db.abc.staging import ActionType, ActionTable
 from db.abc.token import MutableToken, Token
 from db.stagingdb.cache import StagedChange, StagedCollection
@@ -96,14 +97,15 @@ class StagingDBToken:
             obj_class=Token
         )
 
-    def commit(self, change: StagedChange) -> None:
+    def commit(self, change: StagedChange) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.TOKEN:
-            return
+            return None
 
         # Apply the change to the persistent database based on the action type
         if change.action_type == ActionType.ADD:
@@ -116,10 +118,11 @@ class StagingDBToken:
             # Add the token to the persistent database
             self._db.tokens.add_token(token_id, mutable_token, token_value)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Added token {token_data.get('name')}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Add",
+                description=f"Added token {token_data.get('name')}",
                 ref_token=[token_id],
                 ref_url=[],
                 ref_category=[],
@@ -133,10 +136,11 @@ class StagingDBToken:
                 # Roll the token in the persistent database
                 self._db.tokens.roll_token(change.uid, token_data['token'])
 
-                # Create a history event
-                self._db.history.add_history_event(
-                    action=f"Rolled token {token_data.get('name')}",
+                # Create atomic to append to the history event
+                return Atomic(
                     user=change.auth,
+                    action="Update",
+                    description=f"Rolled token {token_data.get('name')}",
                     ref_token=[change.uid],
                     ref_url=[],
                     ref_category=[],
@@ -148,10 +152,11 @@ class StagingDBToken:
                 # Update the token in the persistent database
                 self._db.tokens.update_token(change.uid, mutable_token)
 
-                # Create a history event
-                self._db.history.add_history_event(
-                    action=f"Updated token {token_data.get('name')}",
+                # Create atomic to append to the history event
+                return Atomic(
                     user=change.auth,
+                    action="Update",
+                    description=f"Updated token {token_data.get('name')}",
                     ref_token=[change.uid],
                     ref_url=[],
                     ref_category=[],
@@ -167,10 +172,11 @@ class StagingDBToken:
                 lambda cid: self._db.token_categories.delete_token_category(change.uid, cid),
             )
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Updated Categories for Token {token_data.get('name')}, added {added}, removed {removed}",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Set Categories",
+                description=f"Updated Categories for Token {token_data.get('name')}, added {added}, removed {removed}",
                 ref_token=[change.uid],
                 ref_url=[],
                 ref_category=[],
@@ -179,11 +185,15 @@ class StagingDBToken:
             # Delete the token from the persistent database
             self._db.tokens.delete_token(change.uid)
 
-            # Create a history event
-            self._db.history.add_history_event(
-                action=f"Deleted token",
+            # Create atomic to append to the history event
+            return Atomic(
                 user=change.auth,
+                action="Delete",
+                description=f"Deleted token {change.data.get('name')}",
                 ref_token=[change.uid],
                 ref_url=[],
                 ref_category=[],
             )
+
+        # Unknown action_type
+        return None
