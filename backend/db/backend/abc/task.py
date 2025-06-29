@@ -29,11 +29,7 @@ class TaskDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_task_status(
-            self,
-            task_id: str,
-            status: str,
-    ) -> Task:
+    def update_task_status(self, task_id: str, status: str) -> Task:
         """
         Update the status of a specific task.
 

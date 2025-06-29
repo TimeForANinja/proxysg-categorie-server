@@ -1,4 +1,3 @@
-import uuid
 from typing import List, Mapping, Any, Optional
 import time
 from pymongo.collection import Collection
@@ -34,24 +33,23 @@ class MongoDBHistory(HistoryDBInterface):
         :param atomics: Optional list of atomic changes
         :return: The newly created history event
         """
-        timestamp = int(time.time())  # Current UNIX time
 
         # Convert atomics to dictionaries for MongoDB storage
         atomics_list = []
         if atomics:
             for atomic in atomics:
-                atomic.id = str(uuid.uuid4())
                 atomics_list.append({
                     'uid': atomic.id,
                     'user': AuthUser.serialize(atomic.user),
                     'action': atomic.action,
                     'description': atomic.description,
-                    'time': atomic.timestamp,
+                    'time': atomic.time,
                     'ref_token': atomic.ref_token,
                     'ref_url': atomic.ref_url,
                     'ref_category': atomic.ref_category,
                 })
 
+        timestamp = int(time.time())  # Current UNIX time
         result = self.collection.insert_one({
             'time': timestamp,
             'description': action,
@@ -85,7 +83,7 @@ class MongoDBHistory(HistoryDBInterface):
                     user=AuthUser.unserialize(atomic_dict['user']),
                     action=atomic_dict['action'],
                     description=atomic_dict.get('description'),
-                    timestamp=atomic_dict['time'],
+                    time=atomic_dict['time'],
                     ref_token=atomic_dict.get('ref_token', []),
                     ref_url=atomic_dict.get('ref_url', []),
                     ref_category=atomic_dict.get('ref_category', []),

@@ -74,11 +74,12 @@ class StagingDBCategory(MiddlewareDBCategory):
             obj_class=Category
         )
 
-    def commit(self, change: StagedChange) -> Optional[Atomic]:
+    def commit(self, change: StagedChange, dry_run: bool) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
         :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.CATEGORY:
@@ -91,16 +92,15 @@ class StagingDBCategory(MiddlewareDBCategory):
             category_id = category_data.pop('id')
             mutable_category = MutableCategory(**category_data)
 
-            # Add the category to the persistent database
-            self._db.categories.add_category(mutable_category, category_id)
+            if not dry_run:
+                # Add the category to the persistent database
+                self._db.categories.add_category(mutable_category, category_id)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Add",
                 description=f"Added category {category_data.get('name')}",
-                ref_token=[],
-                ref_url=[],
                 ref_category=[category_id],
             )
         elif change.action_type == ActionType.UPDATE:
@@ -108,49 +108,48 @@ class StagingDBCategory(MiddlewareDBCategory):
             category_data = change.data.copy()
             mutable_category = MutableCategory(**category_data)
 
-            # Update the category in the persistent database
-            self._db.categories.update_category(change.uid, mutable_category)
+            if not dry_run:
+                # Update the category in the persistent database
+                self._db.categories.update_category(change.uid, mutable_category)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Update",
                 description=f"Updated category {category_data.get('name')}",
-                ref_token=[],
-                ref_url=[],
                 ref_category=[change.uid],
             )
         elif change.action_type == ActionType.SET_CATS:
             category_data = change.data.copy()
-            # Update the category mappings in the persistent database
+
             current_cats = self._db.categories.get_category(change.uid)
+
+            # Update the category mappings in the persistent database
             added, removed = set_categories(
                 current_cats.nested_categories,
                 category_data['nested_categories'],
                 lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid),
                 lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid),
+                dry_run,
             )
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Set Categories",
                 description=f"Updated sub-categories for category {category_data.get('name')}, added {added}, removed {removed}",
-                ref_token=[],
-                ref_url=[],
                 ref_category=[change.uid],
             )
         elif change.action_type == ActionType.DELETE:
-            # Delete the category from the persistent database
-            self._db.categories.delete_category(change.uid)
+            if not dry_run:
+                # Delete the category from the persistent database
+                self._db.categories.delete_category(change.uid)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Delete",
                 description=f"Deleted category {change.data.get('name')}",
-                ref_token=[],
-                ref_url=[],
                 ref_category=[change.uid],
             )
 

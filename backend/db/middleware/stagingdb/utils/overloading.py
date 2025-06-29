@@ -11,11 +11,11 @@ T = TypeVar('T')
 
 
 def get_and_overload_object(
-        db_getter,
-        staged: StagedCollection,
-        action_table: ActionTable,
-        obj_id: str,
-        obj_class: Type[T]
+    db_getter: Callable[[str], Optional[T]],
+    staged: StagedCollection,
+    action_table: ActionTable,
+    obj_id: str,
+    obj_class: Type[T]
 ) -> Optional[T]:
     """
     Get an object from the database or staging collection.

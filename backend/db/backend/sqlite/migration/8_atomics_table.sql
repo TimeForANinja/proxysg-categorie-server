@@ -3,12 +3,12 @@
 
 -- Step 1: Create the atomics table
 CREATE TABLE IF NOT EXISTS atomics (
-    id INTEGER PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     user TEXT NOT NULL,
-    time INTEGER NOT NULL,
     history_id INTEGER NOT NULL,
     action TEXT NOT NULL,
     description TEXT NOT NULL,
+    time INTEGER NOT NULL,
     ref_token TEXT NOT NULL DEFAULT '',
     ref_url TEXT NOT NULL DEFAULT '',
     ref_category TEXT NOT NULL DEFAULT '',

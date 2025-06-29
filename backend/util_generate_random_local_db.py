@@ -4,6 +4,8 @@ import random
 import os
 from typing import List, Tuple
 
+
+# noinspection SpellCheckingInspection
 def generate_random_url() -> str:
     """Generate a random URL."""
     tlds = [
@@ -94,7 +96,7 @@ def distribute_urls(urls: List[str], num_categories: int) -> Tuple[List[Tuple[st
     # Create a copy of URLs to distribute
     remaining_urls = urls.copy()
 
-    # Decide how many URLs will be uncategorized (10-20% of total)
+    # Decide how many URLs will be uncategorized (10-20% of the total)
     num_uncategorized = max(1, int(len(urls) * random.uniform(0.1, 0.2)))
     uncategorized_urls = random.sample(remaining_urls, num_uncategorized)
 
@@ -121,7 +123,7 @@ def distribute_urls(urls: List[str], num_categories: int) -> Tuple[List[Tuple[st
             if i == num_categories - 1 and i != empty_category_index:
                 category_urls = remaining_urls
             else:
-                # Randomly assign 1 to 1/3 of remaining URLs to this category
+                # Randomly assign 1 to 1/3 of the remaining URLs to this category
                 max_urls = max(1, len(remaining_urls) // 3)
                 num_urls = random.randint(1, max_urls) if remaining_urls else 0
                 category_urls = random.sample(remaining_urls, min(num_urls, len(remaining_urls)))

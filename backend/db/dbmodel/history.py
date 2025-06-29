@@ -1,3 +1,5 @@
+import time
+import uuid
 from dataclasses import field, dataclass
 from typing import Optional, List
 
@@ -12,7 +14,7 @@ class Atomic:
     user: AuthUser
     action: str
     description: str
-    timestamp: int
+    time: int
     ref_token: List[str] = field(default_factory=list)
     ref_url: List[str] = field(default_factory=list)
     ref_category: List[str] = field(default_factory=list)
@@ -23,10 +25,30 @@ class Atomic:
             user=self.user.username,
             action=self.action,
             description=self.description,
-            timestamp=self.timestamp,
+            timestamp=self.time,
             ref_token=self.ref_token,
             ref_url=self.ref_url,
             ref_category=self.ref_category,
+        )
+
+    @staticmethod
+    def new(
+            action: str,
+            user: AuthUser,
+            description: str,
+            ref_token: List[str] = None,
+            ref_url: List[str] = None,
+            ref_category: List[str] = None,
+    ) -> 'Atomic':
+        return Atomic(
+            id=str(uuid.uuid4()),
+            user=user,
+            action=action,
+            description=description,
+            time=int(time.time()),
+            ref_token=ref_token if ref_token else [],
+            ref_url=ref_url if ref_url else [],
+            ref_category=ref_category if ref_category else [],
         )
 
 

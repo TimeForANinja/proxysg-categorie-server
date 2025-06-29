@@ -1,6 +1,15 @@
 from typing import List
 
 
+def join_str_group(obj: List[str]) -> str:
+    """
+    This method joins a list of strings into a comma-separated string.
+
+    :param obj: The list of strings to be joined
+    :return: A comma-separated string
+    """
+    return ",".join(obj)
+
 def split_opt_str_group(group: str | None) -> List[str]:
     """
     This method splits a comma-separated string into a list of strings.
@@ -22,7 +31,7 @@ def split_str_group(group: str) -> List[str]:
     """
     parts = group.split(',')
     return [
-        str(part)
+        str(part).strip()
         for part
         in parts
     ]

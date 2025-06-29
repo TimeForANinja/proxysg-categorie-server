@@ -39,11 +39,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_token(
-            self,
-            token_id: str,
-            token: MutableToken,
-    ) -> Token:
+    def update_token(self, token_id: str, token: MutableToken) -> Token:
         """
         Update the details of a specific token.
 
@@ -62,11 +58,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def roll_token(
-            self,
-            token_id: str,
-            uuid: str,
-    ) -> Token:
+    def roll_token(self, token_id: str, uuid: str) -> Token:
         """
         Re-Roll the Token of a specific token.
 

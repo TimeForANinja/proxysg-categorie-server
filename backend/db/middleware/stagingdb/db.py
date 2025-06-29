@@ -1,5 +1,8 @@
+from typing import List, Tuple
+
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
+from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionTable
 from db.middleware.abc.db import MiddlewareDB
 from db.middleware.stagingdb.cache import StagedCollection
@@ -33,7 +36,10 @@ class StagingDB(MiddlewareDB):
 
         self.categories = StagingDBCategory(self._main_db, self._staged)
         self.sub_categories = StagingDBSubCategory(self._main_db, self._staged, self.categories)
-        self.history = StagingDBHistory(self._main_db)
+        self.history = StagingDBHistory(
+            self._main_db,
+            lambda: self._commit_modules(False)
+        )
         self.tokens = StagingDBToken(self._main_db, self._staged)
         self.token_categories = StagingDBTokenCategory(self._main_db, self._staged, self.tokens)
         self.urls = StagingDBURL(self._main_db, self._staged)
@@ -43,27 +49,27 @@ class StagingDB(MiddlewareDB):
     def close(self):
         self._main_db.close()
 
-    def commit(self, user: AuthUser):
-        """
-        Push all staged changes to the main database.
-
-        :param user: User object for the user who is committing the changes
-        """
+    def _commit_modules(self, dry_run: bool) -> Tuple[
+        List[Atomic],
+        List[str],
+        List[str],
+        List[str],
+    ]:
         # Collect atomics from for all changes
-        atomics = []
-        ref_token = []
-        ref_url = []
-        ref_category = []
+        atomics: List[Atomic] = []
+        ref_token: List[str] = []
+        ref_url: List[str] = []
+        ref_category: List[str] = []
 
         # apply changes to the database
         for change in self._staged.iter():
             atomic = None
             if change.action_table == ActionTable.TOKEN:
-                atomic = self.tokens.commit(change)
+                atomic = self.tokens.commit(change, dry_run)
             elif change.action_table == ActionTable.URL:
-                atomic = self.urls.commit(change)
+                atomic = self.urls.commit(change, dry_run)
             elif change.action_table == ActionTable.CATEGORY:
-                atomic = self.categories.commit(change)
+                atomic = self.categories.commit(change, dry_run)
 
             # if a change was done, store the atomic
             if atomic:
@@ -73,15 +79,30 @@ class StagingDB(MiddlewareDB):
                 ref_url += atomic.ref_url
                 ref_category += atomic.ref_category
 
+
+        # use list(set(xxx)) to remove duplicates
+        ref_token = list(set(ref_token))
+        ref_url = list(set(ref_url))
+        ref_category = list(set(ref_category))
+
+        return atomics, ref_token, ref_url, ref_category
+
+    def commit(self, user: AuthUser):
+        """
+        Push all staged changes to the main database.
+
+        :param user: User object for the user who is committing the changes
+        """
+        atomics, ref_token, ref_url, ref_category = self._commit_modules(False)
+
         # Create a single history event with all atomics
         if atomics:
             self._main_db.history.add_history_event(
                 action="Commit",
                 user=user,
-                # use list(set(xxx)) to remove duplicates
-                ref_token=list(set(ref_token)),
-                ref_url=list(set(ref_url)),
-                ref_category=list(set(ref_category)),
+                ref_token=ref_token,
+                ref_url=ref_url,
+                ref_category=ref_category,
                 atomics=atomics,
             )
 

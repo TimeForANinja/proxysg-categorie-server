@@ -39,6 +39,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         return super().default(o)
 
 def _to_json(attachment: any) -> str:
+    # noinspection PyBroadException
     try:
         return json.dumps(attachment, cls=EnhancedJSONEncoder)
     except:

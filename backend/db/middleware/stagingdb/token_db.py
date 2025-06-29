@@ -98,11 +98,12 @@ class StagingDBToken(MiddlewareDBToken):
             obj_class=Token
         )
 
-    def commit(self, change: StagedChange) -> Optional[Atomic]:
+    def commit(self, change: StagedChange, dry_run: bool) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
         :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.TOKEN:
@@ -116,17 +117,16 @@ class StagingDBToken(MiddlewareDBToken):
             token_value = token_data.pop('token')
             mutable_token = MutableToken(**token_data)
 
-            # Add the token to the persistent database
-            self._db.tokens.add_token(token_id, mutable_token, token_value)
+            if not dry_run:
+                # Add the token to the persistent database
+                self._db.tokens.add_token(token_id, mutable_token, token_value)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Add",
                 description=f"Added token {token_data.get('name')}",
                 ref_token=[token_id],
-                ref_url=[],
-                ref_category=[],
             )
         elif change.action_type == ActionType.UPDATE:
             # Create a MutableToken from the data
@@ -134,66 +134,64 @@ class StagingDBToken(MiddlewareDBToken):
 
             # Check if this is a token roll update (only contains the 'token' field)
             if 'token' in token_data and len(token_data) == 1:
-                # Roll the token in the persistent database
-                self._db.tokens.roll_token(change.uid, token_data['token'])
+                if not dry_run:
+                    # Roll the token in the persistent database
+                    self._db.tokens.roll_token(change.uid, token_data['token'])
 
                 # Create atomic to append to the history event
-                return Atomic(
+                return Atomic.new(
                     user=change.auth,
                     action="Update",
                     description=f"Rolled token {token_data.get('name')}",
                     ref_token=[change.uid],
-                    ref_url=[],
-                    ref_category=[],
                 )
             else:
                 # Create a MutableToken from the data
                 mutable_token = MutableToken(**token_data)
 
-                # Update the token in the persistent database
-                self._db.tokens.update_token(change.uid, mutable_token)
+                if not dry_run:
+                    # Update the token in the persistent database
+                    self._db.tokens.update_token(change.uid, mutable_token)
 
                 # Create atomic to append to the history event
-                return Atomic(
+                return Atomic.new(
                     user=change.auth,
                     action="Update",
                     description=f"Updated token {token_data.get('name')}",
                     ref_token=[change.uid],
-                    ref_url=[],
-                    ref_category=[],
                 )
         elif change.action_type == ActionType.SET_CATS:
             token_data = change.data.copy()
-            # Update the token in the persistent database
+
             current_cats = self._db.tokens.get_token(change.uid)
+
+            # Update the token in the persistent database
             added, removed = set_categories(
                 current_cats.categories,
                 token_data['categories'],
                 lambda cid: self._db.token_categories.add_token_category(change.uid, cid),
                 lambda cid: self._db.token_categories.delete_token_category(change.uid, cid),
+                dry_run,
             )
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Set Categories",
                 description=f"Updated Categories for Token {token_data.get('name')}, added {added}, removed {removed}",
                 ref_token=[change.uid],
-                ref_url=[],
-                ref_category=[],
             )
         elif change.action_type == ActionType.DELETE:
-            # Delete the token from the persistent database
-            self._db.tokens.delete_token(change.uid)
+            if not dry_run:
+                # Delete the token from the persistent database
+                self._db.tokens.delete_token(change.uid)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Delete",
                 description=f"Deleted token {change.data.get('name')}",
                 ref_token=[change.uid],
-                ref_url=[],
-                ref_category=[],
             )
 
         # Unknown action_type

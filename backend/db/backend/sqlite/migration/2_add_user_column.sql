@@ -17,6 +17,7 @@ CREATE TABLE history_new (
 );
 
 -- Step 4: Copy the data from the old table to the new table
+-- noinspection SqlResolve
 INSERT INTO history_new (id, time, description, user)
 SELECT id, time, description, new_user
 FROM history;

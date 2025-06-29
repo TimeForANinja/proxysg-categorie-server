@@ -78,11 +78,12 @@ class StagingDBURL(MiddlewareDBURL):
             obj_class=URL
         )
 
-    def commit(self, change: StagedChange) -> Optional[Atomic]:
+    def commit(self, change: StagedChange, dry_run: bool) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
         :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.URL:
@@ -95,67 +96,65 @@ class StagingDBURL(MiddlewareDBURL):
             url_id = url_data.pop('id')
             mutable_url = MutableURL(**url_data)
 
-            # Add the URL to the persistent database
-            self._db.urls.add_url(mutable_url, url_id)
+            if not dry_run:
+                # Add the URL to the persistent database
+                self._db.urls.add_url(mutable_url, url_id)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Add",
                 description=f"Added URL {url_data.get('hostname')}",
-                ref_token=[],
                 ref_url=[url_id],
-                ref_category=[],
             )
         elif change.action_type == ActionType.UPDATE:
             # Create a MutableURL from the data
             url_data = change.data.copy()
             mutable_url = MutableURL(**url_data)
 
-            # Update the URL in the persistent database
-            self._db.urls.update_url(change.uid, mutable_url)
+            if not dry_run:
+                # Update the URL in the persistent database
+                self._db.urls.update_url(change.uid, mutable_url)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Update",
                 description=f"Updated URL {url_data.get('hostname')}",
-                ref_token=[],
                 ref_url=[change.uid],
-                ref_category=[],
             )
         elif change.action_type == ActionType.SET_CATS:
             url_data = change.data.copy()
-            # Update the URL in the persistent database
+
             current_cats = self._db.urls.get_url(change.uid)
+
+            # Update the token in the persistent database
             added, removed = set_categories(
                 current_cats.categories,
                 url_data['categories'],
                 lambda cid: self._db.url_categories.add_url_category(change.uid, cid),
                 lambda cid: self._db.url_categories.delete_url_category(change.uid, cid),
+                dry_run,
             )
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Set Categories",
                 description=f"Updated Categories for URL {url_data.get('hostname')}, added {added}, removed {removed}",
-                ref_token=[],
                 ref_url=[change.uid],
-                ref_category=[],
             )
         elif change.action_type == ActionType.DELETE:
-            # Delete the URL from the persistent database
-            self._db.urls.delete_url(change.uid)
+            if not dry_run:
+                # Delete the URL from the persistent database
+                self._db.urls.delete_url(change.uid)
 
             # Create atomic to append to the history event
-            return Atomic(
+            return Atomic.new(
                 user=change.auth,
                 action="Delete",
                 description=f"Deleted URL {change.data.get('hostname')}",
-                ref_token=[],
                 ref_url=[change.uid],
-                ref_category=[],
             )
 
         # Unknown action_type

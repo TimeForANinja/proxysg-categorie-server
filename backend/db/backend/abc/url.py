@@ -28,11 +28,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_url(
-            self,
-            url_id: str,
-            url: MutableURL,
-    ) -> URL:
+    def update_url(self, url_id: str, url: MutableURL) -> URL:
         """
         Update the details of a specific url.
 

@@ -5,7 +5,6 @@ from db.dbmodel.category import MutableCategory, Category
 
 
 class CategoryDBInterface(ABC):
-
     @abstractmethod
     def add_category(self, category: MutableCategory, category_id: str) -> Category:
         """

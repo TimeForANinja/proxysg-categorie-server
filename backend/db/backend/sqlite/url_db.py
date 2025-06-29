@@ -3,7 +3,7 @@ import time
 from typing import Optional, List, Callable
 
 from db.backend.abc.url import URLDBInterface
-from db.backend.sqlite.util.groups import split_opt_str_group
+from db.backend.sqlite.util.groups import split_opt_str_group, join_str_group
 from db.backend.sqlite.util.query_builder import build_update_query
 from db.dbmodel.url import MutableURL, URL, NO_BC_CATEGORY_YET
 
@@ -88,7 +88,7 @@ class SQLiteURL(URLDBInterface):
     def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
         query = 'UPDATE urls SET bc_cats = ? WHERE id = ? AND is_deleted = 0'
         cursor = self.get_conn().cursor()
-        cursor.execute(query, (','.join(bc_cats), url_id))
+        cursor.execute(query, (join_str_group(bc_cats), url_id))
         self.get_conn().commit()
 
     def delete_url(self, url_id: str) -> None:
