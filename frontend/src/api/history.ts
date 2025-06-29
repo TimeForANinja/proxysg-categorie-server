@@ -2,6 +2,12 @@
 export interface IAtomic {
     id: string;
     action: string;
+    description: string;
+    user: string;
+    timestamp: number;
+    ref_token: string[];
+    ref_url: string[];
+    ref_category: string[];
 }
 
 export interface ICommits {

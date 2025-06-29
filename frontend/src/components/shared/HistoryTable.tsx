@@ -41,6 +41,7 @@ function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
                 isOpen ? commit.atomics.map((atomic, idx, items) => {
                     const isFirstAtomic = idx === 0;
                     const isLastAtomic = idx === items.length-1;
+                    const atomicTime = new Date(atomic.timestamp * 1000).toLocaleString();
                     return (
                         <TableRow key={atomic.id}>
                             <TableCell />
@@ -52,9 +53,9 @@ function BuildRow(props: { commit: ICommits, isFirstCommit: boolean}) {
                                 {isFirstAtomic ? (<></>) : (<div className="verticalLine"/>) }
                             </TableCell>
                             <TableCell>{atomic.id}</TableCell>
-                            <TableCell />
-                            <TableCell>{Date.now()}</TableCell>
-                            <TableCell>{atomic.action}</TableCell>
+                            <TableCell>{atomicTime}</TableCell>
+                            <TableCell>{atomic.user}</TableCell>
+                            <TableCell>{atomic.description}</TableCell>
                         </TableRow>
                     )
                 }) : <></>
