@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS atomics (
     id INTEGER PRIMARY KEY,
     user TEXT NOT NULL,
+    time INTEGER NOT NULL,
     history_id INTEGER NOT NULL,
     action TEXT NOT NULL,
     description TEXT NOT NULL,
@@ -15,5 +16,5 @@ CREATE TABLE IF NOT EXISTS atomics (
 );
 
 -- Insert records to mark the migration
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added atomics table', 'system');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 8', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added atomics table', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 8', '{"username": "system", "roles": []}');

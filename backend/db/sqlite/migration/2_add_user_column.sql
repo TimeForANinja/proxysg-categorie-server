@@ -28,5 +28,5 @@ DROP TABLE history;
 ALTER TABLE history_new RENAME TO history;
 
 -- Insert records to mark the migration
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added user column to history table', 'system');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 2', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added user column to history table', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 2', '{"username": "system", "roles": []}');

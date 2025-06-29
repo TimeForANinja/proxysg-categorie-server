@@ -12,7 +12,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_token_category_deleted ON token_categor
 CREATE UNIQUE INDEX IF NOT EXISTS unique_url_category_deleted ON url_categories (url_id, category_id, is_deleted);
 
 -- Insert records to mark the migration
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added UNIQUE INDEX to sub_category table', 'system');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added UNIQUE INDEX to token_categories table', 'system');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added UNIQUE INDEX to url_categories table', 'system');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 4', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added UNIQUE INDEX to sub_category table', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added UNIQUE INDEX to token_categories table', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added UNIQUE INDEX to url_categories table', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 4', '{"username": "system", "roles": []}');

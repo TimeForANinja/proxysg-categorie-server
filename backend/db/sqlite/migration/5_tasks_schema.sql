@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 -- Record this migration in the history table
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 5', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 5', '{"username": "system", "roles": []}');

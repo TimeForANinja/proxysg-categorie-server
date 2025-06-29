@@ -71,9 +71,9 @@ class StagingDB:
             if atomic:
                 atomics.append(atomic)
                 # also store the refs to skip one loop
-                ref_token.append(atomic.ref_token)
-                ref_url.append(atomic.ref_url)
-                ref_category.append(atomic.ref_category)
+                ref_token += atomic.ref_token
+                ref_url += atomic.ref_url
+                ref_category += atomic.ref_category
 
         # Create a single history event with all atomics
         if atomics:
