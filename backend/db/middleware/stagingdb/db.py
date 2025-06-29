@@ -87,18 +87,19 @@ class StagingDB(MiddlewareDB):
 
         return atomics, ref_token, ref_url, ref_category
 
-    def commit(self, user: AuthUser):
+    def commit(self, user: AuthUser, commit_message: str):
         """
         Push all staged changes to the main database.
 
         :param user: User object for the user who is committing the changes
+        :param commit_message: user-provided message describing the commit
         """
         atomics, ref_token, ref_url, ref_category = self._commit_modules(False)
 
         # Create a single history event with all atomics
         if atomics:
             self._main_db.history.add_history_event(
-                action="Commit",
+                action=f"Commit: {commit_message}",
                 user=user,
                 ref_token=ref_token,
                 ref_url=ref_url,

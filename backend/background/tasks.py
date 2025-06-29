@@ -55,7 +55,14 @@ def execute_commit(db_if: StagingDB, task: Task):
     db_if.tasks.update_task_status(task.id, 'running')
 
     try:
-        db_if.commit(task.user)
+        # validate and extract parameters
+        # the parameters should be [func_name, commit_message]
+        if len(task.parameters) != 2:
+            # use the existing catch and error handling at the bottom
+            raise Exception('Invalid parameters for commit task')
+        commit_message = task.parameters[1]
+
+        db_if.commit(task.user, commit_message)
         log_info('BACKGROUND', f'Commit task {task.id} completed successfully')
         db_if.tasks.update_task_status(task.id, 'success')
     except Exception as e:

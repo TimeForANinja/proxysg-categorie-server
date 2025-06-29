@@ -6,6 +6,7 @@ from db.db_singleton import get_db
 from db.dbmodel.task import MutableTask
 from log import log_debug
 from routes.schemas.load_existing import ExistingDBInput
+from routes.schemas.commit import CommitInput
 from routes.schemas.tasks import ListTaskOutput, CreatedTaskOutput, SingleTaskOutput
 
 
@@ -74,17 +75,18 @@ def add_other_bp(app):
 
     @other_bp.post('/api/commit')
     @other_bp.doc(summary='Commit Staged Changes', description='Commit all staged changes to the database')
+    @other_bp.input(class_schema(CommitInput)(), location='json', arg_name='commit_input')
     @other_bp.output(CreatedTaskOutput)
     @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
-    def handle_commit():
+    def handle_commit(commit_data: CommitInput):
         db_if = get_db()
 
         # Create a background task to process the database
         task = db_if.tasks.add_task(auth.current_user, MutableTask(
             name='commit',
-            parameters=['commit']
+            parameters=['commit', commit_data.message]
         ))
-        log_debug('API', f'Created commit task {task.id}')
+        log_debug('API', f'Created commit task {task.id} with message: {commit_data.message}')
 
         return {
             'status': 'success',
