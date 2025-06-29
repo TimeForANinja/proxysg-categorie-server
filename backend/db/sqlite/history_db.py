@@ -43,9 +43,10 @@ class SQLiteHistory(HistoryDBInterface):
         atomics_list = atomics or []
         for atomic in atomics_list:
             cursor.execute(
-                'INSERT INTO atomics (user, history_id, action, description, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                (AuthUser.serialize(atomic.user), history_id, atomic.action, atomic.description or '', ','.join(atomic.ref_token), ','.join(atomic.ref_url), ','.join(atomic.ref_category))
+                'INSERT INTO atomics (user, history_id, action, description, time, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (AuthUser.serialize(atomic.user), history_id, atomic.action, atomic.description or '', atomic.timestamp, ','.join(atomic.ref_token), ','.join(atomic.ref_url), ','.join(atomic.ref_category))
             )
+            atomic.id = str(cursor.lastrowid)
 
         self.get_conn().commit()
 
@@ -69,20 +70,22 @@ class SQLiteHistory(HistoryDBInterface):
         history_rows = cursor.fetchall()
 
         # Get all atomics in a single query
-        cursor.execute('SELECT history_id, user, action, description, ref_token, ref_url, ref_category FROM atomics')
+        cursor.execute('SELECT id, history_id, user, action, description, time, ref_token, ref_url, ref_category FROM atomics')
         atomics_rows = cursor.fetchall()
 
         # Group atomics by history_id
         atomics_by_history = {}
         for atomic_row in atomics_rows:
-            history_id = atomic_row[0]
+            history_id = atomic_row[1]
             atomic = Atomic(
-                user=AuthUser.unserialize(atomic_row[1]),
-                action=atomic_row[2],
-                description=atomic_row[3] if atomic_row[3] else None,
-                ref_token=split_opt_str_group(atomic_row[4]),
-                ref_url=split_opt_str_group(atomic_row[5]),
-                ref_category=split_opt_str_group(atomic_row[6]),
+                id=str(atomic_row[0]),
+                user=AuthUser.unserialize(atomic_row[2]),
+                action=atomic_row[3],
+                description=atomic_row[4] if atomic_row[4] else None,
+                timestamp=atomic_row[5],
+                ref_token=split_opt_str_group(atomic_row[6]),
+                ref_url=split_opt_str_group(atomic_row[7]),
+                ref_category=split_opt_str_group(atomic_row[8]),
             )
             atomics_by_history.setdefault(history_id, []).append(atomic)
 

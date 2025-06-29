@@ -9,21 +9,25 @@ from auth.auth_user import AuthUser
 @dataclass
 class Atomic:
     """Helper class to represent an atomic change within a history event."""
+    id: str
     user: AuthUser
     action: str
     description: str
+    timestamp: int
     ref_token: List[str] = field(default_factory=list)
     ref_url: List[str] = field(default_factory=list)
     ref_category: List[str] = field(default_factory=list)
 
     def to_rest(self) -> 'RESTAtomic':
         return RESTAtomic(
+            id=self.id,
             user=self.user.username,
             action=self.action,
+            description=self.description,
+            timestamp=self.timestamp,
             ref_token=self.ref_token,
             ref_url=self.ref_url,
             ref_category=self.ref_category,
-            description=self.description,
         )
 
 
@@ -55,17 +59,25 @@ class History:
 @dataclass
 class RESTAtomic:
     """Helper class to represent an atomic change within a history event."""
+    id: str = field(metadata={
+        'required': True,
+        'description': 'ID of the category',
+    })
     user: str = field(metadata={
         'required': True,
         'description': 'User who performed the action',
+    })
+    action: str = field(metadata={
+        'required': True,
+        'description': 'Action performed by the user',
     })
     description: str = field(metadata={
         'required': True,
         'description': 'Description of the category',
     })
-    action: str = field(metadata={
+    timestamp: int = field(metadata={
         'required': True,
-        'description': 'Action performed by the user',
+        'description': 'Timestamp of the event',
     })
     ref_token: List[str] = field(default_factory=list)
     ref_url: List[str] = field(default_factory=list)
