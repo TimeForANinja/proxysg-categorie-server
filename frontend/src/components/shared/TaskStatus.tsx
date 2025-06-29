@@ -9,7 +9,7 @@ const TIME_CHECK_TASKS = 2 * TIME_SECONDS;
 
 interface TaskStatusProps {
   taskId: string;
-  onTaskComplete: () => void;
+  onTaskComplete: (success: boolean) => void;
   successMessage?: string;
   failureMessage?: string;
 }
@@ -31,7 +31,6 @@ const TaskStatus: React.FC<TaskStatusProps> = ({
 
   const checkTaskStatus = React.useCallback(async () => {
     // only (continue to) check status if we have a pending task
-    console.log('checkTaskStatus', { taskIdRef: taskIdRef.current, token });
     if (!taskIdRef.current || !token) return;
     try {
       // fetch the task and set the success / warning / error banner accordingly
@@ -42,14 +41,14 @@ const TaskStatus: React.FC<TaskStatusProps> = ({
           setWarning(null);
           setError(null);
           // Call the onTaskComplete callback
-          onTaskComplete();
+          onTaskComplete(true);
           break;
         case 'failed':
           setSuccess(null);
           setWarning(null);
           setError(failureMessage);
           // Call the onTaskComplete callback
-          onTaskComplete();
+          onTaskComplete(false);
           break;
         case 'running':
           setSuccess(null);

@@ -50,6 +50,7 @@ export const getTaskByID = async (
 
 export const startCommit = async (
     userToken: string,
+    commitMessage: string,
 ): Promise<string> => {
   const response = await fetch(`/api/commit`, {
     method: 'POST',
@@ -57,6 +58,7 @@ export const startCommit = async (
       'Content-Type': 'application/json',
       'jwt-token': userToken,
     },
+    body: JSON.stringify({ message: commitMessage }),
   });
 
   if (!response.ok) {
