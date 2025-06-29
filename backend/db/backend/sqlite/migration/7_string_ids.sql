@@ -114,5 +114,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_token_category_deleted ON token_categor
 CREATE UNIQUE INDEX IF NOT EXISTS unique_url_category_deleted ON url_categories (url_id, category_id, is_deleted);
 
 -- Insert records to mark the migration
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Converted all ID columns from INTEGER to TEXT', '{"username": "system", "roles": []}');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 7', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Converted all ID columns from INTEGER to TEXT', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 7', 'system');

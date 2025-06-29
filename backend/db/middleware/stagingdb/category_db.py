@@ -126,7 +126,7 @@ class StagingDBCategory(MiddlewareDBCategory):
 
             # Update the category mappings in the persistent database
             added, removed = set_categories(
-                current_cats.nested_categories,
+                current_cats.nested_categories if current_cats else [],
                 category_data['nested_categories'],
                 lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid),
                 lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid),

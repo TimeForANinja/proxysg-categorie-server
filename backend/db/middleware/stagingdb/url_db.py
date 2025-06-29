@@ -130,7 +130,7 @@ class StagingDBURL(MiddlewareDBURL):
 
             # Update the token in the persistent database
             added, removed = set_categories(
-                current_cats.categories,
+                current_cats.categories if current_cats else [],
                 url_data['categories'],
                 lambda cid: self._db.url_categories.add_url_category(change.uid, cid),
                 lambda cid: self._db.url_categories.delete_url_category(change.uid, cid),

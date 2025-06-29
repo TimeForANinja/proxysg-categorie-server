@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS staged_changes (
 );
 
 -- Insert records to mark the migration
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Created Table staged_changes', '{"username": "system", "roles": []}');
-INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 6', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Created Table staged_changes', 'system');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 6', 'system');

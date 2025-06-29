@@ -19,17 +19,18 @@ class StagingDBHistory(MiddlewareDBHistory):
     def get_history_events(self) -> List[History]:
         history = self._db.history.get_history_events()
 
-        # add a fake event for all pending changes
+        # if we have pending changes, add a fake event for them
         atomics, ref_token, ref_url, ref_category = self._get_pending()
-        history.append(History(
-            id="-1",
-            time=int(time.time()),
-            user=AUTH_USER_SYSTEM,
-            description="Pending changes",
-            ref_token=ref_token,
-            ref_url=ref_url,
-            ref_category=ref_category,
-            atomics=atomics,
-        ))
+        if atomics:
+            history.append(History(
+                id="-1",
+                time=int(time.time()),
+                user=AUTH_USER_SYSTEM,
+                description="Pending changes",
+                ref_token=ref_token,
+                ref_url=ref_url,
+                ref_category=ref_category,
+                atomics=atomics,
+            ))
 
         return history

@@ -38,7 +38,7 @@ class StagingDB(MiddlewareDB):
         self.sub_categories = StagingDBSubCategory(self._main_db, self._staged, self.categories)
         self.history = StagingDBHistory(
             self._main_db,
-            lambda: self._commit_modules(False)
+            lambda: self._commit_modules(True)
         )
         self.tokens = StagingDBToken(self._main_db, self._staged)
         self.token_categories = StagingDBTokenCategory(self._main_db, self._staged, self.tokens)

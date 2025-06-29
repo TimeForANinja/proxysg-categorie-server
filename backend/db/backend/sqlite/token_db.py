@@ -24,7 +24,7 @@ class SQLiteToken(TokenDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_token(self, uuid: str, mut_tok: MutableToken, token_id: str) -> Token:
+    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken) -> Token:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO tokens (id, token, description) VALUES (?, ?, ?)',

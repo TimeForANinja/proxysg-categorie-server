@@ -1,3 +1,4 @@
+import traceback
 import urllib3
 from datetime import timedelta, datetime, timezone
 from apiflask import APIFlask
@@ -8,7 +9,7 @@ from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
 from background.tasks import execute_load_existing_task, execute_commit
 from db.db_singleton import get_db
-from log import log_debug
+from log import log_debug, log_error
 
 TIME_MINUTES = 60
 
@@ -58,11 +59,17 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     # this allows us to use the existing db_singleton stored as a flask global object
     def query_executor(a: APIFlask):
         with a.app_context():
-            log_debug('BACKGROUND', 'executing load_existing background task')
-            load_existing_file(
-                filepath=load_existing_path,
-                prefix_cats=load_existing_prefix,
-            )
+            try:
+                log_debug('BACKGROUND', 'executing load_existing background task')
+                load_existing_file(
+                    filepath=load_existing_path,
+                    prefix_cats=load_existing_prefix,
+                )
+            except Exception as e:
+                log_error('BACKGROUND', 'Error executing load_existing background task', {
+                    'error': str(e),
+                    'traceback': traceback.format_exc(),
+                })
 
     # run once 'quick' after 1 minute
     scheduler.add_job(
@@ -86,22 +93,28 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
     # this allows us to use the existing db_singleton stored as a flask global object
     def task_executor(a: APIFlask):
         with a.app_context():
-            log_debug('BACKGROUND', 'executing task_scheduler background task')
-            db_if = get_db()
+            try:
+                log_debug('BACKGROUND', 'executing task_scheduler background task')
+                db_if = get_db()
 
-            # try to fetch the next pending task from the DB
-            task = db_if.tasks.get_next_pending_task()
-            log_debug("BACKGROUND", "next pending task", task)
+                # try to fetch the next pending task from the DB
+                task = db_if.tasks.get_next_pending_task()
+                log_debug("BACKGROUND", "next pending task", task)
 
-            # if a task is defined go based on the task.name
-            # if no task is defined, we do nothing
-            if task and task.name == "load_existing":
-                execute_load_existing_task(db_if, task)
-            elif task and task.name == "commit":
-                execute_commit(db_if, task)
-            elif task:
-                log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
-                db_if.tasks.update_task_status(task.id, 'unknown')
+                # if a task is defined go based on the task.name
+                # if no task is defined, we do nothing
+                if task and task.name == "load_existing":
+                    execute_load_existing_task(db_if, task)
+                elif task and task.name == "commit":
+                    execute_commit(db_if, task)
+                elif task:
+                    log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
+                    db_if.tasks.update_task_status(task.id, 'unknown')
+            except Exception as e:
+                log_error('BACKGROUND', 'Error executing task_scheduler background task', {
+                    'error': str(e),
+                    'traceback': traceback.format_exc(),
+                })
 
     # run every 30 seconds
     scheduler.add_job(
@@ -156,8 +169,14 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     # this allows us to use the existing db_singleton stored as a flask global object
     def query_executor(a: APIFlask, c: ServerCredentials, unknown_only:bool=False):
         with a.app_context():
-            log_debug('BACKGROUND', 'executing query_bc background task', { 'unknown_only': unknown_only })
-            query_all(c, unknown_only)
+            try:
+                log_debug('BACKGROUND', 'executing query_bc background task', { 'unknown_only': unknown_only })
+                query_all(c, unknown_only)
+            except Exception as e:
+                log_error('BACKGROUND', 'Error executing query_bc background task', {
+                    'error': str(e),
+                    'traceback': traceback.format_exc(),
+                })
 
     # run at the interval defined
     # and once 'quick' after 2 minutes (only query not-yet-rated URLs)

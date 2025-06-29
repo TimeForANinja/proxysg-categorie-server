@@ -14,7 +14,6 @@ def load_existing_file(filepath='./data/local_db.txt', prefix_cats=''):
     :param prefix_cats: A prefix to add to all categories in the DB
     :prefix_cats: A prefix to add to all categories in the DB
     """
-
     # check if we have a local db file
     existing_local_db = Path(filepath)
     if not existing_local_db.is_file():

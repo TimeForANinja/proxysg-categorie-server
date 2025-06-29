@@ -6,13 +6,13 @@ from db.dbmodel.token import MutableToken, Token
 
 class TokenDBInterface(ABC):
     @abstractmethod
-    def add_token(self, uuid: str, mut_tok: MutableToken, token_id: str) -> Token:
+    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken) -> Token:
         """
         Add a new token with the given name, and an optional description.
 
+        :param token_id: The ID of the token to add. This is used to identify the token in the database.
         :param uuid: The UUID (token) of the token.
         :param mut_tok: The (partial) token to add.
-        :param token_id: The ID of the token to add. This is used to identify the token in the database.
         :return: The newly created token.
         """
         pass

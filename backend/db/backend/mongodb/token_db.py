@@ -29,7 +29,7 @@ class MongoDBToken(TokenDBInterface):
         # Create index on token field
         self.collection.create_index({'token': 1}, unique=True)
 
-    def add_token(self, uuid: str, mut_tok: MutableToken, token_id: str) -> Token:
+    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken) -> Token:
         self.collection.insert_one({
             '_id': token_id,
             'token': uuid,

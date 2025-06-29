@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS atomics (
     FOREIGN KEY (history_id) REFERENCES history(id)
 );
 
+UPDATE history SET user = JSON_OBJECT('username', user, 'roles', JSON_ARRAY());
+
 -- Insert records to mark the migration
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added atomics table', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Converted history.user to JSON', '{"username": "system", "roles": []}');
 INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 8', '{"username": "system", "roles": []}');

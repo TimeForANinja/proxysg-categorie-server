@@ -119,7 +119,7 @@ class StagingDBToken(MiddlewareDBToken):
 
             if not dry_run:
                 # Add the token to the persistent database
-                self._db.tokens.add_token(token_id, mutable_token, token_value)
+                self._db.tokens.add_token(token_id, token_value, mutable_token)
 
             # Create atomic to append to the history event
             return Atomic.new(
@@ -167,7 +167,7 @@ class StagingDBToken(MiddlewareDBToken):
 
             # Update the token in the persistent database
             added, removed = set_categories(
-                current_cats.categories,
+                current_cats.categories if current_cats else [],
                 token_data['categories'],
                 lambda cid: self._db.token_categories.add_token_category(change.uid, cid),
                 lambda cid: self._db.token_categories.delete_token_category(change.uid, cid),

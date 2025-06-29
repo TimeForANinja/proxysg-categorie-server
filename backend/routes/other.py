@@ -75,7 +75,7 @@ def add_other_bp(app):
 
     @other_bp.post('/api/commit')
     @other_bp.doc(summary='Commit Staged Changes', description='Commit all staged changes to the database')
-    @other_bp.input(class_schema(CommitInput)(), location='json', arg_name='commit_input')
+    @other_bp.input(class_schema(CommitInput)(), location='json', arg_name='commit_data')
     @other_bp.output(CreatedTaskOutput)
     @other_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def handle_commit(commit_data: CommitInput):
