@@ -3,12 +3,13 @@ from typing import List
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
 from db.dbmodel.staging import ActionType, ActionTable
+from db.middleware.abc.url_category_db import MiddlewareDBURLCategory
 from db.middleware.stagingdb.cache import StagedCollection
 from db.middleware.stagingdb.url_db import StagingDBURL
 from db.middleware.stagingdb.utils.overloading import add_staged_change
 
 
-class StagingDBURLCategory:
+class StagingDBURLCategory(MiddlewareDBURLCategory):
     def __init__(self, db: DBInterface, staged: StagedCollection, urls: StagingDBURL):
         self._db = db
         self._staged = staged

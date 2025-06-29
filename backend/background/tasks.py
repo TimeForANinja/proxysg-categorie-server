@@ -30,8 +30,8 @@ def execute_load_existing_task(db_if: StagingDB, task: Task):
         categories, uncategorized = parse_db(category_db, True)
 
         # Push the intermediate objects to the main DB
-        create_in_db(db_if.urls, db_if.categories, db_if.url_categories, task.user, categories, prefix)
-        create_urls_db(db_if.urls, task.user, uncategorized)
+        create_in_db(db_if, task.user, categories, prefix)
+        create_urls_db(db_if, task.user, uncategorized)
 
         log_info('BACKGROUND', f'Load existing task {task.id} completed successfully')
         db_if.tasks.update_task_status(task.id, 'success')

@@ -3,10 +3,11 @@ from typing import List, Optional
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
 from db.dbmodel.task import MutableTask, Task
+from db.middleware.abc.task_db import MiddlewareDBTask
 from db.middleware.stagingdb.cache import StagedCollection
 
 
-class StagingDBTask:
+class StagingDBTask(MiddlewareDBTask):
     def __init__(self, db: DBInterface, staged: StagedCollection):
         self._db = db
         self._staged = staged

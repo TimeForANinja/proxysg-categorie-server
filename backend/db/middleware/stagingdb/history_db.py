@@ -4,9 +4,10 @@ from typing import List
 from auth.auth_user import AUTH_USER_SYSTEM
 from db.backend.abc.db import DBInterface
 from db.dbmodel.history import History, Atomic
+from db.middleware.abc.history_db import MiddlewareDBHistory
 
 
-class StagingDBHistory:
+class StagingDBHistory(MiddlewareDBHistory):
     def __init__(self, db: DBInterface):
         self._db = db
 

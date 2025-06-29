@@ -1,9 +1,9 @@
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
 from db.dbmodel.staging import ActionTable
+from db.middleware.abc.db import MiddlewareDB
 from db.middleware.stagingdb.cache import StagedCollection
 from db.middleware.stagingdb.category_db import StagingDBCategory
-from db.middleware.stagingdb.existing import StagingDBExisting
 from db.middleware.stagingdb.history_db import StagingDBHistory
 from db.middleware.stagingdb.sub_category_db import StagingDBSubCategory
 from db.middleware.stagingdb.task_db import StagingDBTask
@@ -13,7 +13,7 @@ from db.middleware.stagingdb.url_category_db import StagingDBURLCategory
 from db.middleware.stagingdb.url_db import StagingDBURL
 
 
-class StagingDB:
+class StagingDB(MiddlewareDB):
     categories: StagingDBCategory
     sub_categories: StagingDBSubCategory
     history: StagingDBHistory
@@ -21,7 +21,6 @@ class StagingDB:
     token_categories: StagingDBTokenCategory
     urls: StagingDBURL
     url_categories: StagingDBURLCategory
-    existing: StagingDBExisting
     tasks: StagingDBTask
 
     def __init__(
@@ -39,7 +38,6 @@ class StagingDB:
         self.token_categories = StagingDBTokenCategory(self._main_db, self._staged, self.tokens)
         self.urls = StagingDBURL(self._main_db, self._staged)
         self.url_categories = StagingDBURLCategory(self._main_db, self._staged, self.urls)
-        self.existing = StagingDBExisting(self.urls, self.categories, self.url_categories)
         self.tasks = StagingDBTask(self._main_db, self._staged)
 
     def close(self):
