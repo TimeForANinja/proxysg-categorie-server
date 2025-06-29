@@ -1,7 +1,7 @@
 import traceback
 
-from db.abc.task import Task
-from db.stagingdb.db import StagingDB
+from db.dbmodel.task import Task
+from db.middleware.stagingdb.db import StagingDB
 from db.util.parse_existing_db import parse_db, create_in_db, create_urls_db
 from log import log_debug, log_info
 

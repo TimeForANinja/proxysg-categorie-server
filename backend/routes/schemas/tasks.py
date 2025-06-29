@@ -2,7 +2,7 @@ from apiflask.fields import Nested, List, String
 from marshmallow_dataclass import class_schema
 from typing import List as tList
 
-from db.abc.task import RESTTask
+from routes.restmodel.task import RESTTask
 from routes.schemas.generic_output import GenericOutput
 
 

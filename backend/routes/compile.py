@@ -1,8 +1,8 @@
 from datetime import datetime
 from apiflask import APIBlueprint
 
-from db.abc.category import Category
 from db.db_singleton import get_db
+from db.dbmodel.category import Category
 from log import log_debug
 
 

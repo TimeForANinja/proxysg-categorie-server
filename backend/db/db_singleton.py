@@ -1,8 +1,8 @@
 from flask import current_app
 
-from db.mongodb.db import MyMongoDB
-from db.sqlite.db import MySQLiteDB
-from db.stagingdb.db import StagingDB
+from db.backend.mongodb.db import MyMongoDB
+from db.backend.sqlite.db import MySQLiteDB
+from db.middleware.stagingdb.db import StagingDB
 from log import log_info
 from pymongo import MongoClient
 

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List
 
 from db.db_singleton import get_db
-from db.abc.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP
+from db.dbmodel.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP
 from log import log_info, log_error
 
 

@@ -3,7 +3,7 @@ from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
-from db.abc.token import MutableToken
+from db.dbmodel.token import MutableToken
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 from routes.schemas.token import ListTokenOutput, CreateOrUpdateTokenOutput, ListTokenCategoriesOutput, SetTokenCategoriesInput

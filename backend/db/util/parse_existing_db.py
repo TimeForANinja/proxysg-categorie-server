@@ -3,11 +3,11 @@ import time
 from typing import List, Tuple
 
 from auth.auth_user import AuthUser
-from db.abc.category import MutableCategory, Category
-from db.abc.url import MutableURL, URL
-from db.stagingdb.category_db import StagingDBCategory
-from db.stagingdb.url_category_db import StagingDBURLCategory
-from db.stagingdb.url_db import StagingDBURL
+from db.dbmodel.category import Category, MutableCategory
+from db.dbmodel.url import URL, MutableURL
+from db.middleware.stagingdb.category_db import StagingDBCategory
+from db.middleware.stagingdb.url_category_db import StagingDBURLCategory
+from db.middleware.stagingdb.url_db import StagingDBURL
 
 
 class ExistingCat:

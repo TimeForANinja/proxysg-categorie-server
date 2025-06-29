@@ -3,7 +3,7 @@ from marshmallow_dataclass import class_schema
 
 from db.db_singleton import get_db
 from auth.auth_singleton import get_auth_if
-from db.abc.category import MutableCategory
+from db.dbmodel.category import MutableCategory
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
 from routes.schemas.category import ListCategoriesResponseOutput, CreateOrUpdateCategoryOutput, ListSubCategoriesOutput, SetSubCategoriesInput

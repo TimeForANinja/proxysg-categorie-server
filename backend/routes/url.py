@@ -2,7 +2,7 @@ from apiflask import APIBlueprint, APIFlask
 from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
-from db.abc.url import MutableURL
+from db.dbmodel.url import MutableURL
 from db.db_singleton import get_db
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput

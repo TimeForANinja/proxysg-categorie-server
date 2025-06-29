@@ -4,7 +4,7 @@ from marshmallow_dataclass import class_schema
 from typing import List as tList
 from dataclasses import field, dataclass
 
-from db.abc.token import Token
+from db.dbmodel.token import Token
 from routes.schemas.generic_output import GenericOutput
 
 

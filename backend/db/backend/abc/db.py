@@ -1,0 +1,28 @@
+from abc import ABC, abstractmethod
+
+from db.backend.abc.category import CategoryDBInterface
+from db.backend.abc.history import HistoryDBInterface
+from db.backend.abc.staging import StagingDBInterface
+from db.backend.abc.sub_category import SubCategoryDBInterface
+from db.backend.abc.task import TaskDBInterface
+from db.backend.abc.token import TokenDBInterface
+from db.backend.abc.token_category import TokenCategoryDBInterface
+from db.backend.abc.url import URLDBInterface
+from db.backend.abc.url_category import UrlCategoryDBInterface
+
+
+class DBInterface(ABC):
+    categories: CategoryDBInterface
+    sub_categories: SubCategoryDBInterface
+    history: HistoryDBInterface
+    tokens: TokenDBInterface
+    token_categories: TokenCategoryDBInterface
+    urls: URLDBInterface
+    url_categories: UrlCategoryDBInterface
+    tasks: TaskDBInterface
+    staging: StagingDBInterface
+
+    @abstractmethod
+    def close(self):
+        """Method to trigger any cleanup actions."""
+        pass
