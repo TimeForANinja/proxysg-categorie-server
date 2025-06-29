@@ -1,5 +1,4 @@
 from dataclasses import field, dataclass
-from typing import List
 from marshmallow.validate import Length
 
 from db.util.validators import simpleNameValidator
@@ -26,12 +25,6 @@ class RESTTask:
         'required': True,
         'description': 'User who performed the action',
     })
-    parameters: List[str] = field(
-        default_factory=list,
-        metadata={
-            'description': 'Parameters for the task'
-        },
-    )
     status: str = field(
         default="pending",
         metadata={

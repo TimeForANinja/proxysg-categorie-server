@@ -37,11 +37,11 @@ class Task:
     updated_at: int
 
     def to_rest(self) -> RESTTask:
+        # hide "parameters" due to large size for e.g. import tasks
         return RESTTask(
             id=self.id,
             name=self.name,
             user=self.user.username,
-            parameters=self.parameters,
             status=self.status,
             created_at=self.created_at,
             updated_at=self.updated_at,
