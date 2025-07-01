@@ -48,6 +48,9 @@ def get_and_overload_object(
             # no object in db, and no "add" event
             return None
 
+        # set pending_changes since object is staged
+        obj_data.update({'pending_changes': True})
+
     # Overload any staged changes
     for staged_change in staged.iter_filter(
             StageFilter.fac_filter_table_id(action_table, obj_id),
@@ -56,6 +59,7 @@ def get_and_overload_object(
             # we have a delete object so return "None"
             return None
 
+        obj_data.update({'pending_changes': True})
         obj_data.update(staged_change.data)
 
     return obj_class(**obj_data)
@@ -84,16 +88,16 @@ def get_and_overload_all_objects(
     # Convert to dict
     objects: List[Dict[str, Any]] = [asdict(obj) for obj in db_objects]
 
-    # Append all "added" objects from the cache
-    objects.extend(
-        [
-            o.data for o in
-            staged.iter_filter(
-                StageFilter.filter_add,
-                StageFilter.fac_filter_table(action_table),
-            )
-        ]
-    )
+    # Prepare and append all "added" objects from the cache
+    staged_obj = [
+        o.data for o in
+        staged.iter_filter(
+            StageFilter.filter_add,
+            StageFilter.fac_filter_table(action_table),
+        )
+    ]
+    for obj in staged_obj: obj.update({'pending_changes': True})
+    objects.extend(staged_obj)
 
     staged_objects: List[T] = []
 
@@ -104,6 +108,7 @@ def get_and_overload_all_objects(
         for staged_change in staged.iter_filter(
             StageFilter.fac_filter_table_id(action_table, obj.get('id'))
         ):
+            obj.update({'pending_changes': True})
             obj.update(staged_change.data)
 
         if obj.get('is_deleted', 0) == 0:

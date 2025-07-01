@@ -19,6 +19,7 @@ def _build_token(row: Mapping[str, Any]) -> Token:
             for x in row.get('categories', [])
             if x['is_deleted'] == 0
         ],
+        pending_changes=False,
     )
 
 
@@ -45,7 +46,8 @@ class MongoDBToken(TokenDBInterface):
             description=mut_tok.description,
             last_use=0,
             is_deleted=0,
-            categories=[]
+            categories=[],
+            pending_changes=False,
         )
 
     def get_token(self, token_id: str) -> Optional[Token]:

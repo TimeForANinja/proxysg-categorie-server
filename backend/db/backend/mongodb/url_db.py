@@ -18,6 +18,7 @@ def _build_url(row: Mapping[str, Any]) -> URL:
             if x['is_deleted'] == 0
         ],
         bc_cats=row['bc_cats'],
+        pending_changes=False,
     )
 
 
@@ -43,6 +44,7 @@ class MongoDBURL(URLDBInterface):
             is_deleted=0,
             categories=[],
             bc_cats=[NO_BC_CATEGORY_YET],
+            pending_changes=False,
         )
 
     def get_url(self, url_id: str) -> Optional[URL]:

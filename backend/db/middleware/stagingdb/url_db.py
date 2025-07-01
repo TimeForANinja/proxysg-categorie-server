@@ -33,6 +33,7 @@ class StagingDBURL(MiddlewareDBURL):
         )
 
         # Create a URL object to return
+        url_data.update({'pending_changes': True})
         return URL(**url_data)
 
     def get_url(self, url_id: str) -> Optional[URL]:

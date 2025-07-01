@@ -39,6 +39,7 @@ class StagingDBToken(MiddlewareDBToken):
         )
 
         # Create a Token object to return
+        token_data.update({'pending_changes': True})
         return Token(**token_data)
 
     def get_token(self, token_id: str) -> Optional[Token]:

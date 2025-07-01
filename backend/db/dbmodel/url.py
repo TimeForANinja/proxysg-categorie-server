@@ -78,3 +78,7 @@ class URL(MutableURL):
             'description': 'List of BlueCoat Categories this URL is currently categorised as',
         }
     )
+    pending_changes: bool = field(metadata={
+        'required': True,
+        'description': 'Whether the category has pending changes or not',
+    })

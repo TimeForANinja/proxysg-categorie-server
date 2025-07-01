@@ -33,6 +33,7 @@ class StagingDBCategory(MiddlewareDBCategory):
         )
 
         # Create a Category object to return
+        category_data.update({'pending_changes': True})
         return Category(**category_data)
 
     def get_category(self, category_id: str) -> Optional[Category]:

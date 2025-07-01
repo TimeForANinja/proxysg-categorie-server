@@ -17,6 +17,7 @@ def _build_token(row: any) -> Token:
         last_use=row[3],
         is_deleted=0,
         categories=split_opt_str_group(row[4]),
+        pending_changes=False,
     )
 
 
@@ -38,6 +39,7 @@ class SQLiteToken(TokenDBInterface):
             description=mut_tok.description,
             last_use=0,
             is_deleted=0,
+            pending_changes=False,
         )
         return new_token
 

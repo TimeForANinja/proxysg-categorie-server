@@ -18,7 +18,8 @@ def _build_category(row: Mapping[str, Any]) -> Category:
             x['cat']
             for x in row.get('nested_categories', [])
             if x['is_deleted'] == 0
-        ]
+        ],
+        pending_changes=False,
     )
 
 
@@ -43,7 +44,8 @@ class MongoDBCategory(CategoryDBInterface):
             color=category.color,
             description=category.description,
             is_deleted=0,
-            nested_categories=[]
+            nested_categories=[],
+            pending_changes=False,
         )
 
     def get_category(self, category_id: str) -> Optional[Category]:

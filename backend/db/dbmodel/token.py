@@ -58,3 +58,7 @@ class Token(MutableToken):
             'description': 'List of category IDs associated with the URL',
         }
     )
+    pending_changes: bool = field(metadata={
+        'required': True,
+        'description': 'Whether the category has pending changes or not',
+    })

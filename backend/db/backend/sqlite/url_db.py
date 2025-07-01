@@ -17,6 +17,7 @@ def _build_url(row: any) -> URL:
         is_deleted=0,
         bc_cats=split_opt_str_group(row[3]),
         categories=split_opt_str_group(row[4]),
+        pending_changes=False,
     )
 
 
@@ -38,6 +39,7 @@ class SQLiteURL(URLDBInterface):
             id=url_id,
             is_deleted=0,
             bc_cats=[NO_BC_CATEGORY_YET],
+            pending_changes=False,
         )
         return new_url
 

@@ -17,6 +17,7 @@ def _build_category(row: any) -> Category:
         color=row[3],
         is_deleted=0,
         nested_categories=split_opt_str_group(row[4]),
+        pending_changes=False,
     )
 
 
@@ -38,6 +39,7 @@ class SQLiteCategory(CategoryDBInterface):
             color=mut_cat.color,
             id=category_id,
             is_deleted=0,
+            pending_changes=False,
         )
         return new_cat
 
