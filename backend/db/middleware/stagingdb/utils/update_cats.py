@@ -44,12 +44,13 @@ def set_categories(
             "is_cats": is_cats,
             "should_cats": should_cats,
             "added": added,
-            "removed": removed
+            "removed": removed,
+            "dry_run": dry_run,
         }
     )
 
     if not dry_run:
-        map(add_cat, added)
-        map(remove_cat, removed)
+        for x in added: add_cat(x)
+        for x in removed: remove_cat(x)
 
     return added, removed

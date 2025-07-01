@@ -27,4 +27,4 @@ class StagedChange:
     auth: AuthUser
     uid: str
     data: Optional[Dict[str, Any]]
-    timestamp: int = 0
+    timestamp: int
