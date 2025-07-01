@@ -1,3 +1,4 @@
+import time
 from typing import List, Tuple
 
 from auth.auth_user import AuthUser
@@ -38,7 +39,7 @@ class StagingDB(MiddlewareDB):
         self.sub_categories = StagingDBSubCategory(self._main_db, self._staged, self.categories)
         self.history = StagingDBHistory(
             self._main_db,
-            lambda: self._commit_modules(True)
+            lambda: self._commit_modules(True, int(time.time()))
         )
         self.tokens = StagingDBToken(self._main_db, self._staged)
         self.token_categories = StagingDBTokenCategory(self._main_db, self._staged, self.tokens)
@@ -49,7 +50,7 @@ class StagingDB(MiddlewareDB):
     def close(self):
         self._main_db.close()
 
-    def _commit_modules(self, dry_run: bool) -> Tuple[
+    def _commit_modules(self, dry_run: bool, not_before: int) -> Tuple[
         List[Atomic],
         List[str],
         List[str],
@@ -63,6 +64,10 @@ class StagingDB(MiddlewareDB):
 
         # apply changes to the database
         for change in self._staged.iter():
+            # skip changes created after the commit
+            if change.timestamp > not_before:
+                continue
+
             atomic = None
             if change.action_table == ActionTable.TOKEN:
                 atomic = self.tokens.commit(change, dry_run)
@@ -87,14 +92,15 @@ class StagingDB(MiddlewareDB):
 
         return atomics, ref_token, ref_url, ref_category
 
-    def commit(self, user: AuthUser, commit_message: str):
+    def commit(self, user: AuthUser, commit_message: str, not_before: int):
         """
         Push all staged changes to the main database.
 
         :param user: User object for the user who is committing the changes
         :param commit_message: user-provided message describing the commit
+        :param not_before: timestamp in UTC as a cutoff for pending changes to be committed
         """
-        atomics, ref_token, ref_url, ref_category = self._commit_modules(False)
+        atomics, ref_token, ref_url, ref_category = self._commit_modules(False, not_before)
 
         # Create a single history event with all atomics
         if atomics:

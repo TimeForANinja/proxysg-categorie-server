@@ -1,3 +1,5 @@
+import time
+
 from apiflask import APIBlueprint
 from marshmallow_dataclass import class_schema
 
@@ -84,7 +86,7 @@ def add_other_bp(app):
         # Create a background task to process the database
         task = db_if.tasks.add_task(auth.current_user, MutableTask(
             name='commit',
-            parameters=['commit', commit_data.message]
+            parameters=['commit', commit_data.message, str(int(time.time()))]
         ))
         log_debug('API', f'Created commit task {task.id} with message: {commit_data.message}')
 
