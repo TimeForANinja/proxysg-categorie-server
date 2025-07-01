@@ -12,6 +12,7 @@ export interface IUrl extends IMutableUrl {
     id: string;
     categories: string[];
     bc_cats: string[];
+    pending_changes: boolean;
 }
 
 export const UrlToKV = (x: IUrl, categories: LUT<ICategory>): StringKV => {

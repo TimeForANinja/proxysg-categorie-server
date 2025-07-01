@@ -12,6 +12,7 @@ export interface IMutableCategory {
 export interface ICategory extends IMutableCategory {
     id: string;
     nested_categories: string[];
+    pending_changes: boolean;
 }
 
 export const CategoryToKV = (x: ICategory, categories: LUT<ICategory>): StringKV => {

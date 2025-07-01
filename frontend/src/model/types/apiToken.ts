@@ -12,6 +12,7 @@ export interface IApiToken extends IMutableApiToken {
     token: string;
     categories: string[];
     last_use: number;
+    pending_changes: boolean;
 }
 
 const TIME_SECONDS = 1000;
