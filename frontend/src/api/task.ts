@@ -1,21 +1,10 @@
 /**
  * API functions for interacting with tasks
  */
+import {ITask} from "../model/types/task";
 
 const TASK_BASE_URL = '/api/task';
 
-/**
- * Interface for task data returned from the API
- */
-export interface TaskData {
-  id: string;
-  name: string;
-  user: string;
-  parameters: string[];
-  status: string;
-  created_at: number;
-  updated_at: number;
-}
 
 /**
  * Get the status of a task
@@ -26,7 +15,7 @@ export interface TaskData {
 export const getTaskByID = async (
   userToken: string,
   taskId: string,
-): Promise<TaskData> => {
+): Promise<ITask> => {
   const response = await fetch(`${TASK_BASE_URL}/${taskId}`, {
     method: 'GET',
     headers: {
@@ -47,3 +36,15 @@ export const getTaskByID = async (
 
   return data.data;
 };
+
+/**
+ * Get the list of all tasks
+ * @param userToken - The JWT token for authentication
+ * @returns The list of tasks
+ */
+export const getTasks = async (
+    userToken: string
+): Promise<ITask[]> => {
+    return Promise.resolve([]);
+    // TODO: implement
+}

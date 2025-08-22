@@ -8,6 +8,7 @@ import CategoriesPage from "./components/categories";
 import HistoryPage from "./components/history";
 import HomePage from "./components/home";
 import UploadPage from "./components/upload";
+import SettingsPage from "./components/settings";
 import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
 import {AuthProvider} from "./model/AuthContext";
@@ -36,6 +37,10 @@ function App() {
                 {
                     path: "/upload",
                     element: <UploadPage/>,
+                },
+                {
+                    path: "/settings",
+                    element: <SettingsPage/>,
                 },
                 {
                     path: "/",
