@@ -1,7 +1,6 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import {loadExisting} from '../api/new_task';
-import {getTaskByID} from '../api/task';
 import {useAuth} from '../model/AuthContext';
 import {
     Button,
@@ -24,9 +23,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import CloseIcon from '@mui/icons-material/Close';
 import {formatDateString} from "../util/DateString";
-
-const TIME_SECONDS = 1000;
-const TIME_CHECK_TASKS = 1 * TIME_SECONDS;
+import { TaskStatusTracker } from './shared/TaskStatusTracker';
 
 const UploadPage = () => {
     const navigate = useNavigate();
@@ -71,50 +68,6 @@ const UploadPage = () => {
         setSuccess(null);
     };
 
-    // (wrapper for an) interval to check for the state of the upload task
-    React.useEffect(() => {
-        const timer = setInterval(async () => {
-            // only (continue to) check status if we have a pending task
-            if (!taskId || !token) return;
-            try {
-                // fetch the task and set the success / warning / error banner accordingly
-                const taskData = await getTaskByID(token, taskId);
-                switch (taskData.status) {
-                    case 'success':
-                        setSuccess('URLs uploaded successfully!');
-                        setWarning(null);
-                        setError(null);
-                        // clear the taskID
-                        setTaskId("");
-                        break
-                    case 'failed':
-                        setSuccess(null);
-                        setWarning(null);
-                        setError('Upload failed. Please try again.');
-                        // clear the taskID
-                        setTaskId("");
-                        break
-                    case 'running':
-                        setSuccess(null);
-                        setWarning('Waiting for execution to finish...');
-                        setError(null);
-                        break
-                    default:
-                    case 'pending':
-                        setSuccess(null);
-                        setWarning('Waiting for execution to start...');
-                        setError(null);
-                        break
-                }
-            } catch (err) {
-                setSuccess(null);
-                setWarning(null);
-                setError(`Failed to get task status: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            }
-        }, TIME_CHECK_TASKS);
-        // return a function that gets called to "cleanup" the effect
-        return () => clearInterval(timer);
-    }, [taskId, token])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -158,6 +111,42 @@ const UploadPage = () => {
     return (
         <Container maxWidth="md" sx={{ mt: 4 }}>
             <Paper elevation={3} sx={{ p: 4 }}>
+                {/* Generic task status tracker to handle banner messages based on task status */}
+                <TaskStatusTracker
+                    token={token}
+                    taskId={taskId}
+                    onSuccess={() => {
+                        setSuccess('URLs uploaded successfully!');
+                        setWarning(null);
+                        setError(null);
+                    }}
+                    onFailed={(task) => {
+                        setSuccess(null);
+                        setWarning(null);
+                        // prefer server message if available via thrown error earlier is not provided here; keep generic text
+                        setError('Upload failed. Please try again.');
+                    }}
+                    onRunning={() => {
+                        setSuccess(null);
+                        setWarning('Waiting for execution to finish...');
+                        setError(null);
+                    }}
+                    onPending={() => {
+                        setSuccess(null);
+                        setWarning('Waiting for execution to start...');
+                        setError(null);
+                    }}
+                    onError={(err) => {
+                        setSuccess(null);
+                        setWarning(null);
+                        setError(`Failed to get task status: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                    }}
+                    onComplete={() => {
+                        // clear the taskID once the task completes (success/failed)
+                        setTaskId("");
+                    }}
+                />
+
                 <Typography variant="h4" component="h1" gutterBottom align="center">
                     Upload URLs
                 </Typography>
