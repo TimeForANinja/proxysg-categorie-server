@@ -1,13 +1,13 @@
 import json
 import sqlite3
 import time
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Any
 
 from auth.auth_user import AuthUser
 from db.task import TaskDBInterface, MutableTask, Task
 
 
-def _build_task(row: any) -> Task:
+def _build_task(row: Any) -> Task:
     """Parse SQLite row into a Task object."""
     param_obj = json.loads(row[3])
 

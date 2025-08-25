@@ -1,12 +1,12 @@
 import sqlite3
 import time
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Any
 
 from db.sqlite.util.groups import split_opt_str_group
 from db.url import URLDBInterface, MutableURL, URL, NO_BC_CATEGORY_YET
 
 
-def _build_url(row: any) -> URL:
+def _build_url(row: Any) -> URL:
     """Parse SQLite row into URL object."""
     return URL(
         id=str(row[0]),

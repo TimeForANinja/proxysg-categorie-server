@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import field, dataclass
 from typing import Optional, List
 from marshmallow.validate import Length
+from enum import IntFlag
 
 from auth.auth_user import AuthUser
 from db.util.validators import simpleNameValidator
@@ -125,3 +126,9 @@ class TaskDBInterface(ABC):
         :return: A Task object or None if no pending tasks are available.
         """
         pass
+
+
+class CleanupFlags(IntFlag):
+    """FLags to define which Cleanups to run in a cleanup task"""
+    Categories = 1 << 0
+    URLs = 1 << 1
