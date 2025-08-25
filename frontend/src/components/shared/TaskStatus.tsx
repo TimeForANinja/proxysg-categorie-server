@@ -4,7 +4,7 @@ import { getTaskByID } from '../../api/task';
 import { useAuth } from '../../model/AuthContext';
 
 const TIME_SECONDS = 1000;
-const TIME_CHECK_TASKS = 2 * TIME_SECONDS;
+const DEFAULT_INTERVAL = 2 * TIME_SECONDS;
 
 
 interface TaskStatusProps {
@@ -12,17 +12,20 @@ interface TaskStatusProps {
   onTaskComplete: (success: boolean) => void;
   successMessage?: string;
   failureMessage?: string;
+  intervalMs?: number;
 }
-const TaskStatus: React.FC<TaskStatusProps> = ({ 
+export const TaskStatus: React.FC<TaskStatusProps> = ({
   taskId,
   onTaskComplete, 
   successMessage = 'Task completed successfully!',
-  failureMessage = 'Task failed. Please try again.'
+  failureMessage = 'Task failed. Please try again.',
+  intervalMs = null,
 }) => {
   const { token } = useAuth();
   const [error, setError] = React.useState<string | null>(null);
   const [warning, setWarning] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  const interval = intervalMs || DEFAULT_INTERVAL;
 
   // ref to the current task id
   // resolves various problems with pass-by-value we can run into
@@ -80,7 +83,7 @@ const TaskStatus: React.FC<TaskStatusProps> = ({
   React.useEffect(() => {
     const timer = setInterval(() => {
       checkTaskStatus();
-    }, TIME_CHECK_TASKS);
+    }, interval);
     // return a function that gets called to "cleanup" the effect
     return () => clearInterval(timer);
   }, [checkTaskStatus]);
@@ -93,5 +96,3 @@ const TaskStatus: React.FC<TaskStatusProps> = ({
     </>
   );
 };
-
-export default TaskStatus;

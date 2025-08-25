@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Any
 
 from db.backend.abc.category import CategoryDBInterface
 from db.backend.sqlite.util.groups import split_opt_str_group
@@ -8,7 +8,7 @@ from db.backend.sqlite.util.query_builder import build_update_query
 from db.dbmodel.category import MutableCategory, Category
 
 
-def _build_category(row: any) -> Category:
+def _build_category(row: Any) -> Category:
     """Parse SQLite row into a Category object."""
     return Category(
         id=str(row[0]),

@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Any
 
 from db.backend.abc.token import TokenDBInterface
 from db.backend.sqlite.util.groups import split_opt_str_group
@@ -8,7 +8,7 @@ from db.dbmodel.token import MutableToken, Token
 from db.backend.sqlite.util.query_builder import build_update_query
 
 
-def _build_token(row: any) -> Token:
+def _build_token(row: Any) -> Token:
     """Parse SQLite row into a Token object."""
     return Token(
         id=str(row[0]),

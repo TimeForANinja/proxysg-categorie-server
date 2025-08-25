@@ -71,7 +71,7 @@ interface BuildRowProps {
  * Wrapped in React.memo to prevent unnecessary re-renders in the ApiToken table.
  * This works as long as none of the props passed to the Component change
  *
- * The caching also requires us to ensure that all callbacks passed are constants (e.g. wrapped in useCallable)
+ * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {

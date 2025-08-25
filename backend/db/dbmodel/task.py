@@ -1,4 +1,5 @@
 from dataclasses import field, dataclass
+from enum import IntFlag
 from typing import List
 from marshmallow.validate import Length
 
@@ -46,3 +47,9 @@ class Task:
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
+
+
+class CleanupFlags(IntFlag):
+    """FLags to define which Cleanups to run in a cleanup task"""
+    Categories = 1 << 0
+    URLs = 1 << 1

@@ -1,8 +1,8 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
-import {loadExisting} from '../api/load_existing';
-import {useAuth} from '../model/AuthContext';
-import TaskStatus from './shared/TaskStatus';
+import {loadExisting} from '../../api/task_new';
+import {useAuth} from '../../model/AuthContext';
+import {TaskStatus} from './TaskStatus';
 import {
     Button,
     TextField,
@@ -22,7 +22,7 @@ import Grid from "@mui/material/Grid2";
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import CloseIcon from '@mui/icons-material/Close';
-import {formatDateString} from "../util/DateString";
+import {formatDateString} from "../../util/DateString";
 
 
 const UploadPage = () => {
@@ -35,7 +35,7 @@ const UploadPage = () => {
     const [uploadType, setUploadType] = React.useState<'file' | 'text'>('file');
     const [prefix, setPrefix] = React.useState<string>(`IMPORTED_${formatDateString()}_`);
 
-    // Params changed after creation of fetchTaskStatus need to be passed by-ref
+    // ID (or empty) of an ongoing upload task
     const [taskId, setTaskId] = React.useState<string>("");
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,7 +75,7 @@ const UploadPage = () => {
                 const fileContents = await Promise.all(
                     files.map(file => file.text())
                 );
-                // send the array of files and get task ID
+                // send the array of files and get a task ID
                 const newTaskId = await loadExisting(token, fileContents.join('\n\n'), prefix);
                 setTaskId(newTaskId);
             } else if (uploadType === 'text' && text.trim()) {
@@ -214,7 +214,7 @@ const UploadPage = () => {
                         <Grid size={12}>
                             <TaskStatus 
                                 taskId={taskId} 
-                                successMessage="URLs uploaded successfully!" 
+                                successMessage="Existing DB Import successfully!"
                                 failureMessage="Upload failed. Please try again."
                                 onTaskComplete={() => setTaskId("")}
                             />

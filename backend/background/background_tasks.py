@@ -7,7 +7,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
-from background.tasks import execute_load_existing_task, execute_commit
+from background.task import execute_load_existing_task, execute_commit, execute_cleanup_existing
 from db.db_singleton import get_db
 from log import log_debug, log_error
 
@@ -107,6 +107,8 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
                     execute_load_existing_task(db_if, task)
                 elif task and task.name == "commit":
                     execute_commit(db_if, task)
+                elif task and task.name == 'cleanup_unused':
+                    execute_cleanup_existing(db_if, task)
                 elif task:
                     log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
                     db_if.tasks.update_task_status(task.id, 'unknown')

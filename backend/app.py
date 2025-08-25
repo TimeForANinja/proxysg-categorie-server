@@ -13,7 +13,7 @@ from routes.auth import add_auth_bp
 from routes.category import add_category_bp
 from routes.compile import add_compile_bp
 from routes.history import add_history_bp
-from routes.other import add_other_bp
+from routes.task import add_task_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
 from log import setup_logging, log_info, log_error, log_debug
@@ -22,7 +22,7 @@ from log import setup_logging, log_info, log_error, log_debug
 app = APIFlask(
     __name__,
     'ProxySG Category Server',
-    version='1.0.0',
+    version='1.1.0',
     docs_path='/docs',
     static_folder='./dist',
 )
@@ -52,7 +52,7 @@ add_auth_bp(app)
 add_token_bp(app)
 add_url_bp(app)
 add_compile_bp(app)
-add_other_bp(app)
+add_task_bp(app)
 
 
 # Serve index.html for the root route

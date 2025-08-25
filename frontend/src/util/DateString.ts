@@ -1,4 +1,3 @@
-
 // Utility method to calculate a Date-Time-Stamp to include in filenames
 export const formatDateForFilename = (date: Date = new Date()): string => {
     const year = date.getFullYear();
@@ -11,9 +10,10 @@ export const formatDateForFilename = (date: Date = new Date()): string => {
     return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }
 
-export const formatDateString = (date: Date = new Date()): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+export const formatDateString = (date: Date | null = null): string => {
+    const now = date ?? new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }

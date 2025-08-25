@@ -5,18 +5,18 @@ import {getHistory, ICommits} from "../api/history";
 import {useAuth} from "../model/AuthContext";
 import HistoryTable from "./shared/HistoryTable";
 import {Box, Button, TextField} from "@mui/material";
-import {startCommit} from "../api/task";
-import TaskStatus from "./shared/TaskStatus";
+import {startCommit} from "../api/task_new";
+import {TaskStatus} from "./shared/TaskStatus";
 
 
 function HistoryPage() {
     const { token } = useAuth();
     const [commits, setCommits] = React.useState<ICommits[]>([]);
 
-    // ID (or empty) of ongoing commit task
+    // ID (or empty) of an ongoing commit task
     const [taskId, setTaskId] = React.useState<string>("");
 
-    // State for commit message
+    // State for the commit message
     const [commitMessage, setCommitMessage] = React.useState<string>("");
 
     React.useEffect(() => {
