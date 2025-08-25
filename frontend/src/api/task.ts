@@ -3,7 +3,7 @@
  */
 import {ITask} from "../model/types/task";
 
-const TASK_BASE_URL = '/api/task';
+export const TASK_BASE_URL = '/api/task';
 
 
 /**
@@ -45,6 +45,23 @@ export const getTaskByID = async (
 export const getTasks = async (
     userToken: string
 ): Promise<ITask[]> => {
-    return Promise.resolve([]);
-    // TODO: implement
+    const response = await fetch(TASK_BASE_URL, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'jwt-token': userToken,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get task status: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+
+    return data.data;
 }

@@ -1,4 +1,6 @@
-const TASK_BASE_URL = '/api/new-task/'
+import {TASK_BASE_URL} from "./task";
+
+const NEW_TASK_BASE_URL = `${TASK_BASE_URL}/new`
 
 export const loadExisting = async (
     userToken: string,
@@ -11,7 +13,7 @@ export const loadExisting = async (
         prefix,
     };
 
-    const response = await fetch(`${TASK_BASE_URL}/upload_existing_db`, {
+    const response = await fetch(`${NEW_TASK_BASE_URL}/upload_existing_db`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -33,15 +35,27 @@ export const loadExisting = async (
     return data.data;
 }
 
-export const doCleanupUnused = async (
+export enum CleanupFlags {
+    Categories = 1 << 0,
+    URLs = 1 << 1,
+}
+
+export const cleanupUnused = async (
     userToken: string,
+    flags: CleanupFlags,
 ): Promise<string> => {
-    const response = await fetch(`${TASK_BASE_URL}/cleanup_unused`, {
+    // Create the request body as JSON
+    const requestBody: { flags: CleanupFlags } = {
+        flags,
+    };
+
+    const response = await fetch(`${NEW_TASK_BASE_URL}/cleanup_unused`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'jwt-token': userToken,
         },
+        body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {

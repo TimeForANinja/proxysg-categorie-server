@@ -1,122 +1,94 @@
 import React from 'react';
 import { getTaskByID } from '../../api/task';
-import { ITask } from '../../model/types/task';
+import {Alert} from "@mui/material";
+import {useAuth} from "../../model/AuthContext";
 
 // Polling defaults
 const TIME_SECONDS = 1000;
 const DEFAULT_POLL_INTERVAL = 1 * TIME_SECONDS;
 
 export type TaskLifecycleStatus = 'pending' | 'running' | 'success' | 'failed';
+const isTerminal = (s?: TaskLifecycleStatus) => s === 'success' || s === 'failed';
 
-export interface TaskStatusTrackerOptions {
-  // Polling interval in ms
-  intervalMs?: number;
+export interface taskStatusProps {
+    title: string;
+    taskId: string | null;
+    // Called once when the task reaches a terminal state (success/failed)
+    onComplete: () => void;
+    // Polling interval in ms
+    intervalMs?: number // = DEFAULT_POLL_INTERVAL;
 }
 
-export interface UseTaskStatusTrackerProps {
-  token?: string | null;
-  taskId?: string;
-  options?: TaskStatusTrackerOptions;
-  // Callbacks for status changes. Each receives the full task object
-  onPending?: (task: ITask) => void;
-  onRunning?: (task: ITask) => void;
-  onSuccess?: (task: ITask) => void;
-  onFailed?: (task: ITask) => void;
-  // Called once when the task reaches a terminal state (success/failed)
-  onComplete?: (task: ITask) => void;
-  // Called when an error occurs fetching status
-  onError?: (error: unknown) => void;
-}
+export const TaskStatusTracker = (props: taskStatusProps) => {
+    const { token } = useAuth();
+    const [error, setError] = React.useState<string | null>(null);
+    const [warning, setWarning] = React.useState<string | null>(null);
+    const [success, setSuccess] = React.useState<string | null>(null);
 
-export interface UseTaskStatusTrackerResult {
-  lastTask?: ITask;
-  lastError?: unknown;
-  status?: TaskLifecycleStatus;
-  isActive: boolean;
-}
+    const {taskId, title, onComplete} = props;
+    const intervalMs = props?.intervalMs ?? DEFAULT_POLL_INTERVAL;
 
-/**
- * A reusable hook that polls a task's status by taskId and emits lifecycle callbacks.
- */
-export function useTaskStatusTracker(props: UseTaskStatusTrackerProps): UseTaskStatusTrackerResult {
-  const { token, taskId, options, onPending, onRunning, onSuccess, onFailed, onComplete, onError } = props;
+    React.useEffect(() => {
+        // Do nothing if no token or no task to track
+        if (!token || !taskId) return;
 
-  const intervalMs = options?.intervalMs ?? DEFAULT_POLL_INTERVAL;
+        let cancelled = false;
+        const timer = setInterval(async () => {
+            if (!token || !taskId) return; // guard while running
+            try {
+                const taskData = await getTaskByID(token, taskId);
+                if (cancelled) return;
 
-  const [lastTask, setLastTask] = React.useState<ITask | undefined>(undefined);
-  const [status, setStatus] = React.useState<TaskLifecycleStatus | undefined>(undefined);
-  const [lastError, setLastError] = React.useState<unknown>(undefined);
+                const nextStatus = (taskData.status as TaskLifecycleStatus) ?? 'pending';
 
-  const isTerminal = (s?: TaskLifecycleStatus) => s === 'success' || s === 'failed';
+                switch (nextStatus) {
+                    case 'success':
+                        setSuccess(title+' uploaded successfully!');
+                        setWarning(null);
+                        setError(null);
+                        onComplete();
+                        break;
+                    case 'failed':
+                        setSuccess(null);
+                        setWarning(null);
+                        setError(title+' failed. Please try again.');
+                        onComplete();
+                        break;
+                    case 'running':
+                        setSuccess(null);
+                        setWarning('Waiting for execution to finish...');
+                        setError(null);
+                        break;
+                    default:
+                    case 'pending':
+                        setSuccess(null);
+                        setWarning('Waiting for execution to start...');
+                        setError(null);
+                        break;
+                }
 
-  React.useEffect(() => {
-    // Do nothing if no token or no task to track
-    if (!token || !taskId) return;
+                // Stop polling when reaching a terminal state
+                if (isTerminal(nextStatus)) {
+                    clearInterval(timer);
+                }
+            } catch (err) {
+                if (cancelled) return;
+                setSuccess(null);
+                setWarning(null);
+                setError(title+' failed. Please try again.');
+                onComplete();
+            }
+        }, intervalMs);
 
-    let cancelled = false;
-    const timer = setInterval(async () => {
-      if (!token || !taskId) return; // guard while running
-      try {
-        const taskData = await getTaskByID(token, taskId);
-        if (cancelled) return;
+        return () => {
+            cancelled = true;
+            clearInterval(timer);
+        };
+    }, [token, title, taskId, intervalMs, onComplete]);
 
-        setLastTask(taskData);
-        const nextStatus = (taskData.status as TaskLifecycleStatus) ?? 'pending';
-        setStatus(nextStatus);
-
-        switch (nextStatus) {
-          case 'success':
-            onSuccess?.(taskData);
-            onComplete?.(taskData);
-            break;
-          case 'failed':
-            onFailed?.(taskData);
-            onComplete?.(taskData);
-            break;
-          case 'running':
-            onRunning?.(taskData);
-            break;
-          default:
-          case 'pending':
-            onPending?.(taskData);
-            break;
-        }
-
-        // Stop polling when reaching a terminal state
-        if (isTerminal(nextStatus)) {
-          clearInterval(timer);
-        }
-      } catch (err) {
-        if (cancelled) return;
-        setLastError(err);
-        onError?.(err);
-      }
-    }, intervalMs);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [token, taskId, intervalMs, onPending, onRunning, onSuccess, onFailed, onComplete, onError]);
-
-  return {
-    lastTask,
-    lastError,
-    status,
-    isActive: Boolean(token && taskId && !isTerminal(status)),
-  };
-}
-
-export interface TaskStatusTrackerProps extends UseTaskStatusTrackerProps {
-  // Optional render function to display the current status/UI
-  children?: (result: UseTaskStatusTrackerResult) => React.ReactNode;
-}
-
-/**
- * Component wrapper for the useTaskStatusTracker hook.
- * Can be dropped anywhere to start tracking a task by id.
- */
-export const TaskStatusTracker: React.FC<TaskStatusTrackerProps> = ({ children, ...hookProps }) => {
-  const result = useTaskStatusTracker(hookProps);
-  return <>{children ? children(result) : null}</>;
+    return <>
+        { error && (<Alert severity="error">{error}</Alert>)}
+        { warning && (<Alert severity="warning">{warning}</Alert>)}
+        { success && (<Alert severity="success">{success}</Alert>)}
+    </>;
 };
