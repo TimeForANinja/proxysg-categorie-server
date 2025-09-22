@@ -15,6 +15,16 @@ class StagingDBInterface(ABC):
         pass
 
     @abstractmethod
+    def store_staged_changes(self, changes: List[StagedChange]) -> None:
+        """
+        Store a list of staged changes in the database.
+        Batch Variant of store_staged_change-
+
+        :param changes: The staged changes to store.
+        """
+        pass
+
+    @abstractmethod
     def get_staged_changes(self) -> List[StagedChange]:
         """
         Get all staged changes.

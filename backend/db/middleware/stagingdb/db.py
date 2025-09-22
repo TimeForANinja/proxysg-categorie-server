@@ -63,7 +63,7 @@ class StagingDB(MiddlewareDB):
         ref_category: List[str] = []
 
         # apply changes to the database
-        for change in self._staged.iter():
+        for change in self._staged.get_all():
             # skip changes created after the commit
             if change.timestamp > not_before:
                 continue

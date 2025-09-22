@@ -17,6 +17,16 @@ class MiddlewareDBURL(ABC):
         """
         pass
 
+    def add_urls(self, auth: AuthUser, mut_urls: List[MutableURL]) -> List[URL]:
+        """
+        Add a batch of urls with the given hostnames.
+
+        :param auth: The authenticated user.
+        :param mut_urls: The (partial) urls to add.
+        :return: The newly created urls.
+        """
+        pass
+
     @abstractmethod
     def get_url(self, url_id: str) -> Optional[URL]:
         """

@@ -9,8 +9,9 @@ from db.dbmodel.staging import ActionType, ActionTable, StagedChange
 from db.dbmodel.url import MutableURL, URL
 from db.middleware.abc.url_db import MiddlewareDBURL
 from db.middleware.stagingdb.cache import StagedCollection
-from db.middleware.stagingdb.utils.add_uid import add_uid_to_object
-from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
+from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
+from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, \
+    get_and_overload_all_objects, add_staged_changes
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
 
@@ -35,6 +36,29 @@ class StagingDBURL(MiddlewareDBURL):
         # Create a URL object to return
         url_data.update({'pending_changes': True})
         return URL(**url_data)
+
+    def add_urls(self, auth: AuthUser, mut_urls: List[MutableURL]) -> List[URL]:
+        if not mut_urls:
+            return []
+
+        # Generate a UUID and add it to the URL data
+        url_ids, url_data = add_uid_to_objects(mut_urls)
+
+        add_staged_changes(
+            action_type=ActionType.ADD,
+            action_table=ActionTable.URL,
+            auth=auth,
+            obj_ids=url_ids,
+            update_data=url_data,
+            staged=self._staged,
+        )
+
+        # Create a list of URL objects to return
+        resp = []
+        for ud in url_data:
+            ud.update({'pending_changes': True})
+            resp.append(URL(**ud))
+        return resp
 
     def get_url(self, url_id: str) -> Optional[URL]:
         return get_and_overload_object(

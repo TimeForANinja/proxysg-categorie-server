@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
@@ -6,7 +6,7 @@ from db.dbmodel.staging import ActionType, ActionTable
 from db.middleware.abc.url_category_db import MiddlewareDBURLCategory
 from db.middleware.stagingdb.cache import StagedCollection
 from db.middleware.stagingdb.url_db import StagingDBURL
-from db.middleware.stagingdb.utils.overloading import add_staged_change
+from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes
 
 
 class StagingDBURLCategory(MiddlewareDBURLCategory):
@@ -37,6 +37,43 @@ class StagingDBURLCategory(MiddlewareDBURLCategory):
                 },
                 staged=self._staged,
             )
+
+    def add_url_categories(self, auth: AuthUser, mappings: List[Tuple[str, str]]) -> None:
+        if not mappings:
+            return
+
+        # reformat into a map of url_id to category_ids
+        unique_urls = set([x[1] for x in mappings])
+
+        # get a list of all URL
+        known_urls = self._url_db.get_all_urls()
+
+        url_ids = []
+        url_cat_data = []
+        for url_id in unique_urls:
+            # TODO: check if the url validation is needed
+            # identify url
+            url_item = next((x for x in known_urls if x.id == url_id), None)
+            if url_item is None:
+                raise Exception(f"URL {url_id} not found")
+
+            new_cats = [x[0] for x in mappings if x[1] == url_id]
+            # convert to set to deduplicate
+            total_cats = list(set(new_cats + url_item.categories))
+            # push to global lists, later used for creating staged changes
+            url_ids.append(url_id)
+            url_cat_data.append({ 'categories': total_cats })
+
+        # Use stage_update to create and add the staged change
+        # TODO: check if we can use "ADD" instead of "SET" to simplify the code
+        add_staged_changes(
+            action_type=ActionType.SET_CATS,
+            action_table=ActionTable.URL,
+            auth=auth,
+            obj_ids=url_ids,
+            update_data=url_cat_data,
+            staged=self._staged,
+        )
 
     def delete_url_category(self, auth: AuthUser, url_id: str, cat_id: str) -> None:
         # Get current categories

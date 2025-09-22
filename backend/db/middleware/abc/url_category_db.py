@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Tuple
 
 from auth.auth_user import AuthUser
 
@@ -22,6 +22,16 @@ class MiddlewareDBURLCategory(ABC):
         :param auth: The authenticated user
         :param url_id: The ID of the URL
         :param cat_id: The ID of the Category
+        """
+        pass
+
+    @abstractmethod
+    def add_url_categories(self, auth: AuthUser, mappings: List[Tuple[str, str]]) -> None:
+        """
+        Add a batch of new URL to Category mappings
+
+        :param auth: The authenticated user
+        :param mappings: A list of Tuples, where each Tuple contains the URL ID and the Category ID
         """
         pass
 

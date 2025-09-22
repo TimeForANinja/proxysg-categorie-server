@@ -3,9 +3,10 @@ import time
 from typing import List, Tuple
 
 from auth.auth_user import AuthUser
-from db.dbmodel.category import Category, MutableCategory
-from db.dbmodel.url import URL, MutableURL
+from db.dbmodel.category import MutableCategory
+from db.dbmodel.url import MutableURL
 from db.middleware.abc.db import MiddlewareDB
+from log import log_debug, log_error
 
 
 class ExistingCat:
@@ -34,32 +35,54 @@ def create_in_db(
     :param new_cat_candidates: The list of categories to import
     :param category_prefix: The prefix to use for the new categories
     """
+    if not new_cat_candidates:
+        return
+
     # add prefix to cats
     for cat in new_cat_candidates:
         cat.name = category_prefix + cat.name
 
-    # get existing data from db
+
+    ## identify all categories that are missing
+    _ensure_cats_exist(db, auth, [x.name for x in new_cat_candidates])
+
+    ## identify all urls that are missing
+    new_url_candidates = [u for x in new_cat_candidates for u in x.urls]
+    create_urls_db(db, auth, new_url_candidates)
+
+    ## identify all cat -> url mappings that are missing
     existing_cats = db.categories.get_all_categories()
     existing_urls = db.urls.get_all_urls()
+    missing_mappings: List[Tuple[str, str]] = []
+    for cat in new_cat_candidates:
+        # identify category
+        cat_item = next((x for x in existing_cats if x.name == cat.name), None)
+        if cat_item is None:
+            # should never happen, since we're creating the cats above
+            log_error("existing_db", "Failed to find Category", {"cat": cat.name})
+            raise Exception(f'Category "{cat.name}" not found')
 
-    # create all entries and mappings for existing customDB in db
-    for new_cat_candidate in new_cat_candidates:
-        # identify a cat or create a new one
-        new_cat, cat_created = _find_or_create_cat(db, auth, new_cat_candidate, existing_cats)
-        if cat_created:
-            existing_cats.append(new_cat)
+        for url in cat.urls:
+            # identify url
+            url_item = next((x for x in existing_urls if x.hostname == url), None)
+            if url_item is None:
+                # should never happen, since we're creating the urls above
+                log_error("existing_db", "Failed to find URL", {"cat": cat.name, 'url': url})
+                raise Exception(f'URL "{url}" not found')
 
-        for new_url_candidate in new_cat_candidate.urls:
-            # identify url or create a new one
-            new_url, url_created = _find_or_create_url(db, auth, new_url_candidate, existing_urls)
-            if url_created:
-                existing_urls.append(new_url)
+            # both cat and url of mapping identified, so add it to the list of missing mappings to create
+            missing_mappings.append((cat_item.id, url_item.id))
 
-            # map url to cat, if not already done
-            if not new_cat.id in new_url.categories:
-                db.url_categories.add_url_category(auth, new_url.id, new_cat.id)
+    log_debug('existing_db', 'creating missing url-category mappings', {
+        'hasCategories': len(existing_cats),
+        'hasUrls': len(existing_urls),
+        'hasMappings': sum(len(x.categories) for x in existing_urls),
+        'shouldMappings': sum(len(x.urls) for x in new_cat_candidates),
+        'missingMappings': len(missing_mappings),
+    })
+    db.url_categories.add_url_categories(auth, missing_mappings)
 
-def create_urls_db(db: MiddlewareDB, auth: AuthUser, new_urls: List[str]):
+def create_urls_db(db: MiddlewareDB, auth: AuthUser, new_url_candidates: List[str]):
     """
     This method ensures a list of URLs is in the DB.
 
@@ -67,58 +90,43 @@ def create_urls_db(db: MiddlewareDB, auth: AuthUser, new_urls: List[str]):
 
     :param db: The DBInterface to use for the DB operations
     :param auth: The AuthUser to use for the DB operations
-    :param new_urls: The list of urls to import
+    :param new_url_candidates: The list of urls to import
     """
-    # get existing data from db
+    if not new_url_candidates:
+        return
+
     existing_urls = db.urls.get_all_urls()
+    missing_urls = _find_not_existing([x.hostname for x in existing_urls], new_url_candidates)
+    log_debug('existing_db', 'creating missing urls', {
+        'has': len(existing_urls),
+        'should': len(new_url_candidates),
+        'missing': len(missing_urls),
+    })
+    db.urls.add_urls(auth, [
+        MutableURL(
+            hostname=mu,
+            description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
+        ) for mu in missing_urls
+    ])
 
-    for new_url_candidate in new_urls:
-        # identify url or create a new one
-        new_url, url_created = _find_or_create_url(db, auth, new_url_candidate, existing_urls)
-        if url_created:
-            existing_urls.append(new_url)
+def _find_not_existing(has: List[str], should: List[str]) -> List[str]:
+    return list(set(should) - set(has))
 
-def _find_or_create_cat(db: MiddlewareDB, auth: AuthUser, new_cat_candidate: ExistingCat, existing_cats: List[Category]) -> Tuple[Category, bool]:
-    """
-    Utility method to find or create a category in the DB.
-    It returns the category and a boolean indicating if it was created or not.
-
-    :param db: The DBInterface to use for the DB operations
-    :param auth: The AuthUser to use for the DB operations
-    :param new_cat_candidate: The category to import
-    :param existing_cats: The list of existing categories to check against
-    :return: A tuple containing the category and a boolean indicating if it was created or not.
-    """
-    for ec in existing_cats:
-        if ec.name == new_cat_candidate.name:
-            return ec, False
-    new_cat = db.categories.add_category(auth, MutableCategory(
-        name=new_cat_candidate.name,
-        color=1,
-        description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ))
-    return new_cat, True
-
-def _find_or_create_url(db: MiddlewareDB, auth: AuthUser, new_url_candidate: str, existing_urls: List[URL]) -> Tuple[URL, bool]:
-    """
-    Utility method to find or create a URL in the DB.
-    It returns the URL and a boolean indicating if it was created or not.
-
-    :param db: The DBInterface to use for the DB operations
-    :param auth: The AuthUser to use for the DB operations
-    :param new_url_candidate: The URL to import
-    :param existing_urls: The list of existing URLs to check against
-    :return: A tuple containing the URL and a boolean indicating if it was created or not.
-    """
-    for eu in existing_urls:
-        if eu.hostname == new_url_candidate:
-            return eu, False
-    # not found, so create a new one
-    new_url = db.urls.add_url(auth, MutableURL(
-        hostname=new_url_candidate,
-        description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ))
-    return new_url, True
+def _ensure_cats_exist(db: MiddlewareDB, auth: AuthUser, new_cat_candidates: List[str]):
+    existing_cats = db.categories.get_all_categories()
+    missing_cats = _find_not_existing([x.name for x in existing_cats], new_cat_candidates)
+    log_debug('existing_db', 'creating missing categories', {
+        'has': len(existing_cats),
+        'should': len(new_cat_candidates),
+        'missing': len(missing_cats),
+    })
+    db.categories.add_categories(auth, [
+        MutableCategory(
+            name=mc,
+            color=1,
+            description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
+        ) for mc in missing_cats
+    ])
 
 def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[ExistingCat], List[str]]:
     """

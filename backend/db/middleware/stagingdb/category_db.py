@@ -9,8 +9,8 @@ from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionType, ActionTable, StagedChange
 from db.middleware.abc.category_db import MiddlewareDBCategory
 from db.middleware.stagingdb.cache import StagedCollection
-from db.middleware.stagingdb.utils.add_uid import add_uid_to_object
-from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
+from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
+from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes, get_and_overload_object, get_and_overload_all_objects
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
 
@@ -35,6 +35,29 @@ class StagingDBCategory(MiddlewareDBCategory):
         # Create a Category object to return
         category_data.update({'pending_changes': True})
         return Category(**category_data)
+
+    def add_categories(self, auth: AuthUser, categories: List[MutableCategory]) -> List[Category]:
+        if not categories:
+            return []
+
+        # Generate a UUID and add it to the category data
+        cat_ids, cat_data = add_uid_to_objects(categories)
+
+        add_staged_changes(
+            action_type=ActionType.ADD,
+            action_table=ActionTable.CATEGORY,
+            auth=auth,
+            obj_ids=cat_ids,
+            update_data=cat_data,
+            staged=self._staged,
+        )
+
+        # Create a list of Category objects to return
+        resp = []
+        for cd in cat_data:
+            cd.update({'pending_changes': True})
+            resp.append(Category(**cd))
+        return resp
 
     def get_category(self, category_id: str) -> Optional[Category]:
         return get_and_overload_object(

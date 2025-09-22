@@ -17,6 +17,16 @@ class MiddlewareDBCategory(ABC):
         """
         pass
 
+    def add_categories(self, auth: AuthUser, categories: List[MutableCategory]) -> List[Category]:
+        """
+        Add a batch of categories with the given name, color and an optional description.
+
+        :param auth: The authenticated user.
+        :param categories: The (partial) categories to add.
+        :return: The newly created categories.
+        """
+        pass
+
     @abstractmethod
     def get_category(self, category_id: str) -> Optional[Category]:
         """

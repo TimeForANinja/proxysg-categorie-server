@@ -35,6 +35,25 @@ class MongoDBStaging(StagingDBInterface):
         }
         self.collection.insert_one(document)
 
+    def store_staged_changes(self, changes: List[StagedChange]) -> None:
+        """Store a list of staged changes in the MongoDB database (batch)."""
+        if not changes:
+            return
+
+        documents = [
+            {
+                'action_type': ch.action_type.value,
+                'action_table': ch.action_table.value,
+                'auth': AuthUser.serialize(ch.auth),
+                'uid': ch.uid,
+                'data': ch.data,
+                'timestamp': ch.timestamp,
+            }
+            for ch in changes
+        ]
+        # Use insert_many for efficient batch insert
+        self.collection.insert_many(documents, ordered=False)
+
     def get_staged_changes(self) -> List[StagedChange]:
         """Get all staged changes from the MongoDB database."""
         documents = self.collection.find()

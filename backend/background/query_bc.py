@@ -4,7 +4,7 @@ from typing import List
 
 from db.db_singleton import get_db
 from db.dbmodel.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP
-from log import log_info, log_error
+from log import log_info, log_error, log_debug
 
 
 @dataclass
@@ -53,11 +53,17 @@ def query_all(creds: ServerCredentials, unknown_only: bool):
 
     urls = db_if.urls.get_all_urls()
 
+    # filter out all URLs that need an update
     scheduled_urls = [
         url for url in urls
         # if unknown_only is set, we only want to check not yet looked up / where the prev lookup failed
         if not unknown_only or is_unknown_category(url.bc_cats)
     ]
+    log_debug('background','planning update of BlueCoat categories', {
+        'mode': 'only_unknown' if unknown_only else 'all',
+        'total': len(urls),
+        'planned': len(scheduled_urls),
+    })
 
     for url in scheduled_urls:
         # query the proxy for the categories

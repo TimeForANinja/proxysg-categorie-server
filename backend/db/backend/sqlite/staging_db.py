@@ -43,6 +43,31 @@ class SQLiteStaging(StagingDBInterface):
         )
         self.get_conn().commit()
 
+    def store_staged_changes(self, changes: List[StagedChange]) -> None:
+        """Store a list of staged changes in the SQLite database (batch)."""
+        if not changes:
+            return
+
+        cursor = self.get_conn().cursor()
+
+        params = [
+            (
+                ch.action_type.value,
+                AuthUser.serialize(ch.auth),
+                ch.timestamp,
+                ch.action_table.value,
+                ch.uid,
+                json.dumps(ch.data) if ch.data else None,
+            )
+            for ch in changes
+        ]
+
+        cursor.executemany(
+            'INSERT INTO staged_changes (action, user, timestamp, table_name, entity_id, data) VALUES (?, ?, ?, ?, ?, ?)',
+            params,
+        )
+        self.get_conn().commit()
+
     def get_staged_changes(self) -> List[StagedChange]:
         cursor = self.get_conn().cursor()
         cursor.execute('SELECT action, table_name, user, entity_id, timestamp, data FROM staged_changes')
