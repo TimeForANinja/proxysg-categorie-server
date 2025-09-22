@@ -38,6 +38,7 @@ class StagedCollection:
 
     def remove(self, change: StagedChange):
         """Remove a staged change from the persistent storage."""
+        # TODO: implement proper removal
         # This is a bit tricky since we don't have a direct way to remove a specific change.
         # For now, we'll get all changes, filter out the one we want to remove, and clear and re-add the rest
 
@@ -64,6 +65,7 @@ class StagedCollection:
         """Simplify the stack of staged changes."""
         # This is handled by the database, so we don't need to do anything here
         pass
+
 
 class StageFilter:
     @staticmethod
