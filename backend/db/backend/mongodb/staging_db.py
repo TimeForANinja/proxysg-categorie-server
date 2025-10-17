@@ -2,7 +2,9 @@ from typing import List, Mapping, Any, Dict
 from pymongo.synchronous.database import Database
 
 from auth.auth_user import AuthUser
+from db.backend.abc.util.types import MyTransactionType
 from db.backend.abc.staging import StagingDBInterface
+from db.backend.mongodb.util.transactions import mongo_transaction_kwargs
 from db.dbmodel.staging import StagedChange, ActionType, ActionTable
 
 
@@ -54,11 +56,11 @@ class MongoDBStaging(StagingDBInterface):
         # Use insert_many for efficient batch insert
         self.collection.insert_many(documents, ordered=False)
 
-    def get_staged_changes(self) -> List[StagedChange]:
+    def get_staged_changes(self, session: MyTransactionType = None) -> List[StagedChange]:
         """Get all staged changes from the MongoDB database."""
-        documents = self.collection.find()
+        documents = self.collection.find(**mongo_transaction_kwargs(session))
         return [_document_to_staged_change(doc) for doc in documents]
 
-    def clear_staged_changes(self) -> None:
+    def clear_staged_changes(self, session: MyTransactionType = None) -> None:
         """Clear all staged changes from the MongoDB database."""
-        self.collection.delete_many({})
+        self.collection.delete_many({}, **mongo_transaction_kwargs(session))

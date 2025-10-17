@@ -4,6 +4,7 @@ from typing import Optional, List
 
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.category import MutableCategory, Category
 from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionType, ActionTable, StagedChange
@@ -98,12 +99,18 @@ class StagingDBCategory(MiddlewareDBCategory):
             obj_class=Category
         )
 
-    def commit(self, change: StagedChange, dry_run: bool) -> Optional[Atomic]:
+    def commit(
+            self,
+            change: StagedChange,
+            dry_run: bool,
+            session: MyTransactionType = None,
+    ) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
         :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
+        :param session: Optional database session to use
         :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.CATEGORY:
@@ -118,7 +125,7 @@ class StagingDBCategory(MiddlewareDBCategory):
 
             if not dry_run:
                 # Add the category to the persistent database
-                self._db.categories.add_category(mutable_category, category_id)
+                self._db.categories.add_category(mutable_category, category_id, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(
@@ -134,7 +141,7 @@ class StagingDBCategory(MiddlewareDBCategory):
 
             if not dry_run:
                 # Update the category in the persistent database
-                self._db.categories.update_category(change.uid, mutable_category)
+                self._db.categories.update_category(change.uid, mutable_category, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(
@@ -146,14 +153,14 @@ class StagingDBCategory(MiddlewareDBCategory):
         elif change.action_type == ActionType.SET_CATS:
             category_data = change.data.copy()
 
-            current_cats = self._db.categories.get_category(change.uid)
+            current_cats = self._db.categories.get_category(change.uid, session=session)
 
             # Update the category mappings in the persistent database
             added, removed = set_categories(
                 current_cats.nested_categories if current_cats else [],
                 category_data['nested_categories'],
-                lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid),
-                lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid),
+                lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid, session=session),
+                lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid, session=session),
                 dry_run,
             )
 
@@ -167,7 +174,7 @@ class StagingDBCategory(MiddlewareDBCategory):
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the category from the persistent database
-                self._db.categories.delete_category(change.uid)
+                self._db.categories.delete_category(change.uid, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(

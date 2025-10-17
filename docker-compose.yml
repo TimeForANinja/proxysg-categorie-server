@@ -55,3 +55,22 @@ services:
       # Sets a MongoDB root user and password
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    # adjustments to use a single-node replicate set instead of standalone
+    # this allows us to use transactions
+    command: [ "--replSet", "rs0", "--bind_ip_all" ]
+    healthcheck:
+      test: |
+        mongosh --eval "
+        try {
+          rs.status();
+        } catch(e) {
+          rs.initiate({
+            _id: 'rs0',
+            members: [{ _id: 0, host: 'mongodb:27017' }]
+          });
+        }
+        " --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

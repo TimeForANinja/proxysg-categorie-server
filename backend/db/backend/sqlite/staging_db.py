@@ -3,6 +3,7 @@ import sqlite3
 from typing import Callable, List, Tuple
 
 from auth.auth_user import AuthUser
+from db.backend.abc.util.types import MyTransactionType
 from db.backend.abc.staging import StagingDBInterface
 from db.dbmodel.staging import StagedChange, ActionTable, ActionType
 
@@ -68,13 +69,13 @@ class SQLiteStaging(StagingDBInterface):
         )
         self.get_conn().commit()
 
-    def get_staged_changes(self) -> List[StagedChange]:
+    def get_staged_changes(self, session: MyTransactionType = None) -> List[StagedChange]:
         cursor = self.get_conn().cursor()
         cursor.execute('SELECT action, table_name, user, entity_id, timestamp, data FROM staged_changes')
         rows = cursor.fetchall()
         return [_build_change(row) for row in rows]
 
-    def clear_staged_changes(self) -> None:
+    def clear_staged_changes(self, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute('DELETE FROM staged_changes')
         self.get_conn().commit()

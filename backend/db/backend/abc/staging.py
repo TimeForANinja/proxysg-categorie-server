@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.staging import StagedChange
 
 
@@ -25,17 +26,20 @@ class StagingDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_staged_changes(self) -> List[StagedChange]:
+    def get_staged_changes(self, session: MyTransactionType = None) -> List[StagedChange]:
         """
         Get all staged changes.
 
+        :param session: The database session to use.
         :return: A list of staged changes.
         """
         pass
 
     @abstractmethod
-    def clear_staged_changes(self) -> None:
+    def clear_staged_changes(self, session: MyTransactionType = None) -> None:
         """
         Clear all staged changes.
+
+        :param session: The database session to use.
         """
         pass

@@ -5,6 +5,7 @@ import uuid
 
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionType, ActionTable
 from db.dbmodel.token import MutableToken, Token
@@ -99,12 +100,18 @@ class StagingDBToken(MiddlewareDBToken):
             obj_class=Token
         )
 
-    def commit(self, change: StagedChange, dry_run: bool) -> Optional[Atomic]:
+    def commit(
+            self,
+            change: StagedChange,
+            dry_run: bool,
+            session: MyTransactionType = None,
+    ) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
         :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
+        :param session: Optional database session to use
         :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.TOKEN:
@@ -120,7 +127,7 @@ class StagingDBToken(MiddlewareDBToken):
 
             if not dry_run:
                 # Add the token to the persistent database
-                self._db.tokens.add_token(token_id, token_value, mutable_token)
+                self._db.tokens.add_token(token_id, token_value, mutable_token, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(
@@ -137,7 +144,7 @@ class StagingDBToken(MiddlewareDBToken):
             if 'token' in token_data and len(token_data) == 1:
                 if not dry_run:
                     # Roll the token in the persistent database
-                    self._db.tokens.roll_token(change.uid, token_data['token'])
+                    self._db.tokens.roll_token(change.uid, token_data['token'], session=session)
 
                 # Create atomic to append to the history event
                 return Atomic.new(
@@ -152,7 +159,7 @@ class StagingDBToken(MiddlewareDBToken):
 
                 if not dry_run:
                     # Update the token in the persistent database
-                    self._db.tokens.update_token(change.uid, mutable_token)
+                    self._db.tokens.update_token(change.uid, mutable_token, session=session)
 
                 # Create atomic to append to the history event
                 return Atomic.new(
@@ -164,14 +171,14 @@ class StagingDBToken(MiddlewareDBToken):
         elif change.action_type == ActionType.SET_CATS:
             token_data = change.data.copy()
 
-            current_cats = self._db.tokens.get_token(change.uid)
+            current_cats = self._db.tokens.get_token(change.uid, session=session)
 
             # Update the token in the persistent database
             added, removed = set_categories(
                 current_cats.categories if current_cats else [],
                 token_data['categories'],
-                lambda cid: self._db.token_categories.add_token_category(change.uid, cid),
-                lambda cid: self._db.token_categories.delete_token_category(change.uid, cid),
+                lambda cid: self._db.token_categories.add_token_category(change.uid, cid, session=session),
+                lambda cid: self._db.token_categories.delete_token_category(change.uid, cid, session=session),
                 dry_run,
             )
 
@@ -185,7 +192,7 @@ class StagingDBToken(MiddlewareDBToken):
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the token from the persistent database
-                self._db.tokens.delete_token(change.uid)
+                self._db.tokens.delete_token(change.uid, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(

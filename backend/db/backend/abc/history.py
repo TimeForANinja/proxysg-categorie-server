@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List
 
 from auth.auth_user import AuthUser
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.history import Atomic, History
 
 
@@ -15,6 +16,7 @@ class HistoryDBInterface(ABC):
             ref_url: List[str],
             ref_category: List[str],
             atomics: Optional[List[Atomic]] = None,
+            session: MyTransactionType = None,
     ) -> History:
         """
         Add a new history event with the given name
@@ -25,6 +27,7 @@ class HistoryDBInterface(ABC):
         :param ref_url: List of URL IDs referenced by the action
         :param ref_category: List of category IDs referenced by the action
         :param atomics: Optional list of atomic changes
+        :param session: Optional database session to use
         :return: The newly created history event
         """
         pass

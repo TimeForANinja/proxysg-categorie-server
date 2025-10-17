@@ -3,6 +3,7 @@ import time
 from typing import List, Callable
 
 from db.backend.abc.url_category import UrlCategoryDBInterface
+from db.backend.abc.util.types import MyTransactionType
 
 
 class SQLiteURLCategory(UrlCategoryDBInterface):
@@ -23,7 +24,7 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
         rows = cursor.fetchall()
         return [str(row[0]) for row in rows]
 
-    def add_url_category(self, url_id: str, category_id: str) -> None:
+    def add_url_category(self, url_id: str, category_id: str, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
@@ -31,7 +32,7 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
         )
         self.get_conn().commit()
 
-    def delete_url_category(self, url_id: str, category_id: str) -> None:
+    def delete_url_category(self, url_id: str, category_id: str, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',

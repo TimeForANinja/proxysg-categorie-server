@@ -1,6 +1,7 @@
 from typing import Callable, List, Optional
 
 from db.backend.abc.db import DBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.staging import StagedChange, ActionType, ActionTable
 
 
@@ -28,9 +29,9 @@ class StagedCollection:
         self._db.staging.store_staged_changes(changes)
         self.simplify_stack()
 
-    def get_all(self) -> List[StagedChange]:
+    def get_all(self, session: MyTransactionType = None) -> List[StagedChange]:
         """Get all staged changes from the persistent storage."""
-        return self._db.staging.get_staged_changes()
+        return self._db.staging.get_staged_changes(session=session)
 
     def get_filtered(self, *filters: Callable[[List[StagedChange]], List[StagedChange]]) -> List[StagedChange]:
         """Get all staged changes that match the given conditions."""
@@ -56,9 +57,13 @@ class StagedCollection:
         # Re-add the filtered changes
         self.add_batch(filtered_changes)
 
-    def clear(self):
-        """Clear all staged changes from the persistent storage."""
-        self._db.staging.clear_staged_changes()
+    def clear(self, session: MyTransactionType = None):
+        """
+        Clear all staged changes from the persistent storage.
+
+        :param session: The database session to use.
+        """
+        self._db.staging.clear_staged_changes(session=session)
 
     def simplify_stack(self):
         """Simplify the stack of staged changes."""

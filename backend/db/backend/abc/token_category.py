@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from db.backend.abc.util.types import MyTransactionType
+
 
 class TokenCategoryDBInterface(ABC):
     @abstractmethod
@@ -13,21 +15,33 @@ class TokenCategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def add_token_category(self, token_id: str, category_id: str) -> None:
+    def add_token_category(
+            self,
+            token_id: str,
+            category_id: str,
+            session: MyTransactionType = None,
+    ) -> None:
         """
         Add a new mapping of Token and Category
 
         :param token_id: The ID of the Token
         :param category_id: The ID of the Category
+        :param session: Optional database session to use
         """
         pass
 
     @abstractmethod
-    def delete_token_category(self, token_id: str, category_id: str) -> None:
+    def delete_token_category(
+            self,
+            token_id: str,
+            category_id: str,
+            session: MyTransactionType = None,
+    ) -> None:
         """
         Delete a mapping of Token and Category.
 
         :param token_id: The ID of the Token
         :param category_id: The ID of the Category
+        :param session: Optional database session to use
         """
         pass

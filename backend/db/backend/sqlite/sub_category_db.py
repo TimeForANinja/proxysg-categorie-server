@@ -3,6 +3,7 @@ import time
 from typing import List, Callable
 
 from db.backend.abc.sub_category import SubCategoryDBInterface
+from db.backend.abc.util.types import MyTransactionType
 
 
 class SQLiteSubCategory(SubCategoryDBInterface):
@@ -23,7 +24,7 @@ class SQLiteSubCategory(SubCategoryDBInterface):
         rows = cursor.fetchall()
         return [str(row[0]) for row in rows]
 
-    def add_sub_category(self, category_id: str, sub_category_id: str) -> None:
+    def add_sub_category(self, category_id: str, sub_category_id: str, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO sub_category (parent_id, child_id) VALUES (?, ?)',
@@ -31,7 +32,7 @@ class SQLiteSubCategory(SubCategoryDBInterface):
         )
         self.get_conn().commit()
 
-    def delete_sub_category(self, category_id: str, sub_category_id: str) -> None:
+    def delete_sub_category(self, category_id: str, sub_category_id: str, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE sub_category SET is_deleted = ? WHERE parent_id = ? AND child_id = ? AND is_deleted = 0',

@@ -2,6 +2,8 @@ from typing import Optional, List, Mapping, Any
 from pymongo.synchronous.database import Database
 
 from db.backend.abc.url import URLDBInterface
+from db.backend.abc.util.types import MyTransactionType
+from db.backend.mongodb.util.transactions import mongo_transaction_kwargs
 from db.dbmodel.url import MutableURL, URL, NO_BC_CATEGORY_YET
 
 
@@ -27,7 +29,7 @@ class MongoDBURL(URLDBInterface):
         self.db = db
         self.collection = self.db['urls']
 
-    def add_url(self, mut_url: MutableURL, url_id: str) -> URL:
+    def add_url(self, mut_url: MutableURL, url_id: str, session: MyTransactionType = None) -> URL:
         self.collection.insert_one({
             '_id': url_id,
             'hostname': mut_url.hostname,
@@ -35,7 +37,7 @@ class MongoDBURL(URLDBInterface):
             'is_deleted': 0,
             'categories': [],
             'bc_cats': [NO_BC_CATEGORY_YET],
-        })
+        }, **mongo_transaction_kwargs(session))
 
         return URL(
             id=url_id,
@@ -47,22 +49,22 @@ class MongoDBURL(URLDBInterface):
             pending_changes=False,
         )
 
-    def get_url(self, url_id: str) -> Optional[URL]:
+    def get_url(self, url_id: str, session: MyTransactionType = None) -> Optional[URL]:
         query = {'_id': url_id, 'is_deleted': 0}
-        row = self.collection.find_one(query)
+        row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
         if not row:
             return None
 
         return _build_url(row)
 
-    def update_url(self, url_id: str, mut_url: MutableURL) -> URL:
+    def update_url(self, url_id: str, mut_url: MutableURL, session: MyTransactionType = None) -> URL:
         query = {'_id': url_id, 'is_deleted': 0}
         update_fields = {
             'hostname': mut_url.hostname,
             'description': mut_url.description,
         }
 
-        result = self.collection.update_one(query, {'$set': update_fields})
+        result = self.collection.update_one(query, {'$set': update_fields}, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:
             raise ValueError(f'URL with ID {url_id} not found or is deleted.')
@@ -77,10 +79,10 @@ class MongoDBURL(URLDBInterface):
         if result.matched_count == 0:
             raise ValueError(f'URL with ID {url_id} not found or already deleted.')
 
-    def delete_url(self, url_id: str) -> None:
+    def delete_url(self, url_id: str, session: MyTransactionType = None) -> None:
         query = {'_id': url_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': 1}}
-        result = self.collection.update_one(query, update)
+        result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:
             raise ValueError(f'URL with ID {url_id} not found or already deleted.')

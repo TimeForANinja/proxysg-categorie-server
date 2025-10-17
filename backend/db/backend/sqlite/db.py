@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from contextlib import contextmanager
 from flask import g
 
 from db.backend.abc.db import DBInterface
@@ -114,3 +115,8 @@ class MySQLiteDB(DBInterface):
                     raise e
             else:
                 log_debug("SQLITE", f"Skipping migration: {os.path.basename(file_path)} (version {version} is older than current version {current_version})")
+
+    @contextmanager
+    def start_transaction(self) -> sqlite3.Connection:
+        # TODO: implement transaction support
+        pass

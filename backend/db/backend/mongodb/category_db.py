@@ -3,6 +3,8 @@ from typing import Optional, List, Mapping, Any
 from pymongo.synchronous.database import Database
 
 from db.backend.abc.category import CategoryDBInterface
+from db.backend.abc.util.types import MyTransactionType
+from db.backend.mongodb.util.transactions import mongo_transaction_kwargs
 from db.dbmodel.category import MutableCategory, Category
 
 
@@ -28,7 +30,7 @@ class MongoDBCategory(CategoryDBInterface):
         self.db = db
         self.collection = self.db['categories']
 
-    def add_category(self, category: MutableCategory, category_id: str) -> Category:
+    def add_category(self, category: MutableCategory, category_id: str, session: MyTransactionType = None) -> Category:
         self.collection.insert_one({
             '_id': category_id,
             'name': category.name,
@@ -36,7 +38,7 @@ class MongoDBCategory(CategoryDBInterface):
             'description': category.description,
             'is_deleted': 0,
             'nested_categories': []
-        })
+        }, **mongo_transaction_kwargs(session))
 
         return Category(
             id=category_id,
@@ -48,15 +50,15 @@ class MongoDBCategory(CategoryDBInterface):
             pending_changes=False,
         )
 
-    def get_category(self, category_id: str) -> Optional[Category]:
+    def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
         query = {'_id': category_id, 'is_deleted': 0}
-        row = self.collection.find_one(query)
+        row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
         if not row:
             return None
 
         return _build_category(row)
 
-    def update_category(self, cat_id: str, category: MutableCategory) -> Category:
+    def update_category(self, cat_id: str, category: MutableCategory, session: MyTransactionType = None) -> Category:
         query = {'_id': cat_id, 'is_deleted': 0}
         update_fields = {
             'name': category.name,
@@ -64,7 +66,7 @@ class MongoDBCategory(CategoryDBInterface):
             'description': category.description
         }
 
-        result = self.collection.update_one(query, {'$set': update_fields})
+        result = self.collection.update_one(query, {'$set': update_fields}, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:
             raise ValueError(f'Category with ID {cat_id} not found or is deleted.')
@@ -72,12 +74,12 @@ class MongoDBCategory(CategoryDBInterface):
         # Return the updated category
         return self.get_category(cat_id)
 
-    def delete_category(self, category_id: str) -> None:
+    def delete_category(self, category_id: str, session: MyTransactionType = None) -> None:
         current_timestamp = int(time.time())
 
         query = {'_id': category_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': current_timestamp}}
-        result = self.collection.update_one(query, update)
+        result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:
             raise ValueError(f'Category with ID {category_id} not found or already deleted.')

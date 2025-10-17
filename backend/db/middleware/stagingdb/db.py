@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionTable
 from db.middleware.abc.db import MiddlewareDB
@@ -50,7 +51,7 @@ class StagingDB(MiddlewareDB):
     def close(self):
         self._main_db.close()
 
-    def _commit_modules(self, dry_run: bool, not_before: int) -> Tuple[
+    def _commit_modules(self, dry_run: bool, not_before: int, session: MyTransactionType = None) -> Tuple[
         List[Atomic],
         List[str],
         List[str],
@@ -63,18 +64,18 @@ class StagingDB(MiddlewareDB):
         ref_category: List[str] = []
 
         # apply changes to the database
-        for change in self._staged.get_all():
+        for change in self._staged.get_all(session=session):
             # skip changes created after the commit
             if change.timestamp > not_before:
                 continue
 
             atomic = None
             if change.action_table == ActionTable.TOKEN:
-                atomic = self.tokens.commit(change, dry_run)
+                atomic = self.tokens.commit(change, dry_run, session=session)
             elif change.action_table == ActionTable.URL:
-                atomic = self.urls.commit(change, dry_run)
+                atomic = self.urls.commit(change, dry_run, session=session)
             elif change.action_table == ActionTable.CATEGORY:
-                atomic = self.categories.commit(change, dry_run)
+                atomic = self.categories.commit(change, dry_run, session=session)
 
             # if a change was done, store the atomic
             if atomic:
@@ -100,18 +101,20 @@ class StagingDB(MiddlewareDB):
         :param commit_message: user-provided message describing the commit
         :param not_before: timestamp in UTC as a cutoff for pending changes to be committed
         """
-        atomics, ref_token, ref_url, ref_category = self._commit_modules(False, not_before)
+        with self._main_db.start_transaction() as session:
+            atomics, ref_token, ref_url, ref_category = self._commit_modules(False, not_before, session)
 
-        # Create a single history event with all atomics
-        if atomics:
-            self._main_db.history.add_history_event(
-                action=f"Commit: {commit_message}",
-                user=user,
-                ref_token=ref_token,
-                ref_url=ref_url,
-                ref_category=ref_category,
-                atomics=atomics,
-            )
+            # Create a single history event with all atomics
+            if atomics:
+                self._main_db.history.add_history_event(
+                    action=f"Commit: {commit_message}",
+                    user=user,
+                    ref_token=ref_token,
+                    ref_url=ref_url,
+                    ref_category=ref_category,
+                    atomics=atomics,
+                    session=session,
+                )
 
-        # remove all staged events, now that they are committed
-        self._staged.clear()
+            # remove all staged events, now that they are committed
+            self._staged.clear(session=session)

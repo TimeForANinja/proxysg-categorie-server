@@ -4,6 +4,7 @@ from typing import Optional, List
 
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionType, ActionTable, StagedChange
 from db.dbmodel.url import MutableURL, URL
@@ -103,12 +104,18 @@ class StagingDBURL(MiddlewareDBURL):
             obj_class=URL
         )
 
-    def commit(self, change: StagedChange, dry_run: bool) -> Optional[Atomic]:
+    def commit(
+            self,
+            change: StagedChange,
+            dry_run: bool,
+            session: MyTransactionType = None,
+    ) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
         :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
+        :param session: Optional database session to use
         :return: The atomic operation that was applied to the database.
         """
         if change.action_table != ActionTable.URL:
@@ -123,7 +130,7 @@ class StagingDBURL(MiddlewareDBURL):
 
             if not dry_run:
                 # Add the URL to the persistent database
-                self._db.urls.add_url(mutable_url, url_id)
+                self._db.urls.add_url(mutable_url, url_id, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(
@@ -139,7 +146,7 @@ class StagingDBURL(MiddlewareDBURL):
 
             if not dry_run:
                 # Update the URL in the persistent database
-                self._db.urls.update_url(change.uid, mutable_url)
+                self._db.urls.update_url(change.uid, mutable_url, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(
@@ -151,14 +158,14 @@ class StagingDBURL(MiddlewareDBURL):
         elif change.action_type == ActionType.SET_CATS:
             url_data = change.data.copy()
 
-            current_cats = self._db.urls.get_url(change.uid)
+            current_cats = self._db.urls.get_url(change.uid, session=session)
 
             # Update the token in the persistent database
             added, removed = set_categories(
                 current_cats.categories if current_cats else [],
                 url_data['categories'],
-                lambda cid: self._db.url_categories.add_url_category(change.uid, cid),
-                lambda cid: self._db.url_categories.delete_url_category(change.uid, cid),
+                lambda cid: self._db.url_categories.add_url_category(change.uid, cid, session=session),
+                lambda cid: self._db.url_categories.delete_url_category(change.uid, cid, session=session),
                 dry_run,
             )
 
@@ -172,7 +179,7 @@ class StagingDBURL(MiddlewareDBURL):
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the URL from the persistent database
-                self._db.urls.delete_url(change.uid)
+                self._db.urls.delete_url(change.uid, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(

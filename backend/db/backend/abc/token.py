@@ -1,28 +1,31 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
+from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.token import MutableToken, Token
 
 
 class TokenDBInterface(ABC):
     @abstractmethod
-    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken) -> Token:
+    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: MyTransactionType = None) -> Token:
         """
         Add a new token with the given name, and an optional description.
 
         :param token_id: The ID of the token to add. This is used to identify the token in the database.
         :param uuid: The UUID (token) of the token.
         :param mut_tok: The (partial) token to add.
+        :param session: Optional database session to use
         :return: The newly created token.
         """
         pass
 
     @abstractmethod
-    def get_token(self, token_id: str) -> Optional[Token]:
+    def get_token(self, token_id: str, session: MyTransactionType = None) -> Optional[Token]:
         """
         Retrieve the details of a specific token by its ID.
 
         :param token_id: The ID of the token to retrieve.
+        :param session: Optional database session to use
         :return: A Token
                  or None if the token doesn't exist or is marked as deleted.
         """
@@ -39,12 +42,13 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_token(self, token_id: str, token: MutableToken) -> Token:
+    def update_token(self, token_id: str, token: MutableToken, session: MyTransactionType = None) -> Token:
         """
         Update the details of a specific token.
 
         :param token_id: The ID of the token to update.
         :param token: The (partial) token to update.
+        :param session: Optional database session to use
         """
         pass
 
@@ -58,22 +62,24 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def roll_token(self, token_id: str, uuid: str) -> Token:
+    def roll_token(self, token_id: str, uuid: str, session: MyTransactionType = None) -> Token:
         """
         Re-Roll the Token of a specific token.
 
         :param token_id: The ID of the token to update.
         :param uuid: The new token string to store.
+        :param session: Optional database session to use
         :return: The newly created token.
         """
         pass
 
     @abstractmethod
-    def delete_token(self, token_id: str) -> None:
+    def delete_token(self, token_id: str, session: MyTransactionType = None) -> None:
         """
         Soft-delete a token by setting its `is_deleted` flag to the current timestamp.
 
         :param token_id: The ID of the token to delete.
+        :param session: Optional database session to use
         """
         pass
 

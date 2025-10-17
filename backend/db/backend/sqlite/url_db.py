@@ -3,6 +3,7 @@ import time
 from typing import Optional, List, Callable, Any
 
 from db.backend.abc.url import URLDBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.backend.sqlite.util.groups import split_opt_str_group, join_str_group
 from db.backend.sqlite.util.query_builder import build_update_query
 from db.dbmodel.url import MutableURL, URL, NO_BC_CATEGORY_YET
@@ -25,7 +26,7 @@ class SQLiteURL(URLDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_url(self, mut_url: MutableURL, url_id: str) -> URL:
+    def add_url(self, mut_url: MutableURL, url_id: str, session: MyTransactionType = None) -> URL:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO urls (id, hostname, description, bc_cats) VALUES (?, ?, ?, ?)',
@@ -43,7 +44,7 @@ class SQLiteURL(URLDBInterface):
         )
         return new_url
 
-    def get_url(self, url_id: str) -> Optional[URL]:
+    def get_url(self, url_id: str, session: MyTransactionType = None) -> Optional[URL]:
         cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
@@ -72,7 +73,7 @@ class SQLiteURL(URLDBInterface):
             return _build_url(row)
         return None
 
-    def update_url(self, url_id: str, mut_url: MutableURL) -> URL:
+    def update_url(self, url_id: str, mut_url: MutableURL, session: MyTransactionType = None) -> URL:
         updates, params = build_update_query(mut_url, {
             'hostname': 'hostname',
             'description': 'description',
@@ -93,7 +94,7 @@ class SQLiteURL(URLDBInterface):
         cursor.execute(query, (join_str_group(bc_cats), url_id))
         self.get_conn().commit()
 
-    def delete_url(self, url_id: str) -> None:
+    def delete_url(self, url_id: str, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE urls SET is_deleted = ? WHERE id = ? AND is_deleted = 0',

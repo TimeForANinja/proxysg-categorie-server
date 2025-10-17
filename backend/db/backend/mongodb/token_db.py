@@ -3,6 +3,8 @@ from typing import Optional, List, Mapping, Any
 from pymongo.synchronous.database import Database
 
 from db.backend.abc.token import TokenDBInterface
+from db.backend.abc.util.types import MyTransactionType
+from db.backend.mongodb.util.transactions import mongo_transaction_kwargs
 from db.dbmodel.token import MutableToken, Token
 
 
@@ -30,7 +32,7 @@ class MongoDBToken(TokenDBInterface):
         # Create index on token field
         self.collection.create_index({'token': 1}, unique=True)
 
-    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken) -> Token:
+    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: MyTransactionType = None) -> Token:
         self.collection.insert_one({
             '_id': token_id,
             'token': uuid,
@@ -38,7 +40,7 @@ class MongoDBToken(TokenDBInterface):
             'last_use': 0,
             'is_deleted': 0,
             'categories': []
-        })
+        }, **mongo_transaction_kwargs(session))
 
         return Token(
             id=token_id,
@@ -50,9 +52,9 @@ class MongoDBToken(TokenDBInterface):
             pending_changes=False,
         )
 
-    def get_token(self, token_id: str) -> Optional[Token]:
+    def get_token(self, token_id: str, session: MyTransactionType = None) -> Optional[Token]:
         query = {'_id': token_id, 'is_deleted': 0}
-        row = self.collection.find_one(query)
+        row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
         if not row:
             return None
 
@@ -66,13 +68,13 @@ class MongoDBToken(TokenDBInterface):
 
         return _build_token(row)
 
-    def update_token(self, token_id: str, token: MutableToken) -> Token:
+    def update_token(self, token_id: str, token: MutableToken, session: MyTransactionType = None) -> Token:
         query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'description': token.description,
         }
 
-        result = self.collection.update_one(query, {'$set': update_fields})
+        result = self.collection.update_one(query, {'$set': update_fields}, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:
             raise ValueError(f'Token with ID {token_id} not found or is deleted.')
@@ -90,23 +92,23 @@ class MongoDBToken(TokenDBInterface):
         if result.matched_count == 0:
             raise ValueError(f'Token with ID {token_id} not found or is deleted.')
 
-    def roll_token(self, token_id: str, uuid: str) -> Token:
+    def roll_token(self, token_id: str, uuid: str, session: MyTransactionType = None) -> Token:
         query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'token': uuid,
         }
 
-        result = self.collection.update_one(query, {'$set': update_fields})
+        result = self.collection.update_one(query, {'$set': update_fields}, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:
             raise ValueError(f'Token with ID {token_id} not found or is deleted.')
 
         return self.get_token(token_id)
 
-    def delete_token(self, token_id: str) -> None:
+    def delete_token(self, token_id: str, session: MyTransactionType = None) -> None:
         query = {'_id': token_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': 1}}
-        result = self.collection.update_one(query, update)
+        result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:
             raise ValueError(f'Token with ID {token_id} not found or already deleted.')

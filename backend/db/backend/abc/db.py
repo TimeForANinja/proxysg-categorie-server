@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 
 from db.backend.abc.category import CategoryDBInterface
 from db.backend.abc.history import HistoryDBInterface
@@ -9,6 +10,7 @@ from db.backend.abc.token import TokenDBInterface
 from db.backend.abc.token_category import TokenCategoryDBInterface
 from db.backend.abc.url import URLDBInterface
 from db.backend.abc.url_category import UrlCategoryDBInterface
+from db.backend.abc.util.types import MyTransactionType
 
 
 class DBInterface(ABC):
@@ -25,4 +27,9 @@ class DBInterface(ABC):
     @abstractmethod
     def close(self):
         """Method to trigger any cleanup actions."""
+        pass
+
+    @contextmanager
+    @abstractmethod
+    def start_transaction(self) -> MyTransactionType:
         pass

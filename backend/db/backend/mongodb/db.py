@@ -1,4 +1,7 @@
+from typing import Any, Generator
 from pymongo import MongoClient
+from contextlib import contextmanager
+from pymongo.synchronous.client_session import ClientSession
 
 from db.backend.abc.db import DBInterface
 from db.backend.mongodb.category_db import MongoDBCategory
@@ -37,3 +40,12 @@ class MyMongoDB(DBInterface):
         # no call to self.client.close() required after each context closure
         # since the DB is external, we do not need to worry about thread safety here
         pass
+
+    @contextmanager
+    def start_transaction(self) -> Generator[ClientSession, Any, None]:
+        # start a new session, and a transaction in that session
+        with self.client.start_session() as session:
+            with session.start_transaction():
+                # yield the session to the caller, so they can use it in their transaction
+                # when the caller is done it will automatically close both the transaction and the session
+                yield session

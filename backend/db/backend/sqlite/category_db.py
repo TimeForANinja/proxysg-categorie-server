@@ -3,6 +3,7 @@ import time
 from typing import Optional, List, Callable, Any
 
 from db.backend.abc.category import CategoryDBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.backend.sqlite.util.groups import split_opt_str_group
 from db.backend.sqlite.util.query_builder import build_update_query
 from db.dbmodel.category import MutableCategory, Category
@@ -25,7 +26,12 @@ class SQLiteCategory(CategoryDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_category(self, mut_cat: MutableCategory, category_id: str) -> Category:
+    def add_category(
+            self,
+            mut_cat: MutableCategory,
+            category_id: str,
+            session: MyTransactionType = None,
+    ) -> Category:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO categories (id, name, description, color) VALUES (?, ?, ?, ?)',
@@ -43,7 +49,7 @@ class SQLiteCategory(CategoryDBInterface):
         )
         return new_cat
 
-    def get_category(self, category_id: str) -> Optional[Category]:
+    def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
         cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
@@ -72,7 +78,12 @@ class SQLiteCategory(CategoryDBInterface):
             return _build_category(row)
         return None
 
-    def update_category(self, cat_id: str, category: MutableCategory) -> Category:
+    def update_category(
+            self,
+            cat_id: str,
+            category: MutableCategory,
+            session: MyTransactionType = None,
+    ) -> Category:
         updates, params = build_update_query(category, {
             'name': 'name',
             'description': 'description',
@@ -88,7 +99,11 @@ class SQLiteCategory(CategoryDBInterface):
 
         return self.get_category(cat_id)
 
-    def delete_category(self, category_id: str) -> None:
+    def delete_category(
+            self,
+            category_id: str,
+            session: MyTransactionType = None
+    ) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',

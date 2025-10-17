@@ -4,7 +4,9 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 
 from auth.auth_user import AuthUser
+from db.backend.abc.util.types import MyTransactionType
 from db.backend.abc.history import HistoryDBInterface
+from db.backend.mongodb.util.transactions import mongo_transaction_kwargs
 from db.dbmodel.history import History, Atomic
 
 
@@ -21,6 +23,7 @@ class MongoDBHistory(HistoryDBInterface):
             ref_url: List[str],
             ref_category: List[str],
             atomics: Optional[List[Atomic]] = None,
+            session: MyTransactionType = None,
     ) -> History:
         """
         Add a new history event with the given name
@@ -31,6 +34,7 @@ class MongoDBHistory(HistoryDBInterface):
         :param ref_url: List of URL IDs referenced by the action
         :param ref_category: List of category IDs referenced by the action
         :param atomics: Optional list of atomic changes
+        :param session: Optional database session to use
         :return: The newly created history event
         """
 
@@ -58,7 +62,7 @@ class MongoDBHistory(HistoryDBInterface):
             'ref_token': ref_token,
             'ref_url': ref_url,
             'ref_category': ref_category,
-        })
+        }, **mongo_transaction_kwargs(session))
 
         return History(
             id=str(result.inserted_id),

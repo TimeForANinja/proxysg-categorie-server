@@ -2,6 +2,9 @@ from typing import List, Mapping, Any, TypeVar, Generic
 import time
 from pymongo.synchronous.database import Database
 
+from db.backend.abc.util.types import MyTransactionType
+from db.backend.mongodb.util.transactions import mongo_transaction_kwargs
+
 T = TypeVar('T')
 
 class MongoDBBaseCategory(Generic[T]):
@@ -32,34 +35,36 @@ class MongoDBBaseCategory(Generic[T]):
             if x['is_deleted'] == 0
         ]
 
-    def add_item_category(self, item_id: str, category_id: str) -> None:
+    def add_item_category(self, item_id: str, category_id: str, session: MyTransactionType = None) -> None:
         """
         Add a new mapping of item and Category
 
         :param item_id: The ID of the item
         :param category_id: The ID of the Category
+        :param session: Optional database session to use
         """
         query = {'_id': item_id, 'is_deleted': 0}
         # add-to-set only adds if it is not already a member of the array
         update = {'$addToSet': {'categories': {'cat': category_id, 'is_deleted': 0}}}
 
-        result = self.collection.update_one(query, update)
+        result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 
         if result.modified_count == 0:
             raise ValueError(f'{self.item_type} with id {item_id} not found or is deleted.')
 
-    def delete_item_category(self, item_id: str, category_id: str) -> None:
+    def delete_item_category(self, item_id: str, category_id: str, session: MyTransactionType = None) -> None:
         """
         Delete a mapping of item and Category.
 
         :param item_id: The ID of the item
         :param category_id: The ID of the Category
+        :param session: Optional database session to use
         """
         query = {'_id': item_id, 'is_deleted': 0}
         update = {'$set': {'categories.$[elem].is_deleted': int(time.time())}}
         array_filters = [{'elem.cat': category_id, 'elem.is_deleted': 0}]
 
-        result = self.collection.update_one(query, update, array_filters=array_filters)
+        result = self.collection.update_one(query, update, array_filters=array_filters, **mongo_transaction_kwargs(session))
 
         if result.modified_count == 0:
             raise ValueError(f'{self.item_type} with id {item_id} not found or is deleted.')

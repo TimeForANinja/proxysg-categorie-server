@@ -3,6 +3,7 @@ import time
 from typing import Optional, List, Callable, Any
 
 from db.backend.abc.token import TokenDBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.backend.sqlite.util.groups import split_opt_str_group
 from db.dbmodel.token import MutableToken, Token
 from db.backend.sqlite.util.query_builder import build_update_query
@@ -25,7 +26,13 @@ class SQLiteToken(TokenDBInterface):
     def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
         self.get_conn = get_conn
 
-    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken) -> Token:
+    def add_token(
+            self,
+            token_id: str,
+            uuid: str,
+            mut_tok: MutableToken,
+            session: MyTransactionType = None,
+    ) -> Token:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'INSERT INTO tokens (id, token, description) VALUES (?, ?, ?)',
@@ -43,7 +50,7 @@ class SQLiteToken(TokenDBInterface):
         )
         return new_token
 
-    def get_token(self, token_id: str) -> Optional[Token]:
+    def get_token(self, token_id: str, session: MyTransactionType = None) -> Optional[Token]:
         cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT
@@ -101,7 +108,7 @@ class SQLiteToken(TokenDBInterface):
             return _build_token(row)
         return None
 
-    def update_token(self, token_id: str, token: MutableToken) -> Token:
+    def update_token(self, token_id: str, token: MutableToken, session: MyTransactionType = None) -> Token:
         updates, params = build_update_query(token, {
             'description': 'description',
         })
@@ -124,7 +131,7 @@ class SQLiteToken(TokenDBInterface):
         )
         self.get_conn().commit()
 
-    def roll_token(self, token_id: str, uuid: str) -> Token:
+    def roll_token(self, token_id: str, uuid: str, session: MyTransactionType = None) -> Token:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE tokens SET token = ? WHERE id = ? AND is_deleted = 0',
@@ -134,7 +141,7 @@ class SQLiteToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def delete_token(self, token_id: str) -> None:
+    def delete_token(self, token_id: str, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
         cursor.execute(
             'UPDATE tokens SET is_deleted = ? WHERE id = ? AND is_deleted = 0',

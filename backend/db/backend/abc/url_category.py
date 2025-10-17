@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from db.backend.abc.util.types import MyTransactionType
+
 
 class UrlCategoryDBInterface(ABC):
     @abstractmethod
@@ -13,21 +15,33 @@ class UrlCategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def add_url_category(self, url_id: str, category_id: str) -> None:
+    def add_url_category(
+            self,
+            url_id: str,
+            category_id: str,
+            session: MyTransactionType = None,
+    ) -> None:
         """
         Add a new mapping of URL and Category
 
         :param url_id: The ID of the URL
         :param category_id: The ID of the Category
+        :param session: Optional database session to use
         """
         pass
 
     @abstractmethod
-    def delete_url_category(self, url_id: str, category_id: str) -> None:
+    def delete_url_category(
+            self,
+            url_id: str,
+            category_id: str,
+            session: MyTransactionType = None,
+    ) -> None:
         """
         Delete a mapping of URL and Category.
 
         :param url_id: The ID of the URL
         :param category_id: The ID of the Category
+        :param session: Optional database session to use
         """
         pass
