@@ -1,6 +1,7 @@
 from flask import current_app
 
 from db.backend.sqlite.db import MySQLiteDB
+from db.backend.mongodb.db import MyMongoDB
 from db.middleware.stagingdb.db import StagingDB
 from log import log_info
 from pymongo import MongoClient
@@ -19,11 +20,11 @@ def get_db() -> StagingDB:
             connection_user = mongo_cfg.get('CON_USER', 'admin')
             connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
             connection_host = mongo_cfg.get('CON_HOST', 'localhost')
-            connection_port = mongo_cfg.get('CON_PORT', 27017)
+            connection_port = int(mongo_cfg.get('CON_PORT', 27017))
             log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'auth_db': connection_auth_real, 'user': connection_user, 'host': f'{connection_host}:{connection_port}' })
-            db = (MongoClient(
+            db = MyMongoDB(MongoClient(
                 connection_host,
-                connection_port,
+                port=connection_port,
                 username=connection_user,
                 password=connection_password,
                 authSource=connection_auth_real
