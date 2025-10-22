@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert } from '@mui/material';
 import { getTaskByID } from '../../api/task';
 import { useAuth } from '../../model/AuthContext';
+import { formatDuration } from '../../util/DateString';
 
 const TIME_SECONDS = 1000;
 const DEFAULT_INTERVAL = 2 * TIME_SECONDS;
@@ -30,11 +31,14 @@ export const TaskStatus: React.FC<TaskStatusProps> = ({
   // ref to the current task id
   // resolves various problems with pass-by-value we can run into
   // with setInterval and a function defined inside the react fragment
-  const taskIdRef = React.useRef(taskId);
+  const taskIdRef = React.useRef<string>(taskId);
+  const startTimeRef = React.useRef<number>(0);
 
   const checkTaskStatus = React.useCallback(async () => {
     // only (continue to) check status if we have a pending task
     if (!taskIdRef.current || !token) return;
+    // calculate the elapsed time since the start of the task
+    const elapsedSeconds = (Date.now() - startTimeRef.current) / TIME_SECONDS;
     try {
       // fetch the task and set the success / warning / error banner accordingly
       const taskData = await getTaskByID(token, taskIdRef.current);
@@ -55,13 +59,13 @@ export const TaskStatus: React.FC<TaskStatusProps> = ({
           break;
         case 'running':
           setSuccess(null);
-          setWarning('Waiting for execution to finish...');
+          setWarning(`Waiting for execution to finish... (${formatDuration(elapsedSeconds)})`);
           setError(null);
           break;
         default:
         case 'pending':
           setSuccess(null);
-          setWarning('Waiting for execution to start...');
+          setWarning(`Waiting for execution to start... (${formatDuration(elapsedSeconds)})`);
           setError(null);
           break;
       }
@@ -73,8 +77,12 @@ export const TaskStatus: React.FC<TaskStatusProps> = ({
   }, [failureMessage, onTaskComplete, successMessage, token]);
 
   React.useEffect(() => {
+    // only trigger the effect if the taskId changes
+    if (taskId === taskIdRef.current) return;
     // update the ref
     taskIdRef.current = taskId;
+    // Reset the counter when taskId changes
+    startTimeRef.current = Date.now();
     // Immediately check status when taskId changes
     checkTaskStatus();
   }, [taskId, checkTaskStatus])
@@ -86,7 +94,7 @@ export const TaskStatus: React.FC<TaskStatusProps> = ({
     }, interval);
     // return a function that gets called to "cleanup" the effect
     return () => clearInterval(timer);
-  }, [checkTaskStatus]);
+  }, [checkTaskStatus, interval]);
 
   return (
     <>
