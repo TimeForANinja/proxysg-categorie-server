@@ -57,7 +57,9 @@ services:
       - "27017:27017"
     volumes:
       # Mounts a volume for (persistent) MongoDB data
-      - ./mongo-data:/data/db
+      - ./mongo-data/db:/data/db
+      - ./mongo-data/configdb:/data/configdb
+      - ./mongo-data/mongot:/data/mongot
     restart: unless-stopped
     environment:
       # Sets a MongoDB root user and password
