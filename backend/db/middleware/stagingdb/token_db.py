@@ -12,6 +12,7 @@ from db.dbmodel.token import MutableToken, Token
 from db.middleware.abc.token_db import MiddlewareDBToken
 from db.middleware.stagingdb.cache import StagedChange, StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object
+from db.middleware.stagingdb.utils.cache import SessionCache
 from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
@@ -103,6 +104,7 @@ class StagingDBToken(MiddlewareDBToken):
     def commit(
             self,
             change: StagedChange,
+            cache: SessionCache,
             dry_run: bool,
             session: MyTransactionType = None,
     ) -> Optional[Atomic]:
@@ -110,6 +112,7 @@ class StagingDBToken(MiddlewareDBToken):
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :param cache: A Cache for requests against the Database
         :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
         :param session: Optional database session to use
         :return: The atomic operation that was applied to the database.
@@ -171,11 +174,11 @@ class StagingDBToken(MiddlewareDBToken):
         elif change.action_type == ActionType.SET_CATS:
             token_data = change.data.copy()
 
-            current_cats = self._db.tokens.get_token(change.uid, session=session)
+            current_token = cache.get_token(change.uid)
 
             # Update the token in the persistent database
             added, removed = set_categories(
-                current_cats.categories if current_cats else [],
+                current_token.categories if current_token else [],
                 token_data['categories'],
                 lambda cid: self._db.token_categories.add_token_category(change.uid, cid, session=session),
                 lambda cid: self._db.token_categories.delete_token_category(change.uid, cid, session=session),

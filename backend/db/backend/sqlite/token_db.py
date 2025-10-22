@@ -149,7 +149,7 @@ class SQLiteToken(TokenDBInterface):
         )
         self.get_conn().commit()
 
-    def get_all_tokens(self) -> List[Token]:
+    def get_all_tokens(self, session: MyTransactionType = None) -> List[Token]:
         cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT

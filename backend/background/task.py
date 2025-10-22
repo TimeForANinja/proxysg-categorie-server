@@ -5,6 +5,7 @@ from db.middleware.stagingdb.db import StagingDB
 from db.util.parse_existing_db import parse_db, create_in_db, create_urls_db
 from log import log_debug, log_info
 
+
 def execute_load_existing_task(db_if: StagingDB, task: Task):
     """
     Execute a load_existing task.
@@ -118,6 +119,30 @@ def execute_commit(db_if: StagingDB, task: Task):
         db_if.tasks.update_task_status(task.id, 'success')
     except Exception as e:
         log_info('BACKGROUND', f'Error executing commit task {task.id}', {
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+        })
+        db_if.tasks.update_task_status(task.id, 'failed')
+
+def execute_revert(db_if: StagingDB, task: Task):
+    """
+    Execute a revert task.
+    This will simply clear any staged changes
+
+    :param db_if: The database interface to use
+    :param task: the task to execute
+    """
+    log_debug('BACKGROUND', f'Executing revert task {task.id}')
+
+    # Update task status to running
+    db_if.tasks.update_task_status(task.id, 'running')
+
+    try:
+        db_if.revert()
+        log_info('BACKGROUND', f'Revert task {task.id} completed successfully')
+        db_if.tasks.update_task_status(task.id, 'success')
+    except Exception as e:
+        log_info('BACKGROUND', f'Error executing revert task {task.id}', {
             'error': str(e),
             'traceback': traceback.format_exc(),
         })

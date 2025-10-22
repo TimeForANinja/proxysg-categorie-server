@@ -51,7 +51,7 @@ def query_all(creds: ServerCredentials, unknown_only: bool):
     """
     db_if = get_db()
 
-    urls = db_if.urls.get_all_urls()
+    urls = db_if.urls.get_all_urls(bypass_cache=True)
 
     # filter out all URLs that need an update
     scheduled_urls = [

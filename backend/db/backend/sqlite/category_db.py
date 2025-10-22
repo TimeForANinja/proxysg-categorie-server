@@ -111,7 +111,7 @@ class SQLiteCategory(CategoryDBInterface):
         )
         self.get_conn().commit()
 
-    def get_all_categories(self) -> List[Category]:
+    def get_all_categories(self, session: MyTransactionType = None) -> List[Category]:
         cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT

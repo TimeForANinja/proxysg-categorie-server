@@ -87,8 +87,8 @@ class MongoDBURL(URLDBInterface):
         if result.matched_count == 0:
             raise ValueError(f'URL with ID {url_id} not found or already deleted.')
 
-    def get_all_urls(self) -> List[URL]:
-        rows = self.collection.find({ 'is_deleted': 0 })
+    def get_all_urls(self, session: MyTransactionType = None) -> List[URL]:
+        rows = self.collection.find({ 'is_deleted': 0 }, **mongo_transaction_kwargs(session))
         return [
             _build_url(row)
             for row in rows

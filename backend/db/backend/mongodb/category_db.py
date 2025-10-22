@@ -93,8 +93,8 @@ class MongoDBCategory(CategoryDBInterface):
         self.db['urls'].update_many({}, update3, array_filters=array_filters2)
         self.db['tokens'].update_many({}, update3, array_filters=array_filters2)
 
-    def get_all_categories(self) -> List[Category]:
-        rows = self.collection.find({ 'is_deleted': 0 })
+    def get_all_categories(self, session: MyTransactionType = None) -> List[Category]:
+        rows = self.collection.find({ 'is_deleted': 0 }, **mongo_transaction_kwargs(session))
         return [
             _build_category(row)
             for row in rows

@@ -61,6 +61,9 @@ class MongoDBStaging(StagingDBInterface):
         documents = self.collection.find(**mongo_transaction_kwargs(session))
         return [_document_to_staged_change(doc) for doc in documents]
 
-    def clear_staged_changes(self, session: MyTransactionType = None) -> None:
+    def clear_staged_changes(self, before: int = None, session: MyTransactionType = None) -> None:
         """Clear all staged changes from the MongoDB database."""
-        self.collection.delete_many({}, **mongo_transaction_kwargs(session))
+        if before is not None:
+            self.collection.delete_many({'timestamp': {'$lte': before}}, **mongo_transaction_kwargs(session))
+        else:
+            self.collection.delete_many({}, **mongo_transaction_kwargs(session))

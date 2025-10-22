@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import List, Dict
 
 from auth.auth_user import AuthUser
 
@@ -26,7 +26,7 @@ class MiddlewareDBURLCategory(ABC):
         pass
 
     @abstractmethod
-    def add_url_categories(self, auth: AuthUser, mappings: List[Tuple[str, str]]) -> None:
+    def add_url_categories(self, auth: AuthUser, mappings: Dict[str, List[str]]) -> None:
         """
         Add a batch of new URL to Category mappings
 

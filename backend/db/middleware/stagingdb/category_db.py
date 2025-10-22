@@ -11,6 +11,7 @@ from db.dbmodel.staging import ActionType, ActionTable, StagedChange
 from db.middleware.abc.category_db import MiddlewareDBCategory
 from db.middleware.stagingdb.cache import StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
+from db.middleware.stagingdb.utils.cache import SessionCache
 from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes, get_and_overload_object, get_and_overload_all_objects
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
@@ -102,6 +103,7 @@ class StagingDBCategory(MiddlewareDBCategory):
     def commit(
             self,
             change: StagedChange,
+            cache: SessionCache,
             dry_run: bool,
             session: MyTransactionType = None,
     ) -> Optional[Atomic]:
@@ -109,6 +111,7 @@ class StagingDBCategory(MiddlewareDBCategory):
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :param cache: A Cache for requests against the Database
         :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
         :param session: Optional database session to use
         :return: The atomic operation that was applied to the database.
@@ -153,7 +156,7 @@ class StagingDBCategory(MiddlewareDBCategory):
         elif change.action_type == ActionType.SET_CATS:
             category_data = change.data.copy()
 
-            current_cats = self._db.categories.get_category(change.uid, session=session)
+            current_cats = cache.get_category(change.uid)
 
             # Update the category mappings in the persistent database
             added, removed = set_categories(

@@ -39,9 +39,9 @@ def add_task_bp(app):
             'data': task.id,
         }
 
-    # Route to upload an existing category db
+    # Route to create a task for cleanup of unused URLs / Categories
     @task_bp.post('/api/task/new/cleanup_unused')
-    @task_bp.doc(summary='Cleanup Unused', description='Cleanup all URLs that have no use')
+    @task_bp.doc(summary='Cleanup Unused', description='Cleanup various unused objects')
     @task_bp.input(class_schema(CleanupInput)(), location='json', arg_name='cleanup_settings')
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
@@ -58,6 +58,27 @@ def add_task_bp(app):
         return {
             'status': 'success',
             'message': 'CLeanup-Unused task created successfully',
+            'data': task.id,
+        }
+
+    # Route to revert any not-commited changes
+    @task_bp.post('/api/task/new/revert')
+    @task_bp.doc(summary='Revert Changes', description='Revert any not-commited changes')
+    @task_bp.output(CreatedTaskOutput)
+    @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
+    def revert_changes():
+        db_if = get_db()
+
+        # Create a background task to process the database
+        task = db_if.tasks.add_task(auth.current_user, MutableTask(
+            name='revert_uncommitted',
+            parameters=['revert_uncommitted']
+        ))
+        log_debug('API', f'Created revert_uncommitted task {task.id}')
+
+        return {
+            'status': 'success',
+            'message': 'Revert task created successfully',
             'data': task.id,
         }
 

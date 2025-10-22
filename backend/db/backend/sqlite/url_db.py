@@ -102,7 +102,7 @@ class SQLiteURL(URLDBInterface):
         )
         self.get_conn().commit()
 
-    def get_all_urls(self) -> List[URL]:
+    def get_all_urls(self, session: MyTransactionType = None) -> List[URL]:
         cursor = self.get_conn().cursor()
         cursor.execute(
             '''SELECT

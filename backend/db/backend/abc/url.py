@@ -52,10 +52,11 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_urls(self) -> List[URL]:
+    def get_all_urls(self, session: MyTransactionType = None) -> List[URL]:
         """
         Retrieve all active URLs that are not marked as deleted.
 
+        :param session: Optional database session to use
         :return: A list of URLs
         """
         pass

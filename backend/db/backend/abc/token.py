@@ -84,10 +84,11 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_tokens(self) -> List[Token]:
+    def get_all_tokens(self, session: MyTransactionType = None) -> List[Token]:
         """
         Retrieve all active tokens that are not marked as deleted.
 
+        :param session: Optional database session to use
         :return: A list of tokens
         """
         pass

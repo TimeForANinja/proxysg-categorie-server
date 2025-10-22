@@ -60,10 +60,11 @@ class MiddlewareDBURL(ABC):
         pass
 
     @abstractmethod
-    def get_all_urls(self) -> List[URL]:
+    def get_all_urls(self, bypass_cache: bool = False) -> List[URL]:
         """
         Retrieve all active URLs that are not marked as deleted.
 
+        :param bypass_cache: If True, bypass the cache and retrieve the URLs from the database.
         :return: A list of URLs
         """
         pass

@@ -75,7 +75,10 @@ class SQLiteStaging(StagingDBInterface):
         rows = cursor.fetchall()
         return [_build_change(row) for row in rows]
 
-    def clear_staged_changes(self, session: MyTransactionType = None) -> None:
+    def clear_staged_changes(self, before: int = None, session: MyTransactionType = None) -> None:
         cursor = self.get_conn().cursor()
-        cursor.execute('DELETE FROM staged_changes')
+        if before is not None:
+            cursor.execute('DELETE FROM staged_changes WHERE timestamp <= ?', (before,))
+        else:
+            cursor.execute('DELETE FROM staged_changes')
         self.get_conn().commit()

@@ -16,6 +16,8 @@ from db.middleware.stagingdb.token_category_db import StagingDBTokenCategory
 from db.middleware.stagingdb.token_db import StagingDBToken
 from db.middleware.stagingdb.url_category_db import StagingDBURLCategory
 from db.middleware.stagingdb.url_db import StagingDBURL
+from db.middleware.stagingdb.utils.cache import SessionCache
+from log import log_info
 
 
 class StagingDB(MiddlewareDB):
@@ -27,6 +29,7 @@ class StagingDB(MiddlewareDB):
     urls: StagingDBURL
     url_categories: StagingDBURLCategory
     tasks: StagingDBTask
+    _staged: StagedCollection
 
     def __init__(
             self,
@@ -63,6 +66,9 @@ class StagingDB(MiddlewareDB):
         ref_url: List[str] = []
         ref_category: List[str] = []
 
+        # initialize a cache to speed up commit performance
+        cache = SessionCache(self._main_db, session)
+
         # apply changes to the database
         for change in self._staged.get_all(session=session):
             # skip changes created after the commit
@@ -71,11 +77,11 @@ class StagingDB(MiddlewareDB):
 
             atomic = None
             if change.action_table == ActionTable.TOKEN:
-                atomic = self.tokens.commit(change, dry_run, session=session)
+                atomic = self.tokens.commit(change, cache, dry_run, session=session)
             elif change.action_table == ActionTable.URL:
-                atomic = self.urls.commit(change, dry_run, session=session)
+                atomic = self.urls.commit(change, cache, dry_run, session=session)
             elif change.action_table == ActionTable.CATEGORY:
-                atomic = self.categories.commit(change, dry_run, session=session)
+                atomic = self.categories.commit(change, cache, dry_run, session=session)
 
             # if a change was done, store the atomic
             if atomic:
@@ -85,13 +91,16 @@ class StagingDB(MiddlewareDB):
                 ref_url += atomic.ref_url
                 ref_category += atomic.ref_category
 
-
         # use list(set(xxx)) to remove duplicates
         ref_token = list(set(ref_token))
         ref_url = list(set(ref_url))
         ref_category = list(set(ref_category))
 
         return atomics, ref_token, ref_url, ref_category
+
+    def revert(self):
+        # remove all staged events
+        self._staged.clear()
 
     def commit(self, user: AuthUser, commit_message: str, not_before: int):
         """
@@ -117,4 +126,4 @@ class StagingDB(MiddlewareDB):
                 )
 
             # remove all staged events, now that they are committed
-            self._staged.clear(session=session)
+            self._staged.clear(before=not_before, session=session)

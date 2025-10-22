@@ -57,13 +57,14 @@ class StagedCollection:
         # Re-add the filtered changes
         self.add_batch(filtered_changes)
 
-    def clear(self, session: MyTransactionType = None):
+    def clear(self, before: int = None, session: MyTransactionType = None):
         """
         Clear all staged changes from the persistent storage.
 
+        :param before: The timestamp before which to clear changes.
         :param session: The database session to use.
         """
-        self._db.staging.clear_staged_changes(session=session)
+        self._db.staging.clear_staged_changes(before=before, session=session)
 
     def simplify_stack(self):
         """Simplify the stack of staged changes."""

@@ -57,10 +57,11 @@ class CategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_categories(self) -> List[Category]:
+    def get_all_categories(self, session: MyTransactionType = None) -> List[Category]:
         """
         Retrieve all active categories that are not marked as deleted.
 
+        :param session: Optional database session to use
         :return: A list of categories
         """
         pass

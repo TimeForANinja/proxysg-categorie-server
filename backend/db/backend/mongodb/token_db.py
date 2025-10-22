@@ -113,8 +113,8 @@ class MongoDBToken(TokenDBInterface):
         if result.matched_count == 0:
             raise ValueError(f'Token with ID {token_id} not found or already deleted.')
 
-    def get_all_tokens(self) -> List[Token]:
-        rows = self.collection.find({ 'is_deleted': 0 })
+    def get_all_tokens(self, session: MyTransactionType = None) -> List[Token]:
+        rows = self.collection.find({ 'is_deleted': 0 }, **mongo_transaction_kwargs(session))
         return [
             _build_token(row)
             for row in rows

@@ -36,10 +36,11 @@ class StagingDBInterface(ABC):
         pass
 
     @abstractmethod
-    def clear_staged_changes(self, session: MyTransactionType = None) -> None:
+    def clear_staged_changes(self, before: int = None, session: MyTransactionType = None) -> None:
         """
         Clear all staged changes.
 
+        :param before: The timestamp before which to clear changes.
         :param session: The database session to use.
         """
         pass

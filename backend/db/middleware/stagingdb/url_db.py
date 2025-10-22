@@ -11,6 +11,7 @@ from db.dbmodel.url import MutableURL, URL
 from db.middleware.abc.url_db import MiddlewareDBURL
 from db.middleware.stagingdb.cache import StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
+from db.middleware.stagingdb.utils.cache import SessionCache
 from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, \
     get_and_overload_all_objects, add_staged_changes
 from db.middleware.stagingdb.utils.update_cats import set_categories
@@ -96,7 +97,10 @@ class StagingDBURL(MiddlewareDBURL):
             staged=self._staged,
         )
 
-    def get_all_urls(self) -> List[URL]:
+    def get_all_urls(self, bypass_cache: bool = False) -> List[URL]:
+        if bypass_cache:
+            return self._db.urls.get_all_urls()
+
         return get_and_overload_all_objects(
             db_getter=self._db.urls.get_all_urls,
             staged=self._staged,
@@ -107,6 +111,7 @@ class StagingDBURL(MiddlewareDBURL):
     def commit(
             self,
             change: StagedChange,
+            cache: SessionCache,
             dry_run: bool,
             session: MyTransactionType = None,
     ) -> Optional[Atomic]:
@@ -114,6 +119,7 @@ class StagingDBURL(MiddlewareDBURL):
         Apply the staged change to the persistent database.
 
         :param change: The staged change to apply.
+        :param cache: A Cache for requests against the Database
         :param dry_run: Whether to perform a dry run (no changes are made to the database). Default is False.
         :param session: Optional database session to use
         :return: The atomic operation that was applied to the database.
@@ -158,11 +164,11 @@ class StagingDBURL(MiddlewareDBURL):
         elif change.action_type == ActionType.SET_CATS:
             url_data = change.data.copy()
 
-            current_cats = self._db.urls.get_url(change.uid, session=session)
+            current_url = cache.get_url(change.uid)
 
             # Update the token in the persistent database
             added, removed = set_categories(
-                current_cats.categories if current_cats else [],
+                current_url.categories if current_url else [],
                 url_data['categories'],
                 lambda cid: self._db.url_categories.add_url_category(change.uid, cid, session=session),
                 lambda cid: self._db.url_categories.delete_url_category(change.uid, cid, session=session),
