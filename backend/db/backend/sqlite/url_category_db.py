@@ -1,5 +1,6 @@
 import sqlite3
 import time
+from contextlib import AbstractContextManager
 from typing import List, Callable
 
 from db.backend.abc.url_category import UrlCategoryDBInterface
@@ -7,35 +8,36 @@ from db.backend.abc.util.types import MyTransactionType
 
 
 class SQLiteURLCategory(UrlCategoryDBInterface):
-    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
-        self.get_conn = get_conn
+    def __init__(
+            self,
+            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+        ):
+        self.get_cursor = get_cursor
 
     def get_url_categories_by_url(self, url_id: str) -> List[str]:
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            '''SELECT
-                uc.category_id
-            FROM url_categories uc
-            INNER JOIN categories c
-            ON uc.category_id = c.id AND c.is_deleted = 0
-            WHERE uc.url_id = ? AND uc.is_deleted = 0''',
-            (url_id,)
-        )
-        rows = cursor.fetchall()
-        return [str(row[0]) for row in rows]
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                '''SELECT
+                    uc.category_id
+                FROM url_categories uc
+                INNER JOIN categories c
+                ON uc.category_id = c.id AND c.is_deleted = 0
+                WHERE uc.url_id = ? AND uc.is_deleted = 0''',
+                (url_id,)
+            )
+            rows = cursor.fetchall()
+            return [str(row[0]) for row in rows]
 
     def add_url_category(self, url_id: str, category_id: str, session: MyTransactionType = None) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
-            (url_id, category_id,)
-        )
-        self.get_conn().commit()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
+                (url_id, category_id,)
+            )
 
     def delete_url_category(self, url_id: str, category_id: str, session: MyTransactionType = None) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
-            (int(time.time()), url_id, category_id,)
-        )
-        self.get_conn().commit()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
+                (int(time.time()), url_id, category_id,)
+            )

@@ -1,6 +1,7 @@
 import sqlite3
 import time
-from typing import Optional, List, Callable, Any
+from contextlib import AbstractContextManager
+from typing import Optional, List, Any, Callable
 
 from db.backend.abc.category import CategoryDBInterface
 from db.backend.abc.util.types import MyTransactionType
@@ -23,8 +24,11 @@ def _build_category(row: Any) -> Category:
 
 
 class SQLiteCategory(CategoryDBInterface):
-    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
-        self.get_conn = get_conn
+    def __init__(
+            self,
+            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+        ):
+        self.get_cursor = get_cursor
 
     def add_category(
             self,
@@ -32,12 +36,11 @@ class SQLiteCategory(CategoryDBInterface):
             category_id: str,
             session: MyTransactionType = None,
     ) -> Category:
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            'INSERT INTO categories (id, name, description, color) VALUES (?, ?, ?, ?)',
-            (category_id, mut_cat.name, mut_cat.description, mut_cat.color)
-        )
-        self.get_conn().commit()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                'INSERT INTO categories (id, name, description, color) VALUES (?, ?, ?, ?)',
+                (category_id, mut_cat.name, mut_cat.description, mut_cat.color)
+            )
 
         new_cat = Category(
             name=mut_cat.name,
@@ -50,30 +53,30 @@ class SQLiteCategory(CategoryDBInterface):
         return new_cat
 
     def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            '''SELECT
-                c.id as id,
-                c.name,
-                c.description,
-                c.color,
-                GROUP_CONCAT(sc.child_id) as sub_categories
-            FROM categories c
-            LEFT JOIN (
-                SELECT
-                    sc.parent_id,
-                    sc.child_id
-                FROM sub_category sc
-                INNER JOIN categories c
-                ON sc.child_id = c.id
-                WHERE c.is_deleted = 0 AND sc.is_deleted = 0
-            ) sc
-            ON c.id = sc.parent_id
-            WHERE id = ? AND is_deleted = 0
-            GROUP BY c.id''',
-            (category_id,)
-        )
-        row = cursor.fetchone()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                '''SELECT
+                    c.id as id,
+                    c.name,
+                    c.description,
+                    c.color,
+                    GROUP_CONCAT(sc.child_id) as sub_categories
+                FROM categories c
+                LEFT JOIN (
+                    SELECT
+                        sc.parent_id,
+                        sc.child_id
+                    FROM sub_category sc
+                    INNER JOIN categories c
+                    ON sc.child_id = c.id
+                    WHERE c.is_deleted = 0 AND sc.is_deleted = 0
+                ) sc
+                ON c.id = sc.parent_id
+                WHERE id = ? AND is_deleted = 0
+                GROUP BY c.id''',
+                (category_id,)
+            )
+            row = cursor.fetchone()
         if row:
             return _build_category(row)
         return None
@@ -93,9 +96,8 @@ class SQLiteCategory(CategoryDBInterface):
         if updates:
             query = f'UPDATE categories SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
             params.append(cat_id)
-            cursor = self.get_conn().cursor()
-            cursor.execute(query, params)
-            self.get_conn().commit()
+            with self.get_cursor() as cursor:
+                cursor.execute(query, params)
 
         return self.get_category(cat_id)
 
@@ -104,35 +106,34 @@ class SQLiteCategory(CategoryDBInterface):
             category_id: str,
             session: MyTransactionType = None
     ) -> None:
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-            (int(time.time()), category_id,)
-        )
-        self.get_conn().commit()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
+                (int(time.time()), category_id,)
+            )
 
     def get_all_categories(self, session: MyTransactionType = None) -> List[Category]:
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            '''SELECT
-                c.id as id,
-                c.name,
-                c.description,
-                c.color,
-                GROUP_CONCAT(sc.child_id) as sub_categories
-            FROM categories c
-            LEFT JOIN (
-                SELECT
-                    sc.parent_id,
-                    sc.child_id
-                FROM sub_category sc
-                INNER JOIN categories c
-                ON sc.child_id = c.id
-                WHERE c.is_deleted = 0 AND sc.is_deleted = 0
-            ) sc
-            ON c.id = sc.parent_id
-            WHERE is_deleted = 0
-            GROUP BY c.id'''
-        )
-        rows = cursor.fetchall()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                '''SELECT
+                    c.id as id,
+                    c.name,
+                    c.description,
+                    c.color,
+                    GROUP_CONCAT(sc.child_id) as sub_categories
+                FROM categories c
+                LEFT JOIN (
+                    SELECT
+                        sc.parent_id,
+                        sc.child_id
+                    FROM sub_category sc
+                    INNER JOIN categories c
+                    ON sc.child_id = c.id
+                    WHERE c.is_deleted = 0 AND sc.is_deleted = 0
+                ) sc
+                ON c.id = sc.parent_id
+                WHERE is_deleted = 0
+                GROUP BY c.id'''
+            )
+            rows = cursor.fetchall()
         return [_build_category(row) for row in rows]

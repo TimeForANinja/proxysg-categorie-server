@@ -26,7 +26,10 @@ class DBInterface(ABC):
 
     @abstractmethod
     def close(self):
-        """Method to trigger any cleanup actions."""
+        """
+        Method to trigger any cleanup actions.
+        This might cause the DBInterface to become unusable.
+        """
         pass
 
     @contextmanager

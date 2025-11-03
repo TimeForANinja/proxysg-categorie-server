@@ -1,5 +1,6 @@
 import sqlite3
 import time
+from contextlib import AbstractContextManager
 from typing import List, Callable, Optional
 
 from auth.auth_user import AuthUser
@@ -10,8 +11,11 @@ from db.dbmodel.history import History, Atomic
 
 
 class SQLiteHistory(HistoryDBInterface):
-    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
-        self.get_conn = get_conn
+    def __init__(
+            self,
+            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+        ):
+        self.get_cursor = get_cursor
 
     def add_history_event(
             self,
@@ -35,23 +39,21 @@ class SQLiteHistory(HistoryDBInterface):
         :param session: Optional database session to use
         :return: The newly created history event
         """
-        cursor = self.get_conn().cursor()
         timestamp = int(time.time())
-        cursor.execute(
-            'INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?)',
-            (timestamp, action, AuthUser.serialize(user), join_str_group(ref_token), join_str_group(ref_url), join_str_group(ref_category))
-        )
-        history_id = cursor.lastrowid
-
-        # Add atomics if provided
-        atomics_list = atomics or []
-        for atomic in atomics_list:
+        with self.get_cursor() as cursor:
             cursor.execute(
-                'INSERT INTO atomics (id, user, history_id, action, description, time, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                (atomic.id, AuthUser.serialize(atomic.user), history_id, atomic.action, atomic.description or '', atomic.time, join_str_group(atomic.ref_token), join_str_group(atomic.ref_url), join_str_group(atomic.ref_category))
+                'INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?)',
+                (timestamp, action, AuthUser.serialize(user), join_str_group(ref_token), join_str_group(ref_url), join_str_group(ref_category))
             )
+            history_id = cursor.lastrowid
 
-        self.get_conn().commit()
+            # Add atomics if provided
+            atomics_list = atomics or []
+            for atomic in atomics_list:
+                cursor.execute(
+                    'INSERT INTO atomics (id, user, history_id, action, description, time, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    (atomic.id, AuthUser.serialize(atomic.user), history_id, atomic.action, atomic.description or '', atomic.time, join_str_group(atomic.ref_token), join_str_group(atomic.ref_url), join_str_group(atomic.ref_category))
+                )
 
         hist = History(
             id=str(history_id),
@@ -66,15 +68,14 @@ class SQLiteHistory(HistoryDBInterface):
         return hist
 
     def get_history_events(self) -> List[History]:
-        cursor = self.get_conn().cursor()
+        with self.get_cursor() as cursor:
+            # Get all history events
+            cursor.execute('SELECT id, time, description, user, ref_token, ref_url, ref_category FROM history')
+            history_rows = cursor.fetchall()
 
-        # Get all history events
-        cursor.execute('SELECT id, time, description, user, ref_token, ref_url, ref_category FROM history')
-        history_rows = cursor.fetchall()
-
-        # Get all atomics in a single query
-        cursor.execute('SELECT id, user, history_id, action, description, time, ref_token, ref_url, ref_category FROM atomics')
-        atomics_rows = cursor.fetchall()
+            # Get all atomics in a single query
+            cursor.execute('SELECT id, user, history_id, action, description, time, ref_token, ref_url, ref_category FROM atomics')
+            atomics_rows = cursor.fetchall()
 
         # Group atomics by history_id
         atomics_by_history = {}

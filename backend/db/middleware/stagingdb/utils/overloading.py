@@ -36,7 +36,7 @@ def get_and_overload_object(
     # Convert to dict (or None if not found in db)
     obj_data: Dict[str, Any] = asdict(db_obj) if db_obj is not None else None
 
-    # query all staged changes that effect the object from the db
+    # query all staged changes that affect the object from the db
     relevant_staged_events = staged.get_filtered(
         StageFilter.fac_filter_table_id(action_table, obj_id)
     )
@@ -54,7 +54,7 @@ def get_and_overload_object(
             # no object in db, and no "add" event
             return None
 
-        # set pending_changes since object is staged
+        # set pending_changes since the object is staged
         obj_data.update({'pending_changes': True})
 
     # Overload any staged changes

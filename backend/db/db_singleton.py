@@ -3,7 +3,7 @@ from flask import current_app
 from db.backend.sqlite.db import MySQLiteDB
 from db.backend.mongodb.db import MyMongoDB
 from db.middleware.stagingdb.db import StagingDB
-from log import log_info
+from log import log_info, log_debug
 from pymongo import MongoClient
 
 
@@ -12,6 +12,7 @@ def get_db() -> StagingDB:
     staging_db = current_app.config.get('SINGLETONS', {}).get('DB', None)
 
     if staging_db is None:
+        log_debug("DB", "Initializing DB connection", current_app.config)
         db_type = current_app.config.get('DB', {}).get('TYPE', 'sqlite').lower()
         if db_type == 'mongodb':
             mongo_cfg: dict = current_app.config.get('DB', {}).get('MONGO', {})
@@ -50,6 +51,7 @@ def close_connection():
     Remove the current database connection.
     Flask calls this every time a Context is being removed (e.g., end of request)
     """
-    db = get_db()
+    db = current_app.config.get('SINGLETONS', {}).get('DB', None)
     if db is not None:
         db.close()
+        current_app.config['SINGLETONS']['DB'] = None

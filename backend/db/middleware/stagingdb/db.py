@@ -17,7 +17,6 @@ from db.middleware.stagingdb.token_db import StagingDBToken
 from db.middleware.stagingdb.url_category_db import StagingDBURLCategory
 from db.middleware.stagingdb.url_db import StagingDBURL
 from db.middleware.stagingdb.utils.cache import SessionCache
-from log import log_info
 
 
 class StagingDB(MiddlewareDB):

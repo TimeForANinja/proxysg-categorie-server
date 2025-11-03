@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import AbstractContextManager
 from typing import Callable
 
 
@@ -6,17 +7,20 @@ CONFIG_VAR_SCHEMA_VERSION = 'schema-version'
 
 
 class SQLiteConfig:
-    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
-        self.get_conn = get_conn
+    def __init__(
+            self,
+            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+        ):
+        self.get_cursor = get_cursor
 
     def read_int(self, key: str) -> int:
         """Get the value of a config variable, or -1 if it doesn't exist."""
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            'SELECT value FROM config WHERE key = ?',
-            (key,)
-        )
-        row = cursor.fetchone()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                'SELECT value FROM config WHERE key = ?',
+                (key,)
+            )
+            row = cursor.fetchone()
         if row:
             return int(row[0])
         else:
@@ -24,12 +28,11 @@ class SQLiteConfig:
 
     def set_int(self, key: str, value: int) -> None:
         """Set a config variable. If it doesn't exist, create it."""
-        cursor = self.get_conn().cursor()
-        cursor.execute(
-            'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
-            (key, str(value))
-        )
-        self.get_conn().commit()
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+                (key, str(value))
+            )
 
     def get_schema_version(self) -> int:
         """

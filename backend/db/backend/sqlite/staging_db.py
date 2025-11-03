@@ -1,6 +1,7 @@
 import json
 import sqlite3
-from typing import Callable, List, Tuple
+from contextlib import AbstractContextManager
+from typing import List, Tuple, Callable
 
 from auth.auth_user import AuthUser
 from db.backend.abc.util.types import MyTransactionType
@@ -22,12 +23,13 @@ def _build_change(row: Tuple) -> StagedChange:
 
 
 class SQLiteStaging(StagingDBInterface):
-    def __init__(self, get_conn: Callable[[], sqlite3.Connection]):
-        self.get_conn = get_conn
+    def __init__(
+            self,
+            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+        ):
+        self.get_cursor = get_cursor
 
     def store_staged_change(self, change: StagedChange) -> None:
-        cursor = self.get_conn().cursor()
-
         # Convert Enum values to their integer values
         action_value = change.action_type.value
         table_value = change.action_table.value
@@ -38,18 +40,17 @@ class SQLiteStaging(StagingDBInterface):
         # Serialize data dictionary to JSON string
         data_json = json.dumps(change.data) if change.data else None
 
-        cursor.execute(
-            'INSERT INTO staged_changes (action, user, timestamp, table_name, entity_id, data) VALUES (?, ?, ?, ?, ?, ?)',
-            (action_value, auth_json, change.timestamp, table_value, change.uid, data_json),
-        )
-        self.get_conn().commit()
+        # push to db
+        with self.get_cursor() as cursor:
+            cursor.execute(
+                'INSERT INTO staged_changes (action, user, timestamp, table_name, entity_id, data) VALUES (?, ?, ?, ?, ?, ?)',
+                (action_value, auth_json, change.timestamp, table_value, change.uid, data_json),
+            )
 
     def store_staged_changes(self, changes: List[StagedChange]) -> None:
         """Store a list of staged changes in the SQLite database (batch)."""
         if not changes:
             return
-
-        cursor = self.get_conn().cursor()
 
         params = [
             (
@@ -63,22 +64,22 @@ class SQLiteStaging(StagingDBInterface):
             for ch in changes
         ]
 
-        cursor.executemany(
-            'INSERT INTO staged_changes (action, user, timestamp, table_name, entity_id, data) VALUES (?, ?, ?, ?, ?, ?)',
-            params,
-        )
-        self.get_conn().commit()
+        with self.get_cursor() as cursor:
+            cursor.executemany(
+                'INSERT INTO staged_changes (action, user, timestamp, table_name, entity_id, data) VALUES (?, ?, ?, ?, ?, ?)',
+                params,
+            )
 
     def get_staged_changes(self, session: MyTransactionType = None) -> List[StagedChange]:
-        cursor = self.get_conn().cursor()
-        cursor.execute('SELECT action, table_name, user, entity_id, timestamp, data FROM staged_changes')
-        rows = cursor.fetchall()
+        with self.get_cursor() as cursor:
+            cursor.execute('SELECT action, table_name, user, entity_id, timestamp, data FROM staged_changes')
+            rows = cursor.fetchall()
         return [_build_change(row) for row in rows]
 
     def clear_staged_changes(self, before: int = None, session: MyTransactionType = None) -> None:
-        cursor = self.get_conn().cursor()
-        if before is not None:
-            cursor.execute('DELETE FROM staged_changes WHERE timestamp <= ?', (before,))
-        else:
-            cursor.execute('DELETE FROM staged_changes')
-        self.get_conn().commit()
+        with self.get_cursor() as cursor:
+            if before is not None:
+                cursor.execute('DELETE FROM staged_changes WHERE timestamp <= ?', (before,))
+            else:
+                # noinspection SqlWithoutWhere
+                cursor.execute('DELETE FROM staged_changes')

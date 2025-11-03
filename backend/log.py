@@ -11,19 +11,30 @@ from typing import Any
 # Intercept handler to redirect logs to syslog
 class InterceptHandler(logging.Handler):
     def emit(self, record):
-        level = logger.level(record.levelname).name
-        logger.log(level, record.getMessage())
+        try:
+            level = logger.level(record.levelname).name
+            logger.log(level, record.getMessage())
+        except Exception as e:
+            logger.warning(f"Failed to log via loguru: level={record.levelname}, err={e}")
 
 
 def setup_logging(app: APIFlask):
     # remove all loggers
     logger.remove()
-    # add default stderr but allow for custom level
-    loglevel = app.config.get('LOGLEVEL', 'INFO')
-    logger.add(sys.stderr, level=loglevel)
 
-    # redirect all logs to our custom log handler
+    # determine desired log level
+    loglevel = str(app.config.get('LOGLEVEL', 'INFO')).upper()
+
+    # use stdout as a default sink
+    # - enqueue=True writes via a background thread (non-blocking)
+    logger.add(sys.stdout, level=loglevel, enqueue=True)
+
+    # Redirect stdlib logging into loguru
+    # Keep the root logger at level=0 (ALL)
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
+
+    # for some reason having pymongo on DEBUG or ALL breaks the app...
+    logging.getLogger('pymongo').setLevel(logging.INFO)
 
     # if a syslog server is defined, also send it there
     syslog_server = app.config.get('SYSLOG', {}).get('SYSLOG_SERVER', None)

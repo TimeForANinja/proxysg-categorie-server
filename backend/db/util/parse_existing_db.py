@@ -6,7 +6,7 @@ from auth.auth_user import AuthUser
 from db.dbmodel.category import MutableCategory
 from db.dbmodel.url import MutableURL
 from db.middleware.abc.db import MiddlewareDB
-from log import log_debug, log_error, log_info
+from log import log_debug, log_error
 
 
 class ExistingCat:
@@ -168,7 +168,7 @@ def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[Exist
                 # Start a new category
                 cat_name = define_match.group(1) or define_match.group(2)
                 current_cat = ExistingCat(name=cat_name, urls=[])
-                current_urls = set() # reset url set for new category
+                current_urls = set() # reset url set for the new category
             else:
                 if not allow_uncategorized:
                     # Any other string outside a category is a syntax error

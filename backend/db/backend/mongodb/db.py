@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from contextlib import contextmanager
 from pymongo.synchronous.client_session import ClientSession
 
+from log import log_debug
 from db.backend.abc.db import DBInterface
 from db.backend.mongodb.category_db import MongoDBCategory
 from db.backend.mongodb.history_db import MongoDBHistory
@@ -37,9 +38,8 @@ class MyMongoDB(DBInterface):
         self.staging = MongoDBStaging(self.db)
 
     def close(self):
-        # no call to self.client.close() required after each context closure
-        # since the DB is external, we do not need to worry about thread safety here
-        pass
+        log_debug("MONGODB", "Closing Client")
+        self.client.close()
 
     @contextmanager
     def start_transaction(self) -> Generator[ClientSession, Any, None]:

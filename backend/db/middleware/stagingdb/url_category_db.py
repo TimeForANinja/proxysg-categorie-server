@@ -7,7 +7,6 @@ from db.middleware.abc.url_category_db import MiddlewareDBURLCategory
 from db.middleware.stagingdb.cache import StagedCollection
 from db.middleware.stagingdb.url_db import StagingDBURL
 from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes
-from log import log_info
 
 
 class StagingDBURLCategory(MiddlewareDBURLCategory):

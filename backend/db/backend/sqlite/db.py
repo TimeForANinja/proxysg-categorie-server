@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from contextlib import contextmanager
-from flask import g
+from typing import Generator
 
 from db.backend.abc.db import DBInterface
 from db.backend.sqlite.category_db import SQLiteCategory
@@ -24,38 +24,64 @@ class MySQLiteDB(DBInterface):
         self.filename = filename
 
         # Initialize the config table first to manage a schema version
-        self.config = SQLiteConfig(self.open_con)
+        self.config = SQLiteConfig(self.get_cursor)
 
         # Initialize other tables
-        self.categories = SQLiteCategory(self.open_con)
-        self.sub_categories = SQLiteSubCategory(self.open_con)
-        self.history = SQLiteHistory(self.open_con)
-        self.tokens = SQLiteToken(self.open_con)
-        self.token_categories = SQLiteTokenCategory(self.open_con)
-        self.urls = SQLiteURL(self.open_con)
-        self.url_categories = SQLiteURLCategory(self.open_con)
-        self.tasks = SQLiteTask(self.open_con)
-        self.staging = SQLiteStaging(self.open_con)
+        self.categories = SQLiteCategory(self.get_cursor)
+        self.sub_categories = SQLiteSubCategory(self.get_cursor)
+        self.history = SQLiteHistory(self.get_cursor)
+        self.tokens = SQLiteToken(self.get_cursor)
+        self.token_categories = SQLiteTokenCategory(self.get_cursor)
+        self.urls = SQLiteURL(self.get_cursor)
+        self.url_categories = SQLiteURLCategory(self.get_cursor)
+        self.tasks = SQLiteTask(self.get_cursor)
+        self.staging = SQLiteStaging(self.get_cursor)
 
         # Run migrations if needed
         self._run_migrations()
 
-    def open_con(self) -> sqlite3.Connection:
-        # helper method to provide access to a sqlite con for other SQLite Modules
-        # we unfortunately need to open the connection new for each threat...
-        # flask 'g' is unique for each context, so we can use it to store the connection
-        conn = getattr(g, '_sqlite_db', None)
-        if conn is None:
-            conn = g._sqlite_db = sqlite3.connect(self.filename)
-        return conn
+    @contextmanager
+    def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
+        """
+        Context manager that provides a connection and automatically handles cleanup.
+
+        Usage:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM table')
+                result = cursor.fetchall()
+        """
+        conn = sqlite3.connect(self.filename)
+        try:
+            yield conn
+            conn.commit()  # Auto-commit on success
+        except Exception:
+            conn.rollback()  # Rollback on error
+            raise
+        finally:
+            conn.close()
+
+    @contextmanager
+    def get_cursor(self) -> Generator[sqlite3.Cursor, None, None]:
+        """
+        Context manager that provides a cursor and automatically handles connection cleanup.
+
+        Usage:
+            with self.get_cursor() as cursor:
+                cursor.execute('SELECT * FROM table')
+                result = cursor.fetchall()
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                yield cursor
+            finally:
+                cursor.close()
 
     def close(self):
-        # close the sqlite connection after each request
-        # this is required, since flask creates new threads for each request
-        # and each request requires its own DB instance
-        conn = getattr(g, '_sqlite_db', None)
-        if conn is not None:
-            conn.close()
+        # sqlite is never permanently open
+        # so nothing to do here
+        pass
 
     def _run_migrations(self):
         """
@@ -87,34 +113,39 @@ class MySQLiteDB(DBInterface):
         migration_files.sort(key=lambda x: x[0])
 
         # Run migrations that are newer than the current version
-        conn = self.open_con()
-        cursor = conn.cursor()
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                for version, file_path in migration_files:
+                    if version > current_version:
+                        log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
+                        try:
+                            # Read and execute the migration script
+                            with open(file_path, 'r') as f:
+                                sql_script = f.read()
 
-        for version, file_path in migration_files:
-            if version > current_version:
-                log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
+                            # Execute the script
+                            # use BEGIN/COMMIT to enforce a transaction - changes are only stored if all changes succeed
+                            cursor.executescript(f"BEGIN;\n{ sql_script }\nCOMMIT;")
+                            conn.commit()
+
+                            # Update schema version
+                            self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version)
+
+                            log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
+                        except Exception as e:
+                            conn.rollback()
+                            log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
+                            # migration failed
+                            # raise to stop the server since the DB is not as expected
+                            raise e
+                    else:
+                        log_debug("SQLITE", f"Skipping migration: {os.path.basename(file_path)} (version {version} is older than current version {current_version})")
+            finally:
                 try:
-                    # Read and execute the migration script
-                    with open(file_path, 'r') as f:
-                        sql_script = f.read()
-
-                    # Execute the script
-                    # use BEGIN/COMMIT to enforce a transaction - changes are only stored if all changes succeed
-                    cursor.executescript(f"BEGIN;\n{ sql_script }\nCOMMIT;")
-                    conn.commit()
-
-                    # Update schema version
-                    self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version)
-
-                    log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
-                except Exception as e:
-                    conn.rollback()
-                    log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
-                    # migration failed
-                    # raise to stop the server since the DB is not as expected
-                    raise e
-            else:
-                log_debug("SQLITE", f"Skipping migration: {os.path.basename(file_path)} (version {version} is older than current version {current_version})")
+                    cursor.close()
+                except Exception:
+                    pass
 
     @contextmanager
     def start_transaction(self) -> sqlite3.Connection:
