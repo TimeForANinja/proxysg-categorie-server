@@ -148,6 +148,6 @@ class MySQLiteDB(DBInterface):
                     pass
 
     @contextmanager
-    def start_transaction(self) -> sqlite3.Connection:
+    def start_transaction(self) -> Generator[None, None, None]:
         # TODO: implement transaction support
-        pass
+        yield None

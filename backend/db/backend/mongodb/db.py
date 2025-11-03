@@ -1,4 +1,4 @@
-from typing import Any, Generator
+from typing import Generator
 from pymongo import MongoClient
 from contextlib import contextmanager
 from pymongo.synchronous.client_session import ClientSession
@@ -42,7 +42,7 @@ class MyMongoDB(DBInterface):
         self.client.close()
 
     @contextmanager
-    def start_transaction(self) -> Generator[ClientSession, Any, None]:
+    def start_transaction(self) -> Generator[ClientSession, None, None]:
         # start a new session, and a transaction in that session
         with self.client.start_session() as session:
             with session.start_transaction():

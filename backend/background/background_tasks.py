@@ -99,7 +99,7 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
 
                 # try to fetch the next pending task from the DB
                 task = db_if.tasks.get_next_pending_task()
-                log_debug("BACKGROUND", "next pending task", task)
+                log_debug("BACKGROUND", "next pending task", task, exclude_keys=("parameters",))
 
                 # if a task is defined go based on the task.name
                 # if no task is defined, we do nothing

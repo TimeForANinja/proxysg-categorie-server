@@ -13,7 +13,8 @@ from db.middleware.abc.token_db import MiddlewareDBToken
 from db.middleware.stagingdb.cache import StagedChange, StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object
 from db.middleware.stagingdb.utils.cache import SessionCache
-from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, get_and_overload_all_objects
+from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, \
+    get_and_overload_all_objects, update_dataclass
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
 
@@ -183,6 +184,10 @@ class StagingDBToken(MiddlewareDBToken):
                 lambda cid: self._db.token_categories.add_token_category(change.uid, cid, session=session),
                 lambda cid: self._db.token_categories.delete_token_category(change.uid, cid, session=session),
                 dry_run,
+            )
+            # update cached Token for future requests
+            cache.update_token(
+                update_dataclass(current_token, {'categories': token_data['categories']}, Token)
             )
 
             # Create atomic to append to the history event

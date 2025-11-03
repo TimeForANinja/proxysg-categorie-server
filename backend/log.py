@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 import json
 import sys
@@ -60,14 +61,45 @@ def _to_json(attachment: Any) -> str:
         return str(attachment)
 
 
-def log_debug(module: str, message: str, *attachment: Any):
-    # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).debug(f'{module} | {message} | {_to_json(attachment)}')
+def _remove_keys_from_json(json_str: str, *keys_to_remove: str) -> str:
+    """Remove specified keys from a JSON string after serialization."""
+    if not keys_to_remove:
+        return json_str
+    try:
+        # Parse the JSON string
+        data = json.loads(json_str)
+        # Handle both single objects and lists/tuples
+        if isinstance(data, (list, tuple)):
+            for item in data:
+                if isinstance(item, dict):
+                    for key in keys_to_remove:
+                        item.pop(key, None)
+        elif isinstance(data, dict):
+            for key in keys_to_remove:
+                data.pop(key, None)
+        # Convert back to JSON string
+        return json.dumps(data)
+    except:
+        return json_str
 
-def log_error(module: str, message: str, *attachment: Any):
-    # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).error(f'{module} | {message} | {_to_json(attachment)}')
 
-def log_info(module: str, message: str, *attachment: Any):
+def log_debug(module: str, message: str, *attachment: Any, exclude_keys: tuple[str, ...] = ()):
+    serialized = _to_json(attachment)
+    if exclude_keys:
+        serialized = _remove_keys_from_json(serialized, *exclude_keys)
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).info(f'{module} | {message} | {_to_json(attachment)}')
+    logger.opt(depth=1).debug(f'{module} | {message} | {serialized}')
+
+def log_error(module: str, message: str, *attachment: Any, exclude_keys: tuple[str, ...] = ()):
+    serialized = _to_json(attachment)
+    if exclude_keys:
+        serialized = _remove_keys_from_json(serialized, *exclude_keys)
+    # depth=1 is set so that we log the position log_debug was called and not logger.debug
+    logger.opt(depth=1).error(f'{module} | {message} | {serialized}')
+
+def log_info(module: str, message: str, *attachment: Any, exclude_keys: tuple[str, ...] = ()):
+    serialized = _to_json(attachment)
+    if exclude_keys:
+        serialized = _remove_keys_from_json(serialized, *exclude_keys)
+    # depth=1 is set so that we log the position log_debug was called and not logger.debug
+    logger.opt(depth=1).info(f'{module} | {message} | {serialized}')

@@ -12,8 +12,10 @@ from db.middleware.abc.category_db import MiddlewareDBCategory
 from db.middleware.stagingdb.cache import StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
 from db.middleware.stagingdb.utils.cache import SessionCache
-from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes, get_and_overload_object, get_and_overload_all_objects
+from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes, get_and_overload_object, \
+    get_and_overload_all_objects, update_dataclass
 from db.middleware.stagingdb.utils.update_cats import set_categories
+from log import log_debug
 
 
 class StagingDBCategory(MiddlewareDBCategory):
@@ -165,6 +167,10 @@ class StagingDBCategory(MiddlewareDBCategory):
                 lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid, session=session),
                 lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid, session=session),
                 dry_run,
+            )
+            # update cached Category for future requests
+            cache.update_category(
+                update_dataclass(current_cats, {'nested_categories': category_data['nested_categories']}, Category)
             )
 
             # Create atomic to append to the history event

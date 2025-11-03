@@ -38,16 +38,6 @@ def set_categories(
     :return: Tuple of added and removed categories
     """
     added, removed = analyse_set_categories(is_cats, should_cats)
-    log_debug(
-        "DEBUG", "set_categories",
-        {
-            "is_cats": is_cats,
-            "should_cats": should_cats,
-            "added": added,
-            "removed": removed,
-            "dry_run": dry_run,
-        }
-    )
 
     if not dry_run:
         for x in added: add_cat(x)

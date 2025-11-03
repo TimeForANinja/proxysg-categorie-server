@@ -23,7 +23,7 @@ class SQLiteSubCategory(SubCategoryDBInterface):
                 INNER JOIN categories c
                 ON sc.child_id = c.id AND c.is_deleted = 0
                 WHERE sc.parent_id = ? AND sc.is_deleted = 0''',
-                (int(category_id),)
+                (category_id,)
             )
             rows = cursor.fetchall()
         return [str(row[0]) for row in rows]
@@ -32,12 +32,12 @@ class SQLiteSubCategory(SubCategoryDBInterface):
         with self.get_cursor() as cursor:
             cursor.execute(
                 'INSERT INTO sub_category (parent_id, child_id) VALUES (?, ?)',
-                (int(category_id), int(sub_category_id),)
+                (category_id, sub_category_id,)
             )
 
     def delete_sub_category(self, category_id: str, sub_category_id: str, session: MyTransactionType = None) -> None:
         with self.get_cursor() as cursor:
             cursor.execute(
                 'UPDATE sub_category SET is_deleted = ? WHERE parent_id = ? AND child_id = ? AND is_deleted = 0',
-                (int(time.time()), int(category_id), int(sub_category_id),)
+                (int(time.time()), category_id, sub_category_id,)
             )

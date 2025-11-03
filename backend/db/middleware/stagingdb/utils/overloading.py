@@ -207,3 +207,16 @@ def add_staged_changes(
     # Add the staged changes to the staging DB
     staged.add_batch(staged_changes)
 
+
+def update_dataclass(instance: T, updates: Dict[str, Any], cls: Type[T]) -> T:
+    """
+    Creates a new instance of a dataclass with updated values.
+
+    @param instance: Original dataclass instance
+    @param updates: Dictionary of fields to update
+    @param cls: The dataclass type to create
+    @return: A new instance of the dataclass with updated values
+    """
+    data = asdict(instance)
+    data.update(updates)
+    return cls(**data)

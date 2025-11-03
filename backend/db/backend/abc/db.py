@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from typing import Generator
 
 from db.backend.abc.category import CategoryDBInterface
 from db.backend.abc.history import HistoryDBInterface
@@ -34,5 +35,5 @@ class DBInterface(ABC):
 
     @contextmanager
     @abstractmethod
-    def start_transaction(self) -> MyTransactionType:
+    def start_transaction(self) -> Generator[MyTransactionType, None, None]:
         pass
