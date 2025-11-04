@@ -25,6 +25,7 @@ export const CategoryToKV = (x: ICategory, categories: LUT<ICategory>): StringKV
         cats: cats,
         categories: cats,
         cat_ids: x.nested_categories.join(','),
+        changed: x.pending_changes ? 'true' : 'false',
     }
 }
 
@@ -35,6 +36,7 @@ export const CategoryFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.description,
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
+    SHARED_DEFINITIONS.changed,
 ]
 export const CategoryFieldsRaw: FieldDefinition[] = [
     ...CategoryFields,

@@ -73,7 +73,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         // update api
         setURLCategory(authMgmt.token, url.id, newList).then(newCats => {
             // save the new version
-            const newURL = {...url, categories: newCats};
+            const newURL = {...url, categories: newCats, pending_changes: true};
             updateURL(newURL);
         });
     };
@@ -89,7 +89,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     return (
         <React.Fragment>
-            <TableRow key={url.id}>
+            <TableRow key={url.id} sx={url.pending_changes ? { backgroundColor: (theme) => theme.palette.warning.light } : undefined}>
                 <TableCell>
                     <IconButton
                         aria-label="expand row"
@@ -113,8 +113,12 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                     <div key={index}>{cat}</div>
                 ))}</TableCell>
                 <TableCell>
-                    <EditIcon onClick={() => onEdit(url)}/>
-                    <DeleteIcon onClick={() => onDelete(url)}/>
+                    <IconButton aria-label="edit url" onClick={() => onEdit(url)} size="small">
+                        <EditIcon />
+                    </IconButton>
+                    <IconButton aria-label="delete url" onClick={() => onDelete(url)} size="small">
+                        <DeleteIcon />
+                    </IconButton>
                 </TableCell>
             </TableRow>
             <TableRow>

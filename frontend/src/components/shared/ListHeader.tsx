@@ -25,7 +25,7 @@ import {bracesFunctions, BuildSyntaxTree, SearchParser} from "../../searchParser
 import {formatDateForFilename} from "../../util/DateString";
 import {StringKV} from "../../model/types/stringKV";
 import {FieldDefinition} from "../../searchParser/fieldDefinition";
-import {useDebounce} from "../../hooks/useDebounce";
+import {useQueryParamState} from "../../hooks/useQueryParamState";
 
 
 interface ListHeaderProps {
@@ -47,10 +47,9 @@ export const ListHeader = (props: ListHeaderProps) => {
     const [myTree, setMyTree] = React.useState<SearchParser | null>(null);
     const [treeError, setTreeError] = React.useState<string | null>(null);
     const [isInfoOpen, setIsInfoOpen] = React.useState<boolean>(false);
-    const [searchStringInput, setSearchStringInput] = React.useState<string>("");
 
-    // Debounce the search string to avoid rebuilding the tree on every keystroke
-    const debouncedSearchString = useDebounce(searchStringInput, 300);
+    // Keep input in sync with URL via small reusable hook
+    const { value: searchStringInput, setValue: setSearchStringInput, debounced: debouncedSearchString } = useQueryParamState({ param: 'q' });
 
     // Parse Search Tree
     React.useEffect(() => {
@@ -76,6 +75,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                         label="Quick Search"
                         size="small"
                         variant="filled"
+                        value={searchStringInput}
                         onChange={event => setSearchStringInput(event.target.value)}
                         slotProps={{
                             input: {

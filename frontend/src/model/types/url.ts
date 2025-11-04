@@ -25,6 +25,7 @@ export const UrlToKV = (x: IUrl, categories: LUT<ICategory>): StringKV => {
         categories: cats,
         cat_ids: x.categories.join(','),
         bc_cats: x.bc_cats.join(','),
+        changed: x.pending_changes ? 'true' : 'false',
     };
 }
 
@@ -35,6 +36,7 @@ export const UrlFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
     { field: "bc_cats", description: "Blue Coat categories" },
+    SHARED_DEFINITIONS.changed,
 ]
 export const UrlFieldsRaw: FieldDefinition[] = [
     ...UrlFields,
