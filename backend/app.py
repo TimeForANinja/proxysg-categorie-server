@@ -8,7 +8,7 @@ from flask_compress import Compress
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from background.background_tasks import start_background_tasks
-from db.db_singleton import get_db
+from db.db_singleton import get_db, close_connection
 from routes.auth import add_auth_bp
 from routes.category import add_category_bp
 from routes.compile import add_compile_bp
@@ -103,10 +103,14 @@ def init_background(a: APIFlask):
 
 
 def migrate_db(a: APIFlask):
+    log_debug("APP", "App migrate_db called")
     with a.app_context():
         # init db to trigger schema migration
-        db = get_db()
-        db.close()
+        _db = get_db()
+        # make sure to properly close and delete the DB
+        # MongoDB is not fork-safe, so we need to close the connection before gunicorn spawns more workers
+        # https://www.mongodb.com/docs/languages/python/pymongo-driver/current/connect/mongoclient/#forking-a-process-causes-a-deadlock
+        close_connection()
 
 
 if __name__ == '__main__':
