@@ -22,13 +22,15 @@ def get_db() -> StagingDB:
             connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
             connection_host = mongo_cfg.get('CON_HOST', 'localhost')
             connection_port = int(mongo_cfg.get('CON_PORT', 27017))
+            connection_direct = bool(mongo_cfg.get('CON_DIRECT', False))
             log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'auth_db': connection_auth_real, 'user': connection_user, 'host': f'{connection_host}:{connection_port}' })
             db = MyMongoDB(MongoClient(
                 connection_host,
                 port=connection_port,
                 username=connection_user,
                 password=connection_password,
-                authSource=connection_auth_real
+                authSource=connection_auth_real,
+                directconnection=connection_direct,
             ), database_name)
         elif db_type == 'sqlite':
             sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})

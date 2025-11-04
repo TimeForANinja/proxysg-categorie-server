@@ -32,6 +32,7 @@ services:
       APP_DB__MONGO__DBAUTH: admin
       APP_DB__MONGO__CON_HOST: mongodb
       APP_DB__MONGO__CON_PORT: 27017
+      APP_DB__MONGO__CON_DIRECT: True
       APP_PORT: 8080
     depends_on:
       mongodb:
