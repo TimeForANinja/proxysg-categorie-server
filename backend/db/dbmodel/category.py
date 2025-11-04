@@ -75,3 +75,15 @@ class Category(MutableCategory):
         'required': True,
         'description': 'Whether the category has pending changes or not',
     })
+
+    @staticmethod
+    def from_mutable(category_id: str, mut_category: MutableCategory) -> 'Category':
+        return Category(
+            id=category_id,
+            name=mut_category.name,
+            color=mut_category.color,
+            description=mut_category.description,
+            is_deleted=0,
+            nested_categories=[],
+            pending_changes=False,
+        )

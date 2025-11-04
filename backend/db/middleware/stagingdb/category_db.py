@@ -132,6 +132,11 @@ class StagingDBCategory(MiddlewareDBCategory):
                 # Add the category to the persistent database
                 self._db.categories.add_category(mutable_category, category_id, session=session)
 
+            # add Category to the cache for future requests
+            cache.update_category(
+                Category.from_mutable(category_id, mutable_category)
+            )
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,

@@ -39,15 +39,7 @@ class MongoDBURL(URLDBInterface):
             'bc_cats': [NO_BC_CATEGORY_YET],
         }, **mongo_transaction_kwargs(session))
 
-        return URL(
-            id=url_id,
-            hostname=mut_url.hostname,
-            description=mut_url.description,
-            is_deleted=0,
-            categories=[],
-            bc_cats=[NO_BC_CATEGORY_YET],
-            pending_changes=False,
-        )
+        return URL.from_mutable(url_id, mut_url)
 
     def get_url(self, url_id: str, session: MyTransactionType = None) -> Optional[URL]:
         query = {'_id': url_id, 'is_deleted': 0}

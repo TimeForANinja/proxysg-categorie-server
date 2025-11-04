@@ -133,6 +133,11 @@ class StagingDBToken(MiddlewareDBToken):
                 # Add the token to the persistent database
                 self._db.tokens.add_token(token_id, token_value, mutable_token, session=session)
 
+            # add Token to the cache for future requests
+            cache.update_token(
+                Token.from_mutable(token_id, token_value, mutable_token)
+            )
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,

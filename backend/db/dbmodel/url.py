@@ -82,3 +82,14 @@ class URL(MutableURL):
         'required': True,
         'description': 'Whether the category has pending changes or not',
     })
+
+    @staticmethod
+    def from_mutable(url_id: str, mut_url: MutableURL) -> 'URL':
+        return URL(
+            hostname=mut_url.hostname,
+            description=mut_url.description,
+            id=url_id,
+            is_deleted=0,
+            bc_cats=[NO_BC_CATEGORY_YET],
+            pending_changes=False,
+        )

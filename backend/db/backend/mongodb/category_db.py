@@ -40,15 +40,7 @@ class MongoDBCategory(CategoryDBInterface):
             'nested_categories': []
         }, **mongo_transaction_kwargs(session))
 
-        return Category(
-            id=category_id,
-            name=category.name,
-            color=category.color,
-            description=category.description,
-            is_deleted=0,
-            nested_categories=[],
-            pending_changes=False,
-        )
+        return Category.from_mutable(category_id, category)
 
     def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
         query = {'_id': category_id, 'is_deleted': 0}

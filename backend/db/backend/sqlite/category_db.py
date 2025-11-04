@@ -42,15 +42,7 @@ class SQLiteCategory(CategoryDBInterface):
                 (category_id, mut_cat.name, mut_cat.description, mut_cat.color)
             )
 
-        new_cat = Category(
-            name=mut_cat.name,
-            description=mut_cat.description,
-            color=mut_cat.color,
-            id=category_id,
-            is_deleted=0,
-            pending_changes=False,
-        )
-        return new_cat
+        return Category.from_mutable(category_id, mut_cat)
 
     def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
         with self.get_cursor() as cursor:

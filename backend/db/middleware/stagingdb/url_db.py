@@ -138,6 +138,11 @@ class StagingDBURL(MiddlewareDBURL):
                 # Add the URL to the persistent database
                 self._db.urls.add_url(mutable_url, url_id, session=session)
 
+            # add URL to the cache for future requests
+            cache.update_url(
+                URL.from_mutable(url_id, mutable_url)
+            )
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,

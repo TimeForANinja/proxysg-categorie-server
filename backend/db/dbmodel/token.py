@@ -62,3 +62,15 @@ class Token(MutableToken):
         'required': True,
         'description': 'Whether the category has pending changes or not',
     })
+
+    @staticmethod
+    def from_mutable(token_id: str, token_str: str, mut_token: MutableToken) -> 'Token':
+        return Token(
+            id=token_id,
+            token=token_str,
+            description=mut_token.description,
+            last_use=0,
+            is_deleted=0,
+            categories=[],
+            pending_changes=False,
+        )

@@ -37,15 +37,7 @@ class SQLiteURL(URLDBInterface):
                 (url_id, mut_url.hostname, mut_url.description, NO_BC_CATEGORY_YET)
             )
 
-        new_url = URL(
-            hostname=mut_url.hostname,
-            description=mut_url.description,
-            id=url_id,
-            is_deleted=0,
-            bc_cats=[NO_BC_CATEGORY_YET],
-            pending_changes=False,
-        )
-        return new_url
+        return URL.from_mutable(url_id, mut_url)
 
     def get_url(self, url_id: str, session: MyTransactionType = None) -> Optional[URL]:
         with self.get_cursor() as cursor:

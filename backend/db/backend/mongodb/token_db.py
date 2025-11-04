@@ -42,15 +42,7 @@ class MongoDBToken(TokenDBInterface):
             'categories': []
         }, **mongo_transaction_kwargs(session))
 
-        return Token(
-            id=token_id,
-            token=uuid,
-            description=mut_tok.description,
-            last_use=0,
-            is_deleted=0,
-            categories=[],
-            pending_changes=False,
-        )
+        return Token.from_mutable(token_id, uuid, mut_tok)
 
     def get_token(self, token_id: str, session: MyTransactionType = None) -> Optional[Token]:
         query = {'_id': token_id, 'is_deleted': 0}
