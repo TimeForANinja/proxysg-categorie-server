@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List
 
 from db.db_singleton import get_db
-from db.dbmodel.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP
+from db.dbmodel.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP, FAILED_LOOKUP
 from log import log_info, log_error, log_debug
 
 
@@ -15,9 +15,13 @@ class ServerCredentials:
     password: str
     verifySSL: bool
 
-    def base_url(self):
+    def query(self, url: str):
         """Build a base URL which includes basic auth"""
-        return f'https://{self.user}:{self.password}@{self.server}:8082'
+        return f'https://{self.user}:{self.password}@{self.server}:8082/ContentFilter/TestUrl/{url}'
+
+    def sanitized_query(self, url: str):
+        """Build a base URL which does not include the password"""
+        return f'https://{self.user}@{self.server}:8082/ContentFilter/TestUrl/{url}'
 
 def is_unknown_category(bc_cats: List[str]) -> bool:
     """
@@ -27,6 +31,7 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
     * no cat is set
     * only the NO_BC_CATEGORY_YET category is set
     * only 'unavailable' cat is set
+    * only 'query failed' cat is set
 
     :param bc_cats: The list of BlueCoat Categories to check
     :return: True if the list is unknown, False otherwise
@@ -34,6 +39,8 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
     if len(bc_cats) == 0:
         return True
     if len(bc_cats) == 1 and bc_cats[0] == NO_BC_CATEGORY_YET:
+        return True
+    if len(bc_cats) == 1 and bc_cats[0] == FAILED_LOOKUP:
         return True
     # TODO: decide on how to continue with this (currently disabled by the 'false and')
     # Unavailable is used a) when BC Cat Services are offline
@@ -88,11 +95,8 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
     :return: A list of strings representing the categories of the URLs
     """
 
-    # URL endpoint for the request
-    req_url = f'{creds.base_url()}/ContentFilter/TestUrl/{url}'
-
     try:
-        response = requests.get(req_url, verify=creds.verifySSL)
+        response = requests.get(creds.query(url), verify=creds.verifySSL)
         response.raise_for_status()
 
         raw_content = response.text
@@ -106,14 +110,14 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
         log_error(
             'background',
             'BlueCoat Category not found in Response',
-            {'url': url, 'response': raw_content }
+            {'url': url, 'query': creds.sanitized_query(url), 'response': raw_content }
         )
-        return []
+        return [FAILED_LOOKUP]
     except requests.RequestException as e:
         # TODO: this logs user/password as part of the request URL
         log_error(
             'background',
             'Error fetching BlueCoat Categories',
-            {'url': url, 'error': str(e)}
+            {'url': url, 'query': creds.sanitized_query(url), 'error': str(e)}
         )
-        return []
+        return [FAILED_LOOKUP]

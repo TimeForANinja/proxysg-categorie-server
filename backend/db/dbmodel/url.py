@@ -10,6 +10,8 @@ from db.util.validators import simpleURLValidator, simpleStringValidator
 NO_BC_CATEGORY_YET = 'to be queried'
 # Value returned by BC if the Category-Service is not working
 FAILED_BC_CATEGORY_LOOKUP = 'unavailable'
+# Value used when a Lookup Failed
+FAILED_LOOKUP = 'query failed'
 
 
 @dataclass(kw_only=True)
