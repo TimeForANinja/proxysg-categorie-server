@@ -37,8 +37,8 @@ class MySQLiteDB(DBInterface):
         self.tasks = SQLiteTask(self.get_cursor)
         self.staging = SQLiteStaging(self.get_cursor)
 
-        # Run migrations if needed
-        self._run_migrations()
+        # prep sqlite - run migrations if needed
+        self._on_init()
 
     @contextmanager
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
@@ -79,12 +79,12 @@ class MySQLiteDB(DBInterface):
                 cursor.close()
 
     def close(self):
-        # sqlite is never permanently open
-        # so nothing to do here
+        # sqlite is never permanently open - so nothing to do here
         pass
 
-    def _run_migrations(self):
+    def _on_init(self):
         """
+        Run Initialization and Optimization steps.
         Check for migration scripts and run them in sequence to upgrade the database schema.
         Migration scripts should be named in the format: <version>_<description>.sql
         """

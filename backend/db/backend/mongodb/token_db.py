@@ -29,8 +29,6 @@ class MongoDBToken(TokenDBInterface):
     def __init__(self, db: Database[Mapping[str, Any] | Any]):
         self.db = db
         self.collection = self.db['tokens']
-        # Create index on token field
-        self.collection.create_index({'token': 1}, unique=True)
 
     def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: MyTransactionType = None) -> Token:
         self.collection.insert_one({
