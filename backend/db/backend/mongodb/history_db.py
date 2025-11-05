@@ -14,6 +14,7 @@ class MongoDBHistory(HistoryDBInterface):
     def __init__(self, db: Database[Mapping[str, Any] | Any]):
         self.db = db
         self.collection: Collection = db['history']
+        self.atomics_collection: Collection = db['history_atomics']
 
     def add_history_event(
         self,
@@ -37,38 +38,48 @@ class MongoDBHistory(HistoryDBInterface):
         :param session: Optional database session to use
         :return: The newly created history event
         """
+        # prepare timestamp (current UNIX time)
+        timestamp = int(time.time())
 
-        # Convert atomics to dictionaries for MongoDB storage
-        atomics_list = []
-        if atomics:
-            for atomic in atomics:
-                atomics_list.append({
-                    'uid': atomic.id,
-                    'user': AuthUser.serialize(atomic.user),
-                    'action': atomic.action,
-                    'description': atomic.description,
-                    'time': atomic.time,
-                    'ref_token': atomic.ref_token,
-                    'ref_url': atomic.ref_url,
-                    'ref_category': atomic.ref_category,
-                })
-
-        timestamp = int(time.time())  # Current UNIX time
+        # first, insert the history event WITHOUT embedding atomics to avoid large docs
         result = self.collection.insert_one({
             'time': timestamp,
             'description': action,
-            'atomics': atomics_list,
             'user': AuthUser.serialize(user),
             'ref_token': ref_token,
             'ref_url': ref_url,
             'ref_category': ref_category,
         }, **mongo_transaction_kwargs(session))
 
+        # store the history id, so we can use it when inserting atomics
+        history_id = result.inserted_id
+
+        # prepare atomics for insertion
+        atomics_list = atomics or []
+        if atomics_list:
+            docs = [
+                {
+                    'history_id': history_id,
+                    'uid': a.id,
+                    'user': AuthUser.serialize(a.user),
+                    'action': a.action,
+                    'description': a.description,
+                    'time': a.time,
+                    'ref_token': a.ref_token,
+                    'ref_url': a.ref_url,
+                    'ref_category': a.ref_category,
+                }
+                for a in atomics_list
+            ]
+            # insert_many respects session via kwargs
+            self.atomics_collection.insert_many(docs, **mongo_transaction_kwargs(session))
+
+        # return the History object including embedded atomics
         return History(
-            id=str(result.inserted_id),
+            id=str(history_id),
             time=timestamp,
             description=action,
-            atomics=atomics or [],
+            atomics=atomics_list,
             user=user,
             ref_token=ref_token,
             ref_url=ref_url,
@@ -76,34 +87,45 @@ class MongoDBHistory(HistoryDBInterface):
         )
 
     def get_history_events(self) -> List[History]:
-        events = self.collection.find({})
-        result = []
+        # Fetch all history events first
+        event_docs = list(self.collection.find({}))
+        result: List[History] = []
 
-        for event in events:
-            # Convert atomics dictionaries to Atomic objects
-            atomics_list = [
-                Atomic(
-                    id=atomic_dict['uid'],
-                    user=AuthUser.unserialize(atomic_dict['user']),
-                    action=atomic_dict['action'],
-                    description=atomic_dict.get('description'),
-                    time=atomic_dict['time'],
-                    ref_token=atomic_dict.get('ref_token', []),
-                    ref_url=atomic_dict.get('ref_url', []),
-                    ref_category=atomic_dict.get('ref_category', []),
-                )
-                for atomic_dict in event.get('atomics', [])
-            ]
+        if not event_docs:
+            # shortcut to improve performance
+            return result
 
+        # fetch all atomics, since we also fetched all history events
+        atomics_docs = list(self.atomics_collection.find({}))
+
+        # Group atomics by history_id
+        atomics_by_history: dict[Any, List[Atomic]] = {}
+        for doc in atomics_docs:
+            atomic_obj = Atomic(
+                id=doc['uid'],
+                user=AuthUser.unserialize(doc['user']),
+                action=doc['action'],
+                description=doc['description'],
+                time=doc['time'],
+                ref_token=doc.get('ref_token', []),
+                ref_url=doc.get('ref_url', []),
+                ref_category=doc.get('ref_category', []),
+            )
+            atomics_by_history.setdefault(doc['history_id'], []).append(atomic_obj)
+
+        # Build History objects with their associated atomics
+        for event in event_docs:
+            history_id = event['_id']
+            atomics_list = atomics_by_history.get(history_id, [])
             result.append(History(
-                id=str(event['_id']),
+                id=str(history_id),
                 time=event['time'],
-                description=event.get('description'),
+                description=event['description'],
                 atomics=atomics_list,
                 user=AuthUser.unserialize(event['user']),
-                ref_token=event['ref_token'],
-                ref_url=event['ref_url'],
-                ref_category=event['ref_category'],
+                ref_token=event.get('ref_token', []),
+                ref_url=event.get('ref_url', []),
+                ref_category=event.get('ref_category', []),
             ))
 
         return result

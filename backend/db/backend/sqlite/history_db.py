@@ -50,10 +50,25 @@ class SQLiteHistory(HistoryDBInterface):
 
             # Add atomics if provided
             atomics_list = atomics or []
-            for atomic in atomics_list:
-                cursor.execute(
+            if atomics_list:
+                # build params and insert into DB
+                params = [
+                    (
+                        atomic.id,
+                        AuthUser.serialize(atomic.user),
+                        history_id,
+                        atomic.action,
+                        atomic.description or '',
+                        atomic.time,
+                        join_str_group(atomic.ref_token),
+                        join_str_group(atomic.ref_url),
+                        join_str_group(atomic.ref_category)
+                    )
+                    for atomic in atomics_list
+                ]
+                cursor.executemany(
                     'INSERT INTO atomics (id, user, history_id, action, description, time, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    (atomic.id, AuthUser.serialize(atomic.user), history_id, atomic.action, atomic.description or '', atomic.time, join_str_group(atomic.ref_token), join_str_group(atomic.ref_url), join_str_group(atomic.ref_category))
+                    params,
                 )
 
         hist = History(
