@@ -1,24 +1,27 @@
-
-export interface IAtomic {
-    id: string;
-    action: string;
-    description: string;
-    user: string;
-    timestamp: number;
+/**
+ * Utility interface for generalizing data thats referencing other entries
+ * e.g.: a commit or atomic that has a reference to the url/category/token it was created for
+ */
+export interface IReferred {
     ref_token: string[];
     ref_url: string[];
     ref_category: string[];
 }
 
-export interface ICommits {
+export interface IAtomic extends IReferred {
+    id: string;
+    action: string;
+    description: string;
+    user: string;
+    timestamp: number;
+}
+
+export interface ICommits extends IReferred {
     id: string;
     time: number;
     description: string;
     user: string;
     atomics: IAtomic[];
-    ref_token: string[];
-    ref_url: string[];
-    ref_category: string[];
 }
 
 const HISTORY_BASE_URL = '/api/history'

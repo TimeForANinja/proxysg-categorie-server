@@ -52,6 +52,7 @@ interface BuildRowProps {
     categories: LUT<ICategory>,
     onEdit: (url: IUrl) => void,
     onDelete: (url: IUrl) => void,
+    history: ICommits[],
 }
 /**
  * Renders a table row for a URL entry.
@@ -62,7 +63,7 @@ interface BuildRowProps {
  * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
-    const { url, updateURL, categories, onEdit, onDelete } = props;
+    const { url, updateURL, categories, onEdit, onDelete, history } = props;
     const authMgmt = useAuth();
 
     // (un)fold a row into multiple rows
@@ -78,14 +79,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         });
     };
 
-    const [myHist, setMyHist] = React.useState<ICommits[]>([]);
-    React.useEffect(() => {
-        if (!isOpen) return;
-        getHistory(authMgmt.token).then(fullHist => {
-            const newMyHist = fullHist.filter(h => h.ref_url.includes(url.id));
-            setMyHist(newMyHist);
-        });
-    }, [isOpen, authMgmt, url])
+    const myHist = React.useMemo(() => !isOpen ? [] : history.filter(h => h.ref_url.includes(url.id)), [history, isOpen, url.id])
 
     return (
         <React.Fragment>
@@ -125,7 +119,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={7}>
                     <Collapse in={isOpen} timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 1}} >
-                            <HistoryTable commits={myHist} />
+                            <HistoryTable commits={myHist} url={url.id} />
                         </Box>
                     </Collapse>
                 </TableCell>
@@ -140,6 +134,7 @@ function MatchingListPage() {
     // State info for the Page
     const [urls, setURLs] = React.useState<IUrl[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
+    const [history, setHistory] = React.useState<ICommits[]>([]);
 
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IUrl[]>([]);
@@ -165,6 +160,11 @@ function MatchingListPage() {
             .then(([urlsData, categoriesData]) => {
                 setURLs(urlsData);
                 setCategory(buildLUTFromID(categoriesData));
+                // fetch history async after urls and categories, since it's only needed when opening a row
+                return getHistory(authMgmt.token);
+            })
+            .then(historyData => {
+                setHistory(historyData);
             })
             .catch((error) => console.error("Error:", error));
     }, [authMgmt]);
@@ -244,6 +244,7 @@ function MatchingListPage() {
                                             categories={categories}
                                             onEdit={handleEditOpen}
                                             onDelete={handleDelete}
+                                            history={history}
                                         />
                                     )}
                                 </TableBody>

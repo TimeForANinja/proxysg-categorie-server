@@ -25,6 +25,7 @@ import {useAuth} from "../model/AuthContext";
 import {CleanupFlags, cleanupUnused, cleanupUncommitted} from "../api/task_new";
 import {TaskStatus} from './shared/TaskStatus';
 import {formatDuration} from "../util/DateString";
+import useSlidingWindow from "../hooks/useSlidingWindow";
 
 interface BuildRowProps {
     task: ITask,
@@ -83,6 +84,14 @@ const SettingsPage: React.FC = () => {
         })
     }
 
+    // sliding window over tasks (newest first). window and pagination of 10
+    const { startIndex, endIndex, topHidden, bottomHidden, showMoreTop, showMoreBottom } = useSlidingWindow(tasks.length, {
+        windowSize: 10,
+        step: 10,
+        resetKeys: [tasks],
+    });
+    const visibleTasks = React.useMemo(() => tasks.slice(startIndex, endIndex), [tasks, startIndex, endIndex]);
+
     return (
         <Container maxWidth="md" sx={{ mt: 4 }}>
             <Paper elevation={3} sx={{ p: 4 }}>
@@ -112,8 +121,26 @@ const SettingsPage: React.FC = () => {
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
-                                                    {tasks.map(task =>
+                                                    {topHidden > 0 && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4}>
+                                                                <Button size="small" onClick={showMoreTop}>
+                                                                    {topHidden} hidden, click to show {Math.min(10, topHidden)} more (slide window)
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                    {visibleTasks.map(task => (
                                                         <BuildRow key={task.id} task={task} />
+                                                    ))}
+                                                    {bottomHidden > 0 && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4}>
+                                                                <Button size="small" onClick={showMoreBottom}>
+                                                                    {bottomHidden} hidden, click to show {Math.min(10, bottomHidden)} more (slide window)
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
                                                     )}
                                                 </TableBody>
                                             </Table>

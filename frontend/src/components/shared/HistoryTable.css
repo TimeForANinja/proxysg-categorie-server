@@ -40,7 +40,7 @@ td {
     content: '';
     display: block;
     background-color: black;
-    transform: rotate(-37deg);
+    transform: rotate(-30deg);
     left: -1px;
     bottom: 100%;
     margin-bottom: -25px;
@@ -54,7 +54,7 @@ td {
     content: '';
     display: block;
     background-color: black;
-    transform: rotate(37deg);
+    transform: rotate(30deg);
     left: -1px;
     top: 100%;
     margin-top: -25px;
