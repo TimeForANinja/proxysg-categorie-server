@@ -50,7 +50,7 @@ class MiddlewareDBCategory(ABC):
         pass
 
     @abstractmethod
-    def delete_category(self, auth: AuthUser, cat_id: str) -> None:
+    def delete_category(self, auth: AuthUser, cat_id: str):
         """
         Soft-delete a category by setting its `is_deleted` flag to the current timestamp.
 

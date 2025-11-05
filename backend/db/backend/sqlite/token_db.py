@@ -35,7 +35,7 @@ class SQLiteToken(TokenDBInterface):
             token_id: str,
             uuid: str,
             mut_tok: MutableToken,
-            session: MyTransactionType = None,
+            session: Optional[MyTransactionType] = None,
     ) -> Token:
         with self.get_cursor() as cursor:
             cursor.execute(
@@ -45,7 +45,7 @@ class SQLiteToken(TokenDBInterface):
 
         return Token.from_mutable(token_id, uuid, mut_tok)
 
-    def get_token(self, token_id: str, session: MyTransactionType = None) -> Optional[Token]:
+    def get_token(self, token_id: str, session: Optional[MyTransactionType] = None) -> Optional[Token]:
         with self.get_cursor() as cursor:
             cursor.execute(
                 '''SELECT
@@ -103,7 +103,7 @@ class SQLiteToken(TokenDBInterface):
             return _build_token(row)
         return None
 
-    def update_token(self, token_id: str, token: MutableToken, session: MyTransactionType = None) -> Token:
+    def update_token(self, token_id: str, token: MutableToken, session: Optional[MyTransactionType] = None) -> Token:
         updates, params = build_update_query(token, {
             'description': 'description',
         })
@@ -116,7 +116,7 @@ class SQLiteToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def update_usage(self, token_id: str) -> None:
+    def update_usage(self, token_id: str):
         timestamp = int(time.time())
         with self.get_cursor() as cursor:
             cursor.execute(
@@ -124,7 +124,7 @@ class SQLiteToken(TokenDBInterface):
                 (timestamp, token_id,)
             )
 
-    def roll_token(self, token_id: str, uuid: str, session: MyTransactionType = None) -> Token:
+    def roll_token(self, token_id: str, uuid: str, session: Optional[MyTransactionType] = None) -> Token:
         with self.get_cursor() as cursor:
             cursor.execute(
                 'UPDATE tokens SET token = ? WHERE id = ? AND is_deleted = 0',
@@ -133,14 +133,14 @@ class SQLiteToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def delete_token(self, token_id: str, session: MyTransactionType = None) -> None:
+    def delete_token(self, token_id: str, session: Optional[MyTransactionType] = None):
         with self.get_cursor() as cursor:
             cursor.execute(
                 'UPDATE tokens SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
                 (int(time.time()), token_id,)
             )
 
-    def get_all_tokens(self, session: MyTransactionType = None) -> List[Token]:
+    def get_all_tokens(self, session: Optional[MyTransactionType] = None) -> List[Token]:
         with self.get_cursor() as cursor:
             cursor.execute(
                 '''SELECT

@@ -29,7 +29,7 @@ class StagedCollection:
         self._db.staging.store_staged_changes(changes)
         self.simplify_stack()
 
-    def get_all(self, session: MyTransactionType = None) -> List[StagedChange]:
+    def get_all(self, session: Optional[MyTransactionType] = None) -> List[StagedChange]:
         """Get all staged changes from the persistent storage."""
         return self._db.staging.get_staged_changes(session=session)
 
@@ -57,7 +57,7 @@ class StagedCollection:
         # Re-add the filtered changes
         self.add_batch(filtered_changes)
 
-    def clear(self, before: int = None, session: MyTransactionType = None):
+    def clear(self, before: int = None, session: Optional[MyTransactionType] = None):
         """
         Clear all staged changes from the persistent storage.
 

@@ -69,7 +69,7 @@ class StagingDBToken(MiddlewareDBToken):
         )
         return self.get_token(token_id)
 
-    def update_usage(self, token_id: str) -> None:
+    def update_usage(self, token_id: str):
         # Usage updates go straight to DB
         self._db.tokens.update_usage(token_id)
 
@@ -84,7 +84,7 @@ class StagingDBToken(MiddlewareDBToken):
         )
         return self.get_token(token_id)
 
-    def delete_token(self, auth: AuthUser, token_id: str) -> None:
+    def delete_token(self, auth: AuthUser, token_id: str):
         add_staged_change(
             action_type=ActionType.DELETE,
             action_table=ActionTable.TOKEN,
@@ -103,11 +103,11 @@ class StagingDBToken(MiddlewareDBToken):
         )
 
     def commit(
-            self,
-            change: StagedChange,
-            cache: SessionCache,
-            dry_run: bool,
-            session: MyTransactionType = None,
+        self,
+        change: StagedChange,
+        cache: SessionCache,
+        dry_run: bool,
+        session: Optional[MyTransactionType] = None,
     ) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.

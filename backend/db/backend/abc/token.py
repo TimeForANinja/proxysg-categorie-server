@@ -7,7 +7,7 @@ from db.dbmodel.token import MutableToken, Token
 
 class TokenDBInterface(ABC):
     @abstractmethod
-    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: MyTransactionType = None) -> Token:
+    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: Optional[MyTransactionType] = None) -> Token:
         """
         Add a new token with the given name, and an optional description.
 
@@ -20,7 +20,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_token(self, token_id: str, session: MyTransactionType = None) -> Optional[Token]:
+    def get_token(self, token_id: str, session: Optional[MyTransactionType] = None) -> Optional[Token]:
         """
         Retrieve the details of a specific token by its ID.
 
@@ -42,7 +42,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_token(self, token_id: str, token: MutableToken, session: MyTransactionType = None) -> Token:
+    def update_token(self, token_id: str, token: MutableToken, session: Optional[MyTransactionType] = None) -> Token:
         """
         Update the details of a specific token.
 
@@ -53,7 +53,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_usage(self, token_id: str) -> None:
+    def update_usage(self, token_id: str):
         """
         Update the usage counter for a specified token identified by its ID.
 
@@ -62,7 +62,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def roll_token(self, token_id: str, uuid: str, session: MyTransactionType = None) -> Token:
+    def roll_token(self, token_id: str, uuid: str, session: Optional[MyTransactionType] = None) -> Token:
         """
         Re-Roll the Token of a specific token.
 
@@ -74,7 +74,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_token(self, token_id: str, session: MyTransactionType = None) -> None:
+    def delete_token(self, token_id: str, session: Optional[MyTransactionType] = None):
         """
         Soft-delete a token by setting its `is_deleted` flag to the current timestamp.
 
@@ -84,7 +84,7 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_tokens(self, session: MyTransactionType = None) -> List[Token]:
+    def get_all_tokens(self, session: Optional[MyTransactionType] = None) -> List[Token]:
         """
         Retrieve all active tokens that are not marked as deleted.
 

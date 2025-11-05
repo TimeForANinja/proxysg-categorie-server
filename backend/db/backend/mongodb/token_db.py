@@ -30,7 +30,7 @@ class MongoDBToken(TokenDBInterface):
         self.db = db
         self.collection = self.db['tokens']
 
-    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: MyTransactionType = None) -> Token:
+    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: Optional[MyTransactionType] = None) -> Token:
         self.collection.insert_one({
             '_id': token_id,
             'token': uuid,
@@ -42,7 +42,7 @@ class MongoDBToken(TokenDBInterface):
 
         return Token.from_mutable(token_id, uuid, mut_tok)
 
-    def get_token(self, token_id: str, session: MyTransactionType = None) -> Optional[Token]:
+    def get_token(self, token_id: str, session: Optional[MyTransactionType] = None) -> Optional[Token]:
         query = {'_id': token_id, 'is_deleted': 0}
         row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
         if not row:
@@ -58,7 +58,7 @@ class MongoDBToken(TokenDBInterface):
 
         return _build_token(row)
 
-    def update_token(self, token_id: str, token: MutableToken, session: MyTransactionType = None) -> Token:
+    def update_token(self, token_id: str, token: MutableToken, session: Optional[MyTransactionType] = None) -> Token:
         query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'description': token.description,
@@ -71,7 +71,7 @@ class MongoDBToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def update_usage(self, token_id: str) -> None:
+    def update_usage(self, token_id: str):
         query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'last_use': int(time.time()),
@@ -82,7 +82,7 @@ class MongoDBToken(TokenDBInterface):
         if result.matched_count == 0:
             raise ValueError(f'Token with ID {token_id} not found or is deleted.')
 
-    def roll_token(self, token_id: str, uuid: str, session: MyTransactionType = None) -> Token:
+    def roll_token(self, token_id: str, uuid: str, session: Optional[MyTransactionType] = None) -> Token:
         query = {'_id': token_id, 'is_deleted': 0}
         update_fields = {
             'token': uuid,
@@ -95,7 +95,7 @@ class MongoDBToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def delete_token(self, token_id: str, session: MyTransactionType = None) -> None:
+    def delete_token(self, token_id: str, session: Optional[MyTransactionType] = None):
         query = {'_id': token_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': 1}}
         result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
@@ -103,7 +103,7 @@ class MongoDBToken(TokenDBInterface):
         if result.matched_count == 0:
             raise ValueError(f'Token with ID {token_id} not found or already deleted.')
 
-    def get_all_tokens(self, session: MyTransactionType = None) -> List[Token]:
+    def get_all_tokens(self, session: Optional[MyTransactionType] = None) -> List[Token]:
         rows = self.collection.find({ 'is_deleted': 0 }, **mongo_transaction_kwargs(session))
         return [
             _build_token(row)

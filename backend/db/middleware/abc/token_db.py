@@ -50,7 +50,7 @@ class MiddlewareDBToken(ABC):
         pass
 
     @abstractmethod
-    def update_usage(self, token_id: str) -> None:
+    def update_usage(self, token_id: str):
         """
         Update the usage counter for a specified token identified by its ID.
 
@@ -70,7 +70,7 @@ class MiddlewareDBToken(ABC):
         pass
 
     @abstractmethod
-    def delete_token(self, auth: AuthUser, token_id: str) -> None:
+    def delete_token(self, auth: AuthUser, token_id: str):
         """
         Soft-delete a token by setting its `is_deleted` flag to the current timestamp.
 

@@ -33,12 +33,12 @@ class Atomic:
 
     @staticmethod
     def new(
-            action: str,
-            user: AuthUser,
-            description: str,
-            ref_token: List[str] = None,
-            ref_url: List[str] = None,
-            ref_category: List[str] = None,
+        action: str,
+        user: AuthUser,
+        description: str,
+        ref_token: List[str] = None,
+        ref_url: List[str] = None,
+        ref_category: List[str] = None,
     ) -> 'Atomic':
         return Atomic(
             id=str(uuid.uuid4()),

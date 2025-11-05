@@ -1,7 +1,5 @@
 from typing import List, Callable, Tuple
 
-from log import log_debug
-
 
 def analyse_set_categories(
     is_cats: List[str],

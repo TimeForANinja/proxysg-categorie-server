@@ -15,7 +15,6 @@ from db.middleware.stagingdb.utils.cache import SessionCache
 from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes, get_and_overload_object, \
     get_and_overload_all_objects, update_dataclass
 from db.middleware.stagingdb.utils.update_cats import set_categories
-from log import log_debug
 
 
 class StagingDBCategory(MiddlewareDBCategory):
@@ -84,7 +83,7 @@ class StagingDBCategory(MiddlewareDBCategory):
 
         return self.get_category(cat_id)
 
-    def delete_category(self, auth: AuthUser, cat_id: str) -> None:
+    def delete_category(self, auth: AuthUser, cat_id: str):
         add_staged_change(
             action_type=ActionType.DELETE,
             action_table=ActionTable.CATEGORY,
@@ -103,11 +102,11 @@ class StagingDBCategory(MiddlewareDBCategory):
         )
 
     def commit(
-            self,
-            change: StagedChange,
-            cache: SessionCache,
-            dry_run: bool,
-            session: MyTransactionType = None,
+        self,
+        change: StagedChange,
+        cache: SessionCache,
+        dry_run: bool,
+        session: Optional[MyTransactionType] = None,
     ) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.

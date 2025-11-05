@@ -17,12 +17,12 @@ class RESTAuthRealm(AuthRealmInterface):
     role_map: RoleMap
 
     def __init__(
-            self,
-            auth_url: str,
-            verify_url: str,
-            ssl_verify: bool,
-            paths: Dict[str, str],
-            role_map: str,
+        self,
+        auth_url: str,
+        verify_url: str,
+        ssl_verify: bool,
+        paths: Dict[str, str],
+        role_map: str,
     ):
         """
         :param auth_url: URL to authenticate with username / pw
@@ -61,7 +61,7 @@ class RESTAuthRealm(AuthRealmInterface):
         return value
 
     @staticmethod
-    def _update_json_key(json_obj: Dict[str, Any], key: str, new_value: Any = "*") -> None:
+    def _update_json_key(json_obj: Dict[str, Any], key: str, new_value: Any = "*"):
         """
         Recursively updates a key's value in a JSON object using a dot-separated path.
 

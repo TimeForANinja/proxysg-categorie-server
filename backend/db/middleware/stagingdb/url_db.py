@@ -83,11 +83,11 @@ class StagingDBURL(MiddlewareDBURL):
 
         return self.get_url(url_id)
 
-    def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
+    def set_bc_cats(self, url_id: str, bc_cats: List[str]):
         # BC cats updates go straight to DB
         return self._db.urls.set_bc_cats(url_id, bc_cats)
 
-    def delete_url(self, auth: AuthUser, url_id: str) -> None:
+    def delete_url(self, auth: AuthUser, url_id: str):
         add_staged_change(
             action_type=ActionType.DELETE,
             action_table=ActionTable.URL,
@@ -109,11 +109,11 @@ class StagingDBURL(MiddlewareDBURL):
         )
 
     def commit(
-            self,
-            change: StagedChange,
-            cache: SessionCache,
-            dry_run: bool,
-            session: MyTransactionType = None,
+        self,
+        change: StagedChange,
+        cache: SessionCache,
+        dry_run: bool,
+        session: Optional[MyTransactionType] = None,
     ) -> Optional[Atomic]:
         """
         Apply the staged change to the persistent database.

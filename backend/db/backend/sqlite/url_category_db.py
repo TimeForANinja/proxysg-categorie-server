@@ -1,7 +1,7 @@
 import sqlite3
 import time
 from contextlib import AbstractContextManager
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 from db.backend.abc.url_category import UrlCategoryDBInterface
 from db.backend.abc.util.types import MyTransactionType
@@ -28,14 +28,14 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
             rows = cursor.fetchall()
             return [str(row[0]) for row in rows]
 
-    def add_url_category(self, url_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def add_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         with self.get_cursor() as cursor:
             cursor.execute(
                 'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
                 (url_id, category_id,)
             )
 
-    def delete_url_category(self, url_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def delete_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         with self.get_cursor() as cursor:
             cursor.execute(
                 'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',

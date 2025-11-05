@@ -18,7 +18,7 @@ class StagingDBTokenCategory(MiddlewareDBTokenCategory):
     def get_token_categories_by_token(self, token_id: str) -> List[str]:
         return self._token_db.get_token(token_id).categories
 
-    def add_token_category(self, auth: AuthUser, token_id: str, cat_id: str) -> None:
+    def add_token_category(self, auth: AuthUser, token_id: str, cat_id: str):
         # Get current categories
         current_categories = self.get_token_categories_by_token(token_id)
 
@@ -38,7 +38,7 @@ class StagingDBTokenCategory(MiddlewareDBTokenCategory):
                 staged=self._staged,
             )
 
-    def delete_token_category(self, auth: AuthUser, token_id: str, cat_id: str) -> None:
+    def delete_token_category(self, auth: AuthUser, token_id: str, cat_id: str):
         # Get current categories
         current_categories = self.get_token_categories_by_token(token_id)
 
@@ -58,7 +58,7 @@ class StagingDBTokenCategory(MiddlewareDBTokenCategory):
                 staged=self._staged,
             )
 
-    def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]) -> None:
+    def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]):
         # Use stage_update to create and add the staged change
         add_staged_change(
             action_type=ActionType.SET_CATS,

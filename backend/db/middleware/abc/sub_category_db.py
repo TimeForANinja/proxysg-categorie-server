@@ -15,7 +15,7 @@ class MiddlewareDBSubCategory(ABC):
         pass
 
     @abstractmethod
-    def add_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str) -> None:
+    def add_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str):
         """
         Add a new subcategory
 
@@ -26,7 +26,7 @@ class MiddlewareDBSubCategory(ABC):
         pass
 
     @abstractmethod
-    def delete_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str) -> None:
+    def delete_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str):
         """
         Delete a mapping of a subcategory.
 
@@ -37,7 +37,7 @@ class MiddlewareDBSubCategory(ABC):
         pass
 
     @abstractmethod
-    def set_sub_categories(self, auth: AuthUser, cat_id: str, cat_ids: List[str]) -> None:
+    def set_sub_categories(self, auth: AuthUser, cat_id: str, cat_ids: List[str]):
         """
         Set the subcategories of a category.
 

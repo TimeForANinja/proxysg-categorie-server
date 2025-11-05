@@ -7,7 +7,7 @@ from db.dbmodel.category import MutableCategory, Category
 
 class CategoryDBInterface(ABC):
     @abstractmethod
-    def add_category(self, category: MutableCategory, category_id: str, session: MyTransactionType = None) -> Category:
+    def add_category(self, category: MutableCategory, category_id: str, session: Optional[MyTransactionType] = None) -> Category:
         """
         Add a new category with the given name, color, and an optional description.
 
@@ -19,7 +19,7 @@ class CategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
+    def get_category(self, category_id: str, session: Optional[MyTransactionType] = None) -> Optional[Category]:
         """
         Retrieve the details of a specific category by its ID.
 
@@ -32,10 +32,10 @@ class CategoryDBInterface(ABC):
 
     @abstractmethod
     def update_category(
-            self,
-            cat_id: str,
-            category: MutableCategory,
-            session: MyTransactionType = None,
+        self,
+        cat_id: str,
+        category: MutableCategory,
+        session: Optional[MyTransactionType] = None,
     ) -> Category:
         """
         Update the details of a specific category.
@@ -47,7 +47,7 @@ class CategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_category(self, category_id: str, session: MyTransactionType = None) -> None:
+    def delete_category(self, category_id: str, session: Optional[MyTransactionType] = None):
         """
         Soft-delete a category by setting its `is_deleted` flag to the current timestamp.
 
@@ -57,7 +57,7 @@ class CategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_categories(self, session: MyTransactionType = None) -> List[Category]:
+    def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:
         """
         Retrieve all active categories that are not marked as deleted.
 

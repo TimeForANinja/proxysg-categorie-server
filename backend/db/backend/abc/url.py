@@ -7,7 +7,7 @@ from db.dbmodel.url import MutableURL, URL
 
 class URLDBInterface(ABC):
     @abstractmethod
-    def add_url(self, url: MutableURL, url_id: str, session: MyTransactionType = None) -> URL:
+    def add_url(self, url: MutableURL, url_id: str, session: Optional[MyTransactionType] = None) -> URL:
         """
         Add a new url with the given hostname.
 
@@ -19,7 +19,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_url(self, url_id: str, session: MyTransactionType = None) -> Optional[URL]:
+    def get_url(self, url_id: str, session: Optional[MyTransactionType] = None) -> Optional[URL]:
         """
         Retrieve the details of a specific url by its ID.
 
@@ -31,7 +31,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def update_url(self, url_id: str, url: MutableURL, session: MyTransactionType = None) -> URL:
+    def update_url(self, url_id: str, url: MutableURL, session: Optional[MyTransactionType] = None) -> URL:
         """
         Update the details of a specific url.
 
@@ -42,7 +42,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_url(self, url_id: str, session: MyTransactionType = None) -> None:
+    def delete_url(self, url_id: str, session: Optional[MyTransactionType] = None):
         """
         Soft-delete a URL by setting its `is_deleted` flag to the current timestamp.
 
@@ -52,7 +52,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_urls(self, session: MyTransactionType = None) -> List[URL]:
+    def get_all_urls(self, session: Optional[MyTransactionType] = None) -> List[URL]:
         """
         Retrieve all active URLs that are not marked as deleted.
 
@@ -62,7 +62,7 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
+    def set_bc_cats(self, url_id: str, bc_cats: List[str]):
         """
         Update the BlueCoat Categories associated with a URL.
 

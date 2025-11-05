@@ -16,14 +16,14 @@ class MongoDBHistory(HistoryDBInterface):
         self.collection: Collection = db['history']
 
     def add_history_event(
-            self,
-            action: str,
-            user: AuthUser,
-            ref_token: List[str],
-            ref_url: List[str],
-            ref_category: List[str],
-            atomics: Optional[List[Atomic]] = None,
-            session: MyTransactionType = None,
+        self,
+        action: str,
+        user: AuthUser,
+        ref_token: List[str],
+        ref_url: List[str],
+        ref_category: List[str],
+        atomics: Optional[List[Atomic]] = None,
+        session: Optional[MyTransactionType] = None,
     ) -> History:
         """
         Add a new history event with the given name

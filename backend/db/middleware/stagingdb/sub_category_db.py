@@ -18,7 +18,7 @@ class StagingDBSubCategory(MiddlewareDBSubCategory):
     def get_sub_categories_by_id(self, category_id: str) -> List[str]:
         return self._category_db.get_category(category_id).nested_categories
 
-    def add_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str) -> None:
+    def add_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str):
         # Get current sub-categories
         current_sub_cats = self.get_sub_categories_by_id(cat_id)
 
@@ -38,7 +38,7 @@ class StagingDBSubCategory(MiddlewareDBSubCategory):
                 staged=self._staged,
             )
 
-    def delete_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str) -> None:
+    def delete_sub_category(self, auth: AuthUser, cat_id: str, sub_cat_id: str):
         # Get current sub-categories
         current_sub_cats = self.get_sub_categories_by_id(cat_id)
 
@@ -58,7 +58,7 @@ class StagingDBSubCategory(MiddlewareDBSubCategory):
                 staged=self._staged,
             )
 
-    def set_sub_categories(self, auth: AuthUser, cat_id: str, cat_ids: List[str]) -> None:
+    def set_sub_categories(self, auth: AuthUser, cat_id: str, cat_ids: List[str]):
         # Use stage_update to create and add the staged change
         add_staged_change(
             action_type=ActionType.SET_CATS,

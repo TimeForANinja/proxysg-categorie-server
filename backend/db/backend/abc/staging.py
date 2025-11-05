@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.staging import StagedChange
@@ -7,7 +7,7 @@ from db.dbmodel.staging import StagedChange
 
 class StagingDBInterface(ABC):
     @abstractmethod
-    def store_staged_change(self, change: StagedChange) -> None:
+    def store_staged_change(self, change: StagedChange):
         """
         Store a staged change in the database.
 
@@ -16,7 +16,7 @@ class StagingDBInterface(ABC):
         pass
 
     @abstractmethod
-    def store_staged_changes(self, changes: List[StagedChange]) -> None:
+    def store_staged_changes(self, changes: List[StagedChange]):
         """
         Store a list of staged changes in the database.
         Batch Variant of store_staged_change-
@@ -26,7 +26,7 @@ class StagingDBInterface(ABC):
         pass
 
     @abstractmethod
-    def get_staged_changes(self, session: MyTransactionType = None) -> List[StagedChange]:
+    def get_staged_changes(self, session: Optional[MyTransactionType] = None) -> List[StagedChange]:
         """
         Get all staged changes.
 
@@ -36,7 +36,7 @@ class StagingDBInterface(ABC):
         pass
 
     @abstractmethod
-    def clear_staged_changes(self, before: int = None, session: MyTransactionType = None) -> None:
+    def clear_staged_changes(self, before: int = None, session: Optional[MyTransactionType] = None):
         """
         Clear all staged changes.
 

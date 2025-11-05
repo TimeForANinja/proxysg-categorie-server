@@ -25,16 +25,16 @@ def _build_category(row: Any) -> Category:
 
 class SQLiteCategory(CategoryDBInterface):
     def __init__(
-            self,
-            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
-        ):
+        self,
+        get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+    ):
         self.get_cursor = get_cursor
 
     def add_category(
-            self,
-            mut_cat: MutableCategory,
-            category_id: str,
-            session: MyTransactionType = None,
+        self,
+        mut_cat: MutableCategory,
+        category_id: str,
+        session: Optional[MyTransactionType] = None,
     ) -> Category:
         with self.get_cursor() as cursor:
             cursor.execute(
@@ -44,7 +44,7 @@ class SQLiteCategory(CategoryDBInterface):
 
         return Category.from_mutable(category_id, mut_cat)
 
-    def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
+    def get_category(self, category_id: str, session: Optional[MyTransactionType] = None) -> Optional[Category]:
         with self.get_cursor() as cursor:
             cursor.execute(
                 '''SELECT
@@ -74,10 +74,10 @@ class SQLiteCategory(CategoryDBInterface):
         return None
 
     def update_category(
-            self,
-            cat_id: str,
-            category: MutableCategory,
-            session: MyTransactionType = None,
+        self,
+        cat_id: str,
+        category: MutableCategory,
+        session: Optional[MyTransactionType] = None,
     ) -> Category:
         updates, params = build_update_query(category, {
             'name': 'name',
@@ -94,17 +94,17 @@ class SQLiteCategory(CategoryDBInterface):
         return self.get_category(cat_id)
 
     def delete_category(
-            self,
-            category_id: str,
-            session: MyTransactionType = None
-    ) -> None:
+        self,
+        category_id: str,
+        session: Optional[MyTransactionType] = None
+    ):
         with self.get_cursor() as cursor:
             cursor.execute(
                 'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
                 (int(time.time()), category_id,)
             )
 
-    def get_all_categories(self, session: MyTransactionType = None) -> List[Category]:
+    def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:
         with self.get_cursor() as cursor:
             cursor.execute(
                 '''SELECT

@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any
+from typing import List, Mapping, Any, Optional
 from pymongo.synchronous.database import Database
 
 from db.backend.abc.token_category import TokenCategoryDBInterface
@@ -13,8 +13,8 @@ class MongoDBTokenCategory(TokenCategoryDBInterface, MongoDBBaseCategory):
     def get_token_categories_by_token(self, token_id: str) -> List[str]:
         return self.get_categories_by_item(token_id)
 
-    def add_token_category(self, token_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def add_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         self.add_item_category(token_id, category_id, session=session)
 
-    def delete_token_category(self, token_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def delete_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         self.delete_item_category(token_id, category_id, session=session)

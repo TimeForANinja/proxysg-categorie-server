@@ -1,7 +1,7 @@
 import sqlite3
 import time
 from contextlib import AbstractContextManager
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 from db.backend.abc.token_category import TokenCategoryDBInterface
 from db.backend.abc.util.types import MyTransactionType
@@ -28,14 +28,14 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
             rows = cursor.fetchall()
             return [str(row[0]) for row in rows]
 
-    def add_token_category(self, token_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def add_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         with self.get_cursor() as cursor:
             cursor.execute(
                 'INSERT INTO token_categories (token_id, category_id) VALUES (?, ?)',
                 (token_id, category_id,)
             )
 
-    def delete_token_category(self, token_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def delete_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         with self.get_cursor() as cursor:
             cursor.execute(
                 'UPDATE token_categories SET is_deleted = ? WHERE token_id = ? AND category_id = ? AND is_deleted = 0',

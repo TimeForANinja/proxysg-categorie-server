@@ -12,20 +12,20 @@ from db.dbmodel.history import History, Atomic
 
 class SQLiteHistory(HistoryDBInterface):
     def __init__(
-            self,
-            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
-        ):
+        self,
+        get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+    ):
         self.get_cursor = get_cursor
 
     def add_history_event(
-            self,
-            action: str,
-            user: AuthUser,
-            ref_token: List[str],
-            ref_url: List[str],
-            ref_category: List[str],
-            atomics: Optional[List[Atomic]] = None,
-            session: MyTransactionType = None,
+        self,
+        action: str,
+        user: AuthUser,
+        ref_token: List[str],
+        ref_url: List[str],
+        ref_category: List[str],
+        atomics: Optional[List[Atomic]] = None,
+        session: Optional[MyTransactionType] = None,
     ) -> History:
         """
         Add a new history event with the given name
@@ -40,6 +40,7 @@ class SQLiteHistory(HistoryDBInterface):
         :return: The newly created history event
         """
         timestamp = int(time.time())
+
         with self.get_cursor() as cursor:
             cursor.execute(
                 'INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?)',

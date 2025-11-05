@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
@@ -53,7 +53,7 @@ class StagingDB(MiddlewareDB):
     def close(self):
         self._main_db.close()
 
-    def _commit_modules(self, dry_run: bool, not_before: int, session: MyTransactionType = None) -> Tuple[
+    def _commit_modules(self, dry_run: bool, not_before: int, session: Optional[MyTransactionType] = None) -> Tuple[
         List[Atomic],
         List[str],
         List[str],

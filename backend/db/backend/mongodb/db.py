@@ -19,9 +19,9 @@ from db.backend.mongodb.url_category_db import MongoDBURLCategory
 
 class MyMongoDB(DBInterface):
     def __init__(
-            self,
-            client: MongoClient,
-            database_name: str,
+        self,
+        client: MongoClient,
+        database_name: str,
     ):
         super().__init__()
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 
 def join_str_group(obj: List[str]) -> str:
@@ -10,7 +10,7 @@ def join_str_group(obj: List[str]) -> str:
     """
     return ",".join(obj)
 
-def split_opt_str_group(group: str | None) -> List[str]:
+def split_opt_str_group(group: Optional[str]) -> List[str]:
     """
     This method splits a comma-separated string into a list of strings.
 

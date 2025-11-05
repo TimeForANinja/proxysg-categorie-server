@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any
+from typing import List, Mapping, Any, Optional
 import time
 from pymongo.synchronous.database import Database
 
@@ -24,7 +24,7 @@ class MongoDBSubCategory(SubCategoryDBInterface):
             if x['is_deleted'] == 0
         ]
 
-    def add_sub_category(self, category_id: str, sub_category_id: str, session: MyTransactionType = None) -> None:
+    def add_sub_category(self, category_id: str, sub_category_id: str, session: Optional[MyTransactionType] = None):
         query = {'_id': category_id, 'is_deleted': 0}
         update = {'$addToSet': {'nested_categories': {'cat': sub_category_id, 'is_deleted': 0}}}
 
@@ -33,7 +33,7 @@ class MongoDBSubCategory(SubCategoryDBInterface):
         if result.modified_count == 0:
             raise ValueError(f'Category with id {category_id} not found or is deleted.')
 
-    def delete_sub_category(self, category_id: str, sub_category_id: str, session: MyTransactionType = None) -> None:
+    def delete_sub_category(self, category_id: str, sub_category_id: str, session: Optional[MyTransactionType] = None):
         query = {'_id': category_id, 'is_deleted': 0}
         update = {'$set': {'nested_categories.$[elem].is_deleted': int(time.time())}}
         array_filters = [{'elem.cat': sub_category_id, 'elem.is_deleted': 0}]

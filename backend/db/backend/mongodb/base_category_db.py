@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any, TypeVar, Generic
+from typing import List, Mapping, Any, TypeVar, Generic, Optional
 import time
 from pymongo.synchronous.database import Database
 
@@ -35,7 +35,7 @@ class MongoDBBaseCategory(Generic[T]):
             if x['is_deleted'] == 0
         ]
 
-    def add_item_category(self, item_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def add_item_category(self, item_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         """
         Add a new mapping of item and Category
 
@@ -52,7 +52,7 @@ class MongoDBBaseCategory(Generic[T]):
         if result.modified_count == 0:
             raise ValueError(f'{self.item_type} with id {item_id} not found or is deleted.')
 
-    def delete_item_category(self, item_id: str, category_id: str, session: MyTransactionType = None) -> None:
+    def delete_item_category(self, item_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         """
         Delete a mapping of item and Category.
 

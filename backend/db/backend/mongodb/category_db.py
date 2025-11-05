@@ -30,7 +30,7 @@ class MongoDBCategory(CategoryDBInterface):
         self.db = db
         self.collection = self.db['categories']
 
-    def add_category(self, category: MutableCategory, category_id: str, session: MyTransactionType = None) -> Category:
+    def add_category(self, category: MutableCategory, category_id: str, session: Optional[MyTransactionType] = None) -> Category:
         self.collection.insert_one({
             '_id': category_id,
             'name': category.name,
@@ -42,7 +42,7 @@ class MongoDBCategory(CategoryDBInterface):
 
         return Category.from_mutable(category_id, category)
 
-    def get_category(self, category_id: str, session: MyTransactionType = None) -> Optional[Category]:
+    def get_category(self, category_id: str, session: Optional[MyTransactionType] = None) -> Optional[Category]:
         query = {'_id': category_id, 'is_deleted': 0}
         row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
         if not row:
@@ -50,7 +50,7 @@ class MongoDBCategory(CategoryDBInterface):
 
         return _build_category(row)
 
-    def update_category(self, cat_id: str, category: MutableCategory, session: MyTransactionType = None) -> Category:
+    def update_category(self, cat_id: str, category: MutableCategory, session: Optional[MyTransactionType] = None) -> Category:
         query = {'_id': cat_id, 'is_deleted': 0}
         update_fields = {
             'name': category.name,
@@ -66,7 +66,7 @@ class MongoDBCategory(CategoryDBInterface):
         # Return the updated category
         return self.get_category(cat_id)
 
-    def delete_category(self, category_id: str, session: MyTransactionType = None) -> None:
+    def delete_category(self, category_id: str, session: Optional[MyTransactionType] = None):
         current_timestamp = int(time.time())
 
         query = {'_id': category_id, 'is_deleted': 0}
@@ -85,7 +85,7 @@ class MongoDBCategory(CategoryDBInterface):
         self.db['urls'].update_many({}, update3, array_filters=array_filters2)
         self.db['tokens'].update_many({}, update3, array_filters=array_filters2)
 
-    def get_all_categories(self, session: MyTransactionType = None) -> List[Category]:
+    def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:
         rows = self.collection.find({ 'is_deleted': 0 }, **mongo_transaction_kwargs(session))
         return [
             _build_category(row)

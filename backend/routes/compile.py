@@ -7,10 +7,10 @@ from log import log_debug
 
 
 def find_subcategories(
-        current_cat: Category,
-        categories_dict: dict[str, Category],
-        visited: set[str],
-        result: list[Category]
+    current_cat: Category,
+    categories_dict: dict[str, Category],
+    visited: set[str],
+    result: list[Category]
 ):
     """
     This method is used to recursively traverse the nested categories.

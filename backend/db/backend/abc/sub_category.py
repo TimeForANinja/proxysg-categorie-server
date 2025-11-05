@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from db.backend.abc.util.types import MyTransactionType
 
@@ -16,11 +16,11 @@ class SubCategoryDBInterface(ABC):
 
     @abstractmethod
     def add_sub_category(
-            self,
-            category_id: str,
-            sub_category_id: str,
-            session: MyTransactionType = None,
-    ) -> None:
+        self,
+        category_id: str,
+        sub_category_id: str,
+        session: Optional[MyTransactionType] = None,
+    ):
         """
         Add a new subcategory
 
@@ -32,11 +32,11 @@ class SubCategoryDBInterface(ABC):
 
     @abstractmethod
     def delete_sub_category(
-            self,
-            category_id: str,
-            sub_category_id: str,
-            session: MyTransactionType = None,
-    ) -> None:
+        self,
+        category_id: str,
+        sub_category_id: str,
+        session: Optional[MyTransactionType] = None,
+    ):
         """
         Delete a mapping of a subcategory.
 

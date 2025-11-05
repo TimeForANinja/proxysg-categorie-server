@@ -15,7 +15,7 @@ class MiddlewareDBTokenCategory(ABC):
         pass
 
     @abstractmethod
-    def add_token_category(self, auth: AuthUser, token_id: str, cat_id: str) -> None:
+    def add_token_category(self, auth: AuthUser, token_id: str, cat_id: str):
         """
         Add a new mapping of Token and Category
 
@@ -26,7 +26,7 @@ class MiddlewareDBTokenCategory(ABC):
         pass
 
     @abstractmethod
-    def delete_token_category(self, auth: AuthUser, token_id: str, cat_id: str) -> None:
+    def delete_token_category(self, auth: AuthUser, token_id: str, cat_id: str):
         """
         Delete a mapping of Token and Category.
 
@@ -37,7 +37,7 @@ class MiddlewareDBTokenCategory(ABC):
         pass
 
     @abstractmethod
-    def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]) -> None:
+    def set_token_categories(self, auth: AuthUser, token_id: str, cat_ids: List[str]):
         """
         Set the categories of a token.
 

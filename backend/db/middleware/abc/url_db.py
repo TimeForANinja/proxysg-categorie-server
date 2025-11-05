@@ -50,7 +50,7 @@ class MiddlewareDBURL(ABC):
         pass
 
     @abstractmethod
-    def delete_url(self, auth: AuthUser, url_id: str) -> None:
+    def delete_url(self, auth: AuthUser, url_id: str):
         """
         Soft-delete a URL by setting its `is_deleted` flag to the current timestamp.
 
@@ -70,7 +70,7 @@ class MiddlewareDBURL(ABC):
         pass
 
     @abstractmethod
-    def set_bc_cats(self, url_id: str, bc_cats: List[str]) -> None:
+    def set_bc_cats(self, url_id: str, bc_cats: List[str]):
         """
         Update the BlueCoat Categories associated with a URL.
 

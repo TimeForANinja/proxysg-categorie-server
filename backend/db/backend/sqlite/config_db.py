@@ -26,7 +26,7 @@ class SQLiteConfig:
         else:
             return -1
 
-    def set_int(self, key: str, value: int) -> None:
+    def set_int(self, key: str, value: int):
         """Set a config variable. If it doesn't exist, create it."""
         with self.get_cursor() as cursor:
             cursor.execute(

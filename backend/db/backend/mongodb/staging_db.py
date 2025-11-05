@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any, Dict
+from typing import List, Mapping, Any, Dict, Optional
 from pymongo.synchronous.database import Database
 
 from auth.auth_user import AuthUser
@@ -25,7 +25,7 @@ class MongoDBStaging(StagingDBInterface):
         self.db = db
         self.collection = self.db['staged_changes']
 
-    def store_staged_change(self, change: StagedChange) -> None:
+    def store_staged_change(self, change: StagedChange):
         """Store a staged change in the MongoDB database."""
         document = {
             'action_type': change.action_type.value,
@@ -37,7 +37,7 @@ class MongoDBStaging(StagingDBInterface):
         }
         self.collection.insert_one(document)
 
-    def store_staged_changes(self, changes: List[StagedChange]) -> None:
+    def store_staged_changes(self, changes: List[StagedChange]):
         """Store a list of staged changes in the MongoDB database (batch)."""
         if not changes:
             return
@@ -56,12 +56,12 @@ class MongoDBStaging(StagingDBInterface):
         # Use insert_many for efficient batch insert
         self.collection.insert_many(documents, ordered=False)
 
-    def get_staged_changes(self, session: MyTransactionType = None) -> List[StagedChange]:
+    def get_staged_changes(self, session: Optional[MyTransactionType] = None) -> List[StagedChange]:
         """Get all staged changes from the MongoDB database."""
         documents = self.collection.find(**mongo_transaction_kwargs(session))
         return [_document_to_staged_change(doc) for doc in documents]
 
-    def clear_staged_changes(self, before: int = None, session: MyTransactionType = None) -> None:
+    def clear_staged_changes(self, before: int = None, session: Optional[MyTransactionType] = None):
         """Clear all staged changes from the MongoDB database."""
         if before is not None:
             self.collection.delete_many({'timestamp': {'$lte': before}}, **mongo_transaction_kwargs(session))

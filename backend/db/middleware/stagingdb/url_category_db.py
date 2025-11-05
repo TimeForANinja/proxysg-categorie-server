@@ -18,7 +18,7 @@ class StagingDBURLCategory(MiddlewareDBURLCategory):
     def get_url_categories_by_url(self, url_id: str) -> List[str]:
         return self._url_db.get_url(url_id).categories
 
-    def add_url_category(self, auth: AuthUser, url_id: str, cat_id: str) -> None:
+    def add_url_category(self, auth: AuthUser, url_id: str, cat_id: str):
         # Get current categories
         current_categories = self.get_url_categories_by_url(url_id)
 
@@ -38,7 +38,7 @@ class StagingDBURLCategory(MiddlewareDBURLCategory):
                 staged=self._staged,
             )
 
-    def add_url_categories(self, auth: AuthUser, mappings: Dict[str, List[str]]) -> None:
+    def add_url_categories(self, auth: AuthUser, mappings: Dict[str, List[str]]):
         if not mappings:
             return
 
@@ -75,7 +75,7 @@ class StagingDBURLCategory(MiddlewareDBURLCategory):
             staged=self._staged,
         )
 
-    def delete_url_category(self, auth: AuthUser, url_id: str, cat_id: str) -> None:
+    def delete_url_category(self, auth: AuthUser, url_id: str, cat_id: str):
         # Get current categories
         current_categories = self.get_url_categories_by_url(url_id)
 
@@ -95,7 +95,7 @@ class StagingDBURLCategory(MiddlewareDBURLCategory):
                 staged=self._staged,
             )
 
-    def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]) -> None:
+    def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]):
         # Use stage_update to create and add the staged change
         add_staged_change(
             action_type=ActionType.SET_CATS,

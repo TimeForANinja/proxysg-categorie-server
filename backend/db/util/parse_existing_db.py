@@ -20,11 +20,11 @@ class ExistingCat:
 
 # TODO: input validation for both Categories and URLs
 def create_in_db(
-        db: MiddlewareDB,
-        auth: AuthUser,
-        new_cat_candidates: List[ExistingCat],
-        category_prefix: str
-    ):
+    db: MiddlewareDB,
+    auth: AuthUser,
+    new_cat_candidates: List[ExistingCat],
+    category_prefix: str
+):
     """
     This method creates a DB as read from an existing file in the provided DB.
 

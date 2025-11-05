@@ -12,7 +12,7 @@ def get_db() -> StagingDB:
     staging_db = current_app.config.get('SINGLETONS', {}).get('DB', None)
 
     if staging_db is None:
-        log_debug("DB", "Initializing DB connection", current_app.config)
+        log_debug("DB", "Initializing DB connection", current_app.config.get('DB', {}))
         db_type = current_app.config.get('DB', {}).get('TYPE', 'sqlite').lower()
         if db_type == 'mongodb':
             mongo_cfg: dict = current_app.config.get('DB', {}).get('MONGO', {})

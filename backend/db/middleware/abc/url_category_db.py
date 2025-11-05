@@ -15,7 +15,7 @@ class MiddlewareDBURLCategory(ABC):
         pass
 
     @abstractmethod
-    def add_url_category(self, auth: AuthUser, url_id: str, cat_id: str) -> None:
+    def add_url_category(self, auth: AuthUser, url_id: str, cat_id: str):
         """
         Add a new mapping of URL and Category
 
@@ -26,7 +26,7 @@ class MiddlewareDBURLCategory(ABC):
         pass
 
     @abstractmethod
-    def add_url_categories(self, auth: AuthUser, mappings: Dict[str, List[str]]) -> None:
+    def add_url_categories(self, auth: AuthUser, mappings: Dict[str, List[str]]):
         """
         Add a batch of new URL to Category mappings
 
@@ -36,7 +36,7 @@ class MiddlewareDBURLCategory(ABC):
         pass
 
     @abstractmethod
-    def delete_url_category(self, auth: AuthUser, url_id: str, cat_id: str) -> None:
+    def delete_url_category(self, auth: AuthUser, url_id: str, cat_id: str):
         """
         Delete a mapping of URL and Category.
 
@@ -47,7 +47,7 @@ class MiddlewareDBURLCategory(ABC):
         pass
 
     @abstractmethod
-    def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]) -> None:
+    def set_url_categories(self, auth: AuthUser, url_id: str, cat_ids: List[str]):
         """
         Set Categories of a URL.
 

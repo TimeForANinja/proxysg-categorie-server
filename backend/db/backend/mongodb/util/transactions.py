@@ -1,9 +1,9 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from db.backend.abc.util.types import MyTransactionType
 
 
-def mongo_transaction_kwargs(session: MyTransactionType | None) -> Dict[str, Any]:
+def mongo_transaction_kwargs(session: Optional[MyTransactionType]) -> Dict[str, Any]:
     """
     Provides a utility method to generate transaction-related keyword arguments
     to be passed into database session operations.
