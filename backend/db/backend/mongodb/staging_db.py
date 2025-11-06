@@ -67,3 +67,7 @@ class MongoDBStaging(StagingDBInterface):
             self.collection.delete_many({'timestamp': {'$lte': before}}, **mongo_transaction_kwargs(session))
         else:
             self.collection.delete_many({}, **mongo_transaction_kwargs(session))
+
+    def has_staged_changes(self) -> bool:
+        """Check if there are any staged changes in the MongoDB database."""
+        return self.collection.count_documents({}) > 0

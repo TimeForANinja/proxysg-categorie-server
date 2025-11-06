@@ -37,6 +37,10 @@ class StagedCollection:
         """Get all staged changes that match the given conditions."""
         return StageFilter.apply(self.get_all(), *filters)
 
+    def has_changes(self) -> bool:
+        """Check if there are any staged changes."""
+        return self._db.staging.has_staged_changes()
+
     def remove(self, change: StagedChange):
         """Remove a staged change from the persistent storage."""
         # TODO: implement proper removal

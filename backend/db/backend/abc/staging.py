@@ -44,3 +44,11 @@ class StagingDBInterface(ABC):
         :param session: The database session to use.
         """
         pass
+
+    def has_staged_changes(self) -> bool:
+        """
+        Check if there are any staged changes.
+
+        :return: True if there are staged changes, False otherwise.
+        """
+        pass

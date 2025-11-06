@@ -161,7 +161,7 @@ function MatchingListPage() {
                 setURLs(urlsData);
                 setCategory(buildLUTFromID(categoriesData));
                 // fetch history async after urls and categories, since it's only needed when opening a row
-                return getHistory(authMgmt.token);
+                return getHistory(authMgmt.token, true);
             })
             .then(historyData => {
                 setHistory(historyData);

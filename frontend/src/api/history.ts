@@ -26,8 +26,31 @@ export interface ICommits extends IReferred {
 
 const HISTORY_BASE_URL = '/api/history'
 
-export const getHistory = async (userToken: string): Promise<ICommits[]> => {
-    const response = await fetch(HISTORY_BASE_URL, {
+export const getHistory = async (userToken: string, includeAtomics: boolean = false): Promise<ICommits[]> => {
+    const requestURL = new URL(HISTORY_BASE_URL, window.location.origin);
+    if (includeAtomics) {
+        requestURL.searchParams.append('include_atomics', '1');
+    }
+
+    const response = await fetch(requestURL.toString(), {
+        headers: { 'jwt-token': userToken },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get history`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+
+    return data.data;
+}
+
+export const getAtomicsForHistory = async (userToken: string, historyID: string): Promise<IAtomic[]> => {
+    const response = await fetch(`${HISTORY_BASE_URL}/${historyID}/atomics`, {
         headers: { 'jwt-token': userToken },
     });
 

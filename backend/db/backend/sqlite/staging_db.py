@@ -83,3 +83,8 @@ class SQLiteStaging(StagingDBInterface):
             else:
                 # noinspection SqlWithoutWhere
                 cursor.execute('DELETE FROM staged_changes')
+
+    def has_staged_changes(self) -> bool:
+        with self.get_cursor() as cursor:
+            cursor.execute('SELECT COUNT(*) FROM staged_changes')
+            return cursor.fetchone()[0] > 0

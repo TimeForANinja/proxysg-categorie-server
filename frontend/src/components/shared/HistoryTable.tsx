@@ -1,6 +1,6 @@
 import React from 'react';
 import './HistoryTable.css';
-import { ICommits, IReferred } from "../../api/history";
+import {ICommits, IReferred} from "../../api/history";
 import Paper from "@mui/material/Paper";
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
