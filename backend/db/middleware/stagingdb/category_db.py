@@ -93,7 +93,10 @@ class StagingDBCategory(MiddlewareDBCategory):
             staged=self._staged,
         )
 
-    def get_all_categories(self) -> List[Category]:
+    def get_all_categories(self, bypass_cache: bool = False) -> List[Category]:
+        if bypass_cache:
+            return self._db.categories.get_all_categories()
+
         return get_and_overload_all_objects(
             db_getter=self._db.categories.get_all_categories,
             staged=self._staged,

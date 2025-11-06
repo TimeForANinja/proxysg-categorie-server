@@ -55,7 +55,7 @@ class StagingDBToken(MiddlewareDBToken):
         )
 
     def get_token_by_uuid(self, token_uuid: str) -> Optional[Token]:
-        # fetching by UUID goes straight to DB
+        # fetching by UUID _ALWAYS_ go straight to DB
         return self._db.tokens.get_token_by_uuid(token_uuid)
 
     def update_token(self, auth: AuthUser, token_id: str, mut_tok: MutableToken) -> Token:
@@ -70,7 +70,7 @@ class StagingDBToken(MiddlewareDBToken):
         return self.get_token(token_id)
 
     def update_usage(self, token_id: str):
-        # Usage updates go straight to DB
+        # Usage updates _ALWAYS_ go straight to DB
         self._db.tokens.update_usage(token_id)
 
     def roll_token(self, auth: AuthUser, token_id: str) -> Token:

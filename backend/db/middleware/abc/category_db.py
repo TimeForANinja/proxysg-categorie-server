@@ -60,10 +60,11 @@ class MiddlewareDBCategory(ABC):
         pass
 
     @abstractmethod
-    def get_all_categories(self) -> List[Category]:
+    def get_all_categories(self, bypass_cache: bool = False) -> List[Category]:
         """
         Retrieve all active categories that are not marked as deleted.
 
+        :param bypass_cache: If True, bypass the cache and retrieve the URLs from the database.
         :return: A list of categories
         """
         pass

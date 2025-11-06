@@ -84,11 +84,11 @@ def add_compile_bp(app):
         db_if.tokens.update_usage(token.id)
 
         # load all categories that are part of the token
-        categories = db_if.categories.get_all_categories()
+        categories = db_if.categories.get_all_categories(bypass_cache=True)
         token_cats = [cat for cat in categories if cat.id in token.categories]
 
         # fetch all URLs
-        urls = db_if.urls.get_all_urls()
+        urls = db_if.urls.get_all_urls(bypass_cache=True)
 
         # use response var to track the returned database string
         response = ''
