@@ -1,5 +1,4 @@
 import time
-from dataclasses import asdict
 from typing import Optional, List
 
 from auth.auth_user import AuthUser
@@ -77,7 +76,7 @@ class StagingDBURL(MiddlewareDBURL):
             action_table=ActionTable.URL,
             auth=auth,
             obj_id=url_id,
-            update_data=asdict(mut_url),
+            update_data=mut_url.__dict__,
             staged=self._staged,
         )
 

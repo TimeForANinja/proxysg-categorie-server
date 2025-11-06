@@ -9,9 +9,9 @@ from db.middleware.abc.history_db import MiddlewareDBHistory
 
 class StagingDBHistory(MiddlewareDBHistory):
     def __init__(
-            self,
-            db: DBInterface,
-            get_pending: Callable[[], Tuple[List[Atomic], List[str], List[str], List[str]]],
+        self,
+        db: DBInterface,
+        get_pending: Callable[[], Tuple[List[Atomic], List[str], List[str], List[str]]],
     ):
         self._db = db
         self._get_pending = get_pending

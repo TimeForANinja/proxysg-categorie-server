@@ -15,6 +15,7 @@ class Atomic:
     action: str
     description: str
     time: int
+    # TODO: check if these can be "str" instead of "List[str]"
     ref_token: List[str] = field(default_factory=list)
     ref_url: List[str] = field(default_factory=list)
     ref_category: List[str] = field(default_factory=list)

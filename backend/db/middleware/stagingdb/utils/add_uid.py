@@ -1,5 +1,4 @@
 import uuid
-from dataclasses import asdict
 from typing import Dict, Any, List, Tuple
 
 
@@ -11,7 +10,11 @@ def add_uid_to_object(mutable_obj: Any) -> Tuple[str, Dict[str, Any]]:
     @return: A tuple containing the generated UUID and the object data with the UUID added
     """
     obj_id = str(uuid.uuid4())
-    obj_data = asdict(mutable_obj)
+    # prefer __dict__ over asdict() for performance reasons
+    # this goes for here and every other use of __dict__ / asdict()
+    # see https://stackoverflow.com/a/52229565
+    # since we currently only have simple, non-nested dataclasses, this is fine
+    obj_data = mutable_obj.__dict__
     obj_data.update({
         'id': obj_id,
     })

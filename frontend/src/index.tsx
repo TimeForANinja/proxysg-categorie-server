@@ -7,6 +7,8 @@ import reportWebVitals from './reportWebVitals';
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+// Using the StrictMode can result in triggering React.useEffect multiple times
+// See https://stackoverflow.com/a/60619061
 root.render(
   <React.StrictMode>
     <App />

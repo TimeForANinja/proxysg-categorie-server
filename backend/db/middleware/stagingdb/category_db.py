@@ -1,5 +1,4 @@
 import time
-from dataclasses import asdict
 from typing import Optional, List
 
 from auth.auth_user import AuthUser
@@ -77,7 +76,7 @@ class StagingDBCategory(MiddlewareDBCategory):
             action_table=ActionTable.CATEGORY,
             auth=auth,
             obj_id=cat_id,
-            update_data=asdict(category),
+            update_data=category.__dict__,
             staged=self._staged,
         )
 

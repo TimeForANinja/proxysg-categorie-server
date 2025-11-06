@@ -1,5 +1,4 @@
 import time
-from dataclasses import asdict
 from typing import Optional, List
 import uuid
 
@@ -64,7 +63,7 @@ class StagingDBToken(MiddlewareDBToken):
             action_table=ActionTable.TOKEN,
             auth=auth,
             obj_id=token_id,
-            update_data=asdict(mut_tok),
+            update_data=mut_tok.__dict__,
             staged=self._staged,
         )
         return self.get_token(token_id)

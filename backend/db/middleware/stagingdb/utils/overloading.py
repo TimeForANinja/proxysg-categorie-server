@@ -1,5 +1,4 @@
 import time
-from dataclasses import asdict
 from typing import Optional, Dict, Any, TypeVar, Type, List, Callable
 
 from auth.auth_user import AuthUser
@@ -34,7 +33,7 @@ def get_and_overload_object(
     # Try getting the object by id from the database
     db_obj = db_getter(obj_id)
     # Convert to dict (or None if not found in db)
-    obj_data: Dict[str, Any] = asdict(db_obj) if db_obj is not None else None
+    obj_data: Dict[str, Any] = getattr(db_obj, '__dict__', None)
 
     # query all staged changes that affect the object from the db
     relevant_staged_events = staged.get_filtered(
@@ -90,23 +89,15 @@ def get_and_overload_all_objects(
     # Get all objects from the database
     db_objects: List[T] = db_getter()
     # Convert to dict
-    objects: List[Dict[str, Any]] = [asdict(obj) for obj in db_objects]
+    objects: List[Dict[str, Any]] = [obj.__dict__ for obj in db_objects]
 
     # load all (relevant) Staged Events from DB
     relevant_staged_events = staged.get_filtered(
         StageFilter.fac_filter_table(action_table),
     )
 
-    # Prepare and append all "added" objects from the cache
-    staged_obj = [
-        o.data for o in
-        StageFilter.apply(relevant_staged_events, StageFilter.filter_add)
-    ]
-    for obj in staged_obj: obj.update({'pending_changes': True})
-    objects.extend(staged_obj)
     log_debug('get_all', 'fetched all data from db', {
         'existing objects': len(db_objects),
-        'staged "add" objects': len(staged_obj),
         'staged changes': len(relevant_staged_events),
     })
 
@@ -116,7 +107,12 @@ def get_and_overload_all_objects(
     # without complex searching or db queries inside the for loop below
     changes_by_id: Dict[str, List[StagedChange]] = {}
     for sc in relevant_staged_events:
-        if sc.action_type != ActionType.ADD:
+        if sc.action_type == ActionType.ADD:
+            # Prepare and append all "added" objects from the cache
+            # to the list of known objects
+            objects.append({**sc.data, 'pending_changes': True})
+        else:
+            # append all other actions to the lookup map for later use
             changes_by_id.setdefault(sc.uid, []).append(sc)
 
     # Go through all objects and overload any staged changes for that object
@@ -217,6 +213,6 @@ def update_dataclass(instance: T, updates: Dict[str, Any], cls: Type[T]) -> T:
     @param cls: The dataclass type to create
     @return: A new instance of the dataclass with updated values
     """
-    data = asdict(instance)
+    data = instance.__dict__
     data.update(updates)
     return cls(**data)
