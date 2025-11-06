@@ -1,24 +1,24 @@
 from abc import ABC, abstractmethod
 
-from db.middleware.stagingdb.category_db import StagingDBCategory
-from db.middleware.stagingdb.history_db import StagingDBHistory
-from db.middleware.stagingdb.sub_category_db import StagingDBSubCategory
-from db.middleware.stagingdb.task_db import StagingDBTask
-from db.middleware.stagingdb.token_category_db import StagingDBTokenCategory
-from db.middleware.stagingdb.token_db import StagingDBToken
-from db.middleware.stagingdb.url_category_db import StagingDBURLCategory
-from db.middleware.stagingdb.url_db import StagingDBURL
+from db.middleware.abc.category_db import MiddlewareDBCategory
+from db.middleware.abc.history_db import MiddlewareDBHistory
+from db.middleware.abc.sub_category_db import MiddlewareDBSubCategory
+from db.middleware.abc.task_db import MiddlewareDBTask
+from db.middleware.abc.token_category_db import MiddlewareDBTokenCategory
+from db.middleware.abc.token_db import MiddlewareDBToken
+from db.middleware.abc.url_category_db import MiddlewareDBURLCategory
+from db.middleware.abc.url_db import MiddlewareDBURL
 
 
 class MiddlewareDB(ABC):
-    categories: StagingDBCategory
-    sub_categories: StagingDBSubCategory
-    history: StagingDBHistory
-    tokens: StagingDBToken
-    token_categories: StagingDBTokenCategory
-    urls: StagingDBURL
-    url_categories: StagingDBURLCategory
-    tasks: StagingDBTask
+    categories: MiddlewareDBCategory
+    sub_categories: MiddlewareDBSubCategory
+    history: MiddlewareDBHistory
+    tokens: MiddlewareDBToken
+    token_categories: MiddlewareDBTokenCategory
+    urls: MiddlewareDBURL
+    url_categories: MiddlewareDBURLCategory
+    tasks: MiddlewareDBTask
 
     @abstractmethod
     def close(self):

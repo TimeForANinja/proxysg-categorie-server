@@ -2,12 +2,13 @@ from flask import current_app
 
 from db.backend.sqlite.db import MySQLiteDB
 from db.backend.mongodb.db import MyMongoDB
+from db.middleware.abc.db import MiddlewareDB
 from db.middleware.stagingdb.db import StagingDB
 from log import log_info, log_debug
 from pymongo import MongoClient
 
 
-def get_db() -> StagingDB:
+def get_db() -> MiddlewareDB:
     """Get a unique DB instance."""
     staging_db = current_app.config.get('SINGLETONS', {}).get('DB', None)
 

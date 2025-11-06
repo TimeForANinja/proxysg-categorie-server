@@ -7,5 +7,5 @@ from routes.schemas.generic_output import GenericOutput
 
 
 class ListHistoryOutput(GenericOutput):
-    """Output schema for a list of categories"""
+    """Output schema for a list of history events"""
     data: tList[RESTHistory] = List(Nested(class_schema(RESTHistory)()), required=True, description='List of History Events')
