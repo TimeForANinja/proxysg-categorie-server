@@ -1,5 +1,5 @@
 from typing import List
-import json
+import orjson
 from dataclasses import dataclass, field
 
 
@@ -32,10 +32,10 @@ class AuthUser:
 
         :return: A dictionary representation of the AuthUser
         """
-        return json.dumps({
+        return str(orjson.dumps({
             'username': self.username,
             'roles': self.roles
-        })
+        }))
 
     @staticmethod
     def unserialize(auth_str: str) -> 'AuthUser':
@@ -45,7 +45,7 @@ class AuthUser:
         :param auth_str: A JSON string representing the AuthUser data.
         :return: An AuthUser object
         """
-        auth_data = json.loads(auth_str)
+        auth_data = orjson.loads(auth_str)
         return AuthUser(
             username=auth_data['username'],
             roles=auth_data.get('roles', [])

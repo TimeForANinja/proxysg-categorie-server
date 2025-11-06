@@ -1,4 +1,4 @@
-import json
+import orjson
 import sqlite3
 import time
 from contextlib import AbstractContextManager
@@ -11,7 +11,7 @@ from db.dbmodel.task import MutableTask, Task
 
 def _build_task(row: Any) -> Task:
     """Parse SQLite row into a Task object."""
-    param_obj = json.loads(row[3])
+    param_obj = orjson.loads(row[3])
 
     return Task(
         id=str(row[0]),
@@ -33,7 +33,7 @@ class SQLiteTask(TaskDBInterface):
 
     def add_task(self, user: AuthUser, task: MutableTask) -> Task:
         current_timestamp = int(time.time())
-        param_str = json.dumps(task.parameters)
+        param_str = str(orjson.dumps(task.parameters))
 
         with self.get_cursor() as cursor:
             cursor.execute(

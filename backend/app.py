@@ -27,6 +27,13 @@ app = APIFlask(
     static_folder='./dist',
 )
 
+# add profiler to analyze requests
+# to visualize a profile you can run:
+# pip install snakeviz
+# snakeviz ./profile/request.prof
+#from werkzeug.middleware.profiler import ProfilerMiddleware
+#app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=['^((?!venv).)*$', 0.1], profile_dir='./profile')
+
 # add module to allow compression of replies
 Compress(app)
 

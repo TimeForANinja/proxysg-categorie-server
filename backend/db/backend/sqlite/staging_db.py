@@ -1,4 +1,4 @@
-import json
+import orjson
 import sqlite3
 from contextlib import AbstractContextManager
 from typing import List, Tuple, Callable, Optional
@@ -11,7 +11,7 @@ from db.dbmodel.staging import StagedChange, ActionTable, ActionType
 
 def _build_change(row: Tuple) -> StagedChange:
     """Parse SQLite row into a StagedChange object."""
-    data = json.loads(row[5]) if row[5] else None
+    data = orjson.loads(row[5]) if row[5] else None
     return StagedChange(
         action_type=ActionType(row[0]),
         action_table=ActionTable(row[1]),
@@ -38,7 +38,7 @@ class SQLiteStaging(StagingDBInterface):
         auth_json = AuthUser.serialize(change.auth)
 
         # Serialize data dictionary to JSON string
-        data_json = json.dumps(change.data) if change.data else None
+        data_json = str(orjson.dumps(change.data)) if change.data else None
 
         # push to db
         with self.get_cursor() as cursor:
@@ -59,7 +59,7 @@ class SQLiteStaging(StagingDBInterface):
                 ch.timestamp,
                 ch.action_table.value,
                 ch.uid,
-                json.dumps(ch.data) if ch.data else None,
+                str(orjson.dumps(ch.data)) if ch.data else None,
             )
             for ch in changes
         ]

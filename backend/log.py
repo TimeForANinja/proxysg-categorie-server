@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import orjson
 import sys
 from apiflask import APIFlask
 import logging
@@ -77,7 +78,7 @@ def _remove_keys_from_json(json_str: str, *keys_to_remove: str) -> str:
             for key in keys_to_remove:
                 data.pop(key, None)
         # Convert back to JSON string
-        return json.dumps(data)
+        return str(orjson.dumps(data))
     except:
         return json_str
 
