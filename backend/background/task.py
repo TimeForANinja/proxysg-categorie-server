@@ -62,6 +62,7 @@ def execute_cleanup_existing(db_if: StagingDB, task: Task):
         flags = CleanupFlags(task.parameters[1])
 
         if flags & CleanupFlags.URLs:
+            log_debug("BACKGROUND", f"Cleanup URLs for task {task.id}")
             urls = db_if.urls.get_all_urls()
 
             for url in urls:
@@ -70,6 +71,7 @@ def execute_cleanup_existing(db_if: StagingDB, task: Task):
                     db_if.urls.delete_url(task.user, url.id)
 
         if flags & CleanupFlags.Categories:
+            log_debug("BACKGROUND", f"Cleanup Categories for task {task.id}")
             urls = db_if.urls.get_all_urls()
             cats = db_if.categories.get_all_categories()
 

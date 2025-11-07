@@ -183,7 +183,8 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
                 })
 
     # run at the interval defined
-    # and once 'quick' after 2 minutes (only query not-yet-rated URLs)
+    # and once 'quick' after 3 minutes (only query not-yet-rated URLs)
+    # TODO: this setup might result in jobs being run at the same time...
     scheduler.add_job(
         lambda: query_executor(app, creds),
         CronTrigger.from_crontab(bc_interval, timezone=tz),
