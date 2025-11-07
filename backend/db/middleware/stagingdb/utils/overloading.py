@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, TypeVar, Type, List, Callable
 
 from auth.auth_user import AuthUser
 from db.dbmodel.staging import ActionTable, ActionType, StagedChange
-from db.middleware.stagingdb.cache import StagedCollection, StageFilter
+from db.middleware.stagingdb.cache import StagedCollection
 from log import log_debug
 
 # Generic type variables for different object types
@@ -36,16 +36,14 @@ def get_and_overload_object(
     obj_data: Dict[str, Any] = getattr(db_obj, '__dict__', None)
 
     # query all staged changes that affect the object from the db
-    relevant_staged_events = staged.get_filtered(
-        StageFilter.fac_filter_table_id(action_table, obj_id)
-    )
+    relevant_staged_events = staged.get_by_table_and_id(action_table, obj_id)
 
     if obj_data is None:
         # No object in DB, so check if we have an "add" event for the ID
-        add_obj = StageFilter.first_or_default(
-            relevant_staged_events,
-            StageFilter.filter_add,
-        )
+        add_obj = next((
+            e for e in relevant_staged_events
+            if e.action_type == ActionType.ADD
+        ), None)
         # save the data from the "add" event in obj_data
         obj_data = add_obj.data if add_obj is not None else None
 
@@ -92,9 +90,7 @@ def get_and_overload_all_objects(
     objects: List[Dict[str, Any]] = [obj.__dict__ for obj in db_objects]
 
     # load all (relevant) Staged Events from DB
-    relevant_staged_events = staged.get_filtered(
-        StageFilter.fac_filter_table(action_table),
-    )
+    relevant_staged_events = staged.get_by_table(action_table)
 
     log_debug('get_all', 'fetched all data from db', {
         'existing objects': len(db_objects),

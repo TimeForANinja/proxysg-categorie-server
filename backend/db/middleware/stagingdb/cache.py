@@ -1,8 +1,8 @@
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 from db.backend.abc.db import DBInterface
 from db.backend.abc.util.types import MyTransactionType
-from db.dbmodel.staging import StagedChange, ActionType, ActionTable
+from db.dbmodel.staging import StagedChange, ActionTable
 
 
 class StagedCollection:
@@ -33,13 +33,17 @@ class StagedCollection:
         """Get all staged changes from the persistent storage."""
         return self._db.staging.get_staged_changes(session=session)
 
-    def get_filtered(self, *filters: Callable[[List[StagedChange]], List[StagedChange]]) -> List[StagedChange]:
-        """Get all staged changes that match the given conditions."""
-        return StageFilter.apply(self.get_all(), *filters)
+    def get_by_table(self, table: ActionTable, session: Optional[MyTransactionType] = None) -> List[StagedChange]:
+        """Get all staged changes from a specific table."""
+        return self._db.staging.get_staged_changes_by_table(table, session=session)
+
+    def get_by_table_and_id(self, table: ActionTable, obj_id: str, session: Optional[MyTransactionType] = None) -> List[StagedChange]:
+        """Get all staged changes from a specific table and object ID."""
+        return self._db.staging.get_staged_changes_by_table_and_id(table, obj_id, session=session)
 
     def remove(self, change: StagedChange):
         """Remove a staged change from the persistent storage."""
-        # TODO: implement proper removal
+        # TODO: implement proper removal & use sessions
         # This is a bit tricky since we don't have a direct way to remove a specific change.
         # For now, we'll get all changes, filter out the one we want to remove, and clear and re-add the rest
 
@@ -70,57 +74,3 @@ class StagedCollection:
         """Simplify the stack of staged changes."""
         # This is handled by the database, so we don't need to do anything here
         pass
-
-
-class StageFilter:
-    @staticmethod
-    def apply(changes: List[StagedChange], *filters: Callable[[List[StagedChange]], List[StagedChange]]) -> List[StagedChange]:
-        filtered = changes
-        for f in filters:
-            filtered = f(filtered)
-        return filtered
-
-    @staticmethod
-    def first_or_default(
-            changes: List[StagedChange],
-            *filters: Callable[[List[StagedChange]], List[StagedChange]],
-            default: Optional[StagedChange]=None,
-    ) -> Optional[StagedChange]:
-        filtered = StageFilter.apply(changes, *filters)
-        # return the first element, or the "default" if none was left
-        if len(filtered) > 0:
-            return changes[0]
-        else:
-            return default
-
-    @staticmethod
-    def filter_add(changes: List[StagedChange]) -> List[StagedChange]:
-        return [
-            change
-            for change in changes
-            if change.action_type == ActionType.ADD
-        ]
-
-    @staticmethod
-    def fac_filter_table(table: ActionTable) -> Callable[[List[StagedChange]], List[StagedChange]]:
-        return lambda changes: [
-            change
-            for change in changes
-            if change.action_table == table
-        ]
-
-    @staticmethod
-    def fac_filter_id(uid: str) -> Callable[[List[StagedChange]], List[StagedChange]]:
-        return lambda changes: [
-            change
-            for change in changes
-            if change.uid == uid
-        ]
-
-    @staticmethod
-    def fac_filter_table_id(table: ActionTable, uid: str) -> Callable[[List[StagedChange]], List[StagedChange]]:
-        return lambda changes: [
-            change
-            for change in changes
-            if change.action_table == table and change.uid == uid
-        ]

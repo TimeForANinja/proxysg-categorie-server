@@ -61,6 +61,20 @@ class MongoDBStaging(StagingDBInterface):
         documents = self.collection.find(**mongo_transaction_kwargs(session))
         return [_document_to_staged_change(doc) for doc in documents]
 
+    def get_staged_changes_by_table(self, table: ActionTable, session: Optional[MyTransactionType] = None) -> List[StagedChange]:
+        """Get all staged changes for a specific table from the MongoDB database."""
+        documents = self.collection.find({'action_table': table.value}, **mongo_transaction_kwargs(session))
+        return [_document_to_staged_change(doc) for doc in documents]
+
+    def get_staged_changes_by_table_and_id(
+        self,
+        table: ActionTable,
+        obj_id: str,
+        session: Optional[MyTransactionType] = None,
+    ) -> List[StagedChange]:
+        documents = self.collection.find({'action_table': table.value, 'uid': obj_id}, **mongo_transaction_kwargs(session))
+        return [_document_to_staged_change(doc) for doc in documents]
+
     def clear_staged_changes(self, before: int = None, session: Optional[MyTransactionType] = None):
         """Clear all staged changes from the MongoDB database."""
         if before is not None:

@@ -76,6 +76,23 @@ class SQLiteStaging(StagingDBInterface):
             rows = cursor.fetchall()
         return [_build_change(row) for row in rows]
 
+    def get_staged_changes_by_table(self, table: ActionTable, session: Optional[MyTransactionType] = None) -> List[StagedChange]:
+        with self.get_cursor() as cursor:
+            cursor.execute('SELECT action, table_name, user, entity_id, timestamp, data FROM staged_changes WHERE table_name = ?', (table.value,))
+            rows = cursor.fetchall()
+        return [_build_change(row) for row in rows]
+
+    def get_staged_changes_by_table_and_id(
+        self,
+        table: ActionTable,
+        obj_id: str,
+        session: Optional[MyTransactionType] = None,
+    ) -> List[StagedChange]:
+        with self.get_cursor as cursor:
+            cursor.execute('SELECT action, table_name, user, entity_id, timestamp, data FROM staged_changes WHERE table_name = ? AND entity_id = ?', (table.value, obj_id))
+            rows = cursor.fetchall()
+        return [_build_change(row) for row in rows]
+
     def clear_staged_changes(self, before: int = None, session: Optional[MyTransactionType] = None):
         with self.get_cursor() as cursor:
             if before is not None:
