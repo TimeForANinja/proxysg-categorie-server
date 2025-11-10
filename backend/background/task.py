@@ -1,12 +1,13 @@
 import traceback
 
 from db.dbmodel.task import CleanupFlags, Task
+from db.middleware.abc.db import MiddlewareDB
 from db.middleware.stagingdb.db import StagingDB
 from db.util.parse_existing_db import parse_db, create_in_db, create_urls_db
 from log import log_debug, log_info
 
 
-def execute_load_existing_task(db_if: StagingDB, task: Task):
+def execute_load_existing_task(db_if: MiddlewareDB, task: Task):
     """
     Execute a load_existing task.
 
@@ -44,7 +45,7 @@ def execute_load_existing_task(db_if: StagingDB, task: Task):
         db_if.tasks.update_task_status(task.id, 'failed')
 
 
-def execute_cleanup_existing(db_if: StagingDB, task: Task):
+def execute_cleanup_existing(db_if: MiddlewareDB, task: Task):
     """
     Execute a task to cleanup unused Elements (URLS / Categories).
     """

@@ -9,6 +9,7 @@ from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
 from background.task import execute_load_existing_task, execute_commit, execute_cleanup_existing, execute_revert
 from db.db_singleton import get_db
+from db.middleware.stagingdb.db import StagingDB
 from log import log_debug, log_error
 
 TIME_MINUTES = 60
@@ -105,12 +106,20 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
                 # if no task is defined, we do nothing
                 if task and task.name == "load_existing":
                     execute_load_existing_task(db_if, task)
-                elif task and task.name == "commit":
-                    execute_commit(db_if, task)
                 elif task and task.name == 'cleanup_unused':
                     execute_cleanup_existing(db_if, task)
+                elif task and task.name == "commit":
+                    if isinstance(db_if, StagingDB):
+                        execute_commit(db_if, task)
+                    else:
+                        log_error('BACKGROUND', 'Cannot commit to non-staging DB')
+                        db_if.tasks.update_task_status(task.id, 'failed')
                 elif task and task.name == 'revert_uncommitted':
-                    execute_revert(db_if, task)
+                    if isinstance(db_if, StagingDB):
+                        execute_revert(db_if, task)
+                    else:
+                        log_error('BACKGROUND', 'Cannot revert uncommitted changes to non-staging DB')
+                        db_if.tasks.update_task_status(task.id, 'failed')
                 elif task:
                     log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
                     db_if.tasks.update_task_status(task.id, 'unknown')
