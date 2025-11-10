@@ -33,6 +33,11 @@ class DBInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def migrate(self):
+        """Method to migrate the database schema."""
+        pass
+
     @contextmanager
     @abstractmethod
     def start_transaction(self) -> Generator[MyTransactionType, None, None]:

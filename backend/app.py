@@ -113,7 +113,8 @@ def migrate_db(a: APIFlask):
     log_debug("APP", "App migrate_db called")
     with a.app_context():
         # init db to trigger schema migration
-        _db = get_db()
+        db = get_db()
+        db.migrate()
         # make sure to properly close and delete the DB
         # MongoDB is not fork-safe, so we need to close the connection before gunicorn spawns more workers
         # https://www.mongodb.com/docs/languages/python/pymongo-driver/current/connect/mongoclient/#forking-a-process-causes-a-deadlock

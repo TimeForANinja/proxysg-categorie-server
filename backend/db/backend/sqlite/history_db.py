@@ -124,4 +124,3 @@ class SQLiteHistory(HistoryDBInterface):
             ))
 
         return result
-

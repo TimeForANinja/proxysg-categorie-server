@@ -38,14 +38,11 @@ class MyMongoDB(DBInterface):
         self.tasks = MongoDBTask(self.db)
         self.staging = MongoDBStaging(self.db)
 
-        # prep MongoDB
-        self._on_init()
-
     def close(self):
         log_debug("MONGODB", "Closing Client")
         self.client.close()
 
-    def _on_init(self):
+    def migrate(self):
         """
         Run Initialization and Optimization steps.
         This can include anything from pushing initial data to creating indexes.

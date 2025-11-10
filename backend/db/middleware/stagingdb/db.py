@@ -126,3 +126,6 @@ class StagingDB(MiddlewareDB):
 
             # remove all staged events, now that they are committed
             self._staged.clear(before=not_before, session=session)
+
+    def migrate(self):
+        self._main_db.migrate()

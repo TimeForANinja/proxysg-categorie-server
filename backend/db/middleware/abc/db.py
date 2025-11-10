@@ -24,3 +24,8 @@ class MiddlewareDB(ABC):
     def close(self):
         """Method to trigger any cleanup actions."""
         pass
+
+    @abstractmethod
+    def migrate(self):
+        """Method to migrate the database schema."""
+        pass
