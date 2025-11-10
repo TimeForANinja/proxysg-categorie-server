@@ -1,3 +1,4 @@
+import time
 from typing import Optional, List, Mapping, Any
 from pymongo.synchronous.database import Database
 
@@ -20,6 +21,7 @@ def _build_url(row: Mapping[str, Any]) -> URL:
             if x['is_deleted'] == 0
         ],
         bc_cats=row['bc_cats'],
+        bc_last_set=row['bc_last_set'],
         pending_changes=False,
     )
 
@@ -37,6 +39,7 @@ class MongoDBURL(URLDBInterface):
             'is_deleted': 0,
             'categories': [],
             'bc_cats': [NO_BC_CATEGORY_YET],
+            'bc_last_set': 0,
         }, **mongo_transaction_kwargs(session))
 
         return URL.from_mutable(url_id, mut_url)
@@ -65,7 +68,7 @@ class MongoDBURL(URLDBInterface):
 
     def set_bc_cats(self, url_id: str, bc_cats: List[str]):
         query = {'_id': url_id, 'is_deleted': 0}
-        update = {'$set': {'bc_cats': bc_cats}}
+        update = {'$set': {'bc_cats': bc_cats, 'bc_last_set': int(time.time())}}
         result = self.collection.update_one(query, update)
 
         if result.matched_count == 0:

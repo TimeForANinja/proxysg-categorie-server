@@ -18,7 +18,8 @@ def _build_url(row: Any) -> URL:
         description=row[2],
         is_deleted=0,
         bc_cats=split_opt_str_group(row[3]),
-        categories=split_opt_str_group(row[4]),
+        bc_last_set=row[4],
+        categories=split_opt_str_group(row[5]),
         pending_changes=False,
     )
 
@@ -47,6 +48,7 @@ class SQLiteURL(URLDBInterface):
                     u.hostname,
                     u.description,
                     u.bc_cats,
+                    u.bc_last_set,
                     GROUP_CONCAT(uc.category_id) as categories
                 FROM urls u
                 LEFT JOIN (
@@ -83,9 +85,9 @@ class SQLiteURL(URLDBInterface):
         return self.get_url(url_id)
 
     def set_bc_cats(self, url_id: str, bc_cats: List[str]):
-        query = 'UPDATE urls SET bc_cats = ? WHERE id = ? AND is_deleted = 0'
+        query = 'UPDATE urls SET bc_cats = ?, bc_last_set = ? WHERE id = ? AND is_deleted = 0'
         with self.get_cursor() as cursor:
-            cursor.execute(query, (join_str_group(bc_cats), url_id))
+            cursor.execute(query, (join_str_group(bc_cats), int(time.time()), url_id))
 
     def delete_url(self, url_id: str, session: Optional[MyTransactionType] = None):
         with self.get_cursor() as cursor:
@@ -102,6 +104,7 @@ class SQLiteURL(URLDBInterface):
                     u.hostname,
                     u.description,
                     u.bc_cats,
+                    u.bc_last_set,
                     GROUP_CONCAT(uc.category_id) as categories
                 FROM urls u
                 LEFT JOIN (

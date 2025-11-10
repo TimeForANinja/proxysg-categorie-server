@@ -78,6 +78,7 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
         'date',
         run_date=datetime.now(timezone.utc) + timedelta(seconds=1*TIME_MINUTES),
         misfire_grace_time=MISFIRE_GRACE_TIME,
+        id='task_load_existing',
     )
 
 
@@ -135,6 +136,7 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
         'interval',
         seconds=30,
         misfire_grace_time=MISFIRE_GRACE_TIME,
+        id='check_task_queue',
     )
 
 
@@ -151,7 +153,7 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     # load required config variables
     query_bc_conf: dict = app.config.get('BC', {})
     bc_interval = query_bc_conf.get('INTERVAL', '0 3 * * *')
-    bc_interval_quick = query_bc_conf.get('INTERVAL_QUICK', '0 * * * *')
+    bc_ttl = int(query_bc_conf.get('TTL', 7 * 24 * 60)) * TIME_MINUTES
     bc_host = query_bc_conf.get('HOST')
     bc_user = query_bc_conf.get('USER', 'ro_admin')
     bc_password = query_bc_conf.get('PASSWORD')
@@ -160,7 +162,7 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
 
     log_debug('BACKGROUND', 'Preparing Background Tasks "start_query_bc"', {
         'interval': bc_interval,
-        'interval_quick': bc_interval_quick,
+        'ttl': bc_ttl,
         'host': bc_host,
         'user': bc_user,
         'verify_ssl': bc_verify_ssl,
@@ -171,42 +173,41 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
         urllib3.disable_warnings()
 
     # build a credential object to make it easier to pass them around
-    creds = ServerCredentials(
+    credentials = ServerCredentials(
         server=bc_host,
         user=bc_user,
         password=bc_password,
         verifySSL=bc_verify_ssl,
     )
 
+    def startup_and_enable_schedule():
+        query_executor(app, credentials, bc_ttl)
+        # add the long-terms chedule
+        scheduler.add_job(
+            lambda: query_executor(app, credentials, bc_ttl),
+            CronTrigger.from_crontab(bc_interval, timezone=tz),
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+            id='query_bc_cron',
+        )
+
     # wrapper to use the app_context
     # this allows us to use the existing db_singleton stored as a flask global object
-    def query_executor(a: APIFlask, c: ServerCredentials, unknown_only:bool=False):
+    def query_executor(a: APIFlask, c: ServerCredentials, ttl: int):
         with a.app_context():
             try:
-                log_debug('BACKGROUND', 'executing query_bc background task', { 'unknown_only': unknown_only })
-                query_all(c, unknown_only)
+                log_debug('BACKGROUND', 'executing query_bc background task')
+                query_all(c, ttl)
             except Exception as e:
                 log_error('BACKGROUND', 'Error executing query_bc background task', {
                     'error': str(e),
                     'traceback': traceback.format_exc(),
                 })
 
-    # run at the interval defined
-    # and once 'quick' after 3 minutes (only query not-yet-rated URLs)
-    # TODO: this setup might result in jobs being run at the same time...
+    # run once a few minutes after the system start
     scheduler.add_job(
-        lambda: query_executor(app, creds),
-        CronTrigger.from_crontab(bc_interval, timezone=tz),
-        misfire_grace_time=MISFIRE_GRACE_TIME,
-    )
-    scheduler.add_job(
-        lambda: query_executor(app, creds, True),
-        CronTrigger.from_crontab(bc_interval_quick, timezone=tz),
-        misfire_grace_time=MISFIRE_GRACE_TIME,
-    )
-    scheduler.add_job(
-        lambda: query_executor(app, creds, True),
+        lambda: startup_and_enable_schedule(),
         'date',
         run_date=datetime.now(timezone.utc) + timedelta(seconds=3*TIME_MINUTES),
-        misfire_grace_time=MISFIRE_GRACE_TIME,
+        misfire_grace_time=None, # type: ignore[arg-type]
+        id='query_bc_startup',
     )

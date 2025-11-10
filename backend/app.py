@@ -122,7 +122,7 @@ def migrate_db(a: APIFlask):
 
 
 if __name__ == '__main__':
-    # migrate db schema and init background tasks
+    # migrate db schema and init background tasks,
     # we keep this in the __main__ and manually trigger it for gunicorn with the on_starting / post_fork
     # to prevent the background tasks being run on multiple workers
     migrate_db(app)

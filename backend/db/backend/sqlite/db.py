@@ -87,7 +87,7 @@ class MySQLiteDB(DBInterface):
         """
         # Get current schema version
         current_version = self.config.get_schema_version()
-        log_debug('SQLITE', f'Current schema version: {current_version}')
+        log_info('SQLITE', f'Current schema version: {current_version}')
 
         # Find migration scripts
         migration_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'migration')

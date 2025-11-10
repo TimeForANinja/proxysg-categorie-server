@@ -1,3 +1,4 @@
+import time
 import requests
 from dataclasses import dataclass
 from typing import List
@@ -30,8 +31,8 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
     A Category is unknown if:
     * no cat is set
     * only the NO_BC_CATEGORY_YET category is set
-    * only 'unavailable' cat is set
-    * only 'query failed' cat is set
+    * only 'unavailable' category is set
+    * only 'query failed' category is set
 
     :param bc_cats: The list of BlueCoat Categories to check
     :return: True if the list is unknown, False otherwise
@@ -44,59 +45,60 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
         return True
     # TODO: decide on how to continue with this (currently disabled by the 'false and')
     # Unavailable is used a) when BC Cat Services are offline
-    # and b) when the URL / FQDN is not ratable (e.g. IP)
+    # and b) when the URL / FQDN is not ratable (e.g.: IP)
     if False and len(bc_cats) == 1 and bc_cats[0] == FAILED_BC_CATEGORY_LOOKUP:
         return True
     return False
 
-def query_all(creds: ServerCredentials, unknown_only: bool):
+def query_all(credentials: ServerCredentials, ttl: int):
     """
     Method to query all URLs in the DB for their BlueCoat Categories
 
-    :param creds: The credentials to use for the request
-    :param unknown_only: If True, only URLs with unknown BlueCoat Categories will be queried
+    :param credentials: The credentials to use for the request
+    :param ttl: The max TTL after which to force-refresh the rating
     """
     db_if = get_db()
-
     urls = db_if.urls.get_all_urls(bypass_cache=True)
+
+    # calculate the cutoff time, after which we must refresh the item
+    max_age = int(time.time()) - ttl
 
     # filter out all URLs that need an update
     scheduled_urls = [
         url for url in urls
-        # if unknown_only is set, we only want to check not yet looked up / where the prev lookup failed
-        if not unknown_only or is_unknown_category(url.bc_cats)
+        # check all URLs that have either not been (successfully) looked up,
+        # or where the lookup was done before the TTL
+        if is_unknown_category(url.bc_cats) or url.bc_last_set < max_age
     ]
     log_debug('background','planning update of BlueCoat categories', {
-        'mode': 'only_unknown' if unknown_only else 'all',
         'total': len(urls),
         'planned': len(scheduled_urls),
     })
 
     for url in scheduled_urls:
         # query the proxy for the categories
-        bc_cats = do_query(creds, url.hostname)
+        bc_cats = do_query(credentials, url.hostname)
 
-        # if they changed -> push to the database
-        if set(bc_cats) != set(url.bc_cats):
+        if not (len(bc_cats) == 1 and bc_cats[0] == FAILED_LOOKUP):
+            # since we update the TTL, we need to push even unchanged categories to the DB
             db_if.urls.set_bc_cats(url.id, bc_cats)
 
     log_info('background','Updated BlueCoat categories', {
-        'mode': 'only_unknown' if unknown_only else 'all',
         'total': len(urls),
         'updated': len(scheduled_urls),
     })
 
-def do_query(creds: ServerCredentials, url: str) -> List[str]:
+def do_query(credentials: ServerCredentials, url: str) -> List[str]:
     """
     Perform a basic request against the Database on a Bluecoat Proxy
 
-    :param creds: The credentials to use for the request
+    :param credentials: The credentials to use for the request
     :param url: The URL to query
     :return: A list of strings representing the categories of the URLs
     """
 
     try:
-        response = requests.get(creds.query(url), verify=creds.verifySSL)
+        response = requests.get(credentials.query(url), verify=credentials.verifySSL)
         response.raise_for_status()
 
         raw_content = response.text
@@ -110,7 +112,7 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
         log_error(
             'background',
             'BlueCoat Category not found in Response',
-            {'url': url, 'query': creds.sanitized_query(url), 'response': raw_content }
+            {'url': url, 'query': credentials.sanitized_query(url), 'response': raw_content }
         )
         return [FAILED_LOOKUP]
     except requests.RequestException as e:
@@ -118,6 +120,6 @@ def do_query(creds: ServerCredentials, url: str) -> List[str]:
         log_error(
             'background',
             'Error fetching BlueCoat Categories',
-            {'url': url, 'query': creds.sanitized_query(url), 'error': str(e)}
+            {'url': url, 'query': credentials.sanitized_query(url), 'error': str(e)}
         )
         return [FAILED_LOOKUP]

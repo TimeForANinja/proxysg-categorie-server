@@ -80,6 +80,12 @@ class URL(MutableURL):
             'description': 'List of BlueCoat Categories this URL is currently categorised as',
         }
     )
+    bc_last_set: int = field(
+        default=0,
+        metadata={
+            'description': 'Timestamp when the BlueCoat Categories were last set for this URL',
+        }
+    )
     pending_changes: bool = field(metadata={
         'required': True,
         'description': 'Whether the category has pending changes or not',
@@ -93,5 +99,6 @@ class URL(MutableURL):
             id=url_id,
             is_deleted=0,
             bc_cats=[NO_BC_CATEGORY_YET],
+            bc_last_set=0,
             pending_changes=False,
         )
