@@ -57,7 +57,7 @@ def add_task_bp(app):
 
         return {
             'status': 'success',
-            'message': 'CLeanup-Unused task created successfully',
+            'message': 'Cleanup-Unused task created successfully',
             'data': task.id,
         }
 

@@ -1,9 +1,10 @@
 import os
 import sqlite3
 from contextlib import contextmanager
-from typing import Generator
+from typing import Generator, Optional
 
 from db.backend.abc.db import DBInterface
+from db.backend.abc.util.types import MyTransactionType
 from db.backend.sqlite.category_db import SQLiteCategory
 from db.backend.sqlite.config_db import SQLiteConfig, CONFIG_VAR_SCHEMA_VERSION
 from db.backend.sqlite.history_db import SQLiteHistory
@@ -38,7 +39,7 @@ class MySQLiteDB(DBInterface):
         self.staging = SQLiteStaging(self.get_cursor)
 
     @contextmanager
-    def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
+    def get_connection(self, session: Optional[MyTransactionType] = None) -> Generator[sqlite3.Connection, None, None]:
         """
         Context manager that provides a connection and automatically handles cleanup.
 
@@ -48,18 +49,17 @@ class MySQLiteDB(DBInterface):
                 cursor.execute('SELECT * FROM table')
                 result = cursor.fetchall()
         """
-        conn = sqlite3.connect(self.filename)
-        try:
+        if session is not None:
+            # if we're given a session (open transaction), use it
+            yield session
+            return
+
+        with sqlite3.connect(self.filename) as conn:
             yield conn
-            conn.commit()  # Auto-commit on success
-        except Exception:
-            conn.rollback()  # Rollback on error
-            raise
-        finally:
-            conn.close()
+            # this will auto-commit when exiting the with block
 
     @contextmanager
-    def get_cursor(self) -> Generator[sqlite3.Cursor, None, None]:
+    def get_cursor(self, session: Optional[MyTransactionType] = None) -> Generator[sqlite3.Cursor, None, None]:
         """
         Context manager that provides a cursor and automatically handles connection cleanup.
 
@@ -68,12 +68,8 @@ class MySQLiteDB(DBInterface):
                 cursor.execute('SELECT * FROM table')
                 result = cursor.fetchall()
         """
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                yield cursor
-            finally:
-                cursor.close()
+        with self.get_connection(session=session) as conn:
+            yield conn.cursor()
 
     def close(self):
         # sqlite is never permanently open - so nothing to do here
@@ -110,41 +106,39 @@ class MySQLiteDB(DBInterface):
         migration_files.sort(key=lambda x: x[0])
 
         # Run migrations that are newer than the current version
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                for version, file_path in migration_files:
-                    if version > current_version:
-                        log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
-                        try:
-                            # Read and execute the migration script
-                            with open(file_path, 'r') as f:
-                                sql_script = f.read()
+        for version, file_path in migration_files:
+            if version > current_version:
+                log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
 
+                try:
+                    # Read and execute the migration script
+                    with open(file_path, 'r') as f:
+                        sql_script = f.read()
+
+                    with self.start_transaction() as session:
+                        with self.get_cursor(session=session) as cursor:
                             # Execute the script
                             # use BEGIN/COMMIT to enforce a transaction - changes are only stored if all changes succeed
-                            cursor.executescript(f"BEGIN;\n{ sql_script }\nCOMMIT;")
-                            conn.commit()
+                            cursor.executescript(f"BEGIN;\n{sql_script};")
 
-                            # Update schema version
-                            self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version)
+                        # Update schema version, as part of the same transaction
+                        self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version, session=session)
 
-                            log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
-                        except Exception as e:
-                            conn.rollback()
-                            log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
-                            # migration failed
-                            # raise to stop the server since the DB is not as expected
-                            raise e
-                    else:
-                        log_debug("SQLITE", f"Skipping migration: {os.path.basename(file_path)} (version {version} is older than current version {current_version})")
-            finally:
-                try:
-                    cursor.close()
-                except Exception:
-                    pass
+                        # commit the transaction
+                        session.commit()
+
+                    log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
+                except Exception as e:
+                    log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
+                    # migration failed
+                    # raise to stop the server since the DB is not as expected
+                    raise e
+            else:
+                log_debug("SQLITE", f"Skipping migration: {os.path.basename(file_path)} (version {version} is older or equal to current version {current_version})")
 
     @contextmanager
-    def start_transaction(self) -> Generator[None, None, None]:
-        # TODO: implement transaction support
-        yield None
+    def start_transaction(self) -> Generator[MyTransactionType, None, None]:
+        # for a sqlite transaction it's only required to reuse the same connection
+        # commit / rollback is automatically handled when the with block is exited
+        with self.get_connection(session=None) as conn:
+            yield conn

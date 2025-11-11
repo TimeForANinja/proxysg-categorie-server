@@ -1,17 +1,16 @@
-import sqlite3
 import time
-from contextlib import AbstractContextManager
-from typing import List, Callable, Optional
+from typing import List, Optional
 
 from db.backend.abc.url_category import UrlCategoryDBInterface
 from db.backend.abc.util.types import MyTransactionType
+from db.backend.sqlite.util.cursor_callable import GetCursorProtocol
 
 
 class SQLiteURLCategory(UrlCategoryDBInterface):
     def __init__(
-            self,
-            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
-        ):
+        self,
+        get_cursor: GetCursorProtocol
+    ):
         self.get_cursor = get_cursor
 
     def get_url_categories_by_url(self, url_id: str) -> List[str]:
@@ -29,14 +28,14 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
             return [str(row[0]) for row in rows]
 
     def add_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
                 (url_id, category_id,)
             )
 
     def delete_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
                 (int(time.time()), url_id, category_id,)

@@ -1,10 +1,9 @@
-import sqlite3
 import time
-from contextlib import AbstractContextManager
-from typing import Optional, List, Callable, Any
+from typing import Optional, List, Any
 
 from db.backend.abc.token import TokenDBInterface
 from db.backend.abc.util.types import MyTransactionType
+from db.backend.sqlite.util.cursor_callable import GetCursorProtocol
 from db.backend.sqlite.util.groups import split_opt_str_group
 from db.dbmodel.token import MutableToken, Token
 from db.backend.sqlite.util.query_builder import build_update_query
@@ -25,9 +24,9 @@ def _build_token(row: Any) -> Token:
 
 class SQLiteToken(TokenDBInterface):
     def __init__(
-            self,
-            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
-        ):
+        self,
+        get_cursor: GetCursorProtocol
+    ):
         self.get_cursor = get_cursor
 
     def add_token(
@@ -37,7 +36,7 @@ class SQLiteToken(TokenDBInterface):
             mut_tok: MutableToken,
             session: Optional[MyTransactionType] = None,
     ) -> Token:
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO tokens (id, token, description) VALUES (?, ?, ?)',
                 (token_id, uuid, mut_tok.description)
@@ -46,7 +45,7 @@ class SQLiteToken(TokenDBInterface):
         return Token.from_mutable(token_id, uuid, mut_tok)
 
     def get_token(self, token_id: str, session: Optional[MyTransactionType] = None) -> Optional[Token]:
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 '''SELECT
                     t.id AS id,
@@ -111,7 +110,7 @@ class SQLiteToken(TokenDBInterface):
         if updates:
             query = f'UPDATE tokens SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
             params.append(token_id)
-            with self.get_cursor() as cursor:
+            with self.get_cursor(session=session) as cursor:
                 cursor.execute(query, params)
 
         return self.get_token(token_id)
@@ -125,7 +124,7 @@ class SQLiteToken(TokenDBInterface):
             )
 
     def roll_token(self, token_id: str, uuid: str, session: Optional[MyTransactionType] = None) -> Token:
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE tokens SET token = ? WHERE id = ? AND is_deleted = 0',
                 (uuid, token_id,)
@@ -134,14 +133,14 @@ class SQLiteToken(TokenDBInterface):
         return self.get_token(token_id)
 
     def delete_token(self, token_id: str, session: Optional[MyTransactionType] = None):
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE tokens SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
                 (int(time.time()), token_id,)
             )
 
     def get_all_tokens(self, session: Optional[MyTransactionType] = None) -> List[Token]:
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 '''SELECT
                     t.id AS id,

@@ -1,10 +1,9 @@
-import sqlite3
 import time
-from contextlib import AbstractContextManager
-from typing import Optional, List, Any, Callable
+from typing import Optional, List, Any
 
 from db.backend.abc.url import URLDBInterface
 from db.backend.abc.util.types import MyTransactionType
+from db.backend.sqlite.util.cursor_callable import GetCursorProtocol
 from db.backend.sqlite.util.groups import split_opt_str_group, join_str_group
 from db.backend.sqlite.util.query_builder import build_update_query
 from db.dbmodel.url import MutableURL, URL, NO_BC_CATEGORY_YET
@@ -26,13 +25,13 @@ def _build_url(row: Any) -> URL:
 
 class SQLiteURL(URLDBInterface):
     def __init__(
-            self,
-            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
-        ):
+        self,
+        get_cursor: GetCursorProtocol
+    ):
         self.get_cursor = get_cursor
 
     def add_url(self, mut_url: MutableURL, url_id: str, session: Optional[MyTransactionType] = None) -> URL:
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO urls (id, hostname, description, bc_cats) VALUES (?, ?, ?, ?)',
                 (url_id, mut_url.hostname, mut_url.description, NO_BC_CATEGORY_YET)
@@ -41,7 +40,7 @@ class SQLiteURL(URLDBInterface):
         return URL.from_mutable(url_id, mut_url)
 
     def get_url(self, url_id: str, session: Optional[MyTransactionType] = None) -> Optional[URL]:
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 '''SELECT
                     u.id AS id,
@@ -79,7 +78,7 @@ class SQLiteURL(URLDBInterface):
         if updates:
             query = f'UPDATE urls SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
             params.append(url_id)
-            with self.get_cursor() as cursor:
+            with self.get_cursor(session=session) as cursor:
                 cursor.execute(query, params)
 
         return self.get_url(url_id)
@@ -90,14 +89,14 @@ class SQLiteURL(URLDBInterface):
             cursor.execute(query, (join_str_group(bc_cats), int(time.time()), url_id))
 
     def delete_url(self, url_id: str, session: Optional[MyTransactionType] = None):
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE urls SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
                 (int(time.time()), url_id,)
             )
 
     def get_all_urls(self, session: Optional[MyTransactionType] = None) -> List[URL]:
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 '''SELECT
                     u.id AS id,

@@ -1,11 +1,10 @@
-import sqlite3
 import time
-from contextlib import AbstractContextManager
-from typing import List, Callable, Optional
+from typing import List, Optional
 
 from auth.auth_user import AuthUser
 from db.backend.abc.util.types import MyTransactionType
 from db.backend.abc.history import HistoryDBInterface
+from db.backend.sqlite.util.cursor_callable import GetCursorProtocol
 from db.backend.sqlite.util.groups import split_opt_str_group, join_str_group
 from db.dbmodel.history import History, Atomic
 
@@ -13,7 +12,7 @@ from db.dbmodel.history import History, Atomic
 class SQLiteHistory(HistoryDBInterface):
     def __init__(
         self,
-        get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
+        get_cursor: GetCursorProtocol
     ):
         self.get_cursor = get_cursor
 
@@ -41,7 +40,7 @@ class SQLiteHistory(HistoryDBInterface):
         """
         timestamp = int(time.time())
 
-        with self.get_cursor() as cursor:
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO history (time, description, user, ref_token, ref_url, ref_category) VALUES (?, ?, ?, ?, ?, ?)',
                 (timestamp, action, AuthUser.serialize(user), join_str_group(ref_token), join_str_group(ref_url), join_str_group(ref_category))

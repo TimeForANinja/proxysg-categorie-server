@@ -1,16 +1,17 @@
 import sqlite3
-from contextlib import AbstractContextManager
-from typing import Callable
+from typing import Optional
 
+from db.backend.abc.util.types import MyTransactionType
+from db.backend.sqlite.util.cursor_callable import GetCursorProtocol
 
 CONFIG_VAR_SCHEMA_VERSION = 'schema-version'
 
 
 class SQLiteConfig:
     def __init__(
-            self,
-            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
-        ):
+        self,
+        get_cursor: GetCursorProtocol
+    ):
         self.get_cursor = get_cursor
 
     def read_int(self, key: str) -> int:
@@ -26,9 +27,15 @@ class SQLiteConfig:
         else:
             return -1
 
-    def set_int(self, key: str, value: int):
-        """Set a config variable. If it doesn't exist, create it."""
-        with self.get_cursor() as cursor:
+    def set_int(self, key: str, value: int, session: Optional[MyTransactionType] = None):
+        """
+        Set a config variable. If it doesn't exist, create it.
+
+        :param key: The key of the config variable.
+        :param value: The value to set.
+        :param session: Optional database session to use.
+        """
+        with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
                 (key, str(value))

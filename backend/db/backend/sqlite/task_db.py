@@ -1,11 +1,10 @@
 import orjson
-import sqlite3
 import time
-from contextlib import AbstractContextManager
-from typing import Optional, List, Callable, Any
+from typing import Optional, List, Any
 
 from auth.auth_user import AuthUser
 from db.backend.abc.task import TaskDBInterface
+from db.backend.sqlite.util.cursor_callable import GetCursorProtocol
 from db.dbmodel.task import MutableTask, Task
 
 
@@ -26,9 +25,9 @@ def _build_task(row: Any) -> Task:
 
 class SQLiteTask(TaskDBInterface):
     def __init__(
-            self,
-            get_cursor: Callable[[], AbstractContextManager[sqlite3.Cursor]]
-        ):
+        self,
+        get_cursor: GetCursorProtocol
+    ):
         self.get_cursor = get_cursor
 
     def add_task(self, user: AuthUser, task: MutableTask) -> Task:

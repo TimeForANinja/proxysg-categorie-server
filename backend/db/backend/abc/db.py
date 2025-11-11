@@ -41,4 +41,11 @@ class DBInterface(ABC):
     @contextmanager
     @abstractmethod
     def start_transaction(self) -> Generator[MyTransactionType, None, None]:
+        """
+        Method to start a transaction.
+        The Context Manager returns a transaction object that can be passed to future db calls
+        to have them run in the context of the transaction.
+
+        :return: A context manager that can be used to start a transaction.
+        """
         pass
