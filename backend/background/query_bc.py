@@ -3,8 +3,8 @@ import requests
 from dataclasses import dataclass
 from typing import List
 
-from db.db_singleton import get_db
 from db.dbmodel.url import NO_BC_CATEGORY_YET, FAILED_BC_CATEGORY_LOOKUP, FAILED_LOOKUP
+from db.middleware.abc.db import MiddlewareDB
 from log import log_info, log_error, log_debug
 
 
@@ -50,14 +50,14 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
         return True
     return False
 
-def query_all(credentials: ServerCredentials, ttl: int):
+def query_all(db_if: MiddlewareDB, credentials: ServerCredentials, ttl: int):
     """
     Method to query all URLs in the DB for their BlueCoat Categories
 
+    :param db_if: The DBInterface to use for the DB operations
     :param credentials: The credentials to use for the request
     :param ttl: The max TTL after which to force-refresh the rating
     """
-    db_if = get_db()
     urls = db_if.urls.get_all_urls(bypass_cache=True)
 
     # calculate the cutoff time, after which we must refresh the item

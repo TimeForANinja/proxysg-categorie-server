@@ -1,5 +1,6 @@
 import traceback
 
+from background.query_bc import query_all, ServerCredentials
 from db.dbmodel.task import CleanupFlags, Task
 from db.middleware.abc.db import MiddlewareDB
 from db.middleware.stagingdb.db import StagingDB
@@ -43,7 +44,6 @@ def execute_load_existing_task(db_if: MiddlewareDB, task: Task):
             'traceback': traceback.format_exc(),
         })
         db_if.tasks.update_task_status(task.id, 'failed')
-
 
 def execute_cleanup_existing(db_if: MiddlewareDB, task: Task):
     """
@@ -146,6 +146,31 @@ def execute_revert(db_if: StagingDB, task: Task):
         db_if.tasks.update_task_status(task.id, 'success')
     except Exception as e:
         log_info('BACKGROUND', f'Error executing revert task {task.id}', {
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+        })
+        db_if.tasks.update_task_status(task.id, 'failed')
+
+def execute_refresh_bc_cats(db_if: MiddlewareDB, task: Task, credentials: ServerCredentials):
+    """
+    Execute a Category Refresh Task.
+    This forces an update of all cached Bluecoat Categories for all URLs.
+
+    :param db_if: The database interface to use
+    :param task: the task to execute
+    :param credentials: The credentials to use for the Bluecoat API
+    """
+    log_debug('BACKGROUND', f'Executing refresh_bc task {task.id}')
+
+    # Update task status to running
+    db_if.tasks.update_task_status(task.id, 'running')
+
+    try:
+        query_all(db_if, credentials, 0)
+        log_info('BACKGROUND', f'refresh_bc task {task.id} completed successfully')
+        db_if.tasks.update_task_status(task.id, 'success')
+    except Exception as e:
+        log_info('BACKGROUND', f'Error executing refresh_bc task {task.id}', {
             'error': str(e),
             'traceback': traceback.format_exc(),
         })

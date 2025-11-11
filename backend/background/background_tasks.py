@@ -7,7 +7,8 @@ from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
-from background.task import execute_load_existing_task, execute_commit, execute_cleanup_existing, execute_revert
+from background.task import execute_load_existing_task, execute_commit, execute_cleanup_existing, execute_revert, \
+    execute_refresh_bc_cats
 from db.db_singleton import get_db
 from db.middleware.stagingdb.db import StagingDB
 from log import log_debug, log_error
@@ -109,6 +110,9 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
                     execute_load_existing_task(db_if, task)
                 elif task and task.name == 'cleanup_unused':
                     execute_cleanup_existing(db_if, task)
+                elif task and task.name == 'refresh_bc':
+                    credentials = get_bc_credentials(app)
+                    execute_refresh_bc_cats(db_if, task, credentials)
                 elif task and task.name == "commit":
                     if isinstance(db_if, StagingDB):
                         execute_commit(db_if, task)
@@ -140,6 +144,27 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
     )
 
 
+def get_bc_credentials(app: APIFlask) -> ServerCredentials:
+    query_bc_conf: dict = app.config.get('BC', {})
+    bc_host = query_bc_conf.get('HOST')
+    bc_user = query_bc_conf.get('USER', 'ro_admin')
+    bc_password = query_bc_conf.get('PASSWORD')
+    # check for false or not false, so that we default to 'true' for all other values
+    bc_verify_ssl = query_bc_conf.get('VERIFY_SSL', 'true').lower() != 'false'
+
+
+    if not bc_verify_ssl:
+        # hide warnings telling us to enable ssl verification
+        urllib3.disable_warnings()
+
+    # build a credential object to make it easier to pass them around
+    return ServerCredentials(
+        server=bc_host,
+        user=bc_user,
+        password=bc_password,
+        verifySSL=bc_verify_ssl,
+    )
+
 def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     """
     Initialize the background task to query URL Categories from Bluecoat DB
@@ -154,31 +179,12 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     query_bc_conf: dict = app.config.get('BC', {})
     bc_interval = query_bc_conf.get('INTERVAL', '0 3 * * *')
     bc_ttl = int(query_bc_conf.get('TTL', 7 * 24 * 60)) * TIME_MINUTES
-    bc_host = query_bc_conf.get('HOST')
-    bc_user = query_bc_conf.get('USER', 'ro_admin')
-    bc_password = query_bc_conf.get('PASSWORD')
-    # check for false or not false, so that we default to 'true' for all other values
-    bc_verify_ssl = query_bc_conf.get('VERIFY_SSL', 'true').lower() != 'false'
-
+    credentials = get_bc_credentials(app)
     log_debug('BACKGROUND', 'Preparing Background Tasks "start_query_bc"', {
         'interval': bc_interval,
         'ttl': bc_ttl,
-        'host': bc_host,
-        'user': bc_user,
-        'verify_ssl': bc_verify_ssl,
+        'base-url': credentials.sanitized_query(""),
     })
-
-    if not bc_verify_ssl:
-        # hide warnings telling us to enable ssl verification
-        urllib3.disable_warnings()
-
-    # build a credential object to make it easier to pass them around
-    credentials = ServerCredentials(
-        server=bc_host,
-        user=bc_user,
-        password=bc_password,
-        verifySSL=bc_verify_ssl,
-    )
 
     def startup_and_enable_schedule():
         query_executor(app, credentials, bc_ttl)
@@ -196,7 +202,7 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
         with a.app_context():
             try:
                 log_debug('BACKGROUND', 'executing query_bc background task')
-                query_all(c, ttl)
+                query_all(get_db(), c, ttl)
             except Exception as e:
                 log_error('BACKGROUND', 'Error executing query_bc background task', {
                     'error': str(e),

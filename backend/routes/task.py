@@ -24,10 +24,8 @@ def add_task_bp(app):
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def load_existing(existing_db: ExistingDBInput):
-        db_if = get_db()
-
         # Create a background task to process the database
-        task = db_if.tasks.add_task(auth.current_user, MutableTask(
+        task = get_db().tasks.add_task(auth.current_user, MutableTask(
             name='load_existing',
             parameters=['load_existing', existing_db.categoryDB, existing_db.prefix]
         ))
@@ -46,10 +44,8 @@ def add_task_bp(app):
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def cleanup_unused(cleanup_settings: CleanupInput):
-        db_if = get_db()
-
-        # Create a background task to process the database
-        task = db_if.tasks.add_task(auth.current_user, MutableTask(
+        # Create a background task to process the cleanup
+        task = get_db().tasks.add_task(auth.current_user, MutableTask(
             name='cleanup_unused',
             parameters=['cleanup_unused', cleanup_settings.flags]
         ))
@@ -67,10 +63,8 @@ def add_task_bp(app):
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def revert_changes():
-        db_if = get_db()
-
-        # Create a background task to process the database
-        task = db_if.tasks.add_task(auth.current_user, MutableTask(
+        # Create a background task to process the cleanup
+        task = get_db().tasks.add_task(auth.current_user, MutableTask(
             name='revert_uncommitted',
             parameters=['revert_uncommitted']
         ))
@@ -88,8 +82,7 @@ def add_task_bp(app):
     @task_bp.output(ListTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
     def get_tasks():
-        db_if = get_db()
-        tasks = db_if.tasks.get_all_tasks()
+        tasks = get_db().tasks.get_all_tasks()
         return {
             'status': 'success',
             'message': 'Tasks fetched successfully',
@@ -102,8 +95,7 @@ def add_task_bp(app):
     @task_bp.output(SingleTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
     def get_task(task_id):
-        db_if = get_db()
-        task = db_if.tasks.get_task(task_id)
+        task = get_db().tasks.get_task(task_id)
 
         if task is None:
             return {
@@ -123,14 +115,30 @@ def add_task_bp(app):
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def handle_commit(commit_data: CommitInput):
-        db_if = get_db()
-
         # Create a background task to process the database
-        task = db_if.tasks.add_task(auth.current_user, MutableTask(
+        task = get_db().tasks.add_task(auth.current_user, MutableTask(
             name='commit',
             parameters=['commit', commit_data.message, str(int(time.time()))]
         ))
         log_debug('API', f'Created commit task {task.id} with message: {commit_data.message}')
+
+        return {
+            'status': 'success',
+            'message': 'Commit task created successfully',
+            'data': task.id,
+        }
+
+    @task_bp.post('/api/task/new/refresh_bc')
+    @task_bp.doc(summary='Refresh BC Categories', description='Trigger a refresh of all BC Categories')
+    @task_bp.output(CreatedTaskOutput)
+    @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
+    def handle_refresh_bc():
+        # Create a background task to process the refresh
+        task = get_db().tasks.add_task(auth.current_user, MutableTask(
+            name='refresh_bc',
+            parameters=['refresh_bc']
+        ))
+        log_debug('API', f'Created refresh_bc task {task.id}')
 
         return {
             'status': 'success',
