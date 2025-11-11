@@ -32,10 +32,10 @@ class AuthUser:
 
         :return: A dictionary representation of the AuthUser
         """
-        return str(orjson.dumps({
+        return orjson.dumps({
             'username': self.username,
             'roles': self.roles
-        }))
+        }).decode("utf-8")
 
     @staticmethod
     def unserialize(auth_str: str) -> 'AuthUser':

@@ -78,7 +78,7 @@ def _remove_keys_from_json(json_str: str, *keys_to_remove: str) -> str:
             for key in keys_to_remove:
                 data.pop(key, None)
         # Convert back to JSON string
-        return str(orjson.dumps(data))
+        return orjson.dumps(data).decode("utf-8")
     except:
         return json_str
 

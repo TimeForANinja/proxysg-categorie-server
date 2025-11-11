@@ -37,7 +37,7 @@ class SQLiteStaging(StagingDBInterface):
         auth_json = AuthUser.serialize(change.auth)
 
         # Serialize data dictionary to JSON string
-        data_json = str(orjson.dumps(change.data)) if change.data else None
+        data_json = orjson.dumps(change.data).decode("utf-8") if change.data else None
 
         # push to db
         with self.get_cursor() as cursor:
@@ -58,7 +58,7 @@ class SQLiteStaging(StagingDBInterface):
                 ch.timestamp,
                 ch.action_table.value,
                 ch.uid,
-                str(orjson.dumps(ch.data)) if ch.data else None,
+                orjson.dumps(ch.data).decode("utf-8") if ch.data else None,
             )
             for ch in changes
         ]

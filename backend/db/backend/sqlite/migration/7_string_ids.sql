@@ -14,7 +14,7 @@ CREATE TABLE categories_new (
 
 -- Create a new sub_category table with TEXT IDs
 CREATE TABLE sub_category_new (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     parent_id TEXT,
     child_id TEXT,
     is_deleted INTEGER DEFAULT 0,
@@ -33,7 +33,7 @@ CREATE TABLE tokens_new (
 
 -- Create a new token_categories table with TEXT IDs
 CREATE TABLE token_categories_new (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     token_id TEXT,
     category_id TEXT,
     is_deleted INTEGER DEFAULT 0,
@@ -52,7 +52,7 @@ CREATE TABLE urls_new (
 
 -- Create a new url_categories table with TEXT IDs
 CREATE TABLE url_categories_new (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     url_id TEXT,
     category_id TEXT,
     is_deleted INTEGER DEFAULT 0,
@@ -69,7 +69,7 @@ FROM categories;
 
 -- Copy sub_category data
 INSERT INTO sub_category_new (id, parent_id, child_id, is_deleted)
-SELECT CAST(id AS TEXT), CAST(parent_id AS TEXT), CAST(child_id AS TEXT), is_deleted
+SELECT id, CAST(parent_id AS TEXT), CAST(child_id AS TEXT), is_deleted
 FROM sub_category;
 
 -- Copy tokens data
@@ -79,7 +79,7 @@ FROM tokens;
 
 -- Copy token_categories data
 INSERT INTO token_categories_new (id, token_id, category_id, is_deleted)
-SELECT CAST(id AS TEXT), CAST(token_id AS TEXT), CAST(category_id AS TEXT), is_deleted
+SELECT id, CAST(token_id AS TEXT), CAST(category_id AS TEXT), is_deleted
 FROM token_categories;
 
 -- Copy urls data
@@ -89,7 +89,7 @@ FROM urls;
 
 -- Copy url_categories data
 INSERT INTO url_categories_new (id, url_id, category_id, is_deleted)
-SELECT CAST(id AS TEXT), CAST(url_id AS TEXT), CAST(category_id AS TEXT), is_deleted
+SELECT id, CAST(url_id AS TEXT), CAST(category_id AS TEXT), is_deleted
 FROM url_categories;
 
 -- Step 3: Drop old tables

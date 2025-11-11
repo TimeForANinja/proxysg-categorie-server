@@ -32,7 +32,7 @@ class SQLiteTask(TaskDBInterface):
 
     def add_task(self, user: AuthUser, task: MutableTask) -> Task:
         current_timestamp = int(time.time())
-        param_str = str(orjson.dumps(task.parameters))
+        param_str = orjson.dumps(task.parameters).decode("utf-8")
 
         with self.get_cursor() as cursor:
             cursor.execute(
