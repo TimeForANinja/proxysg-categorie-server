@@ -24,7 +24,7 @@ export const loadExisting = async (
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to import existing URLs`);
+        throw new Error(`Failed to create Task`);
     }
 
     const data = await response.json();
@@ -60,7 +60,7 @@ export const cleanupUnused = async (
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to import existing URLs`);
+        throw new Error(`Failed to create Task`);
     }
 
     const data = await response.json();
@@ -86,7 +86,7 @@ export const cleanupUncommitted = async (
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to import existing URLs`);
+        throw new Error(`Failed to create Task`);
     }
 
     const data = await response.json();
@@ -124,3 +124,28 @@ export const startCommit = async (
     // Return the task ID
     return data.data;
 }
+
+export const refreshBluecoatCategories = async (
+    userToken: string,
+): Promise<string> => {
+    const response = await fetch(`${NEW_TASK_BASE_URL}/refresh_bc`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'jwt-token': userToken,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to create Task`);
+    }
+
+    const data = await response.json();
+    if (data.status === "failed") {
+        throw new Error(data.message);
+    }
+
+    // Return the task ID
+    return data.data;
+}
+

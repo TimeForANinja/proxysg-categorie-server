@@ -15,7 +15,7 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    TextField,
+    TextField, Tooltip,
 } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -80,6 +80,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     };
 
     const myHist = React.useMemo(() => !isOpen ? [] : history.filter(h => h.ref_url.includes(url.id)), [history, isOpen, url.id])
+    const bc_cat_time = url.bc_last_set ? new Date(url.bc_last_set * 1000).toLocaleString() : 'N/A';
 
     return (
         <React.Fragment>
@@ -103,9 +104,15 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                     />
                 </TableCell>
                 <TableCell>{url.description}</TableCell>
-                <TableCell>{url.bc_cats.map((cat, index) => (
-                    <div key={index}>{cat}</div>
-                ))}</TableCell>
+                <TableCell>
+                    <Tooltip title={`Updated ${bc_cat_time}`} placement="left" arrow>
+                        <div>
+                            {url.bc_cats.map((cat, index) => (
+                                <div key={index}>{cat}</div>
+                            ))}
+                        </div>
+                    </Tooltip>
+                </TableCell>
                 <TableCell>
                     <IconButton aria-label="edit url" onClick={() => onEdit(url)} size="small">
                         <EditIcon />

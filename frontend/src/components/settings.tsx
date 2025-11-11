@@ -22,7 +22,7 @@ import UploadPage from './shared/upload';
 import {getTasks} from "../api/task";
 import {ITask} from "../model/types/task"
 import {useAuth} from "../model/AuthContext";
-import {CleanupFlags, cleanupUnused, cleanupUncommitted} from "../api/task_new";
+import {CleanupFlags, cleanupUnused, cleanupUncommitted, refreshBluecoatCategories} from "../api/task_new";
 import {TaskStatus} from './shared/TaskStatus';
 import {formatDuration} from "../util/DateString";
 import useSlidingWindow from "../hooks/useSlidingWindow";
@@ -69,19 +69,25 @@ const SettingsPage: React.FC = () => {
     const onCleanupURLsPressed = () => {
         cleanupUnused(authMgmt.token, CleanupFlags.URLs).then(tid => {
             setTaskId(tid);
-        })
+        });
     };
 
     const onCleanupCATsPressed = () => {
         cleanupUnused(authMgmt.token, CleanupFlags.Categories).then(tid => {
             setTaskId(tid);
-        })
+        });
     };
 
     const onCleanupUncommitedPressed = () => {
         cleanupUncommitted(authMgmt.token).then(tid => {
             setTaskId(tid);
-        })
+        });
+    }
+
+    const onFetchBluecoatPressed = () => {
+        refreshBluecoatCategories(authMgmt.token).then(tid => {
+            setTaskId(tid);
+        });
     }
 
     // sliding window over tasks (newest first). window and pagination of 10
@@ -183,6 +189,9 @@ const SettingsPage: React.FC = () => {
                                         </Button>
                                         <Button variant="contained" color="error" onClick={onCleanupCATsPressed}>
                                             Schedule Cleanup of Unused Categories
+                                        </Button>
+                                        <Button variant="contained" color="warning" onClick={onFetchBluecoatPressed}>
+                                            Force refresh of all Bluecoat Categories
                                         </Button>
                                     </Stack>
                                 </AccordionDetails>
