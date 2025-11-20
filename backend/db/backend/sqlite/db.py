@@ -107,34 +107,31 @@ class MySQLiteDB(DBInterface):
 
         # Run migrations that are newer than the current version
         for version, file_path in migration_files:
-            if version > current_version:
-                log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
+            if version <= current_version:
+                log_debug('SQLITE', f"Skipping migration: {os.path.basename(file_path)} (version {version} is older or equal to current version {current_version})")
+                continue
 
-                try:
-                    # Read and execute the migration script
-                    with open(file_path, 'r') as f:
-                        sql_script = f.read()
+            log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
+            try:
+                # Read and execute the migration script
+                with open(file_path, 'r') as f:
+                    sql_script = f.read()
 
-                    with self.start_transaction() as session:
-                        with self.get_cursor(session=session) as cursor:
-                            # Execute the script
-                            # use BEGIN/COMMIT to enforce a transaction - changes are only stored if all changes succeed
-                            cursor.executescript(f"BEGIN;\n{sql_script};")
+                with self.start_transaction() as session:
+                    with self.get_cursor(session=session) as cursor:
+                        # Execute the script
+                        # use BEGIN/COMMIT to enforce a transaction - changes are only stored if all changes succeed
+                        cursor.executescript(f"BEGIN;\n{sql_script};")
+                    # Update schema version, as part of the same transaction
+                    self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version, session=session)
+                    # leave the with block to commit the transaction
 
-                        # Update schema version, as part of the same transaction
-                        self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version, session=session)
-
-                        # commit the transaction
-                        session.commit()
-
-                    log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
-                except Exception as e:
-                    log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
-                    # migration failed
-                    # raise to stop the server since the DB is not as expected
-                    raise e
-            else:
-                log_debug("SQLITE", f"Skipping migration: {os.path.basename(file_path)} (version {version} is older or equal to current version {current_version})")
+                log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
+            except Exception as e:
+                log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
+                # migration failed
+                # raise to stop the server since the DB is not as expected
+                raise e
 
     @contextmanager
     def start_transaction(self) -> Generator[MyTransactionType, None, None]:
