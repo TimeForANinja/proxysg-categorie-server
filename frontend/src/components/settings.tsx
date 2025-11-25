@@ -22,8 +22,10 @@ import UploadPage from './shared/upload';
 import {getTasks} from "../api/task";
 import {ITask} from "../model/types/task"
 import {useAuth} from "../model/AuthContext";
-import {CleanupFlags, cleanupUnused} from "../api/task_new";
-import {TaskStatusTracker} from "./shared/TaskStatusTracker";
+import {CleanupFlags, cleanupUnused, cleanupUncommitted, refreshBluecoatCategories} from "../api/task_new";
+import {TaskStatus} from './shared/TaskStatus';
+import {formatDuration} from "../util/DateString";
+import useSlidingWindow from "../hooks/useSlidingWindow";
 
 interface BuildRowProps {
     task: ITask,
@@ -44,6 +46,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
             <TableCell>{task.id}</TableCell>
             <TableCell>{task.name}</TableCell>
             <TableCell>{task.status}</TableCell>
+            <TableCell>{formatDuration(task.updated_at - task.created_at)}</TableCell>
         </TableRow>
     );
 });
@@ -51,6 +54,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 const SettingsPage: React.FC = () => {
     const authMgmt = useAuth();
     const [tasks, setTasks] = React.useState<ITask[]>([]);
+    // ID (or empty) of an ongoing task
     const [taskId, setTaskId] = React.useState<string>("");
 
     React.useEffect(() => {
@@ -65,14 +69,34 @@ const SettingsPage: React.FC = () => {
     const onCleanupURLsPressed = () => {
         cleanupUnused(authMgmt.token, CleanupFlags.URLs).then(tid => {
             setTaskId(tid);
-        })
+        });
     };
 
     const onCleanupCATsPressed = () => {
         cleanupUnused(authMgmt.token, CleanupFlags.Categories).then(tid => {
             setTaskId(tid);
-        })
+        });
     };
+
+    const onCleanupUncommitedPressed = () => {
+        cleanupUncommitted(authMgmt.token).then(tid => {
+            setTaskId(tid);
+        });
+    }
+
+    const onFetchBluecoatPressed = () => {
+        refreshBluecoatCategories(authMgmt.token).then(tid => {
+            setTaskId(tid);
+        });
+    }
+
+    // sliding window over tasks (newest first). window and pagination of 10
+    const { startIndex, endIndex, topHidden, bottomHidden, showMoreTop, showMoreBottom } = useSlidingWindow(tasks.length, {
+        windowSize: 10,
+        step: 10,
+        resetKeys: [tasks],
+    });
+    const visibleTasks = React.useMemo(() => tasks.slice(startIndex, endIndex), [tasks, startIndex, endIndex]);
 
     return (
         <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -99,11 +123,30 @@ const SettingsPage: React.FC = () => {
                                                         <TableCell component="th" scope="row">ID</TableCell>
                                                         <TableCell>Name</TableCell>
                                                         <TableCell>State</TableCell>
+                                                        <TableCell>Took</TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
-                                                    {tasks.map(task =>
+                                                    {topHidden > 0 && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4}>
+                                                                <Button size="small" onClick={showMoreTop}>
+                                                                    {topHidden} hidden, click to show {Math.min(10, topHidden)} more (slide window)
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                    {visibleTasks.map(task => (
                                                         <BuildRow key={task.id} task={task} />
+                                                    ))}
+                                                    {bottomHidden > 0 && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4}>
+                                                                <Button size="small" onClick={showMoreBottom}>
+                                                                    {bottomHidden} hidden, click to show {Math.min(10, bottomHidden)} more (slide window)
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
                                                     )}
                                                 </TableBody>
                                             </Table>
@@ -138,11 +181,17 @@ const SettingsPage: React.FC = () => {
                                         Perform various maintenance tasks, like cleaning up unused DB data.
                                     </Typography>
                                     <Stack spacing={2} sx={{ mb: 2 }}>
-                                        <Button variant="contained" color="warning" onClick={onCleanupURLsPressed}>
+                                        <Button variant="contained" color="warning" onClick={onCleanupUncommitedPressed}>
+                                            Remove uncommited Changes
+                                        </Button>
+                                        <Button variant="contained" color="error" onClick={onCleanupURLsPressed}>
                                             Schedule Cleanup of Unused URLs
                                         </Button>
-                                        <Button variant="contained" color="warning" onClick={onCleanupCATsPressed}>
+                                        <Button variant="contained" color="error" onClick={onCleanupCATsPressed}>
                                             Schedule Cleanup of Unused Categories
+                                        </Button>
+                                        <Button variant="contained" color="warning" onClick={onFetchBluecoatPressed}>
+                                            Force refresh of all Bluecoat Categories
                                         </Button>
                                     </Stack>
                                 </AccordionDetails>
@@ -151,13 +200,11 @@ const SettingsPage: React.FC = () => {
 
                         <Grid size={12}>
                             {/* Generic task status tracker to handle banner messages based on task status */}
-                            <TaskStatusTracker
-                                title="URL Cleanup"
+                            <TaskStatus
                                 taskId={taskId}
-                                onComplete={() => {
-                                    // clear the taskID once the task completes
-                                    setTaskId("");
-                                }}
+                                successMessage="Cleanup successfully!"
+                                failureMessage="Cleanup failed. Please try again."
+                                onTaskComplete={() => setTaskId("")}
                             />
                         </Grid>
                     </Grid>

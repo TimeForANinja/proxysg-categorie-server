@@ -4,7 +4,7 @@ from marshmallow_dataclass import class_schema
 from dataclasses import dataclass
 from typing import List as tList
 
-from db.task import Task
+from db.dbmodel.task import Task
 from routes.schemas.generic_output import GenericOutput
 
 

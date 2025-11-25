@@ -1,17 +1,19 @@
 from flask import current_app
 
-from db.db import DBInterface
-from db.mongodb.mongo_db import MyMongoDB
-from db.sqlite.sqlite_db import MySQLiteDB
-from log import log_info
+from db.backend.sqlite.db import MySQLiteDB
+from db.backend.mongodb.db import MyMongoDB
+from db.middleware.abc.db import MiddlewareDB
+from db.middleware.stagingdb.db import StagingDB
+from log import log_info, log_debug
 from pymongo import MongoClient
 
 
-def get_db() -> DBInterface:
+def get_db() -> MiddlewareDB:
     """Get a unique DB instance."""
-    db = current_app.config.get('SINGLETONS', {}).get('DB', None)
+    staging_db = current_app.config.get('SINGLETONS', {}).get('DB', None)
 
-    if db is None:
+    if staging_db is None:
+        log_debug("DB", "Initializing DB connection", current_app.config.get('DB', {}))
         db_type = current_app.config.get('DB', {}).get('TYPE', 'sqlite').lower()
         if db_type == 'mongodb':
             mongo_cfg: dict = current_app.config.get('DB', {}).get('MONGO', {})
@@ -20,14 +22,16 @@ def get_db() -> DBInterface:
             connection_user = mongo_cfg.get('CON_USER', 'admin')
             connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
             connection_host = mongo_cfg.get('CON_HOST', 'localhost')
-            connection_port = mongo_cfg.get('CON_PORT', 27017)
+            connection_port = int(mongo_cfg.get('CON_PORT', 27017))
+            connection_direct = bool(mongo_cfg.get('CON_DIRECT', False))
             log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'auth_db': connection_auth_real, 'user': connection_user, 'host': f'{connection_host}:{connection_port}' })
             db = MyMongoDB(MongoClient(
                 connection_host,
-                connection_port,
+                port=connection_port,
                 username=connection_user,
                 password=connection_password,
-                authSource=connection_auth_real
+                authSource=connection_auth_real,
+                directconnection=connection_direct,
             ), database_name)
         elif db_type == 'sqlite':
             sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})
@@ -37,10 +41,12 @@ def get_db() -> DBInterface:
         else:
             raise ValueError(f'Unsupported APP_DB_TYPE: {db_type}')
 
-        current_app.config.setdefault('SINGLETONS', {})
-        current_app.config['SINGLETONS']['DB'] = db
+        staging_db = StagingDB(db)
 
-    return db
+        current_app.config.setdefault('SINGLETONS', {})
+        current_app.config['SINGLETONS']['DB'] = staging_db
+
+    return staging_db
 
 
 def close_connection():
@@ -48,6 +54,7 @@ def close_connection():
     Remove the current database connection.
     Flask calls this every time a Context is being removed (e.g., end of request)
     """
-    db = get_db()
+    db = current_app.config.get('SINGLETONS', {}).get('DB', None)
     if db is not None:
         db.close()
+        current_app.config['SINGLETONS']['DB'] = None

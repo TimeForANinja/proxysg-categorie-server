@@ -12,6 +12,7 @@ export interface IApiToken extends IMutableApiToken {
     token: string;
     categories: string[];
     last_use: number;
+    pending_changes: boolean;
 }
 
 const TIME_SECONDS = 1000;
@@ -34,6 +35,7 @@ export const ApiTokenToKV = (x: IApiToken, categories: LUT<ICategory>): StringKV
         cats: cats,
         categories: cats,
         cat_ids: x.categories.join(','),
+        changed: x.pending_changes ? 'true' : 'false',
     };
 }
 
@@ -44,6 +46,7 @@ export const ApiTokenFields: FieldDefinition[] = [
     { field: "last_use", description: "Date the Token was last used" },
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
+    SHARED_DEFINITIONS.changed,
 ]
 export const ApiTokenFieldsRaw: FieldDefinition[] = [
     ...ApiTokenFields,

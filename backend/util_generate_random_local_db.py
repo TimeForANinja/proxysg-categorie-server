@@ -4,6 +4,8 @@ import random
 import os
 from typing import List, Tuple
 
+
+# noinspection SpellCheckingInspection
 def generate_random_url() -> str:
     """Generate a random URL."""
     tlds = [

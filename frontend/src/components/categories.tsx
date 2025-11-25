@@ -16,10 +16,13 @@ import {
     TableHead,
     TableRow,
     TextField,
+    IconButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit"
+import SearchIcon from "@mui/icons-material/Search";
+import { useNavigate } from "react-router-dom";
 
 import {
     createCategory,
@@ -58,7 +61,7 @@ interface BuildRowProps {
  * Wrapped in React.memo to prevent unnecessary re-renders in the Category table.
  * This works as long as none of the props passed to the Component change
  *
- * The caching also requires us to ensure that all callbacks passed are constants (e.g. wrapped in useCallable)
+ * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
@@ -69,19 +72,29 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         onDelete
     } = props;
     const authMgmt = useAuth();
+    const navigate = useNavigate();
 
     // helper function, triggered when the category selector changes
     const handleChange = (newList: string[]) => {
         // update api
         setSubCategory(authMgmt.token, category.id, newList).then(newCats => {
             // save the new version
-            const newCat = {...category, nested_categories: newCats};
+            const newCat = {...category, nested_categories: newCats, pending_changes: true};
             updateCategory(newCat);
         })
     };
 
+    const handleSearchInUrls = () => {
+        // Build a wildcard search against the URL list by categories name
+        // Escape special characters that could break the quoted value
+        const safeName = category.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        const query = `categories="*${safeName}*"`;
+        const params = new URLSearchParams({ q: query });
+        navigate({ pathname: '/url', search: `?${params.toString()}` });
+    };
+
     return (
-        <TableRow key={category.id}>
+        <TableRow key={category.id} sx={category.pending_changes ? { backgroundColor: (theme) => theme.palette.warning.light } : undefined}>
             <TableCell>{category.id}</TableCell>
             <TableCell>{category.name}</TableCell>
             <TableCell>
@@ -101,8 +114,15 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                 />
             </TableCell>
             <TableCell>
-                <EditIcon onClick={() => onEdit(category)}/>
-                <DeleteIcon onClick={() => onDelete(category)}/>
+                <IconButton aria-label="search URLs with this category" onClick={handleSearchInUrls} size="small">
+                    <SearchIcon />
+                </IconButton>
+                <IconButton aria-label="edit category" onClick={() => onEdit(category)} size="small">
+                    <EditIcon />
+                </IconButton>
+                <IconButton aria-label="delete category" onClick={() => onDelete(category)} size="small">
+                    <DeleteIcon />
+                </IconButton>
             </TableCell>
         </TableRow>
     );

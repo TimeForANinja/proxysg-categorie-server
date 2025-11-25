@@ -1,16 +1,16 @@
 from datetime import datetime
 from apiflask import APIBlueprint
 
-from db.category import Category
 from db.db_singleton import get_db
+from db.dbmodel.category import Category
 from log import log_debug
 
 
 def find_subcategories(
-        current_cat: Category,
-        categories_dict: dict[str, Category],
-        visited: set[str],
-        result: list[Category]
+    current_cat: Category,
+    categories_dict: dict[str, Category],
+    visited: set[str],
+    result: list[Category]
 ):
     """
     This method is used to recursively traverse the nested categories.
@@ -84,11 +84,11 @@ def add_compile_bp(app):
         db_if.tokens.update_usage(token.id)
 
         # load all categories that are part of the token
-        categories = db_if.categories.get_all_categories()
+        categories = db_if.categories.get_all_categories(bypass_cache=True)
         token_cats = [cat for cat in categories if cat.id in token.categories]
 
         # fetch all URLs
-        urls = db_if.urls.get_all_urls()
+        urls = db_if.urls.get_all_urls(bypass_cache=True)
 
         # use response var to track the returned database string
         response = ''

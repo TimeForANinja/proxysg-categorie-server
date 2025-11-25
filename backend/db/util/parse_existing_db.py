@@ -1,10 +1,12 @@
 import re
 import time
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
-from db.category import MutableCategory, Category
-from db.db import DBInterface
-from db.url import MutableURL, URL
+from auth.auth_user import AuthUser
+from db.dbmodel.category import MutableCategory
+from db.dbmodel.url import MutableURL
+from db.middleware.abc.db import MiddlewareDB
+from log import log_debug, log_error
 
 
 class ExistingCat:
@@ -17,88 +19,120 @@ class ExistingCat:
 
 
 # TODO: input validation for both Categories and URLs
-def create_in_db(db: DBInterface, new_cat_candidates: List[ExistingCat], category_prefix: str):
+def create_in_db(
+    db: MiddlewareDB,
+    auth: AuthUser,
+    new_cat_candidates: List[ExistingCat],
+    category_prefix: str
+):
     """
     This method creates a DB as read from an existing file in the provided DB.
 
     If cats / urls already exist, we'll only map them.
 
     :param db: The DBInterface to use for the DB operations
+    :param auth: The AuthUser to use for the DB operations
     :param new_cat_candidates: The list of categories to import
     :param category_prefix: The prefix to use for the new categories
     """
+    if not new_cat_candidates:
+        return
+
     # add prefix to cats
     for cat in new_cat_candidates:
         cat.name = category_prefix + cat.name
 
-    # get existing data from db
+    ## identify all categories that are missing
+    _ensure_cats_exist(db, auth, [x.name for x in new_cat_candidates])
+
+    ## identify all urls that are missing
+    new_url_candidates = [u for x in new_cat_candidates for u in x.urls]
+    create_urls_db(db, auth, new_url_candidates)
+
+    ## identify all cat -> url mappings that are missing
+    missing_mappings: Dict[str, List[str]] = {}
+    # fetch existing cats/urls and convert to dicts for a faster lookup
+    # since we fetch after create_urls_db / _ensure_cats_exist was called, the new items should already exist
     existing_cats = db.categories.get_all_categories()
     existing_urls = db.urls.get_all_urls()
+    existing_cats_by_name = {cat.name: cat for cat in existing_cats}
+    existing_urls_by_hostname = {url.hostname: url for url in existing_urls}
 
-    # create all entries and mappings for existing customDB in db
-    for new_cat_candidate in new_cat_candidates:
-        # identify a cat or create a new one
-        new_cat, cat_created = _find_or_create_cat(db, new_cat_candidate, existing_cats)
-        if cat_created:
-            existing_cats.append(new_cat)
+    for cat in new_cat_candidates:
+        # identify category
+        cat_item = existing_cats_by_name.get(cat.name)
+        if cat_item is None:
+            # should never happen, since we're creating the cats above
+            log_error("existing_db", "Failed to find Category", {"cat": cat.name})
+            raise Exception(f'Category "{cat.name}" not found')
 
-        for new_url_candidate in new_cat_candidate.urls:
-            # identify url or create a new one
-            new_url, url_created = _find_or_create_url(db, new_url_candidate, existing_urls)
-            if url_created:
-                existing_urls.append(new_url)
+        for url in cat.urls:
+            # identify url
+            url_item = existing_urls_by_hostname.get(url)
+            if url_item is None:
+                # should never happen, since we're creating the urls above
+                log_error("existing_db", "Failed to find URL", {"cat": cat.name, 'url': url})
+                raise Exception(f'URL "{url}" not found')
 
-            # map url to cat, if not already done
-            if not new_cat.id in new_url.categories:
-                db.url_categories.add_url_category(new_url.id, new_cat.id)
+            # both cat and url of mapping identified
+            # add it to the list of mappings to create if it's new
+            if cat_item.id not in url_item.categories:
+                missing_mappings.setdefault(url_item.id, []).append(cat_item.id)
 
-def create_urls_db(db: DBInterface, new_urls: List[str]):
+    log_debug('existing_db', 'creating missing url-category mappings', {
+        'hasCategories': len(existing_cats),
+        'hasUrls': len(existing_urls),
+        'hasMappings': sum(len(x.categories) for x in existing_urls),
+        'shouldMappings': sum(len(x.urls) for x in new_cat_candidates),
+        'missingMappings': len(missing_mappings),
+    })
+    db.url_categories.add_url_categories(auth, missing_mappings)
+
+def create_urls_db(db: MiddlewareDB, auth: AuthUser, new_url_candidates: List[str]):
     """
     This method ensures a list of URLs is in the DB.
 
     If urls already exist, we'll simply ignore them.
 
     :param db: The DBInterface to use for the DB operations
-    :param new_urls: The list of urls to import
+    :param auth: The AuthUser to use for the DB operations
+    :param new_url_candidates: The list of urls to import
     """
-    # get existing data from db
+    if not new_url_candidates:
+        return
+
     existing_urls = db.urls.get_all_urls()
+    missing_urls = _find_not_existing([x.hostname for x in existing_urls], new_url_candidates)
+    log_debug('existing_db', 'creating missing urls', {
+        'has': len(existing_urls),
+        'should': len(new_url_candidates),
+        'missing': len(missing_urls),
+    })
+    db.urls.add_urls(auth, [
+        MutableURL(
+            hostname=mu,
+            description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
+        ) for mu in missing_urls
+    ])
 
-    for new_url_candidate in new_urls:
-        # identify url or create a new one
-        new_url, url_created = _find_or_create_url(db, new_url_candidate, existing_urls)
-        if url_created:
-            existing_urls.append(new_url)
+def _find_not_existing(has: List[str], should: List[str]) -> List[str]:
+    return list(set(should) - set(has))
 
-def _find_or_create_cat(db: DBInterface, new_cat_candidate: ExistingCat, existing_cats: List[Category]) -> Tuple[Category, bool]:
-    """
-    Utility method to find or create a category in the DB.
-    It returns the category and a boolean indicating if it was created or not.
-    """
-    for ec in existing_cats:
-        if ec.name == new_cat_candidate.name:
-            return ec, False
-    new_cat = db.categories.add_category(MutableCategory(
-        name=new_cat_candidate.name,
-        color=1,
-        description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ))
-    return new_cat, True
-
-def _find_or_create_url(db: DBInterface, new_url_candidate: str, existing_urls: List[URL]) -> Tuple[URL, bool]:
-    """
-    Utility method to find or create a URL in the DB.
-    It returns the URL and a boolean indicating if it was created or not.
-    """
-    for eu in existing_urls:
-        if eu.hostname == new_url_candidate:
-            return eu, False
-    # not found, so create a new one
-    new_url = db.urls.add_url(MutableURL(
-        hostname=new_url_candidate,
-        description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
-    ))
-    return new_url, True
+def _ensure_cats_exist(db: MiddlewareDB, auth: AuthUser, new_cat_candidates: List[str]):
+    existing_cats = db.categories.get_all_categories()
+    missing_cats = _find_not_existing([x.name for x in existing_cats], new_cat_candidates)
+    log_debug('existing_db', 'creating missing categories', {
+        'has': len(existing_cats),
+        'should': len(new_cat_candidates),
+        'missing': len(missing_cats),
+    })
+    db.categories.add_categories(auth, [
+        MutableCategory(
+            name=mc,
+            color=1,
+            description=f'Imported on {time.strftime("%Y-%m-%d %H:%M:%S")}',
+        ) for mc in missing_cats
+    ])
 
 def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[ExistingCat], List[str]]:
     """
@@ -108,16 +142,20 @@ def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[Exist
     @param allow_uncategorized: If True, uncategorized URLs will be included in the result.
     @return: A tuple containing a list of categories and a list of uncategorized URLs.
     """
+
+    # use sets as a quick way to deduplicate, instead of checking "is in" every time
     categories = []
-    uncategorized = []
+    uncategorized = set()
     current_cat = None
+    # utility for all URLs of the current_cat, but as a set
+    current_urls = set()
 
     # Regex to match 'define category <cat_name>', with optional quotes around cat_name
     define_category_regex = re.compile(r'define category (?:"([^"]+)"|([^\s"]+))')
 
-    for line in db_str.split('\n'):
+    for line in db_str.splitlines():
         # Remove comments and strip leading/trailing whitespace
-        clean_line = line.split(';')[0].strip()
+        clean_line = line.split(';', 1)[0].strip()
 
         if not clean_line:
             # Ignore empty lines
@@ -130,24 +168,27 @@ def parse_db(db_str: str, allow_uncategorized: bool = False) -> Tuple[List[Exist
                 # Start a new category
                 cat_name = define_match.group(1) or define_match.group(2)
                 current_cat = ExistingCat(name=cat_name, urls=[])
+                current_urls = set() # reset url set for the new category
             else:
                 if not allow_uncategorized:
                     # Any other string outside a category is a syntax error
                     raise ValueError(f'Syntax error: Unexpected line outside category: \'{clean_line}\'')
                 else:
-                    uncategorized.append(clean_line)
+                    uncategorized.add(clean_line)
         else:
             # Inside a category
             if clean_line.lower() == 'end':
                 # End the current category
+                current_cat.urls = list(current_urls)
                 categories.append(current_cat)
                 current_cat = None
-            elif clean_line not in current_cat.urls:
-                # Add the line as a URL to the current category if it's not already in there
-                current_cat.urls.append(clean_line)
+            else:
+                # no need to check for "clean_line not in current_urls"
+                # since we already use a set for deduplication
+                current_urls.add(clean_line)
 
     if current_cat is not None:
         # If still inside a category when the file ends, it's an error
         raise ValueError('Syntax error: Category not properly ended with \'end\'')
 
-    return categories, uncategorized
+    return categories, list(uncategorized)

@@ -33,7 +33,7 @@ export type ArgType = {
      * by moving arguments from a higher level to the children level of the current (self) instance
      *
      * @param self - The TreeNode instance to nest.
-     * @param all - An array of TreeNode instances of the next higher level.
+     * @param all - An array of TreeNode instances in the next higher level.
      * @returns {TreeNode[]} - The nested array of TreeNode instances.
      */
     _nest?: (self: TreeNode, all: TreeNode[]) => TreeNode[];

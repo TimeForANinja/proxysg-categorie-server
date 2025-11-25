@@ -1,0 +1,90 @@
+import time
+from typing import Optional, List, Mapping, Any
+from pymongo.synchronous.database import Database
+
+from db.backend.abc.url import URLDBInterface
+from db.backend.abc.util.types import MyTransactionType
+from db.backend.mongodb.util.transactions import mongo_transaction_kwargs
+from db.dbmodel.url import MutableURL, URL, NO_BC_CATEGORY_YET
+
+
+def _build_url(row: Mapping[str, Any]) -> URL:
+    """build a URL object from a MongoDB document"""
+    return URL(
+        id=str(row['_id']),
+        hostname=row['hostname'],
+        description=row['description'],
+        is_deleted=row['is_deleted'],
+        categories=[
+            x['cat']
+            for x in row.get('categories', [])
+            if x['is_deleted'] == 0
+        ],
+        bc_cats=row['bc_cats'],
+        bc_last_set=row['bc_last_set'],
+        pending_changes=False,
+    )
+
+
+class MongoDBURL(URLDBInterface):
+    def __init__(self, db: Database[Mapping[str, Any] | Any]):
+        self.db = db
+        self.collection = self.db['urls']
+
+    def add_url(self, mut_url: MutableURL, url_id: str, session: Optional[MyTransactionType] = None) -> URL:
+        self.collection.insert_one({
+            '_id': url_id,
+            'hostname': mut_url.hostname,
+            'description': mut_url.description,
+            'is_deleted': 0,
+            'categories': [],
+            'bc_cats': [NO_BC_CATEGORY_YET],
+            'bc_last_set': 0,
+        }, **mongo_transaction_kwargs(session))
+
+        return URL.from_mutable(url_id, mut_url)
+
+    def get_url(self, url_id: str, session: Optional[MyTransactionType] = None) -> Optional[URL]:
+        query = {'_id': url_id, 'is_deleted': 0}
+        row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
+        if not row:
+            return None
+
+        return _build_url(row)
+
+    def update_url(self, url_id: str, mut_url: MutableURL, session: Optional[MyTransactionType] = None) -> URL:
+        query = {'_id': url_id, 'is_deleted': 0}
+        update_fields = {
+            'hostname': mut_url.hostname,
+            'description': mut_url.description,
+        }
+
+        result = self.collection.update_one(query, {'$set': update_fields}, **mongo_transaction_kwargs(session))
+
+        if result.matched_count == 0:
+            raise ValueError(f'URL with ID {url_id} not found or is deleted.')
+
+        return self.get_url(url_id)
+
+    def set_bc_cats(self, url_id: str, bc_cats: List[str]):
+        query = {'_id': url_id, 'is_deleted': 0}
+        update = {'$set': {'bc_cats': bc_cats, 'bc_last_set': int(time.time())}}
+        result = self.collection.update_one(query, update)
+
+        if result.matched_count == 0:
+            raise ValueError(f'URL with ID {url_id} not found or already deleted.')
+
+    def delete_url(self, url_id: str, session: Optional[MyTransactionType] = None):
+        query = {'_id': url_id, 'is_deleted': 0}
+        update = {'$set': {'is_deleted': 1}}
+        result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
+
+        if result.matched_count == 0:
+            raise ValueError(f'URL with ID {url_id} not found or already deleted.')
+
+    def get_all_urls(self, session: Optional[MyTransactionType] = None) -> List[URL]:
+        rows = self.collection.find({ 'is_deleted': 0 }, **mongo_transaction_kwargs(session))
+        return [
+            _build_url(row)
+            for row in rows
+        ]

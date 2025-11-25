@@ -2,6 +2,7 @@ import {LUT} from "./LookUpTable";
 import {StringKV} from "./stringKV";
 import {FieldDefinition, SHARED_DEFINITIONS} from "../../searchParser/fieldDefinition";
 import {ICategory} from "./category";
+import {parseLastUsed} from "./apiToken";
 
 export interface IMutableUrl {
     hostname: string;
@@ -12,6 +13,8 @@ export interface IUrl extends IMutableUrl {
     id: string;
     categories: string[];
     bc_cats: string[];
+    bc_last_set: number;
+    pending_changes: boolean;
 }
 
 export const UrlToKV = (x: IUrl, categories: LUT<ICategory>): StringKV => {
@@ -24,6 +27,8 @@ export const UrlToKV = (x: IUrl, categories: LUT<ICategory>): StringKV => {
         categories: cats,
         cat_ids: x.categories.join(','),
         bc_cats: x.bc_cats.join(','),
+        bc_last_set: parseLastUsed(x.bc_last_set),
+        changed: x.pending_changes ? 'true' : 'false',
     };
 }
 
@@ -34,6 +39,8 @@ export const UrlFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
     { field: "bc_cats", description: "Blue Coat categories" },
+    { field: "bc_last_set", description: "Time the Blue Coat categories were fetched" },
+    SHARED_DEFINITIONS.changed,
 ]
 export const UrlFieldsRaw: FieldDefinition[] = [
     ...UrlFields,

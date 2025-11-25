@@ -1,3 +1,4 @@
+import traceback
 import urllib3
 from datetime import timedelta, datetime, timezone
 from apiflask import APIFlask
@@ -6,9 +7,11 @@ from apscheduler.triggers.cron import CronTrigger
 
 from background.query_bc import ServerCredentials, query_all
 from background.load_existing_db import load_existing_file
-from background.tasks import execute_load_existing_task, execute_cleanup_existing
+from background.task import execute_load_existing_task, execute_commit, execute_cleanup_existing, execute_revert, \
+    execute_refresh_bc_cats
 from db.db_singleton import get_db
-from log import log_debug
+from db.middleware.stagingdb.db import StagingDB
+from log import log_debug, log_error
 
 TIME_MINUTES = 60
 
@@ -58,11 +61,17 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
     # this allows us to use the existing db_singleton stored as a flask global object
     def query_executor(a: APIFlask):
         with a.app_context():
-            log_debug('BACKGROUND', 'executing load_existing background task')
-            load_existing_file(
-                filepath=load_existing_path,
-                prefix_cats=load_existing_prefix,
-            )
+            try:
+                log_debug('BACKGROUND', 'executing load_existing background task')
+                load_existing_file(
+                    filepath=load_existing_path,
+                    prefix_cats=load_existing_prefix,
+                )
+            except Exception as e:
+                log_error('BACKGROUND', 'Error executing load_existing background task', {
+                    'error': str(e),
+                    'traceback': traceback.format_exc(),
+                })
 
     # run once 'quick' after 1 minute
     scheduler.add_job(
@@ -70,6 +79,7 @@ def start_load_existing(scheduler: BackgroundScheduler, app: APIFlask):
         'date',
         run_date=datetime.now(timezone.utc) + timedelta(seconds=1*TIME_MINUTES),
         misfire_grace_time=MISFIRE_GRACE_TIME,
+        id='task_load_existing',
     )
 
 
@@ -86,22 +96,43 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
     # this allows us to use the existing db_singleton stored as a flask global object
     def task_executor(a: APIFlask):
         with a.app_context():
-            log_debug('BACKGROUND', 'executing task_scheduler background task')
-            db_if = get_db()
+            try:
+                log_debug('BACKGROUND', 'executing task_scheduler background task')
+                db_if = get_db()
 
-            # try to fetch the next pending task from the DB
-            task = db_if.tasks.get_next_pending_task()
-            if not task:
-                return
+                # try to fetch the next pending task from the DB
+                task = db_if.tasks.get_next_pending_task()
+                log_debug("BACKGROUND", "next pending task", task, exclude_keys=("parameters",))
 
-            match task.name:
-                case 'load_existing':
+                # if a task is defined go based on the task.name
+                # if no task is defined, we do nothing
+                if task and task.name == "load_existing":
                     execute_load_existing_task(db_if, task)
-                case 'cleanup_unused':
+                elif task and task.name == 'cleanup_unused':
                     execute_cleanup_existing(db_if, task)
-                case _:
+                elif task and task.name == 'refresh_bc':
+                    credentials = get_bc_credentials(app)
+                    execute_refresh_bc_cats(db_if, task, credentials)
+                elif task and task.name == "commit":
+                    if isinstance(db_if, StagingDB):
+                        execute_commit(db_if, task)
+                    else:
+                        log_error('BACKGROUND', 'Cannot commit to non-staging DB')
+                        db_if.tasks.update_task_status(task.id, 'failed')
+                elif task and task.name == 'revert_uncommitted':
+                    if isinstance(db_if, StagingDB):
+                        execute_revert(db_if, task)
+                    else:
+                        log_error('BACKGROUND', 'Cannot revert uncommitted changes to non-staging DB')
+                        db_if.tasks.update_task_status(task.id, 'failed')
+                elif task:
                     log_debug('BACKGROUND', f'Unknown task type: {task.name} in task {task.id}')
                     db_if.tasks.update_task_status(task.id, 'unknown')
+            except Exception as e:
+                log_error('BACKGROUND', 'Error executing task_scheduler background task', {
+                    'error': str(e),
+                    'traceback': traceback.format_exc(),
+                })
 
     # run every 30 seconds
     scheduler.add_job(
@@ -109,8 +140,30 @@ def start_task_scheduler(scheduler: BackgroundScheduler, app: APIFlask):
         'interval',
         seconds=30,
         misfire_grace_time=MISFIRE_GRACE_TIME,
+        id='check_task_queue',
     )
 
+
+def get_bc_credentials(app: APIFlask) -> ServerCredentials:
+    query_bc_conf: dict = app.config.get('BC', {})
+    bc_host = query_bc_conf.get('HOST')
+    bc_user = query_bc_conf.get('USER', 'ro_admin')
+    bc_password = query_bc_conf.get('PASSWORD')
+    # check for false or not false, so that we default to 'true' for all other values
+    bc_verify_ssl = query_bc_conf.get('VERIFY_SSL', 'true').lower() != 'false'
+
+
+    if not bc_verify_ssl:
+        # hide warnings telling us to enable ssl verification
+        urllib3.disable_warnings()
+
+    # build a credential object to make it easier to pass them around
+    return ServerCredentials(
+        server=bc_host,
+        user=bc_user,
+        password=bc_password,
+        verifySSL=bc_verify_ssl,
+    )
 
 def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     """
@@ -125,55 +178,42 @@ def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):
     # load required config variables
     query_bc_conf: dict = app.config.get('BC', {})
     bc_interval = query_bc_conf.get('INTERVAL', '0 3 * * *')
-    bc_interval_quick = query_bc_conf.get('INTERVAL_QUICK', '0 * * * *')
-    bc_host = query_bc_conf.get('HOST')
-    bc_user = query_bc_conf.get('USER', 'ro_admin')
-    bc_password = query_bc_conf.get('PASSWORD')
-    # check for false or not false, so that we default to 'true' for all other values
-    bc_verify_ssl = query_bc_conf.get('VERIFY_SSL', 'true').lower() != 'false'
-
+    bc_ttl = int(query_bc_conf.get('TTL', 7 * 24 * 60)) * TIME_MINUTES
+    credentials = get_bc_credentials(app)
     log_debug('BACKGROUND', 'Preparing Background Tasks "start_query_bc"', {
         'interval': bc_interval,
-        'interval_quick': bc_interval_quick,
-        'host': bc_host,
-        'user': bc_user,
-        'verify_ssl': bc_verify_ssl,
+        'ttl': bc_ttl,
+        'base-url': credentials.sanitized_query(""),
     })
 
-    if not bc_verify_ssl:
-        # hide warnings telling us to enable ssl verification
-        urllib3.disable_warnings()
-
-    # build a credential object to make it easier to pass them around
-    creds = ServerCredentials(
-        server=bc_host,
-        user=bc_user,
-        password=bc_password,
-        verifySSL=bc_verify_ssl,
-    )
+    def startup_and_enable_schedule():
+        query_executor(app, credentials, bc_ttl)
+        # add the long-terms chedule
+        scheduler.add_job(
+            lambda: query_executor(app, credentials, bc_ttl),
+            CronTrigger.from_crontab(bc_interval, timezone=tz),
+            misfire_grace_time=MISFIRE_GRACE_TIME,
+            id='query_bc_cron',
+        )
 
     # wrapper to use the app_context
     # this allows us to use the existing db_singleton stored as a flask global object
-    def query_executor(a: APIFlask, c: ServerCredentials, unknown_only:bool=False):
+    def query_executor(a: APIFlask, c: ServerCredentials, ttl: int):
         with a.app_context():
-            log_debug('BACKGROUND', 'executing query_bc background task', { 'unknown_only': unknown_only })
-            query_all(c, unknown_only)
+            try:
+                log_debug('BACKGROUND', 'executing query_bc background task')
+                query_all(get_db(), c, ttl)
+            except Exception as e:
+                log_error('BACKGROUND', 'Error executing query_bc background task', {
+                    'error': str(e),
+                    'traceback': traceback.format_exc(),
+                })
 
-    # run at the interval defined
-    # and once 'quick' after 2 minutes (only query not-yet-rated URLs)
+    # run once a few minutes after the system start
     scheduler.add_job(
-        lambda: query_executor(app, creds),
-        CronTrigger.from_crontab(bc_interval, timezone=tz),
-        misfire_grace_time=MISFIRE_GRACE_TIME,
-    )
-    scheduler.add_job(
-        lambda: query_executor(app, creds, True),
-        CronTrigger.from_crontab(bc_interval_quick, timezone=tz),
-        misfire_grace_time=MISFIRE_GRACE_TIME,
-    )
-    scheduler.add_job(
-        lambda: query_executor(app, creds, True),
+        lambda: startup_and_enable_schedule(),
         'date',
         run_date=datetime.now(timezone.utc) + timedelta(seconds=3*TIME_MINUTES),
-        misfire_grace_time=MISFIRE_GRACE_TIME,
+        misfire_grace_time=None, # type: ignore[arg-type]
+        id='query_bc_startup',
     )

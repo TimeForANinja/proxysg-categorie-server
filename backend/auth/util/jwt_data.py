@@ -9,6 +9,7 @@ class TokenData:
     """
     This class represents all data stored in a JWT token.
     """
+    # TODO: use AuthUser instead of username and roles
     username: str
     roles: List[str]
     realm: str

@@ -15,7 +15,7 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    TextField,
+    TextField, Tooltip,
 } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -52,6 +52,7 @@ interface BuildRowProps {
     categories: LUT<ICategory>,
     onEdit: (url: IUrl) => void,
     onDelete: (url: IUrl) => void,
+    history: ICommits[],
 }
 /**
  * Renders a table row for a URL entry.
@@ -62,7 +63,7 @@ interface BuildRowProps {
  * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
-    const { url, updateURL, categories, onEdit, onDelete } = props;
+    const { url, updateURL, categories, onEdit, onDelete, history } = props;
     const authMgmt = useAuth();
 
     // (un)fold a row into multiple rows
@@ -73,23 +74,17 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         // update api
         setURLCategory(authMgmt.token, url.id, newList).then(newCats => {
             // save the new version
-            const newURL = {...url, categories: newCats};
+            const newURL = {...url, categories: newCats, pending_changes: true};
             updateURL(newURL);
         });
     };
 
-    const [myHist, setMyHist] = React.useState<ICommits[]>([]);
-    React.useEffect(() => {
-        if (!isOpen) return;
-        getHistory(authMgmt.token).then(fullHist => {
-            const newMyHist = fullHist.filter(h => h.ref_url.includes(url.id));
-            setMyHist(newMyHist);
-        });
-    }, [isOpen, authMgmt, url])
+    const myHist = React.useMemo(() => !isOpen ? [] : history.filter(h => h.ref_url.includes(url.id)), [history, isOpen, url.id])
+    const bc_cat_time = url.bc_last_set ? new Date(url.bc_last_set * 1000).toLocaleString() : 'N/A';
 
     return (
         <React.Fragment>
-            <TableRow key={url.id}>
+            <TableRow key={url.id} sx={url.pending_changes ? { backgroundColor: (theme) => theme.palette.warning.light } : undefined}>
                 <TableCell>
                     <IconButton
                         aria-label="expand row"
@@ -109,19 +104,29 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                     />
                 </TableCell>
                 <TableCell>{url.description}</TableCell>
-                <TableCell>{url.bc_cats.map((cat, index) => (
-                    <div key={index}>{cat}</div>
-                ))}</TableCell>
                 <TableCell>
-                    <EditIcon onClick={() => onEdit(url)}/>
-                    <DeleteIcon onClick={() => onDelete(url)}/>
+                    <Tooltip title={`Updated ${bc_cat_time}`} placement="left" arrow>
+                        <div>
+                            {url.bc_cats.map((cat, index) => (
+                                <div key={index}>{cat}</div>
+                            ))}
+                        </div>
+                    </Tooltip>
+                </TableCell>
+                <TableCell>
+                    <IconButton aria-label="edit url" onClick={() => onEdit(url)} size="small">
+                        <EditIcon />
+                    </IconButton>
+                    <IconButton aria-label="delete url" onClick={() => onDelete(url)} size="small">
+                        <DeleteIcon />
+                    </IconButton>
                 </TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0}} colSpan={7}>
                     <Collapse in={isOpen} timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 1}} >
-                            <HistoryTable commits={myHist} />
+                            <HistoryTable commits={myHist} url={url.id} />
                         </Box>
                     </Collapse>
                 </TableCell>
@@ -136,6 +141,7 @@ function MatchingListPage() {
     // State info for the Page
     const [urls, setURLs] = React.useState<IUrl[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
+    const [history, setHistory] = React.useState<ICommits[]>([]);
 
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IUrl[]>([]);
@@ -161,6 +167,11 @@ function MatchingListPage() {
             .then(([urlsData, categoriesData]) => {
                 setURLs(urlsData);
                 setCategory(buildLUTFromID(categoriesData));
+                // fetch history async after urls and categories, since it's only needed when opening a row
+                return getHistory(authMgmt.token);
+            })
+            .then(historyData => {
+                setHistory(historyData);
             })
             .catch((error) => console.error("Error:", error));
     }, [authMgmt]);
@@ -240,6 +251,7 @@ function MatchingListPage() {
                                             categories={categories}
                                             onEdit={handleEditOpen}
                                             onDelete={handleDelete}
+                                            history={history}
                                         />
                                     )}
                                 </TableBody>

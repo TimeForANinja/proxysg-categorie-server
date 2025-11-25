@@ -1,0 +1,23 @@
+-- Migration script: 8_atomics_table.sql
+-- Add atomics table for storing atomic changes within history events
+
+-- Step 1: Create the atomics table
+CREATE TABLE IF NOT EXISTS atomics (
+    id TEXT PRIMARY KEY,
+    user TEXT NOT NULL,
+    history_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    description TEXT NOT NULL,
+    time INTEGER NOT NULL,
+    ref_token TEXT NOT NULL DEFAULT '',
+    ref_url TEXT NOT NULL DEFAULT '',
+    ref_category TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (history_id) REFERENCES history(id)
+);
+
+UPDATE history SET user = JSON_OBJECT('username', user, 'roles', JSON_ARRAY());
+
+-- Insert records to mark the migration
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Added atomics table', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Converted history.user to JSON', '{"username": "system", "roles": []}');
+INSERT INTO history (time, description, user) VALUES (strftime('%s', 'now'), 'Migrated DB to version: 8', '{"username": "system", "roles": []}');

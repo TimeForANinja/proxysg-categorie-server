@@ -54,6 +54,15 @@ export const FIELD_DEFINITION_CATS: FieldDefinition = {
 
 /**
  * Shared FieldDefinitions for common fields.
+ * The changed field is used to store if the object has pending changes
+ */
+export const FIELD_DEFINITION_CHANGED: FieldDefinition = {
+    field: "changed",
+    description: "True if the object has pending changes",
+}
+
+/**
+ * Shared FieldDefinitions for common fields.
  */
 export const SHARED_DEFINITIONS = {
     raw: FIELD_DEFINITION_RAW,
@@ -61,4 +70,5 @@ export const SHARED_DEFINITIONS = {
     description: FIELD_DEFINITION_DESCRIPTION,
     categories: FIELD_DEFINITION_CATEGORIES,
     cats: FIELD_DEFINITION_CATS,
+    changed: FIELD_DEFINITION_CHANGED,
 }

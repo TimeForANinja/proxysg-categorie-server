@@ -71,7 +71,7 @@ interface BuildRowProps {
  * Wrapped in React.memo to prevent unnecessary re-renders in the ApiToken table.
  * This works as long as none of the props passed to the Component change
  *
- * The caching also requires us to ensure that all callbacks passed are constants (e.g. wrapped in useCallable)
+ * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
@@ -104,7 +104,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         // update api
         setTokenCategory(authMgmt.token, token.id, newList).then(newCats => {
             // save the new version
-            const newToken = {...token, categories: newCats};
+            const newToken = {...token, categories: newCats, pending_changes: true};
             updateToken(newToken);
         });
     };
@@ -112,7 +112,10 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     return (
         <TableRow
             key={token.id}
-            sx={{ '&:last-child td, &:last-child th': {border: 0 }}}
+            sx={{
+                ...(token.pending_changes ? { backgroundColor: (theme) => theme.palette.warning.light } : {}),
+                '&:last-child td, &:last-child th': { border: 0 },
+            }}
         >
             <TableCell component="th" scope="row">{token.id}</TableCell>
             <TableCell>{token.description}</TableCell>
@@ -137,8 +140,12 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                 />
             </TableCell>
             <TableCell>
-                <EditIcon onClick={() => onEdit(token)}/>
-                <DeleteIcon onClick={() => onDelete(token)}/>
+                <IconButton aria-label="edit token" onClick={() => onEdit(token)} size="small">
+                    <EditIcon />
+                </IconButton>
+                <IconButton aria-label="delete token" onClick={() => onDelete(token)} size="small">
+                    <DeleteIcon />
+                </IconButton>
             </TableCell>
         </TableRow>
     )

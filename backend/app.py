@@ -7,8 +7,8 @@ from flask import send_from_directory
 from flask_compress import Compress
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from db import db_singleton
 from background.background_tasks import start_background_tasks
+from db.db_singleton import get_db, close_connection
 from routes.auth import add_auth_bp
 from routes.category import add_category_bp
 from routes.compile import add_compile_bp
@@ -22,10 +22,17 @@ from log import setup_logging, log_info, log_error, log_debug
 app = APIFlask(
     __name__,
     'ProxySG Category Server',
-    version='1.1.0',
+    version='2.0.0',
     docs_path='/docs',
     static_folder='./dist',
 )
+
+# add profiler to analyze requests
+# to visualize a profile you can run:
+# pip install snakeviz
+# snakeviz ./profile/request.prof
+#from werkzeug.middleware.profiler import ProfilerMiddleware
+#app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=['^((?!venv).)*$', 0.1], profile_dir='./profile')
 
 # add module to allow compression of replies
 Compress(app)
@@ -92,23 +99,34 @@ def handle_error(error):
 def teardown(_exception: Any):
     # the exception parameter must be defined, or else Flask crashes
     log_debug("APP", "App teardown called")
-    db_singleton.close_connection()
+    # after fixing the code to not keep sqlite sessions open, no further teardown is required
+    pass
 
 
-def initialize_app(a: APIFlask):
-    log_debug("APP", "App initialization called")
-    # force db initialization and therefore also schema migration
-    with app.app_context():
-        db_singleton.get_db()
-    # start background tasks
+def init_background(a: APIFlask):
+    log_debug("APP", "App init_background called")
+    # start background tasks, make sure to trigger this only in one worker
     start_background_tasks(a)
 
 
+def migrate_db(a: APIFlask):
+    log_debug("APP", "App migrate_db called")
+    with a.app_context():
+        # init db to trigger schema migration
+        db = get_db()
+        db.migrate()
+        # make sure to properly close and delete the DB
+        # MongoDB is not fork-safe, so we need to close the connection before gunicorn spawns more workers
+        # https://www.mongodb.com/docs/languages/python/pymongo-driver/current/connect/mongoclient/#forking-a-process-causes-a-deadlock
+        close_connection()
+
+
 if __name__ == '__main__':
-    # initialize background tasks
-    # we keep this in the __main__ and manually trigger it for gunicorn with the on_starting
+    # migrate db schema and init background tasks,
+    # we keep this in the __main__ and manually trigger it for gunicorn with the on_starting / post_fork
     # to prevent the background tasks being run on multiple workers
-    initialize_app(app)
+    migrate_db(app)
+    init_background(app)
 
     # start app
     app_port = int(app.config.get('PORT', 8080))

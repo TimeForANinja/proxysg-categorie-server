@@ -25,11 +25,14 @@ ENV PYTHONUNBUFFERED=1
 # make dir for persistent content
 RUN mkdir -p /backend/data
 
-# Copy the backend code
-COPY ./backend/ ./
+# copy only the requirements.txt (improves layer caching)
+COPY ./backend/requirements.txt ./
 
 # install requirements
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy all other backend code
+COPY ./backend/ ./
 
 # Copy built React code from the previous stage
 COPY --from=frontend-builder /frontend/build ./dist

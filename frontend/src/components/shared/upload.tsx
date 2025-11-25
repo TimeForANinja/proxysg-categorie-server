@@ -2,6 +2,7 @@ import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import {loadExisting} from '../../api/task_new';
 import {useAuth} from '../../model/AuthContext';
+import {TaskStatus} from './TaskStatus';
 import {
     Button,
     TextField,
@@ -11,7 +12,6 @@ import {
     Paper,
     ToggleButtonGroup,
     ToggleButton,
-    Alert,
     CircularProgress,
     List,
     ListItem,
@@ -23,7 +23,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import CloseIcon from '@mui/icons-material/Close';
 import {formatDateString} from "../../util/DateString";
-import { TaskStatusTracker } from './TaskStatusTracker';
+
 
 const UploadPage = () => {
     const navigate = useNavigate();
@@ -35,8 +35,7 @@ const UploadPage = () => {
     const [uploadType, setUploadType] = React.useState<'file' | 'text'>('file');
     const [prefix, setPrefix] = React.useState<string>(`IMPORTED_${formatDateString()}_`);
 
-    const [error, setError] = React.useState<string | null>(null);
-    // Params changed after creation of fetchTaskStatus need to be passed by-ref
+    // ID (or empty) of an ongoing upload task
     const [taskId, setTaskId] = React.useState<string>("");
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +56,7 @@ const UploadPage = () => {
     };
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setText(e.target.value)
+        setText(e.target.value);
     };
 
 
@@ -76,7 +75,7 @@ const UploadPage = () => {
                 const fileContents = await Promise.all(
                     files.map(file => file.text())
                 );
-                // send the array of files and get task ID
+                // send the array of files and get a task ID
                 const newTaskId = await loadExisting(token, fileContents.join('\n\n'), prefix);
                 setTaskId(newTaskId);
             } else if (uploadType === 'text' && text.trim()) {
@@ -92,7 +91,7 @@ const UploadPage = () => {
             setText('');
             setPrefix(`IMPORTED_${formatDateString()}_`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+            console.error("Error uploading:", err);
         } finally {
             setIsLoading(false);
         }
@@ -213,22 +212,13 @@ const UploadPage = () => {
                         )}
 
                         <Grid size={12}>
-                            {/* Generic task status tracker to handle banner messages based on task status */}
-                            <TaskStatusTracker
-                                title="URL Upload"
-                                taskId={taskId}
-                                onComplete={() => {
-                                    // clear the taskID once the task completes
-                                    setTaskId("");
-                                }}
+                            <TaskStatus 
+                                taskId={taskId} 
+                                successMessage="Existing DB Import successfully!"
+                                failureMessage="Upload failed. Please try again."
+                                onTaskComplete={() => setTaskId("")}
                             />
                         </Grid>
-
-                        { error && (
-                            <Grid size={12}>
-                                <Alert severity="error">{error}</Alert>
-                            </Grid>
-                        )}
 
                         <Grid size={12}>
                             <Button
