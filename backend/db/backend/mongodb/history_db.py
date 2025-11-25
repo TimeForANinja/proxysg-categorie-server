@@ -86,6 +86,10 @@ class MongoDBHistory(HistoryDBInterface):
             ref_category=ref_category,
         )
 
+    def has_history_events(self) -> bool:
+        # required for migration, since the get_history_events can fail pre-migration
+        return self.collection.count_documents({}) > 0
+
     def get_history_events(self) -> List[History]:
         # Fetch all history events first
         event_docs = list(self.collection.find({}))

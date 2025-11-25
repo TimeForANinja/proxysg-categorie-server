@@ -21,6 +21,8 @@ from db.backend.mongodb.config_db import MongoDBConfig, CONFIG_VAR_SCHEMA_VERSIO
 
 
 class MyMongoDB(DBInterface):
+    history: MongoDBHistory
+
     def __init__(
         self,
         client: MongoClient,
@@ -55,7 +57,7 @@ class MyMongoDB(DBInterface):
         Also run MongoDB migration scripts.
         """
         # check if we're using a new MongoDB
-        if len(self.history.get_history_events()) == 0:
+        if not self.history.has_history_events():
             log_info("MONGODB", "Initializing database")
             # create initial commit
             self.history.add_history_event('Initial setup', AUTH_USER_SYSTEM, [], [], [])
