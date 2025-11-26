@@ -27,11 +27,13 @@ class MyMongoDB(DBInterface):
         self,
         client: MongoClient,
         database_name: str,
+        disable_transaction: bool = False,
     ):
         super().__init__()
 
         self.client = client
         self.db = self.client[database_name]
+        self.disable_transaction = disable_transaction
 
         # Initialize the config collection first to manage a schema version
         self.config = MongoDBConfig(self.db)
@@ -133,6 +135,11 @@ class MyMongoDB(DBInterface):
     def start_transaction(self) -> Generator[ClientSession, None, None]:
         # start a new session, and a transaction in that session
         with self.client.start_session() as session:
+            if self.disable_transaction:
+                # not all MongoDB-Installations support transactions,
+                # so add a feature flag to disable transactions
+                yield session
+
             with session.start_transaction():
                 # yield the session to the caller, so they can use it in their transaction
                 # when the caller is done it will automatically close both the transaction and the session

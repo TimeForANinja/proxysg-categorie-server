@@ -24,6 +24,7 @@ def get_db() -> MiddlewareDB:
             connection_host = mongo_cfg.get('CON_HOST', 'localhost')
             connection_port = int(mongo_cfg.get('CON_PORT', 27017))
             connection_direct = bool(mongo_cfg.get('CON_DIRECT', False))
+            mongo_disable_transactions = bool(mongo_cfg.get('DISABLE_TRANSACTIONS', False))
             log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'auth_db': connection_auth_real, 'user': connection_user, 'host': f'{connection_host}:{connection_port}' })
             db = MyMongoDB(MongoClient(
                 connection_host,
@@ -32,7 +33,7 @@ def get_db() -> MiddlewareDB:
                 password=connection_password,
                 authSource=connection_auth_real,
                 directconnection=connection_direct,
-            ), database_name)
+            ), database_name, disable_transaction=mongo_disable_transactions)
         elif db_type == 'sqlite':
             sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})
             database_name = sqlite_cfg.get('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')
