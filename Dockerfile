@@ -7,6 +7,9 @@ WORKDIR /frontend
 # Copy frontend code
 COPY ./frontend/ ./
 
+# allow for custom npmrc (e.g. artifactory)
+COPY .npmrc /root/.npmrc
+
 RUN npm install
 RUN npm run build
 
