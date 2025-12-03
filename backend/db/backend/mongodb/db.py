@@ -63,10 +63,8 @@ class MyMongoDB(DBInterface):
             log_info("MONGODB", "Initializing database")
             # create initial commit
             self.history.add_history_event('Initial setup', AUTH_USER_SYSTEM, [], [], [])
-
-        # Create index on token field
-        # this is idempotent, so it's safe to run multiple times
-        self.db['tokens'].create_index({'token': 1}, unique=True)
+            # Create index on token field
+            self.db['tokens'].create_index({'token': 1}, unique=True, name='token_token_idx')
 
         # Run db migrations
         self._migrate_db_schema()
