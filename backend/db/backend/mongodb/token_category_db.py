@@ -16,5 +16,5 @@ class MongoDBTokenCategory(TokenCategoryDBInterface, MongoDBBaseCategory):
     def add_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         self.add_item_category(token_id, category_id, session=session)
 
-    def delete_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None):
-        self.delete_item_category(token_id, category_id, session=session)
+    def delete_token_category(self, token_id: str, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
+        self.delete_item_category(token_id, category_id, del_timestamp, session=session)

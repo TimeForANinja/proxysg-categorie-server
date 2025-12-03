@@ -171,7 +171,7 @@ class StagingDBCategory(MiddlewareDBCategory):
                 current_cats.nested_categories if current_cats else [],
                 category_data['nested_categories'],
                 lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid, session=session),
-                lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid, session=session),
+                lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid, change.timestamp, session=session),
                 dry_run,
             )
             # update cached Category for future requests
@@ -189,7 +189,7 @@ class StagingDBCategory(MiddlewareDBCategory):
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the category from the persistent database
-                self._db.categories.delete_category(change.uid, session=session)
+                self._db.categories.delete_category(change.uid, change.timestamp, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(

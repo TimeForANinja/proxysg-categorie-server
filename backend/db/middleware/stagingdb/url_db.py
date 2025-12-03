@@ -175,7 +175,7 @@ class StagingDBURL(MiddlewareDBURL):
                 current_url.categories if current_url else [],
                 url_data['categories'],
                 lambda cid: self._db.url_categories.add_url_category(change.uid, cid, session=session),
-                lambda cid: self._db.url_categories.delete_url_category(change.uid, cid, session=session),
+                lambda cid: self._db.url_categories.delete_url_category(change.uid, cid, change.timestamp, session=session),
                 dry_run,
             )
             # update cached URL for future requests
@@ -193,7 +193,7 @@ class StagingDBURL(MiddlewareDBURL):
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the URL from the persistent database
-                self._db.urls.delete_url(change.uid, session=session)
+                self._db.urls.delete_url(change.uid, change.timestamp, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(

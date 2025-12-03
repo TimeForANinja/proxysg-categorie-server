@@ -42,11 +42,12 @@ class URLDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_url(self, url_id: str, session: Optional[MyTransactionType] = None):
+    def delete_url(self, url_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
         """
         Soft-delete a URL by setting its `is_deleted` flag to the current timestamp.
 
         :param url_id: The ID of the url to delete.
+        :param del_timestamp: The timestamp to set as deletion timestamp
         :param session: Optional database session to use
         """
         pass

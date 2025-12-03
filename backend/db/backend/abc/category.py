@@ -47,11 +47,12 @@ class CategoryDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_category(self, category_id: str, session: Optional[MyTransactionType] = None):
+    def delete_category(self, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
         """
         Soft-delete a category by setting its `is_deleted` flag to the current timestamp.
 
         :param category_id: The ID of the category to delete.
+        :param del_timestamp: The timestamp to set as deletion timestamp
         :param session: Optional database session to use
         """
         pass

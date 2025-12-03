@@ -1,4 +1,3 @@
-import time
 from typing import Optional, List, Any
 
 from db.backend.abc.category import CategoryDBInterface
@@ -95,12 +94,13 @@ class SQLiteCategory(CategoryDBInterface):
     def delete_category(
         self,
         category_id: str,
-        session: Optional[MyTransactionType] = None
+        del_timestamp: int,
+        session: Optional[MyTransactionType] = None,
     ):
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-                (int(time.time()), category_id,)
+                (del_timestamp, category_id,)
             )
 
     def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:

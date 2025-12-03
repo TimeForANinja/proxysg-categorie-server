@@ -132,11 +132,16 @@ class SQLiteToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def delete_token(self, token_id: str, session: Optional[MyTransactionType] = None):
+    def delete_token(
+        self,
+        token_id: str,
+        del_timestamp: int,
+        session: Optional[MyTransactionType] = None,
+    ):
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE tokens SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-                (int(time.time()), token_id,)
+                (del_timestamp, token_id,)
             )
 
     def get_all_tokens(self, session: Optional[MyTransactionType] = None) -> List[Token]:

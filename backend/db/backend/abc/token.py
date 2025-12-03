@@ -74,11 +74,12 @@ class TokenDBInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_token(self, token_id: str, session: Optional[MyTransactionType] = None):
+    def delete_token(self, token_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
         """
         Soft-delete a token by setting its `is_deleted` flag to the current timestamp.
 
         :param token_id: The ID of the token to delete.
+        :param del_timestamp: The timestamp to set as deletion timestamp
         :param session: Optional database session to use
         """
         pass

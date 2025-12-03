@@ -74,9 +74,9 @@ class MongoDBURL(URLDBInterface):
         if result.matched_count == 0:
             raise ValueError(f'URL with ID {url_id} not found or already deleted.')
 
-    def delete_url(self, url_id: str, session: Optional[MyTransactionType] = None):
+    def delete_url(self, url_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
         query = {'_id': url_id, 'is_deleted': 0}
-        update = {'$set': {'is_deleted': 1}}
+        update = {'$set': {'is_deleted': del_timestamp}}
         result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:

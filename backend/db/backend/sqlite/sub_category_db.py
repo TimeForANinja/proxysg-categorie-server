@@ -1,4 +1,3 @@
-import time
 from typing import List, Optional
 
 from db.backend.abc.sub_category import SubCategoryDBInterface
@@ -34,9 +33,9 @@ class SQLiteSubCategory(SubCategoryDBInterface):
                 (category_id, sub_category_id,)
             )
 
-    def delete_sub_category(self, category_id: str, sub_category_id: str, session: Optional[MyTransactionType] = None):
+    def delete_sub_category(self, category_id: str, sub_category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE sub_category SET is_deleted = ? WHERE parent_id = ? AND child_id = ? AND is_deleted = 0',
-                (int(time.time()), category_id, sub_category_id,)
+                (del_timestamp, category_id, sub_category_id,)
             )

@@ -1,4 +1,3 @@
-import time
 from typing import List, Optional
 
 from db.backend.abc.url_category import UrlCategoryDBInterface
@@ -34,9 +33,9 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
                 (url_id, category_id,)
             )
 
-    def delete_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
+    def delete_url_category(self, url_id: str, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
-                (int(time.time()), url_id, category_id,)
+                (del_timestamp, url_id, category_id,)
             )

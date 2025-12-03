@@ -35,6 +35,7 @@ class UrlCategoryDBInterface(ABC):
         self,
         url_id: str,
         category_id: str,
+        del_timestamp: int,
         session: Optional[MyTransactionType] = None,
     ):
         """
@@ -42,6 +43,7 @@ class UrlCategoryDBInterface(ABC):
 
         :param url_id: The ID of the URL
         :param category_id: The ID of the Category
+        :param del_timestamp: The timestamp to set as deletion timestamp
         :param session: Optional database session to use
         """
         pass

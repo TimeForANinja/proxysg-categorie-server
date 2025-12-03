@@ -186,7 +186,7 @@ class StagingDBToken(MiddlewareDBToken):
                 current_token.categories if current_token else [],
                 token_data['categories'],
                 lambda cid: self._db.token_categories.add_token_category(change.uid, cid, session=session),
-                lambda cid: self._db.token_categories.delete_token_category(change.uid, cid, session=session),
+                lambda cid: self._db.token_categories.delete_token_category(change.uid, cid, change.timestamp, session=session),
                 dry_run,
             )
             # update cached Token for future requests
@@ -204,7 +204,7 @@ class StagingDBToken(MiddlewareDBToken):
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the token from the persistent database
-                self._db.tokens.delete_token(change.uid, session=session)
+                self._db.tokens.delete_token(change.uid, change.timestamp, session=session)
 
             # Create atomic to append to the history event
             return Atomic.new(

@@ -35,6 +35,7 @@ class SubCategoryDBInterface(ABC):
         self,
         category_id: str,
         sub_category_id: str,
+        del_timestamp: int,
         session: Optional[MyTransactionType] = None,
     ):
         """
@@ -42,6 +43,7 @@ class SubCategoryDBInterface(ABC):
 
         :param category_id: The ID of the parent-category
         :param sub_category_id: The ID of the subcategory
+        :param del_timestamp: The timestamp to set as deletion timestamp
         :param session: Optional database session to use
         """
         pass

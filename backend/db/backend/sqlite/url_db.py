@@ -88,11 +88,16 @@ class SQLiteURL(URLDBInterface):
         with self.get_cursor() as cursor:
             cursor.execute(query, (join_str_group(bc_cats), int(time.time()), url_id))
 
-    def delete_url(self, url_id: str, session: Optional[MyTransactionType] = None):
+    def delete_url(
+        self,
+        url_id: str,
+        del_timestamp: int,
+        session: Optional[MyTransactionType] = None
+    ):
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'UPDATE urls SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-                (int(time.time()), url_id,)
+                (del_timestamp, url_id,)
             )
 
     def get_all_urls(self, session: Optional[MyTransactionType] = None) -> List[URL]:

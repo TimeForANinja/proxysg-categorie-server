@@ -95,9 +95,9 @@ class MongoDBToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def delete_token(self, token_id: str, session: Optional[MyTransactionType] = None):
+    def delete_token(self, token_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
         query = {'_id': token_id, 'is_deleted': 0}
-        update = {'$set': {'is_deleted': 1}}
+        update = {'$set': {'is_deleted': del_timestamp}}
         result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 
         if result.matched_count == 0:

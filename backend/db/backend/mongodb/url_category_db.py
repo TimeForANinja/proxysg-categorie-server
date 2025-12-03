@@ -16,5 +16,5 @@ class MongoDBURLCategory(UrlCategoryDBInterface, MongoDBBaseCategory):
     def add_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
         self.add_item_category(url_id, category_id, session=session)
 
-    def delete_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
-        self.delete_item_category(url_id, category_id, session=session)
+    def delete_url_category(self, url_id: str, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
+        self.delete_item_category(url_id, category_id, del_timestamp, session=session)
