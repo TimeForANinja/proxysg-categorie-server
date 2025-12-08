@@ -10,7 +10,7 @@ from db.dbmodel.category import MutableCategory, Category
 def _build_category(row: Mapping[str, Any]) -> Category:
     """build a Category object from a MongoDB document"""
     return Category(
-        id=str(row['_id']),
+        id=str(row['uid']),
         name=row['name'],
         color=row['color'],
         description=row.get('description'),
@@ -31,7 +31,7 @@ class MongoDBCategory(CategoryDBInterface):
 
     def add_category(self, category: MutableCategory, category_id: str, session: Optional[MyTransactionType] = None) -> Category:
         self.collection.insert_one({
-            '_id': category_id,
+            'uid': category_id,
             'name': category.name,
             'color': category.color,
             'description': category.description,
@@ -42,7 +42,7 @@ class MongoDBCategory(CategoryDBInterface):
         return Category.from_mutable(category_id, category)
 
     def get_category(self, category_id: str, session: Optional[MyTransactionType] = None) -> Optional[Category]:
-        query = {'_id': category_id, 'is_deleted': 0}
+        query = {'uid': category_id, 'is_deleted': 0}
         row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
         if not row:
             return None
@@ -50,7 +50,7 @@ class MongoDBCategory(CategoryDBInterface):
         return _build_category(row)
 
     def update_category(self, cat_id: str, category: MutableCategory, session: Optional[MyTransactionType] = None) -> Category:
-        query = {'_id': cat_id, 'is_deleted': 0}
+        query = {'uid': cat_id, 'is_deleted': 0}
         update_fields = {
             'name': category.name,
             'color': category.color,
@@ -66,7 +66,7 @@ class MongoDBCategory(CategoryDBInterface):
         return self.get_category(cat_id)
 
     def delete_category(self, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
-        query = {'_id': category_id, 'is_deleted': 0}
+        query = {'uid': category_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': del_timestamp}}
         result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 

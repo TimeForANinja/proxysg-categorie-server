@@ -1,6 +1,6 @@
 import time
 from typing import Optional, List, Mapping, Any
-from bson.objectid import ObjectId
+from uuid import uuid7
 from pymongo.synchronous.database import Database
 
 from auth.auth_user import AuthUser
@@ -11,7 +11,7 @@ from db.dbmodel.task import MutableTask, Task
 def _build_task(row: Mapping[str, Any]) -> Task:
     """build a Task object from a MongoDB document"""
     return Task(
-        id=str(row['_id']),
+        id=str(row['uid']),
         name=row['name'],
         user=AuthUser.unserialize(row['user']),
         parameters=row.get('parameters'),
@@ -28,7 +28,9 @@ class MongoDBTask(TaskDBInterface):
 
     def add_task(self, user: AuthUser, task: MutableTask) -> Task:
         current_timestamp = int(time.time())
+        task_id = str(uuid7())
         result = self.collection.insert_one({
+            'uid': task_id,
             'name': task.name,
             'user': AuthUser.serialize(user),
             'parameters': task.parameters,
@@ -38,7 +40,7 @@ class MongoDBTask(TaskDBInterface):
         })
 
         return Task(
-            id=str(result.inserted_id),
+            id=task_id,
             name=task.name,
             user=user,
             parameters=task.parameters,
@@ -48,7 +50,7 @@ class MongoDBTask(TaskDBInterface):
         )
 
     def get_task(self, task_id: str) -> Optional[Task]:
-        query = {'_id': ObjectId(task_id)}
+        query = {'uid': task_id}
         row = self.collection.find_one(query)
         if not row:
             return None
@@ -57,7 +59,7 @@ class MongoDBTask(TaskDBInterface):
 
     def update_task_status(self, task_id: str, status: str) -> Task:
         current_timestamp = int(time.time())
-        query = {'_id': ObjectId(task_id)}
+        query = {'uid': task_id}
         update_fields = {
             'status': status,
             'updated_at': current_timestamp,

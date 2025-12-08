@@ -11,7 +11,7 @@ from db.dbmodel.url import MutableURL, URL, NO_BC_CATEGORY_YET
 def _build_url(row: Mapping[str, Any]) -> URL:
     """build a URL object from a MongoDB document"""
     return URL(
-        id=str(row['_id']),
+        id=str(row['uid']),
         hostname=row['hostname'],
         description=row['description'],
         is_deleted=row['is_deleted'],
@@ -33,7 +33,7 @@ class MongoDBURL(URLDBInterface):
 
     def add_url(self, mut_url: MutableURL, url_id: str, session: Optional[MyTransactionType] = None) -> URL:
         self.collection.insert_one({
-            '_id': url_id,
+            'uid': url_id,
             'hostname': mut_url.hostname,
             'description': mut_url.description,
             'is_deleted': 0,
@@ -45,7 +45,7 @@ class MongoDBURL(URLDBInterface):
         return URL.from_mutable(url_id, mut_url)
 
     def get_url(self, url_id: str, session: Optional[MyTransactionType] = None) -> Optional[URL]:
-        query = {'_id': url_id, 'is_deleted': 0}
+        query = {'uid': url_id, 'is_deleted': 0}
         row = self.collection.find_one(query, **mongo_transaction_kwargs(session))
         if not row:
             return None
@@ -53,7 +53,7 @@ class MongoDBURL(URLDBInterface):
         return _build_url(row)
 
     def update_url(self, url_id: str, mut_url: MutableURL, session: Optional[MyTransactionType] = None) -> URL:
-        query = {'_id': url_id, 'is_deleted': 0}
+        query = {'uid': url_id, 'is_deleted': 0}
         update_fields = {
             'hostname': mut_url.hostname,
             'description': mut_url.description,
@@ -67,7 +67,7 @@ class MongoDBURL(URLDBInterface):
         return self.get_url(url_id)
 
     def set_bc_cats(self, url_id: str, bc_cats: List[str]):
-        query = {'_id': url_id, 'is_deleted': 0}
+        query = {'uid': url_id, 'is_deleted': 0}
         update = {'$set': {'bc_cats': bc_cats, 'bc_last_set': int(time.time())}}
         result = self.collection.update_one(query, update)
 
@@ -75,7 +75,7 @@ class MongoDBURL(URLDBInterface):
             raise ValueError(f'URL with ID {url_id} not found or already deleted.')
 
     def delete_url(self, url_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
-        query = {'_id': url_id, 'is_deleted': 0}
+        query = {'uid': url_id, 'is_deleted': 0}
         update = {'$set': {'is_deleted': del_timestamp}}
         result = self.collection.update_one(query, update, **mongo_transaction_kwargs(session))
 

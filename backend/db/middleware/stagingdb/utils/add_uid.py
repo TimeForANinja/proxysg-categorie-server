@@ -1,5 +1,5 @@
-import uuid
 from typing import Dict, Any, List, Tuple
+from uuid import uuid7
 
 
 def add_uid_to_object(mutable_obj: Any) -> Tuple[str, Dict[str, Any]]:
@@ -9,7 +9,7 @@ def add_uid_to_object(mutable_obj: Any) -> Tuple[str, Dict[str, Any]]:
     @param mutable_obj: The mutable object to add a UUID to
     @return: A tuple containing the generated UUID and the object data with the UUID added
     """
-    obj_id = str(uuid.uuid4())
+    obj_id = str(uuid7())
     # prefer __dict__ over asdict() for performance reasons
     # this goes for here and every other use of __dict__ / asdict()
     # see https://stackoverflow.com/a/52229565

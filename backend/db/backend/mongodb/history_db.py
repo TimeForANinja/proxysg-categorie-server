@@ -1,5 +1,6 @@
 from typing import List, Mapping, Any, Optional
 import time
+from uuid import uuid7
 from pymongo.collection import Collection
 from pymongo.database import Database
 
@@ -41,8 +42,11 @@ class MongoDBHistory(HistoryDBInterface):
         # prepare timestamp (current UNIX time)
         timestamp = int(time.time())
 
+        history_id = str(uuid7())
+
         # first, insert the history event WITHOUT embedding atomics to avoid large docs
-        result = self.collection.insert_one({
+        self.collection.insert_one({
+            'uid': history_id,
             'time': timestamp,
             'description': action,
             'user': AuthUser.serialize(user),
@@ -50,9 +54,6 @@ class MongoDBHistory(HistoryDBInterface):
             'ref_url': ref_url,
             'ref_category': ref_category,
         }, **mongo_transaction_kwargs(session))
-
-        # store the history id, so we can use it when inserting atomics
-        history_id = result.inserted_id
 
         # prepare atomics for insertion
         atomics_list = atomics or []
@@ -119,10 +120,10 @@ class MongoDBHistory(HistoryDBInterface):
 
         # Build History objects with their associated atomics
         for event in event_docs:
-            history_id = event['_id']
+            history_id = event['uid']
             atomics_list = atomics_by_history.get(history_id, [])
             result.append(History(
-                id=str(history_id),
+                id=history_id,
                 time=event['time'],
                 description=event['description'],
                 atomics=atomics_list,

@@ -1,7 +1,7 @@
 import time
-import uuid
 from dataclasses import field, dataclass
 from typing import Optional, List
+from uuid import uuid7
 
 from auth.auth_user import AuthUser
 from routes.restmodel.history import RESTHistory, RESTAtomic
@@ -42,7 +42,7 @@ class Atomic:
         ref_category: List[str] = None,
     ) -> 'Atomic':
         return Atomic(
-            id=str(uuid.uuid4()),
+            id=str(uuid7()),
             user=user,
             action=action,
             description=description,

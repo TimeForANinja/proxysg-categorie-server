@@ -23,7 +23,7 @@ class MongoDBBaseCategory(Generic[T]):
 
         :param item_id: The ID of the item
         """
-        query = {'_id': item_id, 'is_deleted': 0}
+        query = {'uid': item_id, 'is_deleted': 0}
         row = self.collection.find_one(query)
         if not row:
             return []
@@ -42,7 +42,7 @@ class MongoDBBaseCategory(Generic[T]):
         :param category_id: The ID of the Category
         :param session: Optional database session to use
         """
-        query = {'_id': item_id, 'is_deleted': 0}
+        query = {'uid': item_id, 'is_deleted': 0}
         # add-to-set only adds if it is not already a member of the array
         update = {'$addToSet': {'categories': {'cat': category_id, 'is_deleted': 0}}}
 
@@ -60,7 +60,7 @@ class MongoDBBaseCategory(Generic[T]):
         :param del_timestamp: The timestamp to set as deletion timestamp
         :param session: Optional database session to use
         """
-        query = {'_id': item_id, 'is_deleted': 0}
+        query = {'uid': item_id, 'is_deleted': 0}
         update = {'$set': {'categories.$[elem].is_deleted': del_timestamp}}
         array_filters = [{'elem.cat': category_id, 'elem.is_deleted': 0}]
 

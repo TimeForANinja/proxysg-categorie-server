@@ -1,6 +1,6 @@
 import time
 from typing import Optional, List
-import uuid
+from uuid import uuid7
 
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
@@ -28,7 +28,7 @@ class StagingDBToken(MiddlewareDBToken):
 
         # Generate a UUID for the token value
         token_data.update({
-            'token': str(uuid.uuid4()),
+            'token': str(uuid7()),
         })
 
         add_staged_change(
@@ -78,7 +78,7 @@ class StagingDBToken(MiddlewareDBToken):
             action_table=ActionTable.TOKEN,
             auth=auth,
             obj_id=token_id,
-            update_data={'token': str(uuid.uuid4())},
+            update_data={'token': str(uuid7())},
             staged=self._staged,
         )
         return self.get_token(token_id)
