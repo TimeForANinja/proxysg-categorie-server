@@ -14,7 +14,7 @@ RUN npm install
 RUN npm run build
 
 # Stage 2: Prepare the Flask backend
-FROM python:3.11 AS backend
+FROM python:3.14-alpine AS backend
 
 MAINTAINER Tobias Kutscha
 

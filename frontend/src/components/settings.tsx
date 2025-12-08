@@ -188,7 +188,7 @@ const SettingsPage: React.FC = () => {
                                             Schedule Cleanup of Unused URLs
                                         </Button>
                                         <Button variant="contained" color="error" onClick={onCleanupCATsPressed}>
-                                            Schedule Cleanup of Unused Categories
+                                            Schedule Cleanup of Categories without URLs
                                         </Button>
                                         <Button variant="contained" color="warning" onClick={onFetchBluecoatPressed}>
                                             Force refresh of all Bluecoat Categories
