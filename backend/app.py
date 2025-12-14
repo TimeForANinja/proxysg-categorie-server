@@ -23,7 +23,7 @@ from log import setup_logging, log_info, log_error, log_debug
 app = APIFlask(
     __name__,
     'ProxySG Category Server',
-    version='2.1.2',
+    version='2.2.0',
     docs_path='/docs',
     static_folder='./dist',
 )
