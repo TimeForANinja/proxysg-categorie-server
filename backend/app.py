@@ -16,6 +16,7 @@ from routes.history import add_history_bp
 from routes.task import add_task_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
+from routes.others import add_others_bp
 from log import setup_logging, log_info, log_error, log_debug
 
 # Initialize APIFlask instead of Flask
@@ -60,6 +61,7 @@ add_token_bp(app)
 add_url_bp(app)
 add_compile_bp(app)
 add_task_bp(app)
+add_others_bp(app)
 
 
 # Serve index.html for the root route
