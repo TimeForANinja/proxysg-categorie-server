@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, TypeVar, Type, List, Callable
 
 from auth.auth_user import AuthUser
 from db.dbmodel.staging import ActionTable, ActionType, StagedChange
-from db.middleware.stagingdb.cache import StagedCollection
+from db.middleware.stagingdb.staged_collection import StagedCollection
 from log import log_debug
 
 # Generic type variables for different object types

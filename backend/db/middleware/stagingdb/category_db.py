@@ -8,7 +8,7 @@ from db.dbmodel.category import MutableCategory, Category
 from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionType, ActionTable, StagedChange
 from db.middleware.abc.category_db import MiddlewareDBCategory
-from db.middleware.stagingdb.cache import StagedCollection
+from db.middleware.stagingdb.staged_collection import StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
 from db.middleware.stagingdb.utils.cache import SessionCache
 from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes, get_and_overload_object, \

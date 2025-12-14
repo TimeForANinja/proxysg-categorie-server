@@ -4,7 +4,7 @@ from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
 from db.dbmodel.task import MutableTask, Task
 from db.middleware.abc.task_db import MiddlewareDBTask
-from db.middleware.stagingdb.cache import StagedCollection
+from db.middleware.stagingdb.staged_collection import StagedCollection
 
 
 class StagingDBTask(MiddlewareDBTask):

@@ -7,7 +7,7 @@ from db.backend.abc.util.types import MyTransactionType
 from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionTable
 from db.middleware.abc.db import MiddlewareDB
-from db.middleware.stagingdb.cache import StagedCollection
+from db.middleware.stagingdb.staged_collection import StagedCollection
 from db.middleware.stagingdb.category_db import StagingDBCategory
 from db.middleware.stagingdb.history_db import StagingDBHistory
 from db.middleware.stagingdb.sub_category_db import StagingDBSubCategory

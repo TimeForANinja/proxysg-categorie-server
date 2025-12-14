@@ -9,7 +9,7 @@ from db.dbmodel.history import Atomic
 from db.dbmodel.staging import ActionType, ActionTable
 from db.dbmodel.token import MutableToken, Token
 from db.middleware.abc.token_db import MiddlewareDBToken
-from db.middleware.stagingdb.cache import StagedChange, StagedCollection
+from db.middleware.stagingdb.staged_collection import StagedChange, StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object
 from db.middleware.stagingdb.utils.cache import SessionCache
 from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, \

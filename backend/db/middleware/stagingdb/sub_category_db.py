@@ -4,7 +4,7 @@ from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
 from db.dbmodel.staging import ActionType, ActionTable
 from db.middleware.abc.sub_category_db import MiddlewareDBSubCategory
-from db.middleware.stagingdb.cache import StagedCollection
+from db.middleware.stagingdb.staged_collection import StagedCollection
 from db.middleware.stagingdb.category_db import StagingDBCategory
 from db.middleware.stagingdb.utils.overloading import add_staged_change
 
