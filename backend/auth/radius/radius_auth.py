@@ -10,6 +10,8 @@ from auth.util.jwt_data import TokenData
 from auth.util.jwt_handler import JWTHandler
 from auth.util.role_map import parse_role_map, apply_role_map, RoleMap
 from auth.util.server_ip import get_server_ip
+from apiflask import APIFlask
+from log import log_info
 
 
 class RadiusAuthRealm(AuthRealmInterface):
@@ -81,3 +83,23 @@ class RadiusAuthRealm(AuthRealmInterface):
         )
         token = self.jwt.generate_token(token_data)
         return token, token_data.to_auth_user()
+
+
+# Plugin API
+def auth_fits(app: APIFlask, auth_type: str) -> bool:
+    """
+    Return True if this module handles the provided auth_type entry from AUTH.ORDER.
+    """
+    return auth_type.strip().lower() == 'radius'
+
+
+def build_auth_realm(app: APIFlask, jwt: JWTHandler) -> AuthRealmInterface:
+    """
+    Build and return the StaticAuthRealm using values from app.config.
+    """
+    radius_cfg = app.config.get('AUTH', {}).get('RADIUS', {})
+    radius_server = radius_cfg.get('SERVER')
+    radius_secret = radius_cfg.get('SECRET')
+    radius_role_map = radius_cfg.get('ROLE_MAP', "")
+    log_info('AUTH', 'Adding Radius Realm', {'server': radius_server})
+    return RadiusAuthRealm(jwt, radius_server, radius_secret, radius_role_map)

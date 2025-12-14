@@ -7,6 +7,7 @@ from auth.auth_user import AuthUser
 from auth.auth_realm import AuthRealmInterface
 from auth.util.role_map import parse_role_map, apply_role_map, RoleMap
 from log import log_info, log_error
+from apiflask import APIFlask
 
 
 class RESTAuthRealm(AuthRealmInterface):
@@ -150,3 +151,35 @@ class RESTAuthRealm(AuthRealmInterface):
         except requests.RequestException as e:
             log_error('Auth', f'Authentication error: SRC_IP:{request.remote_addr}', e)
             return None
+
+
+# Plugin API
+def auth_fits(app: APIFlask, auth_type: str) -> bool:
+    """
+    Return True if this module handles the provided auth_type entry from AUTH.ORDER.
+    """
+    return auth_type.strip().lower() == 'rest'
+
+
+def build_auth_realm(app: APIFlask, _jwt_unused) -> AuthRealmInterface:
+    """
+    Build and return the StaticAuthRealm using values from app.config.
+    """
+    # REST does not use local JWT; it defers to remote; still conform to signature
+    rest_cfg = app.config.get('AUTH', {}).get('REST', {})
+    auth_url = rest_cfg.get('AUTH_URL')
+    verify_url = rest_cfg.get('VERIFY_URL')
+    ssl_verify: bool = str(rest_cfg.get('SSL_VERIFY', 'true')).lower() != 'false'
+    rest_role_map = rest_cfg.get('ROLE_MAP', "")
+    paths = {
+        'username': rest_cfg.get('PATH_USERNAME', 'username'),
+        'groups': rest_cfg.get('PATH_GROUPS', 'groups'),
+        'token': rest_cfg.get('PATH_TOKEN', 'token'),
+    }
+    log_info('AUTH', 'Adding REST Realm', {
+        'auth_url': auth_url,
+        'verify_url': verify_url,
+        'ssl_verify': ssl_verify,
+        'paths': paths,
+    })
+    return RESTAuthRealm(auth_url, verify_url, ssl_verify, paths, rest_role_map)

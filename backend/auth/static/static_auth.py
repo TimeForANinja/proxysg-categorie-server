@@ -7,6 +7,7 @@ from auth.auth_realm import AuthRealmInterface
 from auth.util.jwt_data import TokenData
 from auth.util.jwt_handler import JWTHandler
 from log import log_error, log_info
+from apiflask import APIFlask
 
 
 class StaticAuthRealm(AuthRealmInterface):
@@ -42,3 +43,22 @@ class StaticAuthRealm(AuthRealmInterface):
         )
         token = self.jwt.generate_token(token_data)
         return token, token_data.to_auth_user()
+
+
+# Plugin API
+def auth_fits(app: APIFlask, auth_type: str) -> bool:
+    """
+    Return True if this module handles the provided auth_type entry from AUTH.ORDER.
+    """
+    return auth_type.strip().lower() == 'local'
+
+
+def build_auth_realm(app: APIFlask, jwt: JWTHandler) -> AuthRealmInterface:
+    """
+    Build and return the StaticAuthRealm using values from app.config.
+    """
+    local_cfg = app.config.get('AUTH', {}).get('LOCAL', {})
+    static_user = local_cfg.get('USER', 'admin')
+    static_password = local_cfg.get('PASSWORD', 'nw_admin_2025')
+    log_info('AUTH', 'Adding Static Realm', {'user': static_user})
+    return StaticAuthRealm(jwt, static_user, static_password)
