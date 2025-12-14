@@ -52,6 +52,7 @@ const BaseLayout = () => {
 
                     { /* Center Buttons, surrounded by flewGrow to center */ }
                     <Box sx={{ flexGrow: 1 }} />
+                    <Button color="inherit" onClick={() => navigate("/test")}>Test</Button>
                     <Button color="inherit" onClick={() => navigate("/url")}>URLs</Button>
                     <Button color="inherit" onClick={() => navigate("/token")}>Api Tokens</Button>
                     <Button color="inherit" onClick={() => navigate("/category")}>Categories</Button>

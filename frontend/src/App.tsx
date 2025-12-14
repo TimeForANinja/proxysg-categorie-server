@@ -9,6 +9,7 @@ import HistoryPage from "./components/history";
 import HomePage from "./components/home";
 import UploadPage from "./components/shared/upload";
 import SettingsPage from "./components/settings";
+import TestPage from "./components/test";
 import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
 import {AuthProvider} from "./model/AuthContext";
@@ -41,6 +42,10 @@ function App() {
                 {
                     path: "/settings",
                     element: <SettingsPage/>,
+                },
+                {
+                    path: "/test",
+                    element: <TestPage/>,
                 },
                 {
                     path: "/",
