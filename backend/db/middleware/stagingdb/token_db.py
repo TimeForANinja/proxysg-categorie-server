@@ -12,8 +12,10 @@ from db.middleware.abc.token_db import MiddlewareDBToken
 from db.middleware.stagingdb.staged_collection import StagedChange, StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object
 from db.middleware.stagingdb.utils.cache import SessionCache
+from db.middleware.stagingdb.utils.dict_diff import diff_str
 from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, \
     get_and_overload_all_objects, update_dataclass
+from db.middleware.stagingdb.utils.str_converter import stringify_category_changes
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
 
@@ -120,6 +122,9 @@ class StagingDBToken(MiddlewareDBToken):
         if change.action_table != ActionTable.TOKEN:
             return None
 
+        # load current version from cache
+        cached_token = cache.get_token(change.uid)
+
         # Apply the change to the persistent database based on the action type
         if change.action_type == ActionType.ADD:
             # Create a MutableToken from the data
@@ -141,8 +146,9 @@ class StagingDBToken(MiddlewareDBToken):
             return Atomic.new(
                 user=change.auth,
                 action="Add",
-                description=f"Added token {token_data.get('name')}",
+                description=f"Added token {token_data.get('description')} ({diff_str({}, token_data)})",
                 ref_token=[token_id],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.UPDATE:
             # Create a MutableToken from the data
@@ -154,12 +160,18 @@ class StagingDBToken(MiddlewareDBToken):
                     # Roll the token in the persistent database
                     self._db.tokens.roll_token(change.uid, token_data['token'], session=session)
 
+                # update cached Token for future requests
+                cache.update_token(
+                    update_dataclass(cached_token, {'token': token_data['token']}, Token)
+                )
+
                 # Create atomic to append to the history event
                 return Atomic.new(
                     user=change.auth,
                     action="Update",
-                    description=f"Rolled token {token_data.get('name')}",
+                    description=f"Rolled token {cached_token.description}",
                     ref_token=[change.uid],
+                    timestamp=change.timestamp,
                 )
             else:
                 # Create a MutableToken from the data
@@ -169,49 +181,65 @@ class StagingDBToken(MiddlewareDBToken):
                     # Update the token in the persistent database
                     self._db.tokens.update_token(change.uid, mutable_token, session=session)
 
+                # build change description before updating the cached token
+                change_description = f"Updated token {cached_token.description} ({diff_str(cached_token.mutable_dict(), token_data)})"
+
+                # update cached Token for future requests
+                cache.update_token(
+                    update_dataclass(cached_token, token_data, Token)
+                )
+
                 # Create atomic to append to the history event
                 return Atomic.new(
                     user=change.auth,
                     action="Update",
-                    description=f"Updated token {token_data.get('name')}",
+                    description=change_description,
                     ref_token=[change.uid],
+                    timestamp=change.timestamp,
                 )
         elif change.action_type == ActionType.SET_CATS:
             token_data = change.data.copy()
 
-            current_token = cache.get_token(change.uid)
-
             # Update the token in the persistent database
             added, removed = set_categories(
-                current_token.categories if current_token else [],
+                cached_token.categories if cached_token else [],
                 token_data['categories'],
                 lambda cid: self._db.token_categories.add_token_category(change.uid, cid, session=session),
                 lambda cid: self._db.token_categories.delete_token_category(change.uid, cid, change.timestamp, session=session),
                 dry_run,
             )
+
             # update cached Token for future requests
             cache.update_token(
-                update_dataclass(current_token, {'categories': token_data['categories']}, Token)
+                update_dataclass(cached_token, {'categories': token_data['categories']}, Token)
             )
+
+            # build change description including added / removed categories
+            change_details = stringify_category_changes(cache, added, removed)
 
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Set Categories",
-                description=f"Updated Categories for Token {token_data.get('name')}, added {added}, removed {removed}",
+                description=f"Updated Categories for Token {cached_token.description} ({change_details})",
                 ref_token=[change.uid],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the token from the persistent database
                 self._db.tokens.delete_token(change.uid, change.timestamp, session=session)
 
+            # Remove from cache to for future requests
+            cache.delete_token(change.uid)
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Delete",
-                description=f"Deleted token {change.data.get('name')}",
+                description=f"Deleted token {cached_token.description}",
                 ref_token=[change.uid],
+                timestamp=change.timestamp,
             )
 
         # Unknown action_type

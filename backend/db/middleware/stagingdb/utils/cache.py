@@ -37,6 +37,12 @@ class SessionCache:
             self.urls = {x.id: x for x in db_urls}
         self.urls[url.id] = url
 
+    def delete_url(self, url_id: str):
+        if self.urls is None:
+            # cache not initialized; nothing to delete
+            return
+        self.urls.pop(url_id, None)
+
 
     def get_token(self, token_id: str) -> Optional[Token]:
         if self.tokens is None:
@@ -50,6 +56,12 @@ class SessionCache:
             self.tokens = {x.id: x for x in db_token}
         self.tokens[token.id] = token
 
+    def delete_token(self, token_id: str):
+        if self.tokens is None:
+            # cache not initialized; nothing to delete
+            return
+        self.tokens.pop(token_id, None)
+
 
     def get_category(self, category_id: str) -> Optional[Category]:
         if self.categories is None:
@@ -62,3 +74,9 @@ class SessionCache:
             db_cats = self._main_db.categories.get_all_categories(session=self.session)
             self.categories = {x.id: x for x in db_cats}
         self.categories[category.id] = category
+
+    def delete_category(self, category_id: str):
+        if self.categories is None:
+            # cache not initialized; nothing to delete
+            return
+        self.categories.pop(category_id, None)

@@ -29,7 +29,7 @@ class MongoDBTask(TaskDBInterface):
     def add_task(self, user: AuthUser, task: MutableTask) -> Task:
         current_timestamp = int(time.time())
         task_id = str(uuid7())
-        result = self.collection.insert_one({
+        self.collection.insert_one({
             'uid': task_id,
             'name': task.name,
             'user': AuthUser.serialize(user),

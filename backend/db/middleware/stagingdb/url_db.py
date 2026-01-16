@@ -11,8 +11,10 @@ from db.middleware.abc.url_db import MiddlewareDBURL
 from db.middleware.stagingdb.staged_collection import StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
 from db.middleware.stagingdb.utils.cache import SessionCache
+from db.middleware.stagingdb.utils.dict_diff import diff_str
 from db.middleware.stagingdb.utils.overloading import add_staged_change, get_and_overload_object, \
     get_and_overload_all_objects, add_staged_changes, update_dataclass
+from db.middleware.stagingdb.utils.str_converter import stringify_category_changes
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
 
@@ -126,6 +128,9 @@ class StagingDBURL(MiddlewareDBURL):
         if change.action_table != ActionTable.URL:
             return None
 
+        # load current version from cache
+        cached_url = cache.get_url(change.uid)
+
         # Apply the change to the persistent database based on the action type
         if change.action_type == ActionType.ADD:
             # Create a MutableURL from the data
@@ -146,8 +151,9 @@ class StagingDBURL(MiddlewareDBURL):
             return Atomic.new(
                 user=change.auth,
                 action="Add",
-                description=f"Added URL {url_data.get('hostname')}",
+                description=f"Added URL {url_data.get('hostname')} ({diff_str({}, url_data)})",
                 ref_url=[url_id],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.UPDATE:
             # Create a MutableURL from the data
@@ -158,49 +164,65 @@ class StagingDBURL(MiddlewareDBURL):
                 # Update the URL in the persistent database
                 self._db.urls.update_url(change.uid, mutable_url, session=session)
 
+            # build change description before updating the cached token
+            change_description = f"Updated URL {cached_url.hostname} ({diff_str(cached_url.mutable_dict(), url_data)})"
+
+            # update cached URL for future requests
+            cache.update_url(
+                update_dataclass(cached_url, url_data, URL)
+            )
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Update",
-                description=f"Updated URL {url_data.get('hostname')}",
+                description=change_description,
                 ref_url=[change.uid],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.SET_CATS:
             url_data = change.data.copy()
 
-            current_url = cache.get_url(change.uid)
-
             # Update the token in the persistent database
             added, removed = set_categories(
-                current_url.categories if current_url else [],
+                cached_url.categories if cached_url else [],
                 url_data['categories'],
                 lambda cid: self._db.url_categories.add_url_category(change.uid, cid, session=session),
                 lambda cid: self._db.url_categories.delete_url_category(change.uid, cid, change.timestamp, session=session),
                 dry_run,
             )
+
             # update cached URL for future requests
             cache.update_url(
-                update_dataclass(current_url, {'categories': url_data['categories']}, URL)
+                update_dataclass(cached_url, {'categories': url_data['categories']}, URL)
             )
+
+            # build change description including added / removed categories
+            change_details = stringify_category_changes(cache, added, removed)
 
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Set Categories",
-                description=f"Updated Categories for URL {url_data.get('hostname')}, added {added}, removed {removed}",
+                description=f"Updated Categories for URL {cached_url.hostname} ({change_details})",
                 ref_url=[change.uid],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the URL from the persistent database
                 self._db.urls.delete_url(change.uid, change.timestamp, session=session)
 
+            # Remove from cache to for future requests
+            cache.delete_url(change.uid)
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Delete",
-                description=f"Deleted URL {change.data.get('hostname')}",
+                description=f"Deleted URL {cached_url.hostname}",
                 ref_url=[change.uid],
+                timestamp=change.timestamp,
             )
 
         # Unknown action_type

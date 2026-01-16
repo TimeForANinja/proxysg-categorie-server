@@ -1,5 +1,5 @@
 from dataclasses import field, dataclass
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from marshmallow.validate import Length
 
 from db.util.validators import simpleNameValidator, simpleStringValidator
@@ -75,6 +75,17 @@ class Category(MutableCategory):
         'required': True,
         'description': 'Whether the category has pending changes or not',
     })
+
+    def mutable_dict(self) -> Dict[str, Any]:
+        """
+        Utility to get a Dict of all mutable fields
+        Used with the diff utility to calculate which fields are being changed
+        """
+        return {
+            "name": self.name,
+            "color": self.color,
+            "description": self.description,
+        }
 
     @staticmethod
     def from_mutable(category_id: str, mut_category: MutableCategory) -> 'Category':

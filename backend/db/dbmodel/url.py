@@ -1,5 +1,5 @@
 from dataclasses import field, dataclass
-from typing import List
+from typing import List, Dict, Any
 from marshmallow.validate import Length
 
 from db.util.validators import simpleURLValidator, simpleStringValidator
@@ -90,6 +90,16 @@ class URL(MutableURL):
         'required': True,
         'description': 'Whether the category has pending changes or not',
     })
+
+    def mutable_dict(self) -> Dict[str, Any]:
+        """
+        Utility to get a Dict of all mutable fields
+        Used with the diff utility to calculate which fields are being changed
+        """
+        return {
+            "hostname": self.hostname,
+            "description": self.description,
+        }
 
     @staticmethod
     def from_mutable(url_id: str, mut_url: MutableURL) -> 'URL':

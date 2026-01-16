@@ -11,8 +11,10 @@ from db.middleware.abc.category_db import MiddlewareDBCategory
 from db.middleware.stagingdb.staged_collection import StagedCollection
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
 from db.middleware.stagingdb.utils.cache import SessionCache
+from db.middleware.stagingdb.utils.dict_diff import diff_str
 from db.middleware.stagingdb.utils.overloading import add_staged_change, add_staged_changes, get_and_overload_object, \
     get_and_overload_all_objects, update_dataclass
+from db.middleware.stagingdb.utils.str_converter import stringify_category_changes
 from db.middleware.stagingdb.utils.update_cats import set_categories
 
 
@@ -122,6 +124,9 @@ class StagingDBCategory(MiddlewareDBCategory):
         if change.action_table != ActionTable.CATEGORY:
             return None
 
+        # load current version from cache
+        cached_category = cache.get_category(change.uid)
+
         # Apply the change to the persistent database based on the action type
         if change.action_type == ActionType.ADD:
             # Create a MutableCategory from the data
@@ -142,8 +147,9 @@ class StagingDBCategory(MiddlewareDBCategory):
             return Atomic.new(
                 user=change.auth,
                 action="Add",
-                description=f"Added category {category_data.get('name')}",
+                description=f"Added category {category_data.get('name')} ({diff_str({}, category_data)})",
                 ref_category=[category_id],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.UPDATE:
             # Create a MutableCategory from the data
@@ -154,49 +160,65 @@ class StagingDBCategory(MiddlewareDBCategory):
                 # Update the category in the persistent database
                 self._db.categories.update_category(change.uid, mutable_category, session=session)
 
+            # build change description before updating the cached token
+            change_description = f"Updated Category {cached_category.name} ({diff_str(cached_category.mutable_dict(), category_data)})"
+
+            # update cached Category for future requests
+            cache.update_category(
+                update_dataclass(cached_category, category_data, Category)
+            )
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Update",
-                description=f"Updated category {category_data.get('name')}",
+                description=change_description,
                 ref_category=[change.uid],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.SET_CATS:
             category_data = change.data.copy()
 
-            current_cats = cache.get_category(change.uid)
-
             # Update the category mappings in the persistent database
             added, removed = set_categories(
-                current_cats.nested_categories if current_cats else [],
+                cached_category.nested_categories if cached_category else [],
                 category_data['nested_categories'],
                 lambda cid: self._db.sub_categories.add_sub_category(change.uid, cid, session=session),
                 lambda cid: self._db.sub_categories.delete_sub_category(change.uid, cid, change.timestamp, session=session),
                 dry_run,
             )
+
             # update cached Category for future requests
             cache.update_category(
-                update_dataclass(current_cats, {'nested_categories': category_data['nested_categories']}, Category)
+                update_dataclass(cached_category, {'nested_categories': category_data['nested_categories']}, Category)
             )
+
+            # build change description including added / removed categories
+            change_details = stringify_category_changes(cache, added, removed)
 
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Set Categories",
-                description=f"Updated sub-categories for category {category_data.get('name')}, added {added}, removed {removed}",
+                description=f"Updated sub-categories for category {cached_category.name} ({change_details})",
                 ref_category=[change.uid],
+                timestamp=change.timestamp,
             )
         elif change.action_type == ActionType.DELETE:
             if not dry_run:
                 # Delete the category from the persistent database
                 self._db.categories.delete_category(change.uid, change.timestamp, session=session)
 
+            # update cached Category for future requests
+            cache.delete_category(change.uid)
+
             # Create atomic to append to the history event
             return Atomic.new(
                 user=change.auth,
                 action="Delete",
-                description=f"Deleted category {change.data.get('name')}",
+                description=f"Deleted category {cached_category.name}",
                 ref_category=[change.uid],
+                timestamp=change.timestamp,
             )
 
         # Unknown action_type

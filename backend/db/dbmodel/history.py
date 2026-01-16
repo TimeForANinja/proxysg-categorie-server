@@ -1,4 +1,3 @@
-import time
 from dataclasses import field, dataclass
 from typing import Optional, List
 from uuid import uuid7
@@ -37,6 +36,7 @@ class Atomic:
         action: str,
         user: AuthUser,
         description: str,
+        timestamp: int,
         ref_token: List[str] = None,
         ref_url: List[str] = None,
         ref_category: List[str] = None,
@@ -46,7 +46,7 @@ class Atomic:
             user=user,
             action=action,
             description=description,
-            time=int(time.time()),
+            time=timestamp,
             ref_token=ref_token if ref_token else [],
             ref_url=ref_url if ref_url else [],
             ref_category=ref_category if ref_category else [],
