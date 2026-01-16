@@ -1,8 +1,10 @@
 from dataclasses import field, dataclass
 from typing import List, Dict, Any
 from marshmallow.validate import Length
+from marshmallow_dataclass import class_schema
 
 from db.util.validators import simpleURLValidator, simpleStringValidator
+from db.util.schema import desc
 
 
 # Default Value set in the bc_cats array
@@ -22,7 +24,7 @@ class MutableURL:
             Length(min=4),
             simpleURLValidator,
         ],
-        'description': 'FQDN of the URL',
+        **desc('FQDN of the URL'),
     })
     description: str = field(
         default=None,
@@ -31,7 +33,7 @@ class MutableURL:
                 Length(max=255),
                 simpleStringValidator,
             ],
-            'description': 'Description of the token'
+            **desc('Description of the token'),
         },
     )
 
@@ -42,7 +44,7 @@ class URL(MutableURL):
     """
     id: str = field(metadata={
         'required': True,
-        'description': 'ID of the URL',
+        **desc('ID of the URL'),
     })
     hostname: str = field(metadata={
         'required': True,
@@ -50,7 +52,7 @@ class URL(MutableURL):
             Length(min=4),
             simpleURLValidator,
         ],
-        'description': 'FQDN of the URL',
+        **desc('FQDN of the URL'),
     })
     description: str = field(
         default=None,
@@ -59,36 +61,28 @@ class URL(MutableURL):
                 Length(max=255),
                 simpleStringValidator,
             ],
-            'description': 'Description of the token'
+            **desc('Description of the token'),
         },
     )
     is_deleted: int = field(
         default=0,
-        metadata={
-            'description': 'Whether the url is deleted or not',
-        }
+        metadata=desc('Whether the url is deleted or not'),
     )
     categories: List[str] = field(
         default_factory=list,
-        metadata={
-            'description': 'List of category IDs associated with the URL',
-        }
+        metadata=desc('List of category IDs associated with the URL'),
     )
     bc_cats: List[str] = field(
         default_factory=list,
-        metadata={
-            'description': 'List of BlueCoat Categories this URL is currently categorised as',
-        }
+        metadata=desc('List of BlueCoat Categories this URL is currently categorised as'),
     )
     bc_last_set: int = field(
         default=0,
-        metadata={
-            'description': 'Timestamp when the BlueCoat Categories were last set for this URL',
-        }
+        metadata=desc('Timestamp when the BlueCoat Categories were last set for this URL'),
     )
     pending_changes: bool = field(metadata={
         'required': True,
-        'description': 'Whether the category has pending changes or not',
+        **desc('Whether the category has pending changes or not'),
     })
 
     def mutable_dict(self) -> Dict[str, Any]:
@@ -112,3 +106,7 @@ class URL(MutableURL):
             bc_last_set=0,
             pending_changes=False,
         )
+
+
+mutable_url_schema = class_schema(MutableURL)()
+url_schema = class_schema(URL)()

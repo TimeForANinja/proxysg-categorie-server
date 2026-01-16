@@ -1,13 +1,11 @@
 from apiflask import APIBlueprint, APIFlask
-from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
-from db.dbmodel.url import MutableURL
+from db.dbmodel.url import MutableURL, mutable_url_schema
 from db.db_singleton import get_db
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
-from routes.schemas.url import ListURLOutput, CreateOrUpdateURLOutput, ListURLCategoriesOutput, SetURLCategoriesInput
-
+from routes.schemas.url import ListURLOutput, CreateOrUpdateURLOutput, ListURLCategoriesOutput, SetURLCategoriesInput, set_url_categories_input_schema
 
 def add_url_bp(app: APIFlask):
     log_debug('ROUTES', 'Adding URL Blueprint')
@@ -31,7 +29,7 @@ def add_url_bp(app: APIFlask):
     # Route to update URL name
     @url_bp.put('/api/url/<string:url_id>')
     @url_bp.doc(summary='Update URL name', description='Update the name of a URL')
-    @url_bp.input(class_schema(MutableURL)(), location='json', arg_name='mut_url')
+    @url_bp.input(mutable_url_schema, location='json', arg_name='mut_url')
     @url_bp.output(CreateOrUpdateURLOutput)
     @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_url(url_id: str, mut_url: MutableURL):
@@ -57,7 +55,7 @@ def add_url_bp(app: APIFlask):
     # Route to create a new URL
     @url_bp.post('/api/url')
     @url_bp.doc(summary='Create a new URL', description='Create a new URL with a given name')
-    @url_bp.input(class_schema(MutableURL)(), location='json', arg_name='mut_url')
+    @url_bp.input(mutable_url_schema, location='json', arg_name='mut_url')
     @url_bp.output(CreateOrUpdateURLOutput)
     @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_url(mut_url: MutableURL):
@@ -93,7 +91,7 @@ def add_url_bp(app: APIFlask):
     # Route to set Categories to a given List
     @url_bp.post('/api/url/<string:url_id>/category')
     @url_bp.doc(summary='overwrite url categories', description='Set the Categories of a URL to the provided list')
-    @url_bp.input(class_schema(SetURLCategoriesInput)(), location='json', arg_name='set_cats')
+    @url_bp.input(set_url_categories_input_schema, location='json', arg_name='set_cats')
     @url_bp.output(ListURLCategoriesOutput)
     @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def set_url_categories(url_id: str, set_cats: SetURLCategoriesInput):

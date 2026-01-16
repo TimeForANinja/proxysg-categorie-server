@@ -2,10 +2,12 @@ from dataclasses import field, dataclass
 from enum import IntFlag
 from typing import List
 from marshmallow.validate import Length
+from marshmallow_dataclass import class_schema
 
 from auth.auth_user import AuthUser
 from db.util.validators import simpleNameValidator
 from routes.restmodel.task import RESTTask
+from db.util.schema import desc
 
 
 @dataclass(kw_only=True)
@@ -16,13 +18,11 @@ class MutableTask:
             Length(min=1),
             simpleNameValidator,
         ],
-        'description': 'Name of the task',
+        **desc('Name of the task'),
     })
     parameters: List[str] = field(
         default_factory=list,
-        metadata={
-            'description': 'Parameters for the task'
-        },
+        metadata=desc('Parameters for the task'),
     )
 
 
@@ -47,6 +47,10 @@ class Task:
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
+
+
+mutable_task_schema = class_schema(MutableTask)()
+task_schema = class_schema(Task)()
 
 
 class CleanupFlags(IntFlag):

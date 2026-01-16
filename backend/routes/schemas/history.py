@@ -1,11 +1,15 @@
 from apiflask.fields import List, Nested
-from marshmallow_dataclass import class_schema
 from typing import List as tList
 
-from routes.restmodel.history import RESTHistory
+from db.util.schema import desc
+from routes.restmodel.history import RESTHistory, rest_history_schema
 from routes.schemas.generic_output import GenericOutput
 
 
 class ListHistoryOutput(GenericOutput):
     """Output schema for a list of history events"""
-    data: tList[RESTHistory] = List(Nested(class_schema(RESTHistory)()), required=True, description='List of History Events')
+    data: tList[RESTHistory] = List(
+        Nested(rest_history_schema),
+        required=True,
+        metadata=desc('List of History Events'),
+    )

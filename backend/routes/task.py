@@ -1,14 +1,13 @@
 import time
 
 from apiflask import APIBlueprint
-from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
 from db.dbmodel.task import MutableTask
 from log import log_debug
-from routes.schemas.commit import CommitInput
-from routes.schemas.task import ExistingDBInput, ListTaskOutput, CreatedTaskOutput, SingleTaskOutput, CleanupInput
+from routes.schemas.commit import CommitInput, commit_input_schema
+from routes.schemas.task import ExistingDBInput, ListTaskOutput, CreatedTaskOutput, SingleTaskOutput, CleanupInput, existing_db_input_schema, cleanup_input_schema
 
 
 def add_task_bp(app):
@@ -20,7 +19,7 @@ def add_task_bp(app):
     # Route to upload an existing category db
     @task_bp.post('/api/task/new/upload_existing_db')
     @task_bp.doc(summary='Upload existing DB', description='Upload an existing database to the server')
-    @task_bp.input(class_schema(ExistingDBInput)(), location='json', arg_name='existing_db')
+    @task_bp.input(existing_db_input_schema, location='json', arg_name='existing_db')
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def load_existing(existing_db: ExistingDBInput):
@@ -40,7 +39,7 @@ def add_task_bp(app):
     # Route to create a task for cleanup of unused URLs / Categories
     @task_bp.post('/api/task/new/cleanup_unused')
     @task_bp.doc(summary='Cleanup Unused', description='Cleanup various unused objects')
-    @task_bp.input(class_schema(CleanupInput)(), location='json', arg_name='cleanup_settings')
+    @task_bp.input(cleanup_input_schema, location='json', arg_name='cleanup_settings')
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def cleanup_unused(cleanup_settings: CleanupInput):
@@ -111,7 +110,7 @@ def add_task_bp(app):
 
     @task_bp.post('/api/task/new/commit')
     @task_bp.doc(summary='Commit Staged Changes', description='Create a Task to commit all staged changes to the database')
-    @task_bp.input(class_schema(CommitInput)(), location='json', arg_name='commit_data')
+    @task_bp.input(commit_input_schema, location='json', arg_name='commit_data')
     @task_bp.output(CreatedTaskOutput)
     @task_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def handle_commit(commit_data: CommitInput):

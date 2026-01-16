@@ -1,8 +1,10 @@
 from dataclasses import field, dataclass
 from typing import List, Dict, Any
 from marshmallow.validate import Length
+from marshmallow_dataclass import class_schema
 
 from db.util.validators import simpleStringValidator
+from db.util.schema import desc
 
 
 @dataclass(kw_only=True)
@@ -13,7 +15,7 @@ class MutableToken:
             Length(max=255),
             simpleStringValidator,
         ],
-        'description': 'Description of the token'
+        **desc('Description of the token'),
     })
 
 
@@ -24,13 +26,13 @@ class Token(MutableToken):
     """
     id: str = field(metadata={
         'required': True,
-        'description': 'ID of the token',
+        **desc('ID of the token'),
     })
     token: str = field(metadata={
         'required': True,
         # uuid v4 is always 36 characters
         'validate': Length(min=36, max=36),
-        'description': 'Token for use with the API',
+        **desc('Token for use with the API'),
     })
     description: str = field(metadata={
         'required': True,
@@ -38,29 +40,23 @@ class Token(MutableToken):
             Length(max=255),
             simpleStringValidator,
         ],
-        'description': 'Description of the token'
+        **desc('Description of the token'),
     })
     last_use: int = field(
         default=0,
-        metadata={
-            'description': 'Timestamp when the token was last used',
-        }
+        metadata=desc('Timestamp when the token was last used'),
     )
     is_deleted: int = field(
         default=0,
-        metadata={
-            'description': 'Whether the token is deleted or not',
-        }
+        metadata=desc('Whether the token is deleted or not'),
     )
     categories: List[str] = field(
         default_factory=list,
-        metadata={
-            'description': 'List of category IDs associated with the URL',
-        }
+        metadata=desc('List of category IDs associated with the URL'),
     )
     pending_changes: bool = field(metadata={
         'required': True,
-        'description': 'Whether the category has pending changes or not',
+        **desc('Whether the category has pending changes or not'),
     })
 
     def mutable_dict(self) -> Dict[str, Any]:
@@ -83,3 +79,7 @@ class Token(MutableToken):
             categories=[],
             pending_changes=False,
         )
+
+
+mutable_token_schema = class_schema(MutableToken)()
+token_schema = class_schema(Token)()

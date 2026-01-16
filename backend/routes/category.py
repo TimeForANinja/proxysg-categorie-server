@@ -1,13 +1,11 @@
 from apiflask import APIBlueprint, APIFlask
-from marshmallow_dataclass import class_schema
 
 from db.db_singleton import get_db
 from auth.auth_singleton import get_auth_if
-from db.dbmodel.category import MutableCategory
+from db.dbmodel.category import MutableCategory, mutable_category_schema
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
-from routes.schemas.category import ListCategoriesResponseOutput, CreateOrUpdateCategoryOutput, ListSubCategoriesOutput, SetSubCategoriesInput
-
+from routes.schemas.category import ListCategoriesResponseOutput, CreateOrUpdateCategoryOutput, ListSubCategoriesOutput, SetSubCategoriesInput, set_sub_categories_input_schema
 
 def add_category_bp(app: APIFlask):
     log_debug('ROUTES', 'Adding Category Blueprint')
@@ -32,7 +30,7 @@ def add_category_bp(app: APIFlask):
     # Route to update Category name
     @category_bp.put('/api/category/<string:cat_id>')
     @category_bp.doc(summary='Update Category name', description='Update the name of a Category')
-    @category_bp.input(class_schema(MutableCategory)(), location='json', arg_name='mut_cat')
+    @category_bp.input(mutable_category_schema, location='json', arg_name='mut_cat')
     @category_bp.output(CreateOrUpdateCategoryOutput)
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_category(cat_id: str, mut_cat: MutableCategory):
@@ -58,7 +56,7 @@ def add_category_bp(app: APIFlask):
     # Route to create a new Category
     @category_bp.post('/api/category')
     @category_bp.doc(summary='Create a Category', description='Create a new Category with a given name')
-    @category_bp.input(class_schema(MutableCategory)(), location='json', arg_name='mut_cat')
+    @category_bp.input(mutable_category_schema, location='json', arg_name='mut_cat')
     @category_bp.output(CreateOrUpdateCategoryOutput)
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_category(mut_cat: MutableCategory):
@@ -94,7 +92,7 @@ def add_category_bp(app: APIFlask):
     # Route to set Sub-Categories to a given List
     @category_bp.post('/api/category/<string:cat_id>/category')
     @category_bp.doc(summary='overwrite token categories', description='Set the Sub-Categories of a Category to the provided list')
-    @category_bp.input(class_schema(SetSubCategoriesInput)(), location='json', arg_name='set_cats')
+    @category_bp.input(set_sub_categories_input_schema, location='json', arg_name='set_cats')
     @category_bp.output(ListSubCategoriesOutput)
     @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def set_sub_categories(cat_id: str, set_cats: SetSubCategoriesInput):

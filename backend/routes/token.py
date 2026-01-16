@@ -1,13 +1,11 @@
 from apiflask import APIBlueprint, APIFlask
-from marshmallow_dataclass import class_schema
 
 from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
-from db.dbmodel.token import MutableToken
+from db.dbmodel.token import MutableToken, mutable_token_schema
 from log import log_debug
 from routes.schemas.generic_output import GenericOutput
-from routes.schemas.token import ListTokenOutput, CreateOrUpdateTokenOutput, ListTokenCategoriesOutput, SetTokenCategoriesInput
-
+from routes.schemas.token import ListTokenOutput, CreateOrUpdateTokenOutput, ListTokenCategoriesOutput, SetTokenCategoriesInput, set_token_categories_input_schema
 
 def add_token_bp(app: APIFlask):
     log_debug('ROUTES', 'Adding Token Blueprint')
@@ -31,7 +29,7 @@ def add_token_bp(app: APIFlask):
     # Route to update Token name
     @token_bp.put('/api/token/<string:token_id>')
     @token_bp.doc(summary='Update Token name', description='Update the name of a Token')
-    @token_bp.input(class_schema(MutableToken)(), location='json', arg_name='mut_tok')
+    @token_bp.input(mutable_token_schema, location='json', arg_name='mut_tok')
     @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_token(token_id: str, mut_tok: MutableToken):
@@ -70,7 +68,7 @@ def add_token_bp(app: APIFlask):
     # Route to create a new Token
     @token_bp.post('/api/token')
     @token_bp.doc(summary='Create a Token', description='Create a new Token with a given name')
-    @token_bp.input(class_schema(MutableToken)(), location='json', arg_name='mut_tok')
+    @token_bp.input(mutable_token_schema, location='json', arg_name='mut_tok')
     @token_bp.output(CreateOrUpdateTokenOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_token(mut_tok: MutableToken):
@@ -106,7 +104,7 @@ def add_token_bp(app: APIFlask):
     # Route to set Categories to a given List
     @token_bp.post('/api/token/<string:token_id>/category')
     @token_bp.doc(summary='overwrite token categories', description='Set the Categories of a Token to the provided list')
-    @token_bp.input(class_schema(SetTokenCategoriesInput)(), location='json', arg_name='set_cats')
+    @token_bp.input(set_token_categories_input_schema, location='json', arg_name='set_cats')
     @token_bp.output(ListTokenCategoriesOutput)
     @token_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def set_token_categories(token_id: str, set_cats: SetTokenCategoriesInput):

@@ -1,8 +1,10 @@
 from dataclasses import field, dataclass
 from typing import Optional, List, Dict, Any
 from marshmallow.validate import Length
+from marshmallow_dataclass import class_schema
 
 from db.util.validators import simpleNameValidator, simpleStringValidator
+from db.util.schema import desc
 
 
 @dataclass(kw_only=True)
@@ -13,7 +15,7 @@ class MutableCategory:
             Length(min=1),
             simpleNameValidator,
         ],
-        'description': 'Name of the category',
+        **desc('Name of the category'),
     })
     color: int = field(metadata={
         'required': True,
@@ -25,7 +27,7 @@ class MutableCategory:
                 Length(max=255),
                 simpleStringValidator,
             ],
-            'description': 'Description of the category'
+            **desc('Description of the category'),
         },
     )
 
@@ -36,7 +38,7 @@ class Category(MutableCategory):
     """
     id: str = field(metadata={
         'required': True,
-        'description': 'ID of the category',
+        **desc('ID of the category'),
     })
     name: str = field(metadata={
         'required': True,
@@ -44,7 +46,7 @@ class Category(MutableCategory):
             Length(min=1),
             simpleNameValidator,
         ],
-        'description': 'Name of the category',
+        **desc('Name of the category'),
     })
     color: int = field(metadata={
         'required': True,
@@ -56,24 +58,20 @@ class Category(MutableCategory):
                 Length(max=255),
                 simpleStringValidator,
             ],
-            'description': 'Description of the category'
+            **desc('Description of the category'),
         },
     )
     is_deleted: int = field(
         default=0,
-        metadata={
-            'description': 'Whether the category is deleted or not',
-        }
+        metadata=desc('Whether the category is deleted or not'),
     )
     nested_categories: List[str] = field(
         default_factory=list,
-        metadata={
-            'description': 'List of category IDs associated with the category',
-        }
+        metadata=desc('List of category IDs associated with the category'),
     )
     pending_changes: bool = field(metadata={
         'required': True,
-        'description': 'Whether the category has pending changes or not',
+        **desc('Whether the category has pending changes or not'),
     })
 
     def mutable_dict(self) -> Dict[str, Any]:
@@ -98,3 +96,7 @@ class Category(MutableCategory):
             nested_categories=[],
             pending_changes=False,
         )
+
+
+mutable_category_schema = class_schema(MutableCategory)()
+category_schema = class_schema(Category)()

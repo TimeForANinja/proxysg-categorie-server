@@ -1,6 +1,9 @@
 from typing import List
 import orjson
 from dataclasses import dataclass, field
+from marshmallow_dataclass import class_schema
+
+from db.util.schema import desc
 
 
 # Constants
@@ -17,13 +20,11 @@ class AuthUser:
     """
     username: str = field(metadata={
         'required': True,
-        'description': 'Username of the User',
+        **desc('Username of the User'),
     })
     roles: List[str] = field(
         default_factory=list,
-        metadata={
-            'description': 'List of roles assigned to the User',
-        }
+        metadata=desc('List of roles assigned to the User'),
     )
 
     def serialize(self) -> str:
@@ -56,3 +57,6 @@ AUTH_USER_SYSTEM = AuthUser(
     username='system',
     roles=[AUTH_ROLES_RO, AUTH_ROLES_RW],
 )
+
+
+auth_user_schema = class_schema(AuthUser)()

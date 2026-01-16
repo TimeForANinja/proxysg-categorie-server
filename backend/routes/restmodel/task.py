@@ -2,6 +2,7 @@ from dataclasses import field, dataclass
 from marshmallow.validate import Length
 
 from db.util.validators import simpleNameValidator
+from db.util.schema import desc
 
 
 @dataclass(kw_only=True)
@@ -11,7 +12,7 @@ class RESTTask:
     """
     id: str = field(metadata={
         'required': True,
-        'description': 'ID of the task',
+        **desc('ID of the task'),
     })
     name: str = field(metadata={
         'required': True,
@@ -19,27 +20,21 @@ class RESTTask:
             Length(min=1),
             simpleNameValidator,
         ],
-        'description': 'Name of the task',
+        **desc('Name of the task'),
     })
     user: str = field(metadata={
         'required': True,
-        'description': 'User who performed the action',
+        **desc('User who performed the action'),
     })
     status: str = field(
         default="pending",
-        metadata={
-            'description': 'Status of the task (pending, running, success, failed)',
-        }
+        metadata=desc('Status of the task (pending, running, success, failed)'),
     )
     created_at: int = field(
         default=0,
-        metadata={
-            'description': 'Timestamp when the task was created',
-        }
+        metadata=desc('Timestamp when the task was created'),
     )
     updated_at: int = field(
         default=0,
-        metadata={
-            'description': 'Timestamp when the task was last updated',
-        }
+        metadata=desc('Timestamp when the task was last updated'),
     )
