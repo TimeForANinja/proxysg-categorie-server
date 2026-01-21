@@ -149,6 +149,8 @@ def get_bc_credentials(app: APIFlask) -> ServerCredentials:
     bc_host = query_bc_conf.get('HOST')
     bc_user = query_bc_conf.get('USER', 'ro_admin')
     bc_password = query_bc_conf.get('PASSWORD')
+    # timeout for the query against the bc proxy. should be below 30 seconds or else the /test api route will timeout
+    timeout = int(query_bc_conf.get("TIMEOUT", "10"))
     # check for false or not false, so that we default to 'true' for all other values
     bc_verify_ssl = query_bc_conf.get('VERIFY_SSL', 'true').lower() != 'false'
 
@@ -163,6 +165,7 @@ def get_bc_credentials(app: APIFlask) -> ServerCredentials:
         user=bc_user,
         password=bc_password,
         verifySSL=bc_verify_ssl,
+        http_timeout=timeout,
     )
 
 def start_query_bc(scheduler: BackgroundScheduler, app: APIFlask, tz: str):

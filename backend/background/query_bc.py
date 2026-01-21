@@ -14,6 +14,7 @@ class ServerCredentials:
     server: str
     user: str
     password: str
+    http_timeout: int
     verifySSL: bool
 
     def query(self, url: str):
@@ -98,7 +99,11 @@ def do_query(credentials: ServerCredentials, url: str) -> List[str]:
     """
 
     try:
-        response = requests.get(credentials.query(url), verify=credentials.verifySSL)
+        response = requests.get(
+            credentials.query(url),
+            verify=credentials.verifySSL,
+            timeout=credentials.http_timeout
+        )
         response.raise_for_status()
 
         raw_content = response.text

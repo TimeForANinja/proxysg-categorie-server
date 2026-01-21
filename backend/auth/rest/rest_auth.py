@@ -13,6 +13,7 @@ from apiflask import APIFlask
 class RESTAuthRealm(AuthRealmInterface):
     verify_url: str
     auth_url: str
+    http_timeout: int
     ssl_verify: bool
     paths: Dict[str, str]
     role_map: RoleMap
@@ -21,6 +22,7 @@ class RESTAuthRealm(AuthRealmInterface):
         self,
         auth_url: str,
         verify_url: str,
+        timeout: int,
         ssl_verify: bool,
         paths: Dict[str, str],
         role_map: str,
@@ -28,6 +30,7 @@ class RESTAuthRealm(AuthRealmInterface):
         """
         :param auth_url: URL to authenticate with username / pw
         :param verify_url: URL to verify a token
+        :param timeout: HTTP timeout in seconds
         :param ssl_verify: false to disable SSL verification
         :param paths: A dict of paths for dynamic JSON key extraction
             Example: {
@@ -39,6 +42,7 @@ class RESTAuthRealm(AuthRealmInterface):
         """
         self.verify_url = verify_url
         self.auth_url = auth_url
+        self.http_timeout = timeout
         self.ssl_verify = ssl_verify
         self.paths = paths
         self.role_map = parse_role_map(role_map)
@@ -126,6 +130,7 @@ class RESTAuthRealm(AuthRealmInterface):
                 self.verify_url,
                 verify=self.ssl_verify,
                 json=payload,
+                timeout=self.http_timeout,
             )
 
             _, user = self._process_auth_response(r)
@@ -145,6 +150,7 @@ class RESTAuthRealm(AuthRealmInterface):
                 self.auth_url,
                 json=payload,
                 verify=self.ssl_verify,
+                timeout=self.http_timeout,
             )
 
             return self._process_auth_response(r)
@@ -169,6 +175,7 @@ def build_auth_realm(app: APIFlask, _jwt_unused) -> AuthRealmInterface:
     rest_cfg = app.config.get('AUTH', {}).get('REST', {})
     auth_url = rest_cfg.get('AUTH_URL')
     verify_url = rest_cfg.get('VERIFY_URL')
+    timeout = int(rest_cfg.get("TIMEOUT", "10"))
     ssl_verify: bool = str(rest_cfg.get('SSL_VERIFY', 'true')).lower() != 'false'
     rest_role_map = rest_cfg.get('ROLE_MAP', "")
     paths = {
@@ -182,4 +189,4 @@ def build_auth_realm(app: APIFlask, _jwt_unused) -> AuthRealmInterface:
         'ssl_verify': ssl_verify,
         'paths': paths,
     })
-    return RESTAuthRealm(auth_url, verify_url, ssl_verify, paths, rest_role_map)
+    return RESTAuthRealm(auth_url, verify_url, timeout, ssl_verify, paths, rest_role_map)
