@@ -33,7 +33,8 @@ function TestPage() {
     const renderCategories = (url: IUrl | null, locals: ICategory[] | null): string => {
         if (!url || !locals) return "";
         const map = new Map(locals.map(c => [c.id, c.name] as const));
-        return url.categories.map(cid => map.get(cid) ?? cid).join(', ');
+        // Filter first, due to issues with categories pending delete not being properly deleted
+        return url.categories.filter(cid => map.has(cid)).map(cid => map.get(cid)).join(', ');
     };
 
     return (

@@ -26,6 +26,7 @@ def add_others_bp(app):
         hostname = value.strip().lower()
 
         # 2) Fetch all URLs and select the best match by comparing the longest suffix that matched
+        # TODO: the get_all_urls() call still returns categories marked for deletion
         urls = db_if.urls.get_all_urls()
         best_url = None
         best_len = -1

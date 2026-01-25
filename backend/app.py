@@ -132,4 +132,5 @@ if __name__ == '__main__':
 
     # start app
     app_port = int(app.config.get('PORT', 8080))
+    log_info("APP", f"Done initializing - Starting app on port {app_port}")
     app.run(port=app_port, host='0.0.0.0')
