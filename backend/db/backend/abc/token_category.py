@@ -20,30 +20,14 @@ class TokenCategoryDBInterface(ABC):
         token_id: str,
         category_id: str,
         session: Optional[MyTransactionType] = None,
-    ):
+    ) -> str:
         """
         Add a new mapping of Token and Category
 
         :param token_id: The ID of the Token
         :param category_id: The ID of the Category
         :param session: Optional database session to use
+        :return: The ID of the newly created entry.
         """
         pass
 
-    @abstractmethod
-    def delete_token_category(
-        self,
-        token_id: str,
-        category_id: str,
-        del_timestamp: int,
-        session: Optional[MyTransactionType] = None,
-    ):
-        """
-        Delete a mapping of Token and Category.
-
-        :param token_id: The ID of the Token
-        :param category_id: The ID of the Category
-        :param del_timestamp: The timestamp to set as deletion timestamp
-        :param session: Optional database session to use
-        """
-        pass

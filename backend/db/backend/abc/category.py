@@ -7,14 +7,13 @@ from db.dbmodel.category import MutableCategory, Category
 
 class CategoryDBInterface(ABC):
     @abstractmethod
-    def add_category(self, category: MutableCategory, category_id: str, session: Optional[MyTransactionType] = None) -> Category:
+    def add_category(self, category: MutableCategory, session: Optional[MyTransactionType] = None) -> str:
         """
         Add a new category with the given name, color, and an optional description.
 
         :param category: The (partial) category to add.
-        :param category_id: The ID of the category to add. This is used to identify the category in the database.
         :param session: Optional database session to use
-        :return: The newly created category.
+        :return: The ID of the newly created category.
         """
         pass
 
@@ -46,16 +45,6 @@ class CategoryDBInterface(ABC):
         """
         pass
 
-    @abstractmethod
-    def delete_category(self, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
-        """
-        Soft-delete a category by setting its `is_deleted` flag to the current timestamp.
-
-        :param category_id: The ID of the category to delete.
-        :param del_timestamp: The timestamp to set as deletion timestamp
-        :param session: Optional database session to use
-        """
-        pass
 
     @abstractmethod
     def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:

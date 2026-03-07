@@ -20,30 +20,14 @@ class SubCategoryDBInterface(ABC):
         category_id: str,
         sub_category_id: str,
         session: Optional[MyTransactionType] = None,
-    ):
+    ) -> str:
         """
         Add a new subcategory
 
         :param category_id: The ID of the parent-category
         :param sub_category_id: The ID of the subcategory
         :param session: Optional database session to use
+        :return: The ID of the newly created entry.
         """
         pass
 
-    @abstractmethod
-    def delete_sub_category(
-        self,
-        category_id: str,
-        sub_category_id: str,
-        del_timestamp: int,
-        session: Optional[MyTransactionType] = None,
-    ):
-        """
-        Delete a mapping of a subcategory.
-
-        :param category_id: The ID of the parent-category
-        :param sub_category_id: The ID of the subcategory
-        :param del_timestamp: The timestamp to set as deletion timestamp
-        :param session: Optional database session to use
-        """
-        pass

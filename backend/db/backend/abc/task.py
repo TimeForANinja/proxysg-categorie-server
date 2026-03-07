@@ -7,13 +7,13 @@ from db.dbmodel.task import MutableTask, Task
 
 class TaskDBInterface(ABC):
     @abstractmethod
-    def add_task(self, user: AuthUser, task: MutableTask) -> Task:
+    def add_task(self, user: AuthUser, task: MutableTask) -> str:
         """
         Add a new task with the given name, description, and parameters.
 
         :param user: The user who performed the action.
         :param task: The (partial) task to add.
-        :return: The newly created task.
+        :return: The ID of the newly created task.
         """
         pass
 

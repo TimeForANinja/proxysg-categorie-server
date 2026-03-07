@@ -20,30 +20,14 @@ class UrlCategoryDBInterface(ABC):
         url_id: str,
         category_id: str,
         session: Optional[MyTransactionType] = None,
-    ):
+    ) -> str:
         """
         Add a new mapping of URL and Category
 
         :param url_id: The ID of the URL
         :param category_id: The ID of the Category
         :param session: Optional database session to use
+        :return: The ID of the newly created entry.
         """
         pass
 
-    @abstractmethod
-    def delete_url_category(
-        self,
-        url_id: str,
-        category_id: str,
-        del_timestamp: int,
-        session: Optional[MyTransactionType] = None,
-    ):
-        """
-        Delete a mapping of URL and Category.
-
-        :param url_id: The ID of the URL
-        :param category_id: The ID of the Category
-        :param del_timestamp: The timestamp to set as deletion timestamp
-        :param session: Optional database session to use
-        """
-        pass

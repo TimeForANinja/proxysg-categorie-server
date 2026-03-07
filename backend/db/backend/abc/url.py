@@ -7,14 +7,13 @@ from db.dbmodel.url import MutableURL, URL
 
 class URLDBInterface(ABC):
     @abstractmethod
-    def add_url(self, url: MutableURL, url_id: str, session: Optional[MyTransactionType] = None) -> URL:
+    def add_url(self, url: MutableURL, session: Optional[MyTransactionType] = None) -> str:
         """
         Add a new url with the given hostname.
 
         :param url: The (partial) url to add.
-        :param url_id: The ID of the url to add. This is used to identify the url in the database.
         :param session: Optional database session to use
-        :return: The newly created url.
+        :return: The ID of the newly created url.
         """
         pass
 
@@ -41,16 +40,6 @@ class URLDBInterface(ABC):
         """
         pass
 
-    @abstractmethod
-    def delete_url(self, url_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
-        """
-        Soft-delete a URL by setting its `is_deleted` flag to the current timestamp.
-
-        :param url_id: The ID of the url to delete.
-        :param del_timestamp: The timestamp to set as deletion timestamp
-        :param session: Optional database session to use
-        """
-        pass
 
     @abstractmethod
     def get_all_urls(self, session: Optional[MyTransactionType] = None) -> List[URL]:

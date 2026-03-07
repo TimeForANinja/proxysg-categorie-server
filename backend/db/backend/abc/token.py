@@ -7,15 +7,14 @@ from db.dbmodel.token import MutableToken, Token
 
 class TokenDBInterface(ABC):
     @abstractmethod
-    def add_token(self, token_id: str, uuid: str, mut_tok: MutableToken, session: Optional[MyTransactionType] = None) -> Token:
+    def add_token(self, uuid: str, mut_tok: MutableToken, session: Optional[MyTransactionType] = None) -> str:
         """
         Add a new token with the given name, and an optional description.
 
-        :param token_id: The ID of the token to add. This is used to identify the token in the database.
         :param uuid: The UUID (token) of the token.
         :param mut_tok: The (partial) token to add.
         :param session: Optional database session to use
-        :return: The newly created token.
+        :return: The ID of the newly created token.
         """
         pass
 
@@ -73,16 +72,6 @@ class TokenDBInterface(ABC):
         """
         pass
 
-    @abstractmethod
-    def delete_token(self, token_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
-        """
-        Soft-delete a token by setting its `is_deleted` flag to the current timestamp.
-
-        :param token_id: The ID of the token to delete.
-        :param del_timestamp: The timestamp to set as deletion timestamp
-        :param session: Optional database session to use
-        """
-        pass
 
     @abstractmethod
     def get_all_tokens(self, session: Optional[MyTransactionType] = None) -> List[Token]:
