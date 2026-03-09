@@ -31,18 +31,19 @@ class SQLiteToken(TokenDBInterface):
 
     def add_token(
             self,
-            token_id: str,
             uuid: str,
             mut_tok: MutableToken,
             session: Optional[MyTransactionType] = None,
-    ) -> Token:
+    ) -> str:
+        import uuid as uuid_pkg
+        token_id = str(uuid_pkg.uuid4())
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO tokens (id, token, description) VALUES (?, ?, ?)',
                 (token_id, uuid, mut_tok.description)
             )
 
-        return Token.from_mutable(token_id, uuid, mut_tok)
+        return token_id
 
     def get_token(self, token_id: str, session: Optional[MyTransactionType] = None) -> Optional[Token]:
         with self.get_cursor(session=session) as cursor:
@@ -132,17 +133,6 @@ class SQLiteToken(TokenDBInterface):
 
         return self.get_token(token_id)
 
-    def delete_token(
-        self,
-        token_id: str,
-        del_timestamp: int,
-        session: Optional[MyTransactionType] = None,
-    ):
-        with self.get_cursor(session=session) as cursor:
-            cursor.execute(
-                'UPDATE tokens SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-                (del_timestamp, token_id,)
-            )
 
     def get_all_tokens(self, session: Optional[MyTransactionType] = None) -> List[Token]:
         with self.get_cursor(session=session) as cursor:

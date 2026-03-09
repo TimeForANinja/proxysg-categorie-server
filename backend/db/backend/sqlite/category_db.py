@@ -31,16 +31,17 @@ class SQLiteCategory(CategoryDBInterface):
     def add_category(
         self,
         mut_cat: MutableCategory,
-        category_id: str,
         session: Optional[MyTransactionType] = None,
-    ) -> Category:
+    ) -> str:
+        import uuid
+        category_id = str(uuid.uuid4())
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO categories (id, name, description, color) VALUES (?, ?, ?, ?)',
                 (category_id, mut_cat.name, mut_cat.description, mut_cat.color)
             )
 
-        return Category.from_mutable(category_id, mut_cat)
+        return category_id
 
     def get_category(self, category_id: str, session: Optional[MyTransactionType] = None) -> Optional[Category]:
         with self.get_cursor(session=session) as cursor:
@@ -91,17 +92,6 @@ class SQLiteCategory(CategoryDBInterface):
 
         return self.get_category(cat_id)
 
-    def delete_category(
-        self,
-        category_id: str,
-        del_timestamp: int,
-        session: Optional[MyTransactionType] = None,
-    ):
-        with self.get_cursor(session=session) as cursor:
-            cursor.execute(
-                'UPDATE categories SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-                (del_timestamp, category_id,)
-            )
 
     def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:
         with self.get_cursor(session=session) as cursor:

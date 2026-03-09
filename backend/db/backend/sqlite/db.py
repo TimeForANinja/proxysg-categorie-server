@@ -6,16 +6,14 @@ from typing import Generator, Optional
 from db.backend.abc.db import DBInterface
 from db.backend.abc.util.types import MyTransactionType
 from db.backend.sqlite.category_db import SQLiteCategory
-from db.backend.sqlite.config_db import SQLiteConfig, CONFIG_VAR_SCHEMA_VERSION
-from db.backend.sqlite.history_db import SQLiteHistory
-from db.backend.sqlite.staging_db import SQLiteStaging
+from db.backend.sqlite.git_tree_db import SQLiteTags, SQLiteTaskSet, SQLiteTokenSet, SQLiteURLSet
 from db.backend.sqlite.sub_category_db import SQLiteSubCategory
 from db.backend.sqlite.task_db import SQLiteTask
 from db.backend.sqlite.token_category_db import SQLiteTokenCategory
 from db.backend.sqlite.token_db import SQLiteToken
 from db.backend.sqlite.url_category_db import SQLiteURLCategory
 from db.backend.sqlite.url_db import SQLiteURL
-from log import log_info, log_debug, log_error
+from log import log_info, log_error
 
 
 class MySQLiteDB(DBInterface):
@@ -24,19 +22,18 @@ class MySQLiteDB(DBInterface):
 
         self.filename = filename
 
-        # Initialize the config table first to manage a schema version
-        self.config = SQLiteConfig(self.get_cursor)
-
-        # Initialize other tables
+        # Initialize tables
         self.categories = SQLiteCategory(self.get_cursor)
         self.sub_categories = SQLiteSubCategory(self.get_cursor)
-        self.history = SQLiteHistory(self.get_cursor)
         self.tokens = SQLiteToken(self.get_cursor)
         self.token_categories = SQLiteTokenCategory(self.get_cursor)
         self.urls = SQLiteURL(self.get_cursor)
         self.url_categories = SQLiteURLCategory(self.get_cursor)
         self.tasks = SQLiteTask(self.get_cursor)
-        self.staging = SQLiteStaging(self.get_cursor)
+        self.tags = SQLiteTags(self.get_cursor)
+        self.task_sets = SQLiteTaskSet(self.get_cursor)
+        self.token_sets = SQLiteTokenSet(self.get_cursor)
+        self.url_sets = SQLiteURLSet(self.get_cursor)
 
     @contextmanager
     def get_connection(self, session: Optional[MyTransactionType] = None) -> Generator[sqlite3.Connection, None, None]:
@@ -78,60 +75,61 @@ class MySQLiteDB(DBInterface):
     def migrate(self):
         """
         Run Initialization and Optimization steps.
-        Check for migration scripts and run them in sequence to upgrade the database schema.
-        Migration scripts should be named in the format: <version>_<description>.sql
+        Automatically applies new migrations when the application starts.
         """
-        # Get current schema version
-        current_version = self.config.get_schema_version()
-        log_info('SQLITE', f'Current schema version: {current_version}')
+        log_info('SQLITE', 'Checking for database migrations...')
 
-        # Find migration scripts
         migration_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'migration')
-        os.makedirs(migration_dir, exist_ok=True)  # Ensure migration directory exists
+        
+        # 1. Get current version from DB
+        current_version = 0
+        try:
+            with self.get_cursor() as cursor:
+                # Check if config table exists
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='config'")
+                if cursor.fetchone():
+                    cursor.execute("SELECT value FROM config WHERE key='schema-version'")
+                    row = cursor.fetchone()
+                    if row:
+                        current_version = int(row[0])
+        except Exception as e:
+            log_info("SQLITE", f"Could not determine schema version (assuming 0): {e}")
 
-        # Get all SQL files in the migration directory
+        # 2. Find migration scripts
         migration_files = []
-        for file in os.listdir(migration_dir):
-            if file.endswith('.sql'):
-                try:
-                    # Extract version number from filename (format: <version>_<description>.sql)
-                    version = int(file.split('_')[0])
-                    migration_files.append((version, os.path.join(migration_dir, file)))
-                except (ValueError, IndexError):
-                    # Skip files that don't follow the naming convention
-                    log_error("SQLITE", f"Skipping invalid migration file: {file}")
-                    continue
+        if os.path.exists(migration_dir):
+            for f in os.listdir(migration_dir):
+                if f.endswith('.sql'):
+                    parts = f.split('_', 1)
+                    if len(parts) > 1 and parts[0].isdigit():
+                        version = int(parts[0])
+                        if version > current_version:
+                            migration_files.append((version, f))
+        
+        migration_files.sort()
 
-        # Sort migration files by version
-        migration_files.sort(key=lambda x: x[0])
+        if not migration_files:
+            log_info("SQLITE", "Database is up to date.")
+            return
 
-        # Run migrations that are newer than the current version
-        for version, file_path in migration_files:
-            if version <= current_version:
-                log_debug('SQLITE', f"Skipping migration: {os.path.basename(file_path)} (version {version} is older or equal to current version {current_version})")
-                continue
-
-            log_debug("SQLITE", f"Applying migration: {os.path.basename(file_path)}")
+        for version, filename in migration_files:
+            log_info("SQLITE", f"Applying migration {filename}...")
+            script_path = os.path.join(migration_dir, filename)
+            
             try:
-                # Read and execute the migration script
-                with open(file_path, 'r') as f:
+                with open(script_path, 'r') as f:
                     sql_script = f.read()
 
                 with self.start_transaction() as session:
                     with self.get_cursor(session=session) as cursor:
-                        # Execute the script
-                        # use BEGIN/COMMIT to enforce a transaction - changes are only stored if all changes succeed
-                        cursor.executescript(f"BEGIN;\n{sql_script};")
-                    # Update schema version, as part of the same transaction
-                    self.config.set_int(CONFIG_VAR_SCHEMA_VERSION, version, session=session)
-                    # leave the with block to commit the transaction
-
-                log_info("SQLITE", f"Applied migration: {os.path.basename(file_path)}")
+                        cursor.executescript(sql_script)
+                
+                log_info("SQLITE", f"Migration {filename} applied successfully.")
             except Exception as e:
-                log_error("SQLITE", f"Error applying migration {os.path.basename(file_path)}: {str(e)}")
-                # migration failed
-                # raise to stop the server since the DB is not as expected
+                log_error("SQLITE", f"Error applying migration {filename}: {str(e)}")
                 raise e
+
+        log_info("SQLITE", "All migrations applied successfully.")
 
     @contextmanager
     def start_transaction(self) -> Generator[MyTransactionType, None, None]:

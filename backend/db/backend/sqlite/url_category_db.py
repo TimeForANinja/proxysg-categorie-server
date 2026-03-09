@@ -26,16 +26,10 @@ class SQLiteURLCategory(UrlCategoryDBInterface):
             rows = cursor.fetchall()
             return [str(row[0]) for row in rows]
 
-    def add_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None):
+    def add_url_category(self, url_id: str, category_id: str, session: Optional[MyTransactionType] = None) -> str:
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO url_categories (url_id, category_id) VALUES (?, ?)',
                 (url_id, category_id,)
             )
-
-    def delete_url_category(self, url_id: str, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
-        with self.get_cursor(session=session) as cursor:
-            cursor.execute(
-                'UPDATE url_categories SET is_deleted = ? WHERE url_id = ? AND category_id = ? AND is_deleted = 0',
-                (del_timestamp, url_id, category_id,)
-            )
+        return str(cursor.lastrowid)

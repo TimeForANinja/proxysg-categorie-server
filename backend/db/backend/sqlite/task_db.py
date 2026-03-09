@@ -30,7 +30,7 @@ class SQLiteTask(TaskDBInterface):
     ):
         self.get_cursor = get_cursor
 
-    def add_task(self, user: AuthUser, task: MutableTask) -> Task:
+    def add_task(self, user: AuthUser, task: MutableTask) -> str:
         current_timestamp = int(time.time())
         param_str = orjson.dumps(task.parameters).decode("utf-8")
 
@@ -42,16 +42,7 @@ class SQLiteTask(TaskDBInterface):
                 (task.name, AuthUser.serialize(user), param_str, 'pending', current_timestamp, current_timestamp)
             )
 
-            new_task = Task(
-                id=str(cursor.lastrowid),
-                name=task.name,
-                user=user,
-                parameters=task.parameters,
-                status='pending',
-                created_at=current_timestamp,
-                updated_at=current_timestamp,
-            )
-            return new_task
+            return str(cursor.lastrowid)
 
     def get_task(self, task_id: str) -> Optional[Task]:
         with self.get_cursor() as cursor:

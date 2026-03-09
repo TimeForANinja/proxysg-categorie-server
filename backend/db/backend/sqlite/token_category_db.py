@@ -26,16 +26,11 @@ class SQLiteTokenCategory(TokenCategoryDBInterface):
             rows = cursor.fetchall()
             return [str(row[0]) for row in rows]
 
-    def add_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None):
+    def add_token_category(self, token_id: str, category_id: str, session: Optional[MyTransactionType] = None) -> str:
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO token_categories (token_id, category_id) VALUES (?, ?)',
                 (token_id, category_id,)
             )
+        return str(cursor.lastrowid)
 
-    def delete_token_category(self, token_id: str, category_id: str, del_timestamp: int, session: Optional[MyTransactionType] = None):
-        with self.get_cursor(session=session) as cursor:
-            cursor.execute(
-                'UPDATE token_categories SET is_deleted = ? WHERE token_id = ? AND category_id = ? AND is_deleted = 0',
-                (del_timestamp, token_id, category_id,)
-            )

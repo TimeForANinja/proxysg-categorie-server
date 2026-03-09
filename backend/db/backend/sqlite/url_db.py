@@ -30,14 +30,16 @@ class SQLiteURL(URLDBInterface):
     ):
         self.get_cursor = get_cursor
 
-    def add_url(self, mut_url: MutableURL, url_id: str, session: Optional[MyTransactionType] = None) -> URL:
+    def add_url(self, mut_url: MutableURL, session: Optional[MyTransactionType] = None) -> str:
+        import uuid
+        url_id = str(uuid.uuid4())
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 'INSERT INTO urls (id, hostname, description, bc_cats) VALUES (?, ?, ?, ?)',
                 (url_id, mut_url.hostname, mut_url.description, NO_BC_CATEGORY_YET)
             )
 
-        return URL.from_mutable(url_id, mut_url)
+        return url_id
 
     def get_url(self, url_id: str, session: Optional[MyTransactionType] = None) -> Optional[URL]:
         with self.get_cursor(session=session) as cursor:
@@ -88,17 +90,6 @@ class SQLiteURL(URLDBInterface):
         with self.get_cursor() as cursor:
             cursor.execute(query, (join_str_group(bc_cats), int(time.time()), url_id))
 
-    def delete_url(
-        self,
-        url_id: str,
-        del_timestamp: int,
-        session: Optional[MyTransactionType] = None
-    ):
-        with self.get_cursor(session=session) as cursor:
-            cursor.execute(
-                'UPDATE urls SET is_deleted = ? WHERE id = ? AND is_deleted = 0',
-                (del_timestamp, url_id,)
-            )
 
     def get_all_urls(self, session: Optional[MyTransactionType] = None) -> List[URL]:
         with self.get_cursor(session=session) as cursor:
