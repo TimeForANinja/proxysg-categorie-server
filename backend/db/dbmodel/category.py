@@ -1,5 +1,5 @@
 from dataclasses import field, dataclass
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from marshmallow.validate import Length
 from marshmallow_dataclass import class_schema
 
@@ -31,6 +31,7 @@ class MutableCategory:
         },
     )
 
+
 @dataclass(kw_only=True)
 class Category(MutableCategory):
     """
@@ -61,18 +62,6 @@ class Category(MutableCategory):
             **desc('Description of the category'),
         },
     )
-    is_deleted: int = field(
-        default=0,
-        metadata=desc('Whether the category is deleted or not'),
-    )
-    nested_categories: List[str] = field(
-        default_factory=list,
-        metadata=desc('List of category IDs associated with the category'),
-    )
-    pending_changes: bool = field(metadata={
-        'required': True,
-        **desc('Whether the category has pending changes or not'),
-    })
 
     def mutable_dict(self) -> Dict[str, Any]:
         """
@@ -92,9 +81,6 @@ class Category(MutableCategory):
             name=mut_category.name,
             color=mut_category.color,
             description=mut_category.description,
-            is_deleted=0,
-            nested_categories=[],
-            pending_changes=False,
         )
 
 

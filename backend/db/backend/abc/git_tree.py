@@ -29,47 +29,43 @@ class TagsDBInterface(ABC):
 
 class BaseSetDBInterface(ABC):
     @abstractmethod
-    def insert(self, uuid: str, type: str, entries: List[str]):
+    def insert(self, uuid: str, entries: List[str]):
         """
         Map a UUID to a set of entries.
 
         :param uuid: The UUID for the set.
-        :param type: The type of entries in the set.
         :param entries: The list of UUIDs.
         """
         pass
 
+    def _insert(self, uuid: str, type: str, entries: List[str]):
+        pass
+
     @abstractmethod
-    def get(self, uuid: str, type: str) -> Optional[List[str]]:
+    def get(self, uuid: str) -> Optional[List[str]]:
         """
         Retrieve the entries for a given UUID and type.
 
         :param uuid: The UUID for the set.
-        :param type: The type of entries in the set.
         :return: The list of UUIDs or None if not found.
         """
         pass
 
+    def _get(self, uuid: str, type: str) -> Optional[List[str]]:
+        pass
 
-class TaskSetDBInterface(BaseSetDBInterface):
+
+class CategorySetDBInterface(BaseSetDBInterface):
     def insert(self, uuid: str, entries: List[str]):
-        super().insert(uuid, "task", entries)
+        super()._insert(uuid, "category", entries)
 
     def get(self, uuid: str) -> Optional[List[str]]:
-        return super().get(uuid, "task")
-
-
-class TokenSetDBInterface(BaseSetDBInterface):
-    def insert(self, uuid: str, entries: List[str]):
-        super().insert(uuid, "token", entries)
-
-    def get(self, uuid: str) -> Optional[List[str]]:
-        return super().get(uuid, "token")
+        return super()._get(uuid, "category")
 
 
 class URLSetDBInterface(BaseSetDBInterface):
     def insert(self, uuid: str, entries: List[str]):
-        super().insert(uuid, "url", entries)
+        super()._insert(uuid, "url", entries)
 
     def get(self, uuid: str) -> Optional[List[str]]:
-        return super().get(uuid, "url")
+        return super()._get(uuid, "url")

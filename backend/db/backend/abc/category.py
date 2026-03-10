@@ -45,7 +45,6 @@ class CategoryDBInterface(ABC):
         """
         pass
 
-
     @abstractmethod
     def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:
         """

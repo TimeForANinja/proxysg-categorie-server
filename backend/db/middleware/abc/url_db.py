@@ -68,13 +68,3 @@ class MiddlewareDBURL(ABC):
         :return: A list of URLs
         """
         pass
-
-    @abstractmethod
-    def set_bc_cats(self, url_id: str, bc_cats: List[str]):
-        """
-        Update the BlueCoat Categories associated with a URL.
-
-        :param url_id: The ID of the url to update.
-        :param bc_cats: The list of BlueCoat Categories to associate with the URL.
-        """
-        pass

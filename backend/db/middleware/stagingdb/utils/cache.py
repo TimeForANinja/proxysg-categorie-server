@@ -2,7 +2,6 @@ from typing import Optional, Dict
 
 from db.backend.abc.db import DBInterface
 from db.dbmodel.category import Category
-from db.dbmodel.token import Token
 from db.dbmodel.url import URL
 from db.backend.abc.util.types import MyTransactionType
 
@@ -13,7 +12,6 @@ class SessionCache:
     It allows for efficient retrieval of objects by ID, without having to query the database multiple times.
     """
     urls: Optional[Dict[str, URL]] = None
-    tokens: Optional[Dict[str, Token]] = None
     categories: Optional[Dict[str, Category]] = None
 
     def __init__(
@@ -42,25 +40,6 @@ class SessionCache:
             # cache not initialized; nothing to delete
             return
         self.urls.pop(url_id, None)
-
-
-    def get_token(self, token_id: str) -> Optional[Token]:
-        if self.tokens is None:
-            db_token = self._main_db.tokens.get_all_tokens(session=self.session)
-            self.tokens = {x.id: x for x in db_token}
-        return self.tokens.get(token_id)
-
-    def update_token(self, token: Token):
-        if self.tokens is None:
-            db_token = self._main_db.tokens.get_all_tokens(session=self.session)
-            self.tokens = {x.id: x for x in db_token}
-        self.tokens[token.id] = token
-
-    def delete_token(self, token_id: str):
-        if self.tokens is None:
-            # cache not initialized; nothing to delete
-            return
-        self.tokens.pop(token_id, None)
 
 
     def get_category(self, category_id: str) -> Optional[Category]:

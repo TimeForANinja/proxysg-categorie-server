@@ -10,6 +10,7 @@ def stringify_list(l: List[str]) -> str:
     # skip the opening and closing brackets
     return escaped[1:-1]
 
+
 def stringify_category_changes(cache: SessionCache, added_ids: List[str], removed_ids: List[str]) -> str:
     """Convert added/removed lists of category IDs to a human-readable string."""
     added_cats = stringify_list([cache.get_category(cid).name for cid in added_ids])

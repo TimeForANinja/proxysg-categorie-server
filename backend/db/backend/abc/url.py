@@ -40,7 +40,6 @@ class URLDBInterface(ABC):
         """
         pass
 
-
     @abstractmethod
     def get_all_urls(self, session: Optional[MyTransactionType] = None) -> List[URL]:
         """
@@ -48,15 +47,5 @@ class URLDBInterface(ABC):
 
         :param session: Optional database session to use
         :return: A list of URLs
-        """
-        pass
-
-    @abstractmethod
-    def set_bc_cats(self, url_id: str, bc_cats: List[str]):
-        """
-        Update the BlueCoat Categories associated with a URL.
-
-        :param url_id: The ID of the url to update.
-        :param bc_cats: The list of BlueCoat Categories to associate with the URL.
         """
         pass

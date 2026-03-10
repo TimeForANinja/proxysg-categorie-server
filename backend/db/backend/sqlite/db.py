@@ -6,12 +6,7 @@ from typing import Generator, Optional
 from db.backend.abc.db import DBInterface
 from db.backend.abc.util.types import MyTransactionType
 from db.backend.sqlite.category_db import SQLiteCategory
-from db.backend.sqlite.git_tree_db import SQLiteTags, SQLiteTaskSet, SQLiteTokenSet, SQLiteURLSet
-from db.backend.sqlite.sub_category_db import SQLiteSubCategory
-from db.backend.sqlite.task_db import SQLiteTask
-from db.backend.sqlite.token_category_db import SQLiteTokenCategory
-from db.backend.sqlite.token_db import SQLiteToken
-from db.backend.sqlite.url_category_db import SQLiteURLCategory
+from db.backend.sqlite.git_tree_db import SQLiteTags, SQLiteURLSet, SQLiteCategorySet
 from db.backend.sqlite.url_db import SQLiteURL
 from log import log_info, log_error
 
@@ -24,15 +19,9 @@ class MySQLiteDB(DBInterface):
 
         # Initialize tables
         self.categories = SQLiteCategory(self.get_cursor)
-        self.sub_categories = SQLiteSubCategory(self.get_cursor)
-        self.tokens = SQLiteToken(self.get_cursor)
-        self.token_categories = SQLiteTokenCategory(self.get_cursor)
         self.urls = SQLiteURL(self.get_cursor)
-        self.url_categories = SQLiteURLCategory(self.get_cursor)
-        self.tasks = SQLiteTask(self.get_cursor)
         self.tags = SQLiteTags(self.get_cursor)
-        self.task_sets = SQLiteTaskSet(self.get_cursor)
-        self.token_sets = SQLiteTokenSet(self.get_cursor)
+        self.category_sets = SQLiteCategorySet(self.get_cursor)
         self.url_sets = SQLiteURLSet(self.get_cursor)
 
     @contextmanager

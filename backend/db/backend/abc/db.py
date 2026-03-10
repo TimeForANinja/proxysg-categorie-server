@@ -3,27 +3,17 @@ from contextlib import contextmanager
 from typing import Generator
 
 from db.backend.abc.category import CategoryDBInterface
-from db.backend.abc.git_tree import TagsDBInterface, TaskSetDBInterface, TokenSetDBInterface, URLSetDBInterface
-from db.backend.abc.sub_category import SubCategoryDBInterface
+from db.backend.abc.git_tree import TagsDBInterface, URLSetDBInterface
 from db.backend.abc.task import TaskDBInterface
-from db.backend.abc.token import TokenDBInterface
-from db.backend.abc.token_category import TokenCategoryDBInterface
 from db.backend.abc.url import URLDBInterface
-from db.backend.abc.url_category import UrlCategoryDBInterface
 from db.backend.abc.util.types import MyTransactionType
 
 
 class DBInterface(ABC):
     categories: CategoryDBInterface
-    sub_categories: SubCategoryDBInterface
-    tokens: TokenDBInterface
-    token_categories: TokenCategoryDBInterface
     urls: URLDBInterface
-    url_categories: UrlCategoryDBInterface
     tasks: TaskDBInterface
     tags: TagsDBInterface
-    task_sets: TaskSetDBInterface
-    token_sets: TokenSetDBInterface
     url_sets: URLSetDBInterface
 
     @abstractmethod

@@ -1,11 +1,9 @@
 from flask import current_app
 
 from db.backend.sqlite.db import MySQLiteDB
-from db.backend.mongodb.db import MyMongoDB
 from db.middleware.abc.db import MiddlewareDB
 from db.middleware.stagingdb.db import StagingDB
 from log import log_info, log_debug
-from pymongo import MongoClient
 
 
 def get_db() -> MiddlewareDB:
@@ -15,26 +13,7 @@ def get_db() -> MiddlewareDB:
     if staging_db is None:
         log_debug("DB", "Initializing DB connection", current_app.config.get('DB', {}))
         db_type = current_app.config.get('DB', {}).get('TYPE', 'sqlite').lower()
-        if db_type == 'mongodb':
-            mongo_cfg: dict = current_app.config.get('DB', {}).get('MONGO', {})
-            database_name = mongo_cfg.get('DBNAME', 'proxysg_localdb')
-            connection_auth_real = mongo_cfg.get('DBAUTH', database_name)
-            connection_user = mongo_cfg.get('CON_USER', 'admin')
-            connection_password = mongo_cfg.get('CON_PASSWORD', 'adminpassword')
-            connection_host = mongo_cfg.get('CON_HOST', 'localhost')
-            connection_port = int(mongo_cfg.get('CON_PORT', 27017))
-            connection_direct = bool(mongo_cfg.get('CON_DIRECT', False))
-            mongo_disable_transactions = bool(mongo_cfg.get('DISABLE_TRANSACTIONS', False))
-            log_info('DB', 'Connecting to MongoDB', { 'db': database_name, 'auth_db': connection_auth_real, 'user': connection_user, 'host': f'{connection_host}:{connection_port}' })
-            db = MyMongoDB(MongoClient(
-                connection_host,
-                port=connection_port,
-                username=connection_user,
-                password=connection_password,
-                authSource=connection_auth_real,
-                directconnection=connection_direct,
-            ), database_name, disable_transaction=mongo_disable_transactions)
-        elif db_type == 'sqlite':
+        if db_type == 'sqlite':
             sqlite_cfg: dict = current_app.config.get('DB', {}).get('SQLITE', {})
             database_name = sqlite_cfg.get('APP_DB_SQLITE_FILENAME', './data/mydatabase.db')
             log_info('DB', 'Creating Standby SQLite DB', { 'db': database_name })

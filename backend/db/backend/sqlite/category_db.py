@@ -3,8 +3,6 @@ from typing import Optional, List, Any
 from db.backend.abc.category import CategoryDBInterface
 from db.backend.abc.util.types import MyTransactionType
 from db.backend.sqlite.util.cursor_callable import GetCursorProtocol
-from db.backend.sqlite.util.groups import split_opt_str_group
-from db.backend.sqlite.util.query_builder import build_update_query
 from db.dbmodel.category import MutableCategory, Category
 
 
@@ -15,9 +13,6 @@ def _build_category(row: Any) -> Category:
         name=row[1],
         description=row[2],
         color=row[3],
-        is_deleted=0,
-        nested_categories=split_opt_str_group(row[4]),
-        pending_changes=False,
     )
 
 
@@ -47,24 +42,12 @@ class SQLiteCategory(CategoryDBInterface):
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 '''SELECT
-                    c.id as id,
-                    c.name,
-                    c.description,
-                    c.color,
-                    GROUP_CONCAT(sc.child_id) as sub_categories
-                FROM categories c
-                LEFT JOIN (
-                    SELECT
-                        sc.parent_id,
-                        sc.child_id
-                    FROM sub_category sc
-                    INNER JOIN categories c
-                    ON sc.child_id = c.id
-                    WHERE c.is_deleted = 0 AND sc.is_deleted = 0
-                ) sc
-                ON c.id = sc.parent_id
-                WHERE id = ? AND is_deleted = 0
-                GROUP BY c.id''',
+                    id,
+                    name,
+                    description,
+                    color
+                FROM categories
+                WHERE id = ?''',
                 (category_id,)
             )
             row = cursor.fetchone()
@@ -72,49 +55,15 @@ class SQLiteCategory(CategoryDBInterface):
             return _build_category(row)
         return None
 
-    def update_category(
-        self,
-        cat_id: str,
-        category: MutableCategory,
-        session: Optional[MyTransactionType] = None,
-    ) -> Category:
-        updates, params = build_update_query(category, {
-            'name': 'name',
-            'description': 'description',
-            'color': 'color',
-        })
-
-        if updates:
-            query = f'UPDATE categories SET {", ".join(updates)} WHERE id = ? AND is_deleted = 0'
-            params.append(cat_id)
-            with self.get_cursor(session=session) as cursor:
-                cursor.execute(query, params)
-
-        return self.get_category(cat_id)
-
-
     def get_all_categories(self, session: Optional[MyTransactionType] = None) -> List[Category]:
         with self.get_cursor(session=session) as cursor:
             cursor.execute(
                 '''SELECT
-                    c.id as id,
-                    c.name,
-                    c.description,
-                    c.color,
-                    GROUP_CONCAT(sc.child_id) as sub_categories
-                FROM categories c
-                LEFT JOIN (
-                    SELECT
-                        sc.parent_id,
-                        sc.child_id
-                    FROM sub_category sc
-                    INNER JOIN categories c
-                    ON sc.child_id = c.id
-                    WHERE c.is_deleted = 0 AND sc.is_deleted = 0
-                ) sc
-                ON c.id = sc.parent_id
-                WHERE is_deleted = 0
-                GROUP BY c.id'''
+                    id,
+                    name,
+                    description,
+                    color
+                FROM categories'''
             )
             rows = cursor.fetchall()
         return [_build_category(row) for row in rows]
