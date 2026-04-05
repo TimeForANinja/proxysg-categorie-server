@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List
 
 from auth.auth_user import AuthUser
-from db.dbmodel.url import MutableURL, URL
+from db.types.url import MutableURL, URL
 
 
 class MiddlewareDBURL(ABC):

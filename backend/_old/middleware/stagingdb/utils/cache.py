@@ -1,8 +1,8 @@
 from typing import Optional, Dict
 
 from db.backend.abc.db import DBInterface
-from db.dbmodel.category import Category
-from db.dbmodel.url import URL
+from db.types.category import Category
+from db.types.url import URL
 from db.backend.abc.util.types import MyTransactionType
 
 

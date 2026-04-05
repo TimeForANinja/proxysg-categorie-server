@@ -4,7 +4,7 @@ from typing import Optional, List
 from auth.auth_user import AuthUser
 from db.backend.abc.db import DBInterface
 from db.backend.abc.util.types import MyTransactionType
-from db.dbmodel.category import MutableCategory, Category
+from db.types.category import MutableCategory, Category
 from db.middleware.abc.category_db import MiddlewareDBCategory
 from db.middleware.stagingdb.utils.add_uid import add_uid_to_object, add_uid_to_objects
 from db.middleware.stagingdb.utils.cache import SessionCache

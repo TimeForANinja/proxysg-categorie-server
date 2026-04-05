@@ -1,0 +1,58 @@
+from typing import Any, Dict, List
+
+from cachetools import LFUCache
+
+from db.abc.db import DBInterface
+
+
+DEFAULT_CACHE_CAPACITY = 1_000_000
+
+
+class CacheDB(DBInterface):
+    def __init__(self, parent: DBInterface, capacity: int = DEFAULT_CACHE_CAPACITY):
+        super().__init__()
+        self.capacity = capacity
+
+        self.kv_cache = LFUCache(maxsize=capacity)
+        self.obj_cache = LFUCache(maxsize=capacity)
+        self.id_list_cache = LFUCache(maxsize=capacity)
+
+        self.parent = parent
+
+
+    def close(self):
+        # clear cache
+        self.kv_cache = LFUCache(maxsize=self.capacity)
+        self.obj_cache = LFUCache(maxsize=self.capacity)
+        self.id_list_cache = LFUCache(maxsize=self.capacity)
+        # then forward call to parent
+        self.parent.close()
+
+
+    def fetch_kv(self, key: str) -> str:
+        if key in self.kv_cache:
+            return self.kv_cache[key]
+        return self.parent.fetch_kv(key)
+
+    def fetch_obj(self, hash: str) -> Dict[Any, Any]:
+        if hash in self.obj_cache:
+            return self.obj_cache[hash]
+        return self.parent.fetch_obj(hash)
+
+    def fetch_id_list(self, hash: str) -> List[str]:
+        if hash in self.id_list_cache:
+            return self.id_list_cache[hash]
+        return self.parent.fetch_id_list(hash)
+
+
+    def insert_kv(self, key: str, value: str):
+        # pass all writes to parent
+        return self.parent.insert_kv(key, value)
+
+    def insert_obj(self, entry: Dict[Any, Any]) -> str:
+        # pass all writes to parent
+        return self.parent.insert_obj(entry)
+
+    def insert_id_list(self, entries: List[str]) -> str:
+        # pass all writes to parent
+        return self.parent.insert_id_list(entries)

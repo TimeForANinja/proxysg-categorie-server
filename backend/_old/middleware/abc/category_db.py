@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List
 
 from auth.auth_user import AuthUser
-from db.dbmodel.category import MutableCategory, Category
+from db.types.category import MutableCategory, Category
 
 
 class MiddlewareDBCategory(ABC):
