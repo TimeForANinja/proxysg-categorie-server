@@ -12,11 +12,15 @@ class DBInterface(ABC):
         pass
 
     @abstractmethod
-    def fetch_kv(self, hash: str) -> str:
+    def has_key(self, key: str) -> bool:
         pass
 
     @abstractmethod
-    def insert_kv(self, key: str, value: str):
+    def fetch_kv(self, hash: str) -> str|bytes:
+        pass
+
+    @abstractmethod
+    def insert_kv(self, key: str, value: str|bytes):
         pass
 
     @abstractmethod

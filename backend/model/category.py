@@ -4,7 +4,6 @@ from uuid import uuid4
 from db.abc.db import DBInterface
 from model.types.category import Member, Category, Constraint
 from model.types.tags import Commit
-from model.util.tag_name import build_user_tag
 
 
 class CategoryModel:
@@ -12,12 +11,9 @@ class CategoryModel:
         self.backend = backend
 
 
-    def add_category(self, author: str, name: str) -> Category:
+    def add_category(self, branch: str, name: str) -> Category:
         """Add a new Category with the given name and members"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
-
-        commit = Commit.read(self.backend, commit_hash)
+        commit = Commit.read_branch(self.backend, branch)
 
         # create category
         new_category = Category(
@@ -29,23 +25,20 @@ class CategoryModel:
 
         # add new category to commit
         commit.head.categories.append(new_category_hash)
-        new_commit_hash = commit.write(self.backend)
 
         # update user's tag with new commit
-        self.backend.insert_kv(author_tag, new_commit_hash)
+        commit.write_branch(self.backend, branch)
 
         return new_category
 
     def update_category(
             self,
-            author: str, category_id: str,
+            branch: str, category_id: str,
             name: Optional[str],
     ) -> Category:
         """Update the name and members of an existing Category"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
+        commit = Commit.read_branch(self.backend, branch)
 
-        commit = Commit.read(self.backend, commit_hash)
         for category_hash in commit.head.categories:
             category = Category.read(self.backend, category_hash)
             if category.id != category_id:
@@ -59,21 +52,17 @@ class CategoryModel:
             # update commit with new category
             commit.head.categories.remove(category_hash)
             commit.head.categories.append(new_category_hash)
-            new_commit_hash = commit.write(self.backend)
 
             # update user's tag with new commit
-            self.backend.insert_kv(author_tag, new_commit_hash)
+            commit.write_branch(self.backend, branch)
 
             return category
-
         raise Exception("Category not found")
 
-    def delete_category(self, author: str, category_id: str):
+    def delete_category(self, branch: str, category_id: str):
         """Delete a Category by ID"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
+        commit = Commit.read_branch(self.backend, branch)
 
-        commit = Commit.read(self.backend, commit_hash)
         for category_hash in commit.head.categories:
             category = Category.read(self.backend, category_hash)
             if category.id != category_id:
@@ -81,23 +70,19 @@ class CategoryModel:
 
             # update commit, removing old category
             commit.head.categories.remove(category_hash)
-            new_commit_hash = commit.write(self.backend)
 
             # update user's tag with new commit
-            self.backend.insert_kv(author_tag, new_commit_hash)
+            commit.write_branch(self.backend, branch)
 
             return category
-
         raise Exception("Category not found")
         # TODO: propagate delete to tokens
 
 
-    def add_member(self, author: str, category_id: str, url: str, constraint: Constraint) -> Member:
+    def add_member(self, branch: str, category_id: str, url: str, constraint: Constraint) -> Member:
         """Add a new Member to a Category with the given URL and constraint"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
+        commit = Commit.read_branch(self.backend, branch)
 
-        commit = Commit.read(self.backend, commit_hash)
         for category_hash in commit.head.categories:
             category = Category.read(self.backend, category_hash)
             if category.id != category_id:
@@ -115,21 +100,17 @@ class CategoryModel:
             # update commit with new category
             commit.head.categories.remove(category_hash)
             commit.head.categories.append(new_category_hash)
-            new_commit_hash = commit.write(self.backend)
 
             # update user's tag with new commit
-            self.backend.insert_kv(author_tag, new_commit_hash)
+            commit.write_branch(self.backend, branch)
 
             return new_member
-
         raise Exception("Category not found")
 
-    def delete_member(self, author: str, category_id: str, url: str):
+    def delete_member(self, branch: str, category_id: str, url: str):
         """Delete a Member from a Category by ID"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
+        commit = Commit.read_branch(self.backend, branch)
 
-        commit = Commit.read(self.backend, commit_hash)
         for category_hash in commit.head.categories:
             category = Category.read(self.backend, category_hash)
             if category.id != category_id:
@@ -147,10 +128,9 @@ class CategoryModel:
                 # update commit with new category
                 commit.head.categories.remove(category_hash)
                 commit.head.categories.append(new_category_hash)
-                new_commit_hash = commit.write(self.backend)
 
                 # update user's tag with new commit
-                self.backend.insert_kv(author_tag, new_commit_hash)
+                commit.write_branch(self.backend, branch)
 
                 return
             raise Exception("Member not found in Category")

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 import bson
 
 
@@ -24,12 +24,12 @@ def _decode_dict_str_list_str(data: bytes) -> Dict[str, List[str]]:
     return doc["dict"]
 
 
-def encode_dict_str(mapping: Dict[str, str]) -> bytes:
+def encode_dict_str(mapping: Dict[str, Any]) -> bytes:
     """Encode a dict[str, str] into BSON bytes."""
     return bson.encode({'dict': mapping})
 
 
-def decode_dict_str(data: bytes) -> Dict[str, str]:
+def decode_dict_str(data: bytes) -> Dict[str, Any]:
     """Decode BSON bytes back into a dict[str, str]."""
     doc = bson.decode(data)
     return doc["dict"]

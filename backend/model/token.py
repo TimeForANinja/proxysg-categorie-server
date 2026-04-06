@@ -4,7 +4,6 @@ from uuid import uuid4
 from db.abc.db import DBInterface
 from model.types.tags import Commit
 from model.types.token import Token
-from model.util.tag_name import build_user_tag
 
 
 class TokenModel:
@@ -12,12 +11,10 @@ class TokenModel:
         self.backend = backend
 
 
-    def roll_token(self, author: str, token_id: str) -> Token:
+    def roll_token(self, branch: str, token_id: str) -> Token:
         """Roll the value of a Token"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
+        commit = Commit.read_branch(self.backend, branch)
 
-        commit = Commit.read(self.backend, commit_hash)
         for token_hash in commit.head.tokens:
             token = Token.read(self.backend, token_hash)
             if token.id != token_id:
@@ -30,20 +27,16 @@ class TokenModel:
             # update commit with new token
             commit.head.tokens.remove(token_hash)
             commit.head.tokens.append(new_token_hash)
-            new_commit_hash = commit.write(self.backend)
 
             # update user's tag with new commit
-            self.backend.insert_kv(author_tag, new_commit_hash)
+            commit.write_branch(self.backend, branch)
 
             return token
-
         raise Exception("Token not found")
 
-    def create_token(self, author: str, description: str, categories: List[str]) -> Token:
+    def create_token(self, branch: str, description: str, categories: List[str]) -> Token:
         """Create a new Token with the given description and categories"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
-        commit = Commit.read(self.backend, commit_hash)
+        commit = Commit.read_branch(self.backend, branch)
 
         new_token = Token(
             id=str(uuid4()),
@@ -56,22 +49,19 @@ class TokenModel:
 
         # update commit with new token
         commit.head.tokens.append(new_token_hash)
-        new_commit_hash = commit.write(self.backend)
 
         # update user's tag with new commit
-        self.backend.insert_kv(author_tag, new_commit_hash)
+        commit.write_branch(self.backend, branch)
 
         return new_token
 
     def update_token(
             self,
-            author: str, token_id: str,
+            branch: str, token_id: str,
             description: Optional[str], categories: Optional[List[str]]
     ) -> Token:
         """Update the description and categories of an existing Token"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
-        commit = Commit.read(self.backend, commit_hash)
+        commit = Commit.read_branch(self.backend, branch)
 
         for token_hash in commit.head.tokens:
             token = Token.read(self.backend, token_hash)
@@ -88,20 +78,16 @@ class TokenModel:
             # update commit with new token
             commit.head.tokens.remove(token_hash)
             commit.head.tokens.append(new_token_hash)
-            new_commit_hash = commit.write(self.backend)
 
             # update user's tag with new commit
-            self.backend.insert_kv(author_tag, new_commit_hash)
+            commit.write_branch(self.backend, branch)
 
             return token
-
         raise Exception("Token not found")
 
-    def delete_token(self, author: str, token_id: str):
+    def delete_token(self, branch: str, token_id: str):
         """Delete a Token by ID"""
-        author_tag = build_user_tag(author)
-        commit_hash = self.backend.fetch_kv(author_tag)
-        commit = Commit.read(self.backend, commit_hash)
+        commit = Commit.read_branch(self.backend, branch)
 
         for token_hash in commit.head.tokens:
             token = Token.read(self.backend, token_hash)
@@ -110,10 +96,9 @@ class TokenModel:
 
             # update commit, removing the token
             commit.head.tokens.remove(token_hash)
-            new_commit_hash = commit.write(self.backend)
 
             # update user's tag with new commit
-            self.backend.insert_kv(author_tag, new_commit_hash)
+            commit.write_branch(self.backend, branch)
 
             return
         raise Exception("Token not found")

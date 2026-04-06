@@ -25,11 +25,17 @@ class DBM_DB(DBInterface):
         # dbm get's opened and closed for each connection, so no need to close
         pass
 
-    def fetch_kv(self, key: str) -> str:
+
+    def has_key(self, key: str) -> bool:
+        with self.get_connection() as con:
+            return key in con
+
+
+    def fetch_kv(self, key: str) -> str|bytes:
         with self.get_connection() as con:
             return con[key]
 
-    def insert_kv(self, key: str, value: str):
+    def insert_kv(self, key: str, value: str|bytes):
         with self.get_connection() as con:
             con[key] = value
 

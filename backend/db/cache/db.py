@@ -29,7 +29,11 @@ class CacheDB(DBInterface):
         self.parent.close()
 
 
-    def fetch_kv(self, key: str) -> str:
+    def has_key(self, key: str) -> bool:
+        return self.parent.has_key(key)
+
+
+    def fetch_kv(self, key: str) -> str|bytes:
         if key in self.kv_cache:
             return self.kv_cache[key]
         return self.parent.fetch_kv(key)
@@ -45,7 +49,7 @@ class CacheDB(DBInterface):
         return self.parent.fetch_id_list(hash)
 
 
-    def insert_kv(self, key: str, value: str):
+    def insert_kv(self, key: str, value: str|bytes):
         # pass all writes to parent
         return self.parent.insert_kv(key, value)
 

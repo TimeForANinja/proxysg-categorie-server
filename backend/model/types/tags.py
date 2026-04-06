@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 from db.abc.db import DBInterface
+from model.types.core import Core
 
 
 @dataclass
@@ -9,7 +10,7 @@ class Commit:
     author: str
     description: str
     head: StateTreeRootNode
-    parent_commit_hash: str
+    parent_commit_hash: str|None
 
     def write(self, backend: DBInterface) -> str:
         head_hash = self.head.write(backend)
@@ -19,6 +20,12 @@ class Commit:
             "head": head_hash,
             "parent_commit_hash": self.parent_commit_hash,
         })
+
+    def write_branch(self, backend: DBInterface, branch_tag: str):
+        commit_hash = self.write(backend)
+        core = Core.read(backend)
+        core.branches[branch_tag] = commit_hash
+        core.write(backend)
 
     @staticmethod
     def read(backend: DBInterface, hash: str) -> 'Commit':
@@ -30,6 +37,11 @@ class Commit:
             head=head,
             parent_commit_hash=raw_commit["parent_commit_hash"],
         )
+    @staticmethod
+    def read_branch(backend: DBInterface, branch_tag: str) -> 'Commit':
+        core = Core.read(backend)
+        user_tag = core.branches[branch_tag]
+        return Commit.read(backend, user_tag)
 
 
 @dataclass
