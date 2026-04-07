@@ -7,16 +7,11 @@ from flask import send_from_directory
 from flask_compress import Compress
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from background.background_tasks import start_background_tasks
 from db.db_singleton import get_db, close_connection
-from routes.auth import add_auth_bp
 from routes.category import add_category_bp
-from routes.compile import add_compile_bp
 from routes.history import add_history_bp
-from routes.task import add_task_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
-from routes.others import add_others_bp
 from log import setup_logging, log_info, log_error, log_debug
 
 # Initialize APIFlask instead of Flask
@@ -56,12 +51,8 @@ if app.config.get('PROXY_FIX', 'false').lower() == 'true':
 # Register blueprints
 add_category_bp(app)
 add_history_bp(app)
-add_auth_bp(app)
 add_token_bp(app)
 add_url_bp(app)
-add_compile_bp(app)
-add_task_bp(app)
-add_others_bp(app)
 
 
 # Serve index.html for the root route
@@ -102,13 +93,15 @@ def teardown(_exception: Any):
     # the exception parameter must be defined, or else Flask crashes
     log_debug("APP", "App teardown called")
     # after fixing the code to not keep sqlite sessions open, no further teardown is required
+    # TODO: call db close
     pass
 
 
 def init_background(a: APIFlask):
     log_debug("APP", "App init_background called")
     # start background tasks, make sure to trigger this only in one worker
-    start_background_tasks(a)
+    # TODO: implement background tasks
+    pass
 
 
 def migrate_db(a: APIFlask):
