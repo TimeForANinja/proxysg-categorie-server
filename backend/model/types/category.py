@@ -37,7 +37,7 @@ class Member:
     def write(self, backend: DBInterface) -> str:
         return backend.insert_obj({
             "url": self.url,
-            "constraint": self.constraint,
+            "constraint": self.constraint.serialize(),
         })
 
     @staticmethod
@@ -45,7 +45,7 @@ class Member:
         raw_member = backend.fetch_obj(hash)
         return Member(
             url=raw_member["url"],
-            constraint=raw_member["constraint"],
+            constraint=Constraint.deserialize(raw_member["constraint"]),
         )
 
 
@@ -54,3 +54,18 @@ class Constraint:
     from_: int
     until: int
     comment: str
+
+    def serialize(self) -> dict:
+        return {
+            "from_": self.from_,
+            "until": self.until,
+            "comment": self.comment,
+        }
+
+    @staticmethod
+    def deserialize(data: dict) -> 'Constraint':
+        return Constraint(
+            from_=data["from_"],
+            until=data["until"],
+            comment=data["comment"],
+        )

@@ -9,6 +9,7 @@ from db.dbm.util.hash import sha256_hash
 
 
 KEY_LENGTH = 2
+MAX_COMPACT_LIST_SIZE = 100
 
 
 class DBM_DB(DBInterface):
@@ -55,19 +56,55 @@ class DBM_DB(DBInterface):
             return entry_hash
 
     def fetch_id_list(self, hash: str) -> List[str]:
-        entries = []
         # fetch from db
         with self.get_connection() as con:
-            superset_bson = con[hash]
-            superset = decode_dict_str(superset_bson)
-            for key, val in superset.items():
-                subset_bson = con[val]
+            data_bson = con[hash]
+            data_dict = decode_dict_str(data_bson)
+
+            # check if the list is type small or large
+            if data_dict.get("_type") == "id_list_large":
+                return self._fetch_id_list_large(data_dict)
+            elif data_dict.get("_type") == "id_list_small":
+                return self._fetch_id_list_small(data_dict)
+            else:
+                raise ValueError("Invalid ID list type")
+
+    def _fetch_id_list_small(self, data: Dict[Any, Any]) -> List[str]:
+        return data["list"]
+
+    def _fetch_id_list_large(self, data: Dict[Any, Any]) -> List[str]:
+        # fetch subsets from db
+        with self.get_connection() as con:
+            entries = []
+            for key, subset_hash in data.items():
+                if key == "_type":
+                    continue
+                subset_bson = con[subset_hash]
                 subset = decode_list_str(subset_bson)
                 entries.extend([key + s for s in subset])
-        return entries
+            return entries
 
     def insert_id_list(self, entries: List[str]) -> str:
-        # sort into subsets
+        # Insert a List of IDs into the DB
+        # If the list is small, insert it directly to improve performance
+        if len(entries) <= MAX_COMPACT_LIST_SIZE:
+            return self._insert_id_list_small(entries)
+        else:
+            return self._insert_id_list_large(entries)
+
+    def _insert_id_list_small(self, entries: List[str]) -> str:
+        data = {
+            "_type": "id_list_small",
+            "list": entries
+        }
+        with self.get_connection() as con:
+            data_bson = encode_dict_str(data)
+            data_hash = sha256_hash(data_bson)
+            if data_hash not in con:
+                con[data_hash] = data_bson
+            return data_hash
+
+    def _insert_id_list_large(self, entries: List[str]) -> str:
         subsets = defaultdict(list)
         for x in entries:
             key, val = x[:KEY_LENGTH], x[KEY_LENGTH:]
@@ -75,7 +112,7 @@ class DBM_DB(DBInterface):
 
         with self.get_connection() as con:
             # insert subsets, and track them for the superset
-            superset = {}
+            superset = {"_type": "id_list_large"}
             for key, val in subsets.items():
                 subset_bson = encode_list_str(val)
                 subset_hash = sha256_hash(subset_bson)
