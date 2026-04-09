@@ -21,8 +21,8 @@ class Token:
         })
 
     @staticmethod
-    def read(backend: DBInterface, hash: str) -> 'Token':
-        raw_token = backend.fetch_obj(hash)
+    def read(backend: DBInterface, obj_hash: str) -> 'Token':
+        raw_token = backend.fetch_obj(obj_hash)
         categories = backend.fetch_id_list(raw_token["categories"])
         return Token(
             id=raw_token["id"],

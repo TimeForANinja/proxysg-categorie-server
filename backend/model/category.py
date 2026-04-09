@@ -59,7 +59,7 @@ class CategoryModel:
             return category
         raise Exception("Category not found")
 
-    def delete_category(self, branch: str, category_id: str):
+    def delete_category(self, branch: str, category_id: str) -> None:
         """Delete a Category by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
@@ -74,7 +74,7 @@ class CategoryModel:
             # update user's tag with new commit
             commit.write_branch(self.backend, branch)
 
-            return category
+            return
         raise Exception("Category not found")
         # TODO: propagate delete to tokens
 
@@ -107,7 +107,7 @@ class CategoryModel:
             return new_member
         raise Exception("Category not found")
 
-    def delete_member(self, branch: str, category_id: str, url: str):
+    def delete_member(self, branch: str, category_id: str, url: str) -> None:
         """Delete a Member from a Category by ID"""
         commit = Commit.read_branch(self.backend, branch)
 

@@ -19,23 +19,23 @@ class TagModel:
         branch_name = user_branch_name(author)
         return self.fetch_commit(core.branches[branch_name])
 
-    def fetch_commit(self, hash: str) -> Commit:
+    def fetch_commit(self, obj_hash: str) -> Commit:
         """Fetch a specific Commit by Hash"""
-        return Commit.read(self.backend, hash)
+        return Commit.read(self.backend, obj_hash)
 
 
-    def reset_user_branch(self, author: str) -> Commit:
+    def reset_user_branch(self, user: str) -> Commit:
         """Reset (or Create) a Tag for a specific User"""
         core = Core.read(self.backend)
         prod_commit_hash = core.branches[BRANCH_PROD]
         # create a dummy commit for "pending changes" for the user
         new_commit = Commit(
-            author=author,
-            description=f"Pending changes for {author}",
+            author=user,
+            description=f"Pending changes for {user}",
             head=self.fetch_commit(prod_commit_hash).head,
             parent_commit_hash=prod_commit_hash,
         )
-        new_commit.write_branch(self.backend, user_branch_name(author))
+        new_commit.write_branch(self.backend, user_branch_name(user))
         return new_commit
 
 

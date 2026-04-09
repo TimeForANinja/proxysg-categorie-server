@@ -38,15 +38,15 @@ class CacheDB(DBInterface):
             return self.kv_cache[key]
         return self.parent.fetch_kv(key)
 
-    def fetch_obj(self, hash: str) -> Dict[Any, Any]:
-        if hash in self.obj_cache:
-            return self.obj_cache[hash]
-        return self.parent.fetch_obj(hash)
+    def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
+        if obj_hash in self.obj_cache:
+            return self.obj_cache[obj_hash]
+        return self.parent.fetch_obj(obj_hash)
 
-    def fetch_id_list(self, hash: str) -> List[str]:
-        if hash in self.id_list_cache:
-            return self.id_list_cache[hash]
-        return self.parent.fetch_id_list(hash)
+    def fetch_id_list(self, obj_hash: str) -> List[str]:
+        if obj_hash in self.id_list_cache:
+            return self.id_list_cache[obj_hash]
+        return self.parent.fetch_id_list(obj_hash)
 
 
     def insert_kv(self, key: str, value: str|bytes):

@@ -16,7 +16,7 @@ class DBInterface(ABC):
         pass
 
     @abstractmethod
-    def fetch_kv(self, hash: str) -> str|bytes:
+    def fetch_kv(self, obj_hash: str) -> str|bytes:
         pass
 
     @abstractmethod
@@ -24,7 +24,7 @@ class DBInterface(ABC):
         pass
 
     @abstractmethod
-    def fetch_obj(self, hash: str) -> Dict[Any, Any]:
+    def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
         pass
 
     @abstractmethod
@@ -32,7 +32,7 @@ class DBInterface(ABC):
         pass
 
     @abstractmethod
-    def fetch_id_list(self, hash: str) -> List[str]:
+    def fetch_id_list(self, obj_hash: str) -> List[str]:
         pass
 
     @abstractmethod

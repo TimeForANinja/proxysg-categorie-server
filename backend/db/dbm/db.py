@@ -12,7 +12,7 @@ KEY_LENGTH = 2
 MAX_COMPACT_LIST_SIZE = 100
 
 
-class DBM_DB(DBInterface):
+class DBMDB(DBInterface):
     def __init__(self, filename):
         super().__init__()
         self.filename = filename
@@ -23,7 +23,7 @@ class DBM_DB(DBInterface):
             yield db
 
     def close(self):
-        # dbm get's opened and closed for each connection, so no need to close
+        # dbm gets opened and closed for each connection, so no need to close
         pass
 
 
@@ -40,10 +40,10 @@ class DBM_DB(DBInterface):
         with self.get_connection() as con:
             con[key] = value
 
-    def fetch_obj(self, hash: str) -> Dict[Any, Any]:
+    def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
         # fetch from db
         with self.get_connection() as con:
-            obj_bson = con[hash]
+            obj_bson = con[obj_hash]
             obj = decode_dict_str(obj_bson)
             return obj
 
@@ -55,10 +55,10 @@ class DBM_DB(DBInterface):
                 con[entry_hash] = entry_bson
             return entry_hash
 
-    def fetch_id_list(self, hash: str) -> List[str]:
+    def fetch_id_list(self, obj_hash: str) -> List[str]:
         # fetch from db
         with self.get_connection() as con:
-            data_bson = con[hash]
+            data_bson = con[obj_hash]
             data_dict = decode_dict_str(data_bson)
 
             # check if the list is type small or large

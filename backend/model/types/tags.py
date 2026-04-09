@@ -28,8 +28,8 @@ class Commit:
         core.write(backend)
 
     @staticmethod
-    def read(backend: DBInterface, hash: str) -> 'Commit':
-        raw_commit = backend.fetch_obj(hash)
+    def read(backend: DBInterface, obj_hash: str) -> 'Commit':
+        raw_commit = backend.fetch_obj(obj_hash)
         head = StateTreeRootNode.read(backend, raw_commit["head"])
         return Commit(
             author=raw_commit["author"],

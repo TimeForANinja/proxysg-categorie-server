@@ -19,8 +19,8 @@ class Category:
         })
 
     @staticmethod
-    def read(backend: DBInterface, hash: str) -> 'Category':
-        raw_category = backend.fetch_obj(hash)
+    def read(backend: DBInterface, obj_hash: str) -> 'Category':
+        raw_category = backend.fetch_obj(obj_hash)
         members = backend.fetch_id_list(raw_category["members"])
         return Category(
             id=raw_category["id"],

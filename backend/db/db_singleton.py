@@ -1,5 +1,5 @@
 from flask import current_app
-from db.dbm.db import DBM_DB
+from db.dbm.db import DBMDB
 from model.model import MyModel
 from log import log_info, log_debug
 
@@ -14,7 +14,7 @@ def get_db() -> MyModel:
         database_name = dbm_cfg.get('FILENAME', './data/mydatabase.db')
         
         log_info('DB', 'Creating DBM DB', {'db': database_name})
-        backend = DBM_DB(database_name)
+        backend = DBMDB(database_name)
         my_model = MyModel(backend)
 
         current_app.config.setdefault('SINGLETONS', {})

@@ -85,7 +85,7 @@ class TokenModel:
             return token
         raise Exception("Token not found")
 
-    def delete_token(self, branch: str, token_id: str):
+    def delete_token(self, branch: str, token_id: str) -> None:
         """Delete a Token by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
