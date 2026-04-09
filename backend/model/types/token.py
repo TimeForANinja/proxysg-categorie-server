@@ -1,15 +1,23 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List as tList
+
+from marshmallow.fields import String, List
+from marshmallow_dataclass import class_schema
 
 from db.abc.db import DBInterface
+from util.schema import desc, to_field
 
 
 @dataclass
 class Token:
-    id: str
-    token_value: str
-    description: str
-    categories: List[str]
+    id: str = to_field(String(required=True, metadata=desc('ID of the token')))
+    token_value: str = to_field(String(required=True, metadata=desc('Value of the token')))
+    description: str = to_field(String(required=False, metadata=desc('Description of the token')))
+    categories: tList[str] = to_field(List(
+        String(required=True, metadata=desc('Category ID')),
+        required=True,
+        metadata=desc('Categories associated with the token'),
+    ))
 
     def write(self, backend: DBInterface) -> str:
         cat_list_hash = backend.insert_id_list(self.categories)
@@ -30,3 +38,5 @@ class Token:
             description=raw_token["description"],
             categories=categories,
         )
+
+token_schema = class_schema(Token)()

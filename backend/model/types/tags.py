@@ -1,16 +1,27 @@
 from dataclasses import dataclass
-from typing import List
+from typing import Optional
+
+from marshmallow.fields import String, Nested
+from marshmallow_dataclass import class_schema
 
 from db.abc.db import DBInterface
-from model.types.core import Core
+from model.types.core import Core, StateTreeRootNode, state_tree_root_node_schema
+from util.schema import desc, to_field
 
 
 @dataclass
 class Commit:
-    author: str
-    description: str
-    head: StateTreeRootNode
-    parent_commit_hash: str|None
+    author: str = to_field(String(required=True, metadata=desc('Username of the author')))
+    description: str = to_field(String(required=True, metadata=desc('Description of the commit')))
+    head: StateTreeRootNode = to_field(Nested(
+        state_tree_root_node_schema,
+        required=True,
+        metadata=desc('Head of the commit')
+    ))
+    parent_commit_hash: Optional[str] = to_field(String(
+        required=False,
+        metadata=desc('Hash of the parent commit, or None if it is the root commit'),
+    ))
 
     def write(self, backend: DBInterface) -> str:
         head_hash = self.head.write(backend)
@@ -44,25 +55,4 @@ class Commit:
         return Commit.read(backend, user_tag)
 
 
-@dataclass
-class StateTreeRootNode:
-    categories: List[str]
-    tokens: List[str]
-
-    def write(self, backend: DBInterface) -> str:
-        cat_list_hash = backend.insert_id_list(self.categories)
-        tok_list_hash = backend.insert_id_list(self.tokens)
-        return backend.insert_obj({
-            "categories": cat_list_hash,
-            "tokens": tok_list_hash,
-        })
-
-    @staticmethod
-    def read(backend: DBInterface, hash: str) -> 'StateTreeRootNode':
-        raw_head = backend.fetch_obj(hash)
-        categories = backend.fetch_id_list(raw_head["categories"])
-        tokens = backend.fetch_id_list(raw_head["tokens"])
-        return StateTreeRootNode(
-            categories=categories,
-            tokens=tokens,
-        )
+commit_schema = class_schema(Commit)()

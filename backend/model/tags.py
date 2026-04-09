@@ -45,7 +45,7 @@ class TagModel:
         prod_commit_hash = core.branches[BRANCH_PROD]
         # fetch current user commit and update for push to production
         user_commit = self.fetch_user_commit(author)
-        if user_commit.parent_commit_hash is not prod_commit_hash:
+        if user_commit.parent_commit_hash != prod_commit_hash:
             raise Exception("User Branch is not based on the latest production commit")
         user_commit.description = description
 

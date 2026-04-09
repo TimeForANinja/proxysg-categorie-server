@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from uuid import uuid4
 
 from db.abc.db import DBInterface
@@ -79,6 +79,18 @@ class CategoryModel:
         # TODO: propagate delete to tokens
 
 
+    def get_category_members(self, branch: str, category_id: str) -> List[Member]:
+        """Fetch all members of a Category"""
+        commit = Commit.read_branch(self.backend, branch)
+
+        for category_hash in commit.head.categories:
+            category = Category.read(self.backend, category_hash)
+            if category.id != category_id:
+                continue
+
+            return category.members
+        raise Exception("Category not found")
+
     def add_member(self, branch: str, category_id: str, url: str, constraint: Constraint) -> Member:
         """Add a new Member to a Category with the given URL and constraint"""
         commit = Commit.read_branch(self.backend, branch)
@@ -91,10 +103,8 @@ class CategoryModel:
             # create new member
             # TODO: check if member already exists
             new_member = Member(url=url, constraint=constraint)
-            new_member_hash = new_member.write(self.backend)
-
             # update category
-            category.members.append(new_member_hash)
+            category.members.append(new_member)
             new_category_hash = category.write(self.backend)
 
             # update commit with new category
@@ -116,13 +126,12 @@ class CategoryModel:
             if category.id != category_id:
                 continue
 
-            for member_hash in category.members:
-                member = Member.read(self.backend, member_hash)
+            for member in category.members:
                 if member.url != url:
                     continue
 
                 # update category, removing the member
-                category.members.remove(member_hash)
+                category.members.remove(member)
                 new_category_hash = category.write(self.backend)
 
                 # update commit with new category

@@ -1,12 +1,10 @@
-from marshmallow_dataclass import class_schema
 from apiflask.fields import List, Nested, String
 from typing import List as tList
 
 from util.schema import desc
-from model.types.tags import Commit
+from model.types.tags import Commit, commit_schema
 from routes.schemas.generic_output import GenericOutput
 
-commit_schema = class_schema(Commit)()
 
 class ListBranchesOutput(GenericOutput):
     """Output schema for a list of branches"""

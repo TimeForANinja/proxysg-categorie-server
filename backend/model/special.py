@@ -1,17 +1,11 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import List
 
 from db.abc.db import DBInterface
 from model.types.category import Category, Member
 from model.types.core import Core
 from model.types.tags import Commit
-
-
-@dataclass
-class URLMapping:
-    url: str
-    categories: List[str]
+from model.types.url import URLMapping
 
 
 class SpecialModel:
@@ -27,9 +21,8 @@ class SpecialModel:
 
         for cat_hash in head_commit.head.categories:
             cat = Category.read(self.backend, cat_hash)
-            for member_hash in cat.members:
-                member = Member.read(self.backend, member_hash)
-                urls[member.url].append(cat.name)
+            for member in cat.members:
+                urls[member.url].append(cat)
 
         # typecast
         return [
@@ -50,6 +43,14 @@ class SpecialModel:
             lut = c.parent_commit_hash
 
         return commits
+
+    def fetch_categories(self, branch: str) -> List[Category]:
+        """Fetch a list of all Categories"""
+        head_commit = Commit.read_branch(self.backend, branch)
+        return [
+            Category.read(self.backend, h)
+            for h in head_commit.head.categories
+        ]
 
     def list_branches(self) -> List[str]:
         """Fetch a list of all Branches"""

@@ -1,12 +1,29 @@
-from marshmallow_dataclass import class_schema
-from apiflask.fields import List, Nested
+from dataclasses import dataclass
+
+from apiflask.fields import List, Nested, String
 from typing import List as tList
 
-from util.schema import desc
-from model.types.token import Token
+from marshmallow_dataclass import class_schema
+
+from model.types.category import category_schema
+from util.schema import desc, to_field
+from model.types.token import Token, token_schema
 from routes.schemas.generic_output import GenericOutput
 
-token_schema = class_schema(Token)()
+@dataclass
+class TokenInput:
+    description: str = to_field(String(
+        required=True,
+        metadata=desc('Description of the token'),
+    ))
+
+class TokenCategoryOutput(GenericOutput):
+    """Output schema for token category association"""
+    data: tList[dict] = List(
+        Nested(category_schema),
+        required=True,
+        metadata=desc('List of Categories for a specific Token'),
+    )
 
 class TokenOutput(GenericOutput):
     """Output schema for a single token"""
@@ -23,3 +40,5 @@ class ListTokensOutput(GenericOutput):
         required=True,
         metadata=desc('List of Tokens'),
     )
+
+token_input_schema = class_schema(TokenInput)()
