@@ -1,11 +1,9 @@
 import {ICategory, IMutableCategory} from "../model/types/category";
 
-const CATEGORY_BASE_URL = '/api/category'
+const getBaseUrl = (branch: string) => `/api/branch/${branch}/category`;
 
-export const getCategories = async (userToken: string): Promise<ICategory[]> => {
-    const response = await fetch(CATEGORY_BASE_URL, {
-        headers: { 'jwt-token': userToken },
-    });
+export const getCategories = async (branch: string): Promise<ICategory[]> => {
+    const response = await fetch(getBaseUrl(branch));
 
     if (!response.ok) {
         throw new Error(`Failed to get category list`);
@@ -20,12 +18,11 @@ export const getCategories = async (userToken: string): Promise<ICategory[]> => 
     return data.data;
 }
 
-export const updateCategory = async (userToken: string, id: string, updatedCategory: IMutableCategory): Promise<ICategory> => {
-    const response = await fetch(`${CATEGORY_BASE_URL}/${id}`, {
+export const updateCategory = async (branch: string, id: string, updatedCategory: IMutableCategory): Promise<ICategory> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify(updatedCategory),
     });
@@ -43,12 +40,11 @@ export const updateCategory = async (userToken: string, id: string, updatedCateg
     return data.data;
 };
 
-export const createCategory = async (userToken: string, partialCategory: IMutableCategory): Promise<ICategory> => {
-    const response = await fetch(CATEGORY_BASE_URL, {
+export const createCategory = async (branch: string, partialCategory: IMutableCategory): Promise<ICategory> => {
+    const response = await fetch(getBaseUrl(branch), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify(partialCategory),
     });
@@ -61,10 +57,9 @@ export const createCategory = async (userToken: string, partialCategory: IMutabl
     return data.data;
 };
 
-export const deleteCategory = async (userToken: string, id: string): Promise<void> => {
-    const response = await fetch(`${CATEGORY_BASE_URL}/${id}`, {
+export const deleteCategory = async (branch: string, id: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'DELETE',
-        headers: { 'jwt-token': userToken },
     });
 
     if (!response.ok) {
@@ -72,12 +67,11 @@ export const deleteCategory = async (userToken: string, id: string): Promise<voi
     }
 };
 
-export const addSubCategory = async (userToken: string, cat_id: string, subCategoryId: string): Promise<void> => {
-    const response = await fetch(`${CATEGORY_BASE_URL}/${cat_id}/category/${subCategoryId}`, {
+export const addSubCategory = async (branch: string, cat_id: string, subCategoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${cat_id}/category/${subCategoryId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
     });
 
@@ -91,12 +85,11 @@ export const addSubCategory = async (userToken: string, cat_id: string, subCateg
     }
 }
 
-export const deleteSubCategory = async (userToken: string, cat_id: string, subCategoryId: string): Promise<void> => {
-    const response = await fetch(`${CATEGORY_BASE_URL}/${cat_id}/category/${subCategoryId}`, {
+export const deleteSubCategory = async (branch: string, cat_id: string, subCategoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${cat_id}/category/${subCategoryId}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
     });
 
@@ -110,12 +103,11 @@ export const deleteSubCategory = async (userToken: string, cat_id: string, subCa
     }
 }
 
-export const setSubCategory = async (userToken: string, cat_id: string, subCategories: string[]): Promise<string[]> => {
-    const response = await fetch(`${CATEGORY_BASE_URL}/${cat_id}/category`, {
+export const setSubCategory = async (branch: string, cat_id: string, subCategories: string[]): Promise<string[]> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${cat_id}/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify({ categories: subCategories }),
     });

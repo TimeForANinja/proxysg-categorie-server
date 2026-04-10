@@ -1,11 +1,9 @@
 import {IUrl, IMutableUrl} from "../model/types/url";
 
-const URL_BASE_URL = '/api/url'
+const getBaseUrl = (branch: string) => `/api/branch/${branch}/url`;
 
-export const getURLs = async (userToken: string): Promise<IUrl[]> => {
-    const response = await fetch(URL_BASE_URL, {
-        headers: { 'jwt-token': userToken },
-    });
+export const getURLs = async (branch: string): Promise<IUrl[]> => {
+    const response = await fetch(getBaseUrl(branch));
 
     if (!response.ok) {
         throw new Error(`Failed to get URLs`);
@@ -20,12 +18,11 @@ export const getURLs = async (userToken: string): Promise<IUrl[]> => {
     return data.data;
 }
 
-export const updateURL = async (userToken: string, id: string, updatedURL: IMutableUrl): Promise<IUrl> => {
-    const response = await fetch(`${URL_BASE_URL}/${id}`, {
+export const updateURL = async (branch: string, id: string, updatedURL: IMutableUrl): Promise<IUrl> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify(updatedURL),
     });
@@ -43,12 +40,11 @@ export const updateURL = async (userToken: string, id: string, updatedURL: IMuta
     return data.data;
 };
 
-export const createURL = async (userToken: string, partialURL: IMutableUrl): Promise<IUrl> => {
-    const response = await fetch(URL_BASE_URL, {
+export const createURL = async (branch: string, partialURL: IMutableUrl): Promise<IUrl> => {
+    const response = await fetch(getBaseUrl(branch), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify(partialURL),
     });
@@ -66,10 +62,9 @@ export const createURL = async (userToken: string, partialURL: IMutableUrl): Pro
     return data.data;
 };
 
-export const deleteURL = async (userToken: string, id: string): Promise<void> => {
-    const response = await fetch(`${URL_BASE_URL}/${id}`, {
+export const deleteURL = async (branch: string, id: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'DELETE',
-        headers: { 'jwt-token': userToken },
     });
 
     if (!response.ok) {
@@ -82,12 +77,11 @@ export const deleteURL = async (userToken: string, id: string): Promise<void> =>
     }
 };
 
-export const addURLCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
-    const response = await fetch(`${URL_BASE_URL}/${id}/category/${categoryId}`, {
+export const addURLCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/category/${categoryId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
     });
 
@@ -101,12 +95,11 @@ export const addURLCategory = async (userToken: string, id: string, categoryId: 
     }
 }
 
-export const deleteURLCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
-    const response = await fetch(`${URL_BASE_URL}/${id}/category/${categoryId}`, {
+export const deleteURLCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/category/${categoryId}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
     });
 
@@ -120,12 +113,11 @@ export const deleteURLCategory = async (userToken: string, id: string, categoryI
     }
 }
 
-export const setURLCategory = async (userToken: string, id: string, categories: string[]): Promise<string[]> => {
-    const response = await fetch(`${URL_BASE_URL}/${id}/category`, {
+export const setURLCategory = async (branch: string, id: string, categories: string[]): Promise<string[]> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify({ categories }),
     });

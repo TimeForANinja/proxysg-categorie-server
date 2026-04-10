@@ -24,12 +24,10 @@ export interface ICommits extends IReferred {
     atomics: IAtomic[];
 }
 
-const HISTORY_BASE_URL = '/api/history'
+const getBaseUrl = (branch: string) => `/api/branch/${branch}/history`;
 
-export const getHistory = async (userToken: string): Promise<ICommits[]> => {
-    const response = await fetch(HISTORY_BASE_URL, {
-        headers: { 'jwt-token': userToken },
-    });
+export const getHistory = async (branch: string): Promise<ICommits[]> => {
+    const response = await fetch(getBaseUrl(branch));
 
     if (!response.ok) {
         throw new Error(`Failed to get history`);

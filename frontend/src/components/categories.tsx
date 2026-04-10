@@ -32,7 +32,6 @@ import {
     updateCategory
 } from "../api/category";
 import {colorLUT} from "../util/colormixer";
-import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
@@ -48,12 +47,15 @@ import {SearchParser} from "../searchParser";
 import {CategoryFieldsRaw, CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
 import {KVaddRAW} from "../model/types/stringKV";
 
+import { useBranch } from "../model/BranchContext";
+
 interface BuildRowProps {
     category: ICategory,
     updateCategory: (newCategory: ICategory) => void,
     categories: LUT<ICategory>,
     onEdit: (cat: ICategory) => void,
     onDelete: (cat: ICategory) => void,
+    branch: string,
 }
 /**
  * Renders a table row for a Category entry.
@@ -69,15 +71,15 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         updateCategory,
         categories,
         onEdit,
-        onDelete
+        onDelete,
+        branch
     } = props;
-    const authMgmt = useAuth();
     const navigate = useNavigate();
 
     // helper function, triggered when the category selector changes
     const handleChange = (newList: string[]) => {
         // update api
-        setSubCategory(authMgmt.token, category.id, newList).then(newCats => {
+        setSubCategory(branch, category.id, newList).then(newCats => {
             // save the new version
             const newCat = {...category, nested_categories: newCats, pending_changes: true};
             updateCategory(newCat);
@@ -129,8 +131,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 });
 
 function CategoriesPage() {
-    const authMgmt = useAuth();
-
+    const { currentBranch } = useBranch();
     // State info for the Page
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
@@ -157,12 +158,12 @@ function CategoriesPage() {
 
     // load categories from the backend
     React.useEffect(() => {
-        Promise.all([getCategories(authMgmt.token)])
+        Promise.all([getCategories(currentBranch)])
             .then(([categoriesData]) => {
                 setCategory(buildLUTFromID(categoriesData));
             })
             .catch((error) => console.error("Error:", error));
-    }, [authMgmt]);
+    }, [currentBranch]);
 
     // Edit Dialog State
     const [editCategory, setEditCategory] = React.useState<TriState<ICategory>>(TriState.CLOSED);
@@ -177,10 +178,10 @@ function CategoriesPage() {
     const handleSave = async (catID: string | null, category: IMutableCategory) => {
         if (catID == null) {
             // add the new category
-            const newCat = await createCategory(authMgmt.token, category)
+            const newCat = await createCategory(currentBranch, category)
             setCategory(pushLUT(categories, newCat));
         } else {
-            const newCat = await updateCategory(authMgmt.token, catID, category)
+            const newCat = await updateCategory(currentBranch, catID, category)
             // "replace" existing category if id matches
             setCategory(mapLUT(categories, (cat => cat.id === catID ? newCat : cat)));
         }
@@ -194,7 +195,7 @@ function CategoriesPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteCategory(authMgmt.token, isDeleteDialogOpen.id).then(() => {
+            deleteCategory(currentBranch, isDeleteDialogOpen.id).then(() => {
                 // remove category with ID from the store
                 setCategory(filterLUT(categories, (cat => cat.id !== isDeleteDialogOpen.id)));
             });
@@ -246,6 +247,7 @@ function CategoriesPage() {
                                             category={cat}
                                             onEdit={handleEditOpen}
                                             onDelete={handleDelete}
+                                            branch={currentBranch}
                                         />
                                     )}
                                 </TableBody>

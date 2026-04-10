@@ -31,7 +31,6 @@ import {
     setURLCategory,
     updateURL,
 } from "../api/url"
-import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/ListHeader";
 import {MyPaginator} from "./shared/MyPaginator";
 import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
@@ -46,6 +45,8 @@ import {KVaddRAW} from "../model/types/stringKV";
 import {IUrl, IMutableUrl, UrlToKV, UrlFieldsRaw} from "../model/types/url";
 import {ICategory} from "../model/types/category";
 
+import { useBranch } from "../model/BranchContext";
+
 interface BuildRowProps {
     url: IUrl,
     updateURL: (newURL: IUrl) => void,
@@ -53,6 +54,7 @@ interface BuildRowProps {
     onEdit: (url: IUrl) => void,
     onDelete: (url: IUrl) => void,
     history: ICommits[],
+    branch: string,
 }
 /**
  * Renders a table row for a URL entry.
@@ -63,8 +65,7 @@ interface BuildRowProps {
  * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
-    const { url, updateURL, categories, onEdit, onDelete, history } = props;
-    const authMgmt = useAuth();
+    const { url, updateURL, categories, onEdit, onDelete, history, branch } = props;
 
     // (un)fold a row into multiple rows
     const [isOpen, setIsOpen] = React.useState(false);
@@ -72,7 +73,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     // helper function, triggered when the category selector changes
     const handleChange = (newList: string[]) => {
         // update api
-        setURLCategory(authMgmt.token, url.id, newList).then(newCats => {
+        setURLCategory(branch, url.id, newList).then(newCats => {
             // save the new version
             const newURL = {...url, categories: newCats, pending_changes: true};
             updateURL(newURL);
@@ -136,8 +137,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 });
 
 function MatchingListPage() {
-    const authMgmt = useAuth();
-
+    const { currentBranch } = useBranch();
     // State info for the Page
     const [urls, setURLs] = React.useState<IUrl[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
@@ -163,18 +163,18 @@ function MatchingListPage() {
 
     // Load urls (& Categories) From backend
     React.useEffect(() => {
-        Promise.all([getURLs(authMgmt.token), getCategories(authMgmt.token)])
+        Promise.all([getURLs(currentBranch), getCategories(currentBranch)])
             .then(([urlsData, categoriesData]) => {
                 setURLs(urlsData);
                 setCategory(buildLUTFromID(categoriesData));
                 // fetch history async after urls and categories, since it's only needed when opening a row
-                return getHistory(authMgmt.token);
+                return getHistory(currentBranch);
             })
             .then(historyData => {
                 setHistory(historyData);
             })
             .catch((error) => console.error("Error:", error));
-    }, [authMgmt]);
+    }, [currentBranch]);
 
     // Edit Dialog State
     const [editURL, setEditURL] = React.useState<TriState<IUrl>>(TriState.CLOSED);
@@ -189,10 +189,10 @@ function MatchingListPage() {
     const handleSave = async (urlID: string|null, uri: IMutableUrl) => {
         if (urlID == null) {
             // add new URL
-            const newURI = await createURL(authMgmt.token, uri);
+            const newURI = await createURL(currentBranch, uri);
             setURLs([...urls, newURI]);
         } else {
-            const newURI = await updateURL(authMgmt.token, urlID, uri)
+            const newURI = await updateURL(currentBranch, urlID, uri)
             // "replace" existing URL if id matches
             setURLs(urls.map(u => u.id === urlID ? newURI : u));
         }
@@ -200,11 +200,11 @@ function MatchingListPage() {
     };
 
     const handleDelete = React.useCallback((remove_url: IUrl) => {
-        deleteURL(authMgmt.token, remove_url.id).then(() => {
+        deleteURL(currentBranch, remove_url.id).then(() => {
             // remove URL with ID from store
             setURLs(urls.filter(uri => uri.id !== remove_url.id));
         });
-    }, [setURLs, authMgmt, urls]);
+    }, [setURLs, urls, currentBranch]);
 
     // save an updated URL object in the urls cache
     const handleUpdateURL = React.useCallback((newURL: IUrl) =>
@@ -252,6 +252,7 @@ function MatchingListPage() {
                                             onEdit={handleEditOpen}
                                             onDelete={handleDelete}
                                             history={history}
+                                            branch={currentBranch}
                                         />
                                     )}
                                 </TableBody>

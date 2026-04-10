@@ -35,7 +35,6 @@ import {
     updateToken
 } from "../api/token";
 import {getCategories} from "../api/category";
-import {useAuth} from "../model/AuthContext";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../model/types/EditDialogState";
@@ -54,6 +53,7 @@ import {
 } from '../model/types/apiToken';
 import {ICategory} from "../model/types/category";
 import {KVaddRAW} from "../model/types/stringKV";
+import {useBranch} from "../model/BranchContext";
 
 const TIME_SECONDS = 1000;
 
@@ -64,6 +64,7 @@ interface BuildRowProps {
     onEdit: (token: IApiToken) => void,
     onShuffle: (token: IApiToken) => void,
     onDelete: (token: IApiToken) => void,
+    branch: string,
 }
 /**
  * Renders a table row for an ApiToken entry.
@@ -81,8 +82,8 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         onEdit,
         onDelete,
         onShuffle,
+        branch,
     } = props;
-    const authMgmt = useAuth();
 
     // toggle the visibility of the token
     const [hideToken, setHideToken] = React.useState(false);
@@ -102,7 +103,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     // helper function, triggered when the category selector changes
     const handleChange = (newList: string[]) => {
         // update api
-        setTokenCategory(authMgmt.token, token.id, newList).then(newCats => {
+        setTokenCategory(branch, token.id, newList).then(newCats => {
             // save the new version
             const newToken = {...token, categories: newCats, pending_changes: true};
             updateToken(newToken);
@@ -152,8 +153,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 });
 
 function ApiTokenPage() {
-    const authMgmt = useAuth();
-
+    const { currentBranch } = useBranch();
     // State info for the Page
     const [tokens, setTokens] = React.useState<IApiToken[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
@@ -181,13 +181,13 @@ function ApiTokenPage() {
 
     // Load tokens (& Categories) From backend
     React.useEffect(() => {
-        Promise.all([ getAPITokens(authMgmt.token), getCategories(authMgmt.token)])
+        Promise.all([ getAPITokens(currentBranch), getCategories(currentBranch)])
             .then(([tokenData, categoryData]) => {
                 setTokens(tokenData);
                 setCategory(buildLUTFromID(categoryData))
             })
             .catch((error) => console.error("Error:", error));
-    }, [authMgmt]);
+    }, [currentBranch]);
 
     // Edit Dialog State
     const [editToken, setEditToken] = React.useState<TriState<IApiToken>>(TriState.CLOSED);
@@ -202,10 +202,10 @@ function ApiTokenPage() {
     const handleSave = async (tokenID: string|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
-            const newTok = await createToken(authMgmt.token, token)
+            const newTok = await createToken(currentBranch, token)
             setTokens([...tokens, newTok]);
          } else {
-            const newTok = await updateToken(authMgmt.token, tokenID, token)
+            const newTok = await updateToken(currentBranch, tokenID, token)
             // "replace" existing token if id matches
             setTokens(tokens.map(tok => tok.id === tokenID ? newTok : tok));
         }
@@ -219,7 +219,7 @@ function ApiTokenPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteToken(authMgmt.token, isDeleteDialogOpen.id).then(() => {
+            deleteToken(currentBranch, isDeleteDialogOpen.id).then(() => {
                 // remove token with ID from the store
                 setTokens(tokens.filter(tok => tok.id !== isDeleteDialogOpen.id));
             });
@@ -229,11 +229,11 @@ function ApiTokenPage() {
 
     // generate a new token
     const handleOnShuffle = React.useCallback((token: IApiToken) => {
-        rotateToken(authMgmt.token, token.id).then(newTok => {
+        rotateToken(currentBranch, token.id).then(newTok => {
             // "replace" existing token if id matches
             setTokens(tokens.map(tok => tok.id === token.id ? newTok : tok));
         })
-    }, [authMgmt, tokens]);
+    }, [tokens, currentBranch]);
 
     // save an updated URL object in the urls cache
     const handleUpdateToken = React.useCallback(
@@ -283,6 +283,7 @@ function ApiTokenPage() {
                                             onEdit={handleEditOpen}
                                             onShuffle={handleOnShuffle}
                                             onDelete={() => handleDelete(token)}
+                                            branch={currentBranch}
                                         />
                                     )}
                                 </TableBody>

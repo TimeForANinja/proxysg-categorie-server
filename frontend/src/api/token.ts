@@ -1,11 +1,9 @@
 import {IApiToken, IMutableApiToken} from "../model/types/apiToken";
 
-const TOKEN_BASE_URL = '/api/token'
+const getBaseUrl = (branch: string) => `/api/branch/${branch}/token`;
 
-export const getAPITokens = async (userToken: string): Promise<IApiToken[]> => {
-    const response = await fetch(TOKEN_BASE_URL, {
-        headers: { 'jwt-token': userToken },
-    });
+export const getAPITokens = async (branch: string): Promise<IApiToken[]> => {
+    const response = await fetch(getBaseUrl(branch));
 
     if (!response.ok) {
         throw new Error(`Failed to get tokens`);
@@ -20,12 +18,11 @@ export const getAPITokens = async (userToken: string): Promise<IApiToken[]> => {
     return data.data;
 }
 
-export const updateToken = async (userToken: string, id: string, updatedToken: IMutableApiToken): Promise<IApiToken> => {
-    const response = await fetch(`${TOKEN_BASE_URL}/${id}`, {
+export const updateToken = async (branch: string, id: string, updatedToken: IMutableApiToken): Promise<IApiToken> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify(updatedToken),
     });
@@ -43,12 +40,11 @@ export const updateToken = async (userToken: string, id: string, updatedToken: I
     return data.data;
 };
 
-export const createToken = async (userToken: string, partialToken: IMutableApiToken): Promise<IApiToken> => {
-    const response = await fetch(TOKEN_BASE_URL, {
+export const createToken = async (branch: string, partialToken: IMutableApiToken): Promise<IApiToken> => {
+    const response = await fetch(getBaseUrl(branch), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify(partialToken),
     });
@@ -66,12 +62,11 @@ export const createToken = async (userToken: string, partialToken: IMutableApiTo
     return data.data;
 };
 
-export const rotateToken = async (userToken: string, id: string): Promise<IApiToken> => {
-    const response = await fetch(`${TOKEN_BASE_URL}/${id}/roll`, {
+export const rotateToken = async (branch: string, id: string): Promise<IApiToken> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/roll`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
     });
 
@@ -88,10 +83,9 @@ export const rotateToken = async (userToken: string, id: string): Promise<IApiTo
     return data.data;
 };
 
-export const deleteToken = async (userToken: string, id: string): Promise<void> => {
-    const response = await fetch(`${TOKEN_BASE_URL}/${id}`, {
+export const deleteToken = async (branch: string, id: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'DELETE',
-        headers: { 'jwt-token': userToken },
     });
 
     if (!response.ok) {
@@ -104,12 +98,11 @@ export const deleteToken = async (userToken: string, id: string): Promise<void> 
     }
 }
 
-export const addTokenCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
-    const response = await fetch(`${TOKEN_BASE_URL}/${id}/category/${categoryId}`, {
+export const addTokenCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/category/${categoryId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
     });
 
@@ -123,12 +116,11 @@ export const addTokenCategory = async (userToken: string, id: string, categoryId
     }
 }
 
-export const deleteTokenCategory = async (userToken: string, id: string, categoryId: string): Promise<void> => {
-    const response = await fetch(`${TOKEN_BASE_URL}/${id}/category/${categoryId}`, {
+export const deleteTokenCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/category/${categoryId}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
     });
 
@@ -142,12 +134,11 @@ export const deleteTokenCategory = async (userToken: string, id: string, categor
     }
 }
 
-export const setTokenCategory = async (userToken: string, id: string, categories: string[]): Promise<string[]> => {
-    const response = await fetch(`${TOKEN_BASE_URL}/${id}/category`, {
+export const setTokenCategory = async (branch: string, id: string, categories: string[]): Promise<string[]> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'jwt-token': userToken,
         },
         body: JSON.stringify({ categories }),
     });
