@@ -41,4 +41,9 @@ class ListTokensOutput(GenericOutput):
         metadata=desc('List of Tokens'),
     )
 
+@dataclass
+class CategoryMemberInput:
+    category: str = to_field(String(required=True, metadata=desc('ID of the Category')))
+
+category_member_input_schema = class_schema(CategoryMemberInput)()
 token_input_schema = class_schema(TokenInput)()

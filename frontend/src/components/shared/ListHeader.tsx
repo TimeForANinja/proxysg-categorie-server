@@ -23,13 +23,13 @@ import {CSVLink} from "react-csv"
 
 import {bracesFunctions, BuildSyntaxTree, SearchParser} from "../../searchParser";
 import {formatDateForFilename} from "../../util/DateString";
-import {StringKV} from "../../model/types/stringKV";
+import {StringKV} from "../../types/stringKV";
 import {FieldDefinition} from "../../searchParser/fieldDefinition";
 import {useQueryParamState} from "../../hooks/useQueryParamState";
 
 
 interface ListHeaderProps {
-    onCreate: () => void,
+    onCreate: null | (() => void),
     setQuickSearch: (parser: SearchParser | null) => void,
     addElement: string,
     downloadRows:  StringKV[],
@@ -43,6 +43,8 @@ export const ListHeader = (props: ListHeaderProps) => {
         downloadRows,
         availableFields,
     } = props;
+
+    const support_create = onCreate != null;
 
     const [myTree, setMyTree] = React.useState<SearchParser | null>(null);
     const [treeError, setTreeError] = React.useState<string | null>(null);
@@ -68,7 +70,7 @@ export const ListHeader = (props: ListHeaderProps) => {
     return (
         <>
             { /* Search Bar */ }
-            <Grid size={8}>
+            <Grid size={support_create ? 8 : 11}>
                 <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
                     <TextField
                         margin="dense"
@@ -94,16 +96,18 @@ export const ListHeader = (props: ListHeaderProps) => {
                 </Box>
             </Grid>
             { /* Add-Button */ }
-            <Grid size={3}>
-                <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
-                    <Button
-                        variant="outlined"
-                        onClick={() => onCreate()}
-                    >
-                        + Add {addElement}
-                    </Button>
-                </Box>
-            </Grid>
+            { support_create && (
+                <Grid size={3}>
+                    <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => onCreate!()}
+                        >
+                            + Add {addElement}
+                        </Button>
+                    </Box>
+                </Grid>
+            )}
             { /* Download Button for visible rows */ }
             <Grid size={1}>
                 <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>

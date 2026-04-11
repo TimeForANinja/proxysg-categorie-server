@@ -4,7 +4,8 @@ from log import log_debug
 from model.types.tags import Commit
 from model.types.token import Token
 from routes.schemas.generic_output import GenericOutput
-from routes.schemas.token import ListTokensOutput, TokenOutput, TokenCategoryOutput, token_input_schema, TokenInput
+from routes.schemas.token import ListTokensOutput, TokenOutput, TokenCategoryOutput, token_input_schema, TokenInput, \
+    CategoryMemberInput, category_member_input_schema
 
 
 def add_token_bp(app: APIFlask):
@@ -63,12 +64,13 @@ def add_token_bp(app: APIFlask):
             'data': categories,
         }
 
-    @token_bp.post('/api/branch/<branch>/token/<token_id>/category/<category_id>')
+    @token_bp.post('/api/branch/<branch>/token/<token_id>/category')
     @token_bp.doc(summary='Associate Token with Category', description='Add a category to a token', tags=['Tokens', 'Categories'])
+    @token_bp.input(category_member_input_schema, location='json', arg_name='member_data')
     @token_bp.output(TokenOutput)
-    def add_token_category(branch: str, token_id: str, category_id: str):
+    def add_token_category(branch: str, token_id: str, member_data: CategoryMemberInput):
         db = get_db()
-        token = db.tokens.add_token_category(branch, token_id, category_id)
+        token = db.tokens.add_token_category(branch, token_id, member_data.category)
         return {
             'status': 'success',
             'message': 'Category added to token successfully',

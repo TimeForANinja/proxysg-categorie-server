@@ -6,9 +6,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    MenuItem,
     Paper,
-    Select,
     Table,
     TableBody,
     TableCell,
@@ -20,7 +18,6 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit"
 import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
 
@@ -28,34 +25,22 @@ import {
     createCategory,
     deleteCategory,
     getCategories,
-    setSubCategory,
-    updateCategory
 } from "../api/category";
-import {colorLUT} from "../util/colormixer";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
-import {TriState} from "../model/types/EditDialogState";
+import {TriState} from "../types/EditDialogState";
 import {MyPaginator} from "./shared/MyPaginator";
-import {CategoryPicker} from "./shared/CategoryPicker";
-import {buildLUTFromID, filterLUT, getLUTValues, LUT, mapLUT, pushLUT} from "../model/types/LookUpTable";
-import {
-    simpleNameCheck,
-    simpleStringCheck,
-} from "../util/InputValidators";
+import {buildLUTFromID, filterLUT, getLUTValues, LUT, pushLUT} from "../types/LookUpTable";
+import {simpleNameCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
-import {CategoryFieldsRaw, CategoryToKV, ICategory, IMutableCategory} from "../model/types/category";
-import {KVaddRAW} from "../model/types/stringKV";
-
-import { useBranch } from "../model/BranchContext";
+import {CategoryFieldsRaw, CategoryToKV, ICategory, IMutableCategory} from "../types/category";
+import {KVaddRAW} from "../types/stringKV";
+import {useBranch} from "../hooks/useBranch";
 
 interface BuildRowProps {
     category: ICategory,
-    updateCategory: (newCategory: ICategory) => void,
-    categories: LUT<ICategory>,
-    onEdit: (cat: ICategory) => void,
     onDelete: (cat: ICategory) => void,
-    branch: string,
 }
 /**
  * Renders a table row for a Category entry.
@@ -68,23 +53,9 @@ interface BuildRowProps {
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
         category,
-        updateCategory,
-        categories,
-        onEdit,
         onDelete,
-        branch
     } = props;
     const navigate = useNavigate();
-
-    // helper function, triggered when the category selector changes
-    const handleChange = (newList: string[]) => {
-        // update api
-        setSubCategory(branch, category.id, newList).then(newCats => {
-            // save the new version
-            const newCat = {...category, nested_categories: newCats, pending_changes: true};
-            updateCategory(newCat);
-        })
-    };
 
     const handleSearchInUrls = () => {
         // Build a wildcard search against the URL list by categories name
@@ -96,31 +67,12 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     };
 
     return (
-        <TableRow key={category.id} sx={category.pending_changes ? { backgroundColor: (theme) => theme.palette.warning.light } : undefined}>
+        <TableRow key={category.id}>
             <TableCell>{category.id}</TableCell>
             <TableCell>{category.name}</TableCell>
             <TableCell>
-                <div style={{
-                    backgroundColor: colorLUT[category.color].bg,
-                    color: colorLUT[category.color].fg,
-                    width: '20px',
-                    height: '20px',
-                }}/>
-            </TableCell>
-            <TableCell>{category.description}</TableCell>
-            <TableCell>
-                <CategoryPicker
-                    isCategories={category.nested_categories}
-                    onChange={(newList) => handleChange(newList)}
-                    categories={categories}
-                />
-            </TableCell>
-            <TableCell>
                 <IconButton aria-label="search URLs with this category" onClick={handleSearchInUrls} size="small">
                     <SearchIcon />
-                </IconButton>
-                <IconButton aria-label="edit category" onClick={() => onEdit(category)} size="small">
-                    <EditIcon />
                 </IconButton>
                 <IconButton aria-label="delete category" onClick={() => onDelete(category)} size="small">
                     <DeleteIcon />
@@ -142,14 +94,14 @@ function CategoriesPage() {
     // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => getLUTValues(categories).filter(x => {
-            return quickSearch?.test(KVaddRAW(CategoryToKV(x, categories))) ?? true;
+            return quickSearch?.test(KVaddRAW(CategoryToKV(x))) ?? true;
         }),
         [quickSearch, categories],
     );
 
     // Memoize the download rows to avoid unnecessary transformations
     const downloadRows = React.useMemo(
-        () => filteredRows.map(row => CategoryToKV(row, categories)),
+        () => filteredRows.map(row => CategoryToKV(row)),
         [filteredRows, categories],
     );
 
@@ -180,10 +132,6 @@ function CategoriesPage() {
             // add the new category
             const newCat = await createCategory(currentBranch, category)
             setCategory(pushLUT(categories, newCat));
-        } else {
-            const newCat = await updateCategory(currentBranch, catID, category)
-            // "replace" existing category if id matches
-            setCategory(mapLUT(categories, (cat => cat.id === catID ? newCat : cat)));
         }
         handleEditDialogClose();
     };
@@ -202,12 +150,6 @@ function CategoriesPage() {
         }
         setDeleteDialogOpen(null);
     }
-
-    // save an updated URL object in the urls cache
-    const handleUpdateCategory = React.useCallback(
-        (newCat: ICategory) => setCategory(mapLUT(categories, (cat => cat.id === newCat.id ? newCat : cat))),
-        [categories]
-    );
 
     return (
         <>
@@ -232,9 +174,6 @@ function CategoriesPage() {
                                     <TableRow>
                                         <TableCell component="th" scope="row">ID</TableCell>
                                         <TableCell>Name</TableCell>
-                                        <TableCell>Color</TableCell>
-                                        <TableCell>Description</TableCell>
-                                        <TableCell>Sub-Categories</TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -242,12 +181,8 @@ function CategoriesPage() {
                                     {visibleRows.map(cat =>
                                         <BuildRow
                                             key={cat.id}
-                                            categories={categories}
-                                            updateCategory={handleUpdateCategory}
                                             category={cat}
-                                            onEdit={handleEditOpen}
                                             onDelete={handleDelete}
-                                            branch={currentBranch}
                                         />
                                     )}
                                 </TableBody>
@@ -285,17 +220,11 @@ function EditDialog(props: EditDialogProps) {
     let {category, onClose, onSave} = props;
 
     const [name, setName] = React.useState('');
-    const [description, setDescription] = React.useState('');
-    const [color, setColor] = React.useState(1);
 
     // validate inputs
     const nameError: string|null = React.useMemo(
         () => simpleNameCheck(name, true),
         [name],
-    )
-    const descriptionError: string|null = React.useMemo(
-        () => simpleStringCheck(description),
-        [description],
     )
 
     React.useEffect(() => {
@@ -303,25 +232,19 @@ function EditDialog(props: EditDialogProps) {
         // else force clear the fields
         if (!category.isNull()) {
             setName(category.getValue()!.name);
-            setDescription(category.getValue()!.description);
-            setColor(category.getValue()!.color);
         } else {
             setName("")
-            setDescription("")
-            setColor(1)
         }
     }, [category]);
 
     const handleSave = () => {
-        if (nameError != null || descriptionError != null) {
+        if (nameError != null) {
             // only continue if the inputs are valid
             return;
         }
 
-        onSave(category.getValue()?.id ?? null, {name, description, color});
+        onSave(category.getValue()?.id ?? null, {name});
         setName("")
-        setDescription("")
-        setColor(1)
     };
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -343,31 +266,6 @@ function EditDialog(props: EditDialogProps) {
                         helperText={nameError ? nameError : ''}
                         required
                     />
-                    <TextField
-                        label="Description"
-                        value={description}
-                        onChange={e => setDescription(e.target.value)}
-                        error={descriptionError != null}
-                        helperText={descriptionError ? descriptionError : ''}
-                    />
-                    <Select
-                        value={color.toString()}
-                        label="Color"
-                        onChange={(e) => setColor(Number(e.target.value))}
-                    >
-                        {
-                            Object.keys(colorLUT).map(c => Number(c)).map((key) => (
-                                <MenuItem key={key} value={key.toString()}>
-                                    <div style={{
-                                        backgroundColor: colorLUT[key].bg,
-                                        color: colorLUT[key].fg,
-                                        width: '20px',
-                                        height: '20px'
-                                    }}/>
-                                </MenuItem>
-                            ))
-                        }
-                    </Select>
                 </Box>
             </DialogContent>
             <DialogActions>

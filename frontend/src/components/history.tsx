@@ -1,13 +1,14 @@
 import React from 'react';
 import Grid from "@mui/material/Grid2";
 
-import {getHistory, ICommits} from "../api/history";
+import {getHistory} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
-import { useBranch } from "../model/BranchContext";
+import {useBranch} from "../hooks/useBranch";
+import {ICommit} from "../types/history";
 
 function HistoryPage() {
     const { currentBranch } = useBranch();
-    const [commits, setCommits] = React.useState<ICommits[]>([]);
+    const [commits, setCommits] = React.useState<ICommit[]>([]);
 
     React.useEffect(() => {
         getHistory(currentBranch)

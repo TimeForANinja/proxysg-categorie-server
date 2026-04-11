@@ -24,22 +24,14 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from "@mui/icons-material/Edit"
-import ShuffleIcon from "@mui/icons-material/Shuffle";
 
-import {
-    createToken,
-    deleteToken,
-    getAPITokens,
-    rotateToken,
-    setTokenCategory,
-    updateToken
-} from "../api/token";
+import {addTokenCategory, createToken, deleteToken, deleteTokenCategory, getTokens} from "../api/token";
 import {getCategories} from "../api/category";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
-import {TriState} from "../model/types/EditDialogState";
+import {TriState} from "../types/EditDialogState";
 import {MyPaginator} from "./shared/MyPaginator";
-import {buildLUTFromID, LUT} from "../model/types/LookUpTable";
+import {buildLUTFromID, LUT} from "../types/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
@@ -47,22 +39,19 @@ import {SearchParser} from "../searchParser";
 import {
     IApiToken,
     IMutableApiToken,
-    parseLastUsed,
     ApiTokenToKV,
     ApiTokenFieldsRaw
-} from '../model/types/apiToken';
-import {ICategory} from "../model/types/category";
-import {KVaddRAW} from "../model/types/stringKV";
-import {useBranch} from "../model/BranchContext";
+} from '../types/apiToken';
+import {ICategory} from "../types/category";
+import {KVaddRAW} from "../types/stringKV";
+import {useBranch} from "../hooks/useBranch";
 
 const TIME_SECONDS = 1000;
 
 interface BuildRowProps {
     token: IApiToken,
-    updateToken: (newToken: IApiToken) => void,
     categories: LUT<ICategory>,
     onEdit: (token: IApiToken) => void,
-    onShuffle: (token: IApiToken) => void,
     onDelete: (token: IApiToken) => void,
     branch: string,
 }
@@ -77,11 +66,9 @@ interface BuildRowProps {
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
         token,
-        updateToken,
         categories,
         onEdit,
         onDelete,
-        onShuffle,
         branch,
     } = props;
 
@@ -93,49 +80,46 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     // helper function, triggered when the "copy" button is pressed
     const handleCopy = async () => {
         // copy ID to clipboard
-        await navigator.clipboard.writeText(token.token);
+        await navigator.clipboard.writeText(token.token_value);
 
         // Change the look of the icon for a few seconds
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 1.5 * TIME_SECONDS);
     };
 
-    // helper function, triggered when the category selector changes
-    const handleChange = (newList: string[]) => {
-        // update api
-        setTokenCategory(branch, token.id, newList).then(newCats => {
-            // save the new version
-            const newToken = {...token, categories: newCats, pending_changes: true};
-            updateToken(newToken);
-        });
-    };
+    const handleChange = (newCats: string[], added: string[], removed: string[]) => {
+        const tasks = []
+        for (const a of added) {
+            // TODO: added/removed are names and not IDs
+            tasks.push(addTokenCategory(branch, token.id, a))
+        }
+        for (const r of removed) {
+            tasks.push(deleteTokenCategory(branch, token.id, r))
+        }
+        Promise.all(tasks)
+    }
 
     return (
         <TableRow
             key={token.id}
             sx={{
-                ...(token.pending_changes ? { backgroundColor: (theme) => theme.palette.warning.light } : {}),
                 '&:last-child td, &:last-child th': { border: 0 },
             }}
         >
             <TableCell component="th" scope="row">{token.id}</TableCell>
             <TableCell>{token.description}</TableCell>
             <TableCell align="right">
-                {hideToken ? token.token : token.token.replace(/[a-zA-Z0-9]/g, '*')}
+                {hideToken ? token.token_value : token.token_value.replace(/[a-zA-Z0-9]/g, '*')}
                 <IconButton onClick={() => setHideToken(!hideToken)}>
                     { hideToken ? <VisibilityIcon /> : <VisibilityOffIcon /> }
-                </IconButton>
-                <IconButton onClick={() => onShuffle(token)}>
-                    <ShuffleIcon />
                 </IconButton>
                 <IconButton onClick={handleCopy}>
                     {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
                 </IconButton>
             </TableCell>
-            <TableCell>{ parseLastUsed(token.last_use) }</TableCell>
             <TableCell align="right">
                 <CategoryPicker
-                    onChange={(newList) => handleChange(newList)}
+                    onChange={handleChange}
                     categories={categories}
                     isCategories={token.categories}
                 />
@@ -165,14 +149,14 @@ function ApiTokenPage() {
     // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => tokens.filter(x => {
-            return quickSearch?.test(KVaddRAW(ApiTokenToKV(x, categories))) ?? true;
+            return quickSearch?.test(KVaddRAW(ApiTokenToKV(x))) ?? true;
         }),
         [quickSearch, tokens, categories],
     );
 
     // Memoize the download rows to avoid unnecessary transformations
     const downloadRows = React.useMemo(
-        () => filteredRows.map(row => ApiTokenToKV(row, categories)),
+        () => filteredRows.map(row => ApiTokenToKV(row)),
         [filteredRows, categories],
     );
 
@@ -181,7 +165,7 @@ function ApiTokenPage() {
 
     // Load tokens (& Categories) From backend
     React.useEffect(() => {
-        Promise.all([ getAPITokens(currentBranch), getCategories(currentBranch)])
+        Promise.all([ getTokens(currentBranch), getCategories(currentBranch)])
             .then(([tokenData, categoryData]) => {
                 setTokens(tokenData);
                 setCategory(buildLUTFromID(categoryData))
@@ -204,11 +188,7 @@ function ApiTokenPage() {
             // add new token
             const newTok = await createToken(currentBranch, token)
             setTokens([...tokens, newTok]);
-         } else {
-            const newTok = await updateToken(currentBranch, tokenID, token)
-            // "replace" existing token if id matches
-            setTokens(tokens.map(tok => tok.id === tokenID ? newTok : tok));
-        }
+         }
         handleEditDialogClose();
     };
 
@@ -226,14 +206,6 @@ function ApiTokenPage() {
         }
         setDeleteDialogOpen(null);
     }
-
-    // generate a new token
-    const handleOnShuffle = React.useCallback((token: IApiToken) => {
-        rotateToken(currentBranch, token.id).then(newTok => {
-            // "replace" existing token if id matches
-            setTokens(tokens.map(tok => tok.id === token.id ? newTok : tok));
-        })
-    }, [tokens, currentBranch]);
 
     // save an updated URL object in the urls cache
     const handleUpdateToken = React.useCallback(
@@ -268,7 +240,6 @@ function ApiTokenPage() {
                                         <TableCell component="th" scope="row">ID</TableCell>
                                         <TableCell>Description</TableCell>
                                         <TableCell align="right">Token</TableCell>
-                                        <TableCell>Last Used</TableCell>
                                         <TableCell align="right">Categories</TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
@@ -278,10 +249,8 @@ function ApiTokenPage() {
                                         <BuildRow
                                             key={token.id}
                                             token={token}
-                                            updateToken={handleUpdateToken}
                                             categories={categories}
                                             onEdit={handleEditOpen}
-                                            onShuffle={handleOnShuffle}
                                             onDelete={() => handleDelete(token)}
                                             branch={currentBranch}
                                         />

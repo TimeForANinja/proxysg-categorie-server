@@ -7,22 +7,22 @@ interface BranchContextType {
     setLocked: (locked: boolean) => void;
 }
 
-const BranchContext = createContext<BranchContextType | undefined>(undefined);
+const UseBranch = createContext<BranchContextType | undefined>(undefined);
 
 export const BranchProvider = ({ children }: { children: ReactNode }) => {
-    // Default branch can be "main" or empty, depending on server default
-    const [currentBranch, setCurrentBranch] = useState<string>('main');
+    // Default branch is "b_prod"
+    const [currentBranch, setCurrentBranch] = useState<string>('b_prod');
     const [isLocked, setLocked] = useState<boolean>(false);
 
     return (
-        <BranchContext.Provider value={{ currentBranch, setCurrentBranch, isLocked, setLocked }}>
+        <UseBranch.Provider value={{ currentBranch, setCurrentBranch, isLocked, setLocked }}>
             {children}
-        </BranchContext.Provider>
+        </UseBranch.Provider>
     );
 };
 
 export const useBranch = () => {
-    const context = useContext(BranchContext);
+    const context = useContext(UseBranch);
     if (context === undefined) {
         throw new Error('useBranch must be used within a BranchProvider');
     }

@@ -1,7 +1,5 @@
 import {StringKV} from "./stringKV";
-import {FieldDefinition, SHARED_DEFINITIONS} from "../../searchParser/fieldDefinition";
-import {LUT} from "./LookUpTable";
-import {ICategory} from "./category";
+import {FieldDefinition, SHARED_DEFINITIONS} from "../searchParser/fieldDefinition";
 
 export interface IMutableApiToken {
     description: string;
@@ -9,10 +7,8 @@ export interface IMutableApiToken {
 
 export interface IApiToken extends IMutableApiToken {
     id: string;
-    token: string;
+    token_value: string;
     categories: string[];
-    last_use: number;
-    pending_changes: boolean;
 }
 
 const TIME_SECONDS = 1000;
@@ -25,28 +21,22 @@ export const parseLastUsed = (last_use: number): string => {
     }
 }
 
-export const ApiTokenToKV = (x: IApiToken, categories: LUT<ICategory>): StringKV => {
-    const cats = x.categories.map(c => categories[c]?.name).join(',');
+export const ApiTokenToKV = (x: IApiToken): StringKV => {
     return {
         id: x.id,
-        token: x.token,
+        value: x.token_value,
         description: x.description,
-        last_use: parseLastUsed(x.last_use),
-        cats: cats,
-        categories: cats,
-        cat_ids: x.categories.join(','),
-        changed: x.pending_changes ? 'true' : 'false',
+        cats: x.categories.join(', '),
+        categories: x.categories.join(', '),
     };
 }
 
 export const ApiTokenFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.id,
-    { field: "token", description: "Token" },
+    { field: "value", description: "Token Value itself" },
     SHARED_DEFINITIONS.description,
-    { field: "last_use", description: "Date the Token was last used" },
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
-    SHARED_DEFINITIONS.changed,
 ]
 export const ApiTokenFieldsRaw: FieldDefinition[] = [
     ...ApiTokenFields,

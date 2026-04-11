@@ -1,9 +1,8 @@
 import React from "react";
 import {Autocomplete, Box, Chip, TextField} from "@mui/material";
 
-import {getLUTValues, LUT} from "../../model/types/LookUpTable";
-import {ICategory} from "../../model/types/category";
-import {colorLUT} from "../../util/colormixer";
+import {getLUTValues, LUT} from "../../types/LookUpTable";
+import {ICategory} from "../../types/category";
 import {CompareLists} from "../../util/ArrayDiff";
 
 interface CategoryPickerProps {
@@ -50,10 +49,6 @@ export function CategoryPicker(props: CategoryPickerProps) {
                             label={val.name}
                             key={key}
                             {...tagProps}
-                            sx={{
-                                bgcolor: colorLUT[val.color].bg,
-                                color: colorLUT[val.color].fg,
-                            }}
                         />
                     );
                 })
@@ -72,10 +67,6 @@ export function CategoryPicker(props: CategoryPickerProps) {
                                 borderRadius: '3px',
                                 mr: 1,
                                 mt: '2px',
-                            }}
-                            style={{
-                                backgroundColor: colorLUT[option.color].bg,
-                                color: colorLUT[option.color].fg,
                             }}
                         />
                         <Box

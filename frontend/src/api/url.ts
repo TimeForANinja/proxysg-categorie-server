@@ -1,9 +1,9 @@
-import {IUrl, IMutableUrl} from "../model/types/url";
+import {URLMapping} from "../types/url";
 
-const getBaseUrl = (branch: string) => `/api/branch/${branch}/url`;
+const getBaseUrl = (branch: string) => `/api/branch/${branch}`;
 
-export const getURLs = async (branch: string): Promise<IUrl[]> => {
-    const response = await fetch(getBaseUrl(branch));
+export const getURLs = async (branch: string): Promise<URLMapping[]> => {
+    const response = await fetch(`${getBaseUrl(branch)}/url`);
 
     if (!response.ok) {
         throw new Error(`Failed to get URLs`);
@@ -18,75 +18,19 @@ export const getURLs = async (branch: string): Promise<IUrl[]> => {
     return data.data;
 }
 
-export const updateURL = async (branch: string, id: string, updatedURL: IMutableUrl): Promise<IUrl> => {
-    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedURL),
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to update url with id: ${id}`);
-    }
-
-    const data = await response.json();
-
-    if (data.status === "failed") {
-        throw new Error(data.message);
-    }
-
-    return data.data;
-};
-
-export const createURL = async (branch: string, partialURL: IMutableUrl): Promise<IUrl> => {
-    const response = await fetch(getBaseUrl(branch), {
+export const addURLCategory = async (branch: string, url: string, categoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/category/${categoryId}/url`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(partialURL),
+        body: JSON.stringify({
+            url: url,
+        }),
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to create url.`);
-    }
-
-    const data = await response.json();
-
-    if (data.status === "failed") {
-        throw new Error(data.message);
-    }
-
-    return data.data;
-};
-
-export const deleteURL = async (branch: string, id: string): Promise<void> => {
-    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
-        method: 'DELETE',
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to delete URL.`);
-    }
-
-    const data = await response.json();
-    if (data.status === "failed") {
-        throw new Error(data.message);
-    }
-};
-
-export const addURLCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
-    const response = await fetch(`${getBaseUrl(branch)}/${id}/category/${categoryId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to add category ${categoryId} to url with id: ${id}`);
+        throw new Error(`Failed to add url ${url} to category ${categoryId}`);
     }
 
     const data = await response.json();
@@ -95,8 +39,8 @@ export const addURLCategory = async (branch: string, id: string, categoryId: str
     }
 }
 
-export const deleteURLCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
-    const response = await fetch(`${getBaseUrl(branch)}/${id}/category/${categoryId}`, {
+export const deleteURLCategory = async (branch: string, url: string, categoryId: string): Promise<void> => {
+    const response = await fetch(`${getBaseUrl(branch)}/category/${categoryId}/url/${url}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
@@ -104,32 +48,11 @@ export const deleteURLCategory = async (branch: string, id: string, categoryId: 
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to remove category ${categoryId} from url with id: ${id}`);
+        throw new Error(`Failed to remove url ${url} to category ${categoryId}`);
     }
 
     const data = await response.json();
     if (data.status === "failed") {
         throw new Error(data.message);
     }
-}
-
-export const setURLCategory = async (branch: string, id: string, categories: string[]): Promise<string[]> => {
-    const response = await fetch(`${getBaseUrl(branch)}/${id}/category`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ categories }),
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to set categories ${categories.join(',')} for url with id: ${id}`);
-    }
-
-    const data = await response.json();
-    if (data.status === "failed") {
-        throw new Error(data.message);
-    }
-
-    return data.data;
 }

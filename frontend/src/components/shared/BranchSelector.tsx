@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { FormControl, Select, MenuItem, IconButton, Tooltip, Box } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import { useBranch } from '../../model/BranchContext';
-import { getBranches } from '../../api/branch';
+import {useBranch} from '../../hooks/useBranch';
+import { getBranches } from '../../api/history';
 
 const BranchSelector = () => {
     const { currentBranch, setCurrentBranch, isLocked, setLocked } = useBranch();

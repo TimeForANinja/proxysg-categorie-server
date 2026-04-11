@@ -8,7 +8,7 @@ import HistoryPage from "./components/history";
 import HomePage from "./components/home";
 import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
-import { BranchProvider } from "./model/BranchContext";
+import { BranchProvider } from "./hooks/useBranch";
 
 function App() {
     const router = createBrowserRouter([
