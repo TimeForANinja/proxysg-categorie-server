@@ -1,21 +1,29 @@
 from dataclasses import dataclass
-from apiflask.fields import List
-from typing import List as tList
-
-from marshmallow.fields import String, Nested
+from apiflask.fields import String
 from marshmallow_dataclass import class_schema
 
-from model.types.category import category_schema
+from db.abc.db import DBInterface
 from util.schema import desc, to_field
 
 
 @dataclass
-class URLMapping:
-    url: str = to_field(String(required=True, metadata=desc("URL of the resource")))
-    categories: tList[str] = to_field(List(
-        Nested(category_schema),
-        required=True,
-        metadata=desc("Categories (Name) associated with the URL"),
-    ))
+class URL:
+    id: str = to_field(String(required=True, metadata=desc('ID of the URL')))
+    url: str = to_field(String(required=True, metadata=desc('Value of the URL')))
 
-url_mapping_schema = class_schema(URLMapping)()
+    def write(self, backend: DBInterface) -> str:
+        return backend.insert_obj({
+            "id": self.id,
+            "url": self.url,
+        })
+
+    @staticmethod
+    def read(backend: DBInterface, obj_hash: str) -> 'URL':
+        raw_url = backend.fetch_obj(obj_hash)
+        return URL(
+            id=raw_url["id"],
+            url=raw_url["url"],
+        )
+
+
+url_schema = class_schema(URL)()

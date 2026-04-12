@@ -1,15 +1,19 @@
 # DB Layout
 
- Tag
+Core
+  |
+  Type:LUT
+  |
+Tag
   |
 Commit (author, description, head, parent)
   |
 Root-Tree (categories, tokens)
-  |          |
-  |         List
-  |          |
-List        Category (ID, Name, members)
-  |          |
-  |         Member (URL, From, Until, Comment)
+  |            |                   |
+  |            Type:List           Type:List
+  Type:List    |                   |
+  |            |                 URL (ID, value)
+  |            |
+  |          Category (ID, Name, members)
   |
-Token (ID, Token, Categories, Description)
+Token (ID, value, Categories, Description)

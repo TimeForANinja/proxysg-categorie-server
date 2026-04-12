@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Dict, Any
-
 from marshmallow.fields import String, Integer
 from marshmallow_dataclass import class_schema
 

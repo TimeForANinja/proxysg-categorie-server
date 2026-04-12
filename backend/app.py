@@ -9,10 +9,11 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from db.db_singleton import get_db, close_connection
 from routes.category import add_category_bp
-from routes.history import add_history_bp
+from routes.core import add_core_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
 from log import setup_logging, log_info, log_error, log_debug
+
 
 # Initialize APIFlask instead of Flask
 app = APIFlask(
@@ -49,8 +50,8 @@ if app.config.get('PROXY_FIX', 'false').lower() == 'true':
 
 
 # Register blueprints
+add_core_bp(app)
 add_category_bp(app)
-add_history_bp(app)
 add_token_bp(app)
 add_url_bp(app)
 

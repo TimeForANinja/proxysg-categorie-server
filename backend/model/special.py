@@ -1,48 +1,43 @@
-from collections import defaultdict
-from typing import List
+from typing import List, Dict
 
 from db.abc.db import DBInterface
-from model.types.category import Category, Member
+from model.types.category import Category
 from model.types.core import Core
-from model.types.tags import Commit
-from model.types.url import URLMapping
+from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
+from model.types.token import Token
+from model.types.url import URL
+from routes.types.core import RestCommit
+from routes.schemas.url import RestURLDetail
+from model.types.core import Commit
+from routes.types.token import RestTokenDetail
+from routes.types.url import RestConstrainedCategory
 
 
 class SpecialModel:
-    """Special Read-Only Routes useful for the Rest-API"""
+    """Special Read-Only Routes useful for the Frontend"""
     def __init__(self, backend: DBInterface):
         self.backend = backend
 
 
-    def fetch_url_list(self, branch: str) -> List[URLMapping]:
-        """Fetch a list of all URLs"""
-        head_commit = Commit.read_branch(self.backend, branch)
-        urls = defaultdict(list)
-
-        for cat_hash in head_commit.head.categories:
-            cat = Category.read(self.backend, cat_hash)
-            for member in cat.members:
-                urls[member.url].append(cat)
-
-        # typecast
-        return [
-            URLMapping(url=url, categories=categories)
-            for url, categories in urls.items()
-        ]
-
-    def fetch_commits(self, branch: str) -> List[Commit]:
+    def fetch_commits(self, branch: str) -> List[RestCommit]:
         """Fetch a list of recent Commits by Name"""
         head_commit = Commit.read_branch(self.backend, branch)
         commits = []
 
         # Iterate over all elements in our linked list
-        lut = head_commit.parent_commit_hash
-        while lut is not None:
-            c = Commit.read(self.backend, lut)
-            commits.append(c)
-            lut = c.parent_commit_hash
+        uut = head_commit.parent_commit_hash
+        while uut is not None:
+            c = Commit.read(self.backend, uut)
+            commits.append(c.to_rest(self.backend))
+            uut = c.parent_commit_hash
 
         return commits
+
+    def list_branches(self) -> List[str]:
+        """Fetch a list of all Branches"""
+        core = Core.read(self.backend)
+        return list(core.branches.keys())
+
 
     def fetch_categories(self, branch: str) -> List[Category]:
         """Fetch a list of all Categories"""
@@ -52,7 +47,76 @@ class SpecialModel:
             for h in head_commit.head.categories
         ]
 
-    def list_branches(self) -> List[str]:
-        """Fetch a list of all Branches"""
-        core = Core.read(self.backend)
-        return list(core.branches.keys())
+    def fetch_url_list(self, branch: str) -> List[RestURLDetail]:
+        """Fetch a list of all URLs"""
+        head_commit = Commit.read_branch(self.backend, branch)
+
+        # Fetch all URL, and build LUT
+        url_lut: Dict[str, URL] = {
+            u.id: u for u in [
+                URL.read(self.backend, url_hash)
+                for url_hash in head_commit.head.urls
+            ]
+        }
+
+        # Fetch all Category, and build a LUT
+        category_lut: Dict[str, Category] = {
+            c.id: c for c in [
+                Category.read(self.backend, cat_hash)
+                for cat_hash in head_commit.head.categories
+            ]
+        }
+
+        # Build Mappings for URL -> List of Categories
+        data: Dict[str, RestURLDetail] = {}
+        for map_hash in head_commit.head.url_category_mappings:
+            mapping = URLCategoryMapping.read(self.backend, map_hash)
+
+            if mapping.url_id not in data:
+                data[mapping.url_id] = RestURLDetail(
+                    url = url_lut[mapping.url_id],
+                    categories = [],
+                )
+            data[mapping.url_id].categories.append(
+                RestConstrainedCategory(
+                    category=category_lut[mapping.category_id],
+                    constraint=mapping.constraint,
+                )
+            )
+
+        return list(data.values())
+
+    def fetch_tokens(self, branch: str) -> List[RestTokenDetail]:
+        """Fetch a list of all Tokens"""
+        head_commit = Commit.read_branch(self.backend, branch)
+
+        # Fetch all Token, and build LUT
+        token_lut: Dict[str, Token] = {
+            t.id: t for t in [
+                Token.read(self.backend, token_hash)
+                for token_hash in head_commit.head.tokens
+            ]
+        }
+
+        # Fetch all Category, and build a LUT
+        category_lut: Dict[str, Category] = {
+            c.id: c for c in [
+                Category.read(self.backend, cat_hash)
+                for cat_hash in head_commit.head.categories
+            ]
+        }
+
+        data: Dict[str, RestTokenDetail] = {}
+        for map_hash in head_commit.head.token_category_mappings:
+            mapping = TokenCategoryMapping.read(self.backend, map_hash)
+
+            if mapping.token_id not in data:
+                data[mapping.token_id] = RestTokenDetail(
+                    token=token_lut[mapping.token_id],
+                    categories=[],
+                )
+            data[mapping.token_id].categories.append(
+                category_lut[mapping.category_id]
+            )
+
+        return list(data.values())
