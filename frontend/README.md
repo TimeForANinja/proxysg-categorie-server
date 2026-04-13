@@ -1,46 +1,43 @@
-# Getting Started with Create React App
+# ProxySG Category Server Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the frontend for the ProxySG Category Server, built with React, TypeScript, and Vite.
 
 ## Available Scripts
 
 In the project directory, you can run:
 
-### `npm start`
+### `npm run dev` or `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Runs the app in the development mode using Vite.  
+Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The page will reload if you make edits.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
+Builds the app for production to the `build` folder.  
 It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified, and the filenames include the hashes.\
-Your app is ready to be deployed!
+The build is minified, and the filenames include the hashes.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### `npm run preview`
 
-### `npm run eject`
+Locally preview the production build.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### `npm test`
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Launches the test runner. (Note: Currently configured as a placeholder).
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc.) right into your project so you have full control over them. All the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Project Structure
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However, we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+The project follows a standard React/Vite structure:
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- `src/api/`: Contains API implementation functions for all routes defined in the OpenAPI documentation.
+- `src/components/`: React components for the application, including pages (History, Categories, URLs, Tokens) and shared UI elements.
+- `src/hooks/`: Custom React hooks for managing state and side effects (e.g., branch selection, query parameters).
+- `src/types/`: TypeScript type definitions and interfaces matching the backend API schemas.
+- `src/util/`: General utility functions (e.g., date formatting).
+- `src/index.tsx`: The entry point for the React application.
+- `vite.config.ts`: Configuration for Vite, including proxy settings and plugin setup.
+- `index.html`: The main HTML file (Vite's entry point).
+- `public/`: Static assets like icons and images.
