@@ -1,33 +1,40 @@
 import {StringKV} from "./stringKV";
 import {FieldDefinition, SHARED_DEFINITIONS} from "../searchParser/fieldDefinition";
+import {ICategory} from "./category";
+import {DataOutput} from "./api";
+import {formatUnixTimestamp} from "../util/DateString";
 
-export interface IMutableApiToken {
+export interface IApiToken {
+    id: string;
+    token_value: string;
     description: string;
 }
 
-export interface IApiToken extends IMutableApiToken {
-    id: string;
-    token_value: string;
-    categories: string[];
+export type IMutableApiToken = IApiTokenInput;
+
+export interface IApiTokenInput {
+    description: string;
 }
 
-const TIME_SECONDS = 1000;
+export interface IRestTokenDetail {
+    token: IApiToken;
+    categories: ICategory[];
+}
+
+export type IApiTokenOutput = DataOutput<IApiToken>;
+export type IListTokenOutput = DataOutput<IRestTokenDetail[]>;
 
 export const parseLastUsed = (last_use: number): string => {
-    if (last_use === 0) {
-        return 'never';
-    } else {
-        return new Date(last_use * TIME_SECONDS).toLocaleString();
-    }
+    return formatUnixTimestamp(last_use);
 }
 
-export const ApiTokenToKV = (x: IApiToken): StringKV => {
+export const ApiTokenToKV = (x: IRestTokenDetail): StringKV => {
     return {
-        id: x.id,
-        value: x.token_value,
-        description: x.description,
-        cats: x.categories.join(', '),
-        categories: x.categories.join(', '),
+        id: x.token.id,
+        value: x.token.token_value,
+        description: x.token.description,
+        cats: x.categories.map(c => c.name).join(', '),
+        categories: x.categories.map(c => c.name).join(', '),
     };
 }
 
@@ -38,6 +45,7 @@ export const ApiTokenFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
 ]
+
 export const ApiTokenFieldsRaw: FieldDefinition[] = [
     ...ApiTokenFields,
     SHARED_DEFINITIONS.raw,

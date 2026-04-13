@@ -2,6 +2,7 @@ import React from 'react';
 import {
     Box,
     Button,
+    Collapse,
     Dialog,
     DialogActions,
     DialogContent,
@@ -19,6 +20,8 @@ import {
 import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -26,6 +29,7 @@ import {
     deleteCategory,
     getCategories,
 } from "../api/category";
+import { getHistory } from "../api/history";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../types/EditDialogState";
@@ -35,12 +39,15 @@ import {simpleNameCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
 import {CategoryFieldsRaw, CategoryToKV, ICategory, IMutableCategory} from "../types/category";
+import {IRestCommit} from "../types/history";
 import {KVaddRAW} from "../types/stringKV";
 import {useBranch} from "../hooks/useBranch";
+import HistoryTable from "./shared/HistoryTable";
 
 interface BuildRowProps {
     category: ICategory,
     onDelete: (cat: ICategory) => void,
+    branch: string,
 }
 /**
  * Renders a table row for a Category entry.
@@ -54,8 +61,11 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
         category,
         onDelete,
+        branch,
     } = props;
     const navigate = useNavigate();
+    const [open, setOpen] = React.useState(false);
+    const [history, setHistory] = React.useState<IRestCommit[]>([]);
 
     const handleSearchInUrls = () => {
         // Build a wildcard search against the URL list by categories name
@@ -66,19 +76,46 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         navigate({ pathname: '/url', search: `?${params.toString()}` });
     };
 
+    const toggleOpen = () => {
+        if (!open && history.length === 0) {
+            getHistory(branch).then(setHistory).catch(console.error);
+        }
+        setOpen(!open);
+    };
+
     return (
-        <TableRow key={category.id}>
-            <TableCell>{category.id}</TableCell>
-            <TableCell>{category.name}</TableCell>
-            <TableCell>
-                <IconButton aria-label="search URLs with this category" onClick={handleSearchInUrls} size="small">
-                    <SearchIcon />
-                </IconButton>
-                <IconButton aria-label="delete category" onClick={() => onDelete(category)} size="small">
-                    <DeleteIcon />
-                </IconButton>
-            </TableCell>
-        </TableRow>
+        <React.Fragment>
+            <TableRow key={category.id} sx={{ '& > *': { borderBottom: 'unset' } }}>
+                <TableCell>
+                    <IconButton
+                        aria-label="expand row"
+                        size="small"
+                        onClick={toggleOpen}
+                    >
+                        {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                    </IconButton>
+                </TableCell>
+                <TableCell>{category.id}</TableCell>
+                <TableCell>{category.name}</TableCell>
+                <TableCell align="right">
+                    <IconButton aria-label="search URLs with this category" onClick={handleSearchInUrls} size="small">
+                        <SearchIcon />
+                    </IconButton>
+                    <IconButton aria-label="delete category" onClick={() => onDelete(category)} size="small">
+                        <DeleteIcon />
+                    </IconButton>
+                </TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 1 }}>
+                            <HistoryTable commits={history} />
+                        </Box>
+                    </Collapse>
+                </TableCell>
+            </TableRow>
+        </React.Fragment>
     );
 });
 
@@ -172,9 +209,10 @@ function CategoriesPage() {
                             <Table sx={{minWidth: 650}} size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
+                                        <TableCell style={{ width: 40 }} />
                                         <TableCell component="th" scope="row">ID</TableCell>
                                         <TableCell>Name</TableCell>
-                                        <TableCell></TableCell>
+                                        <TableCell align="right"></TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -183,6 +221,7 @@ function CategoriesPage() {
                                             key={cat.id}
                                             category={cat}
                                             onDelete={handleDelete}
+                                            branch={currentBranch}
                                         />
                                     )}
                                 </TableBody>

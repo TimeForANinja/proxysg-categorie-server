@@ -1,82 +1,72 @@
-import {IApiToken, IMutableApiToken} from "../types/apiToken";
+import {IApiToken, IApiTokenInput, IApiTokenOutput, IListTokenOutput, IRestTokenDetail} from "../types/apiToken";
+import {GenericOutput} from "../types/api";
 
 const getBaseUrl = (branch: string) => `/api/branch/${branch}/token`;
 
-export const getTokens = async (branch: string): Promise<IApiToken[]> => {
+export const getTokens = async (branch: string): Promise<IRestTokenDetail[]> => {
     const response = await fetch(getBaseUrl(branch));
+    const data: IListTokenOutput = await response.json();
 
-    if (!response.ok) {
-        throw new Error(`Failed to get tokens`);
-    }
-
-    const data = await response.json();
-
-    if (data.status === "failed") {
-        throw new Error(data.message);
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to get tokens`);
     }
 
     return data.data;
 }
 
-export const createToken = async (branch: string, partialToken: IMutableApiToken): Promise<IApiToken> => {
+export const createToken = async (branch: string, token: IApiTokenInput): Promise<IApiToken> => {
     const response = await fetch(getBaseUrl(branch), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(partialToken),
+        body: JSON.stringify(token),
     });
 
-    if (!response.ok) {
-        throw new Error(`Failed to create token.`);
-    }
+    const data: IApiTokenOutput = await response.json();
 
-    const data = await response.json();
-
-    if (data.status === "failed") {
-        throw new Error(data.message);
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to create token.`);
     }
 
     return data.data;
 };
 
-export const deleteToken = async (branch: string, id: string): Promise<void> => {
+export const deleteToken = async (branch: string, id: string): Promise<GenericOutput> => {
     const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'DELETE',
     });
 
-    if (!response.ok) {
-        throw new Error(`Failed to delete category.`);
+    const data: GenericOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to delete token.`);
     }
 
-    const data = await response.json();
-    if (data.status === "failed") {
-        throw new Error(data.message);
-    }
+    return data;
 }
 
-export const addTokenCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
+export const addTokenCategory = async (branch: string, id: string, categoryId: string): Promise<GenericOutput> => {
     const response = await fetch(`${getBaseUrl(branch)}/${id}/category`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            category: categoryId
+            category_id: categoryId
         }),
     });
 
-    if (!response.ok) {
-        throw new Error(`Failed to add category ${categoryId} to token with id: ${id}`);
+    const data: GenericOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to add category ${categoryId} to token with id: ${id}`);
     }
 
-    const data = await response.json();
-    if (data.status === "failed") {
-        throw new Error(data.message);
-    }
+    return data;
 }
 
-export const deleteTokenCategory = async (branch: string, id: string, categoryId: string): Promise<void> => {
+export const deleteTokenCategory = async (branch: string, id: string, categoryId: string): Promise<GenericOutput> => {
     const response = await fetch(`${getBaseUrl(branch)}/${id}/category/${categoryId}`, {
         method: 'DELETE',
         headers: {
@@ -84,12 +74,28 @@ export const deleteTokenCategory = async (branch: string, id: string, categoryId
         },
     });
 
-    if (!response.ok) {
-        throw new Error(`Failed to remove category ${categoryId} from token with id: ${id}`);
+    const data: GenericOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to remove category ${categoryId} from token with id: ${id}`);
     }
 
-    const data = await response.json();
-    if (data.status === "failed") {
-        throw new Error(data.message);
+    return data;
+}
+
+export const rollToken = async (branch: string, id: string): Promise<IApiToken> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}/roll`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    const data: IApiTokenOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to roll token with id: ${id}`);
     }
+
+    return data.data;
 }

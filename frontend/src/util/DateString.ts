@@ -1,3 +1,25 @@
+const TIME_SECONDS = 1000;
+
+/**
+ * Formats a Unix timestamp (in seconds) to a human-readable date string.
+ * If the timestamp is 0, it returns 'never'.
+ * @param timestamp - Unix timestamp in seconds
+ */
+export const formatUnixTimestamp = (timestamp: number): string => {
+    if (timestamp === 0) {
+        return 'never';
+    }
+    const date = new Date(timestamp * TIME_SECONDS);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
 // Utility method to calculate a Date-Time-Stamp to include in filenames
 export const formatDateForFilename = (date: Date = new Date()): string => {
     const year = date.getFullYear();

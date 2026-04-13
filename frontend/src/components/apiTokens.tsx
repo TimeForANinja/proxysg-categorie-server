@@ -25,7 +25,9 @@ import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from "@mui/icons-material/Edit"
 
-import {addTokenCategory, createToken, deleteToken, deleteTokenCategory, getTokens} from "../api/token";
+import RefreshIcon from "@mui/icons-material/Refresh"
+
+import {addTokenCategory, createToken, deleteToken, deleteTokenCategory, getTokens, rollToken} from "../api/token";
 import {getCategories} from "../api/category";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
@@ -34,13 +36,13 @@ import {MyPaginator} from "./shared/MyPaginator";
 import {buildLUTFromID, LUT} from "../types/LookUpTable";
 import {CategoryPicker} from "./shared/CategoryPicker";
 import {simpleStringCheck} from "../util/InputValidators";
-import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
 import {
     IApiToken,
     IMutableApiToken,
     ApiTokenToKV,
-    ApiTokenFieldsRaw
+    ApiTokenFieldsRaw,
+    IRestTokenDetail
 } from '../types/apiToken';
 import {ICategory} from "../types/category";
 import {KVaddRAW} from "../types/stringKV";
@@ -49,10 +51,11 @@ import {useBranch} from "../hooks/useBranch";
 const TIME_SECONDS = 1000;
 
 interface BuildRowProps {
-    token: IApiToken,
+    tokenDetail: IRestTokenDetail,
     categories: LUT<ICategory>,
     onEdit: (token: IApiToken) => void,
     onDelete: (token: IApiToken) => void,
+    onRoll: (token: IApiToken) => void,
     branch: string,
 }
 /**
@@ -65,12 +68,15 @@ interface BuildRowProps {
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
-        token,
+        tokenDetail,
         categories,
         onEdit,
         onDelete,
+        onRoll,
         branch,
     } = props;
+
+    const token = tokenDetail.token;
 
     // toggle the visibility of the token
     const [hideToken, setHideToken] = React.useState(false);
@@ -90,7 +96,6 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const handleChange = (newCats: string[], added: string[], removed: string[]) => {
         const tasks = []
         for (const a of added) {
-            // TODO: added/removed are names and not IDs
             tasks.push(addTokenCategory(branch, token.id, a))
         }
         for (const r of removed) {
@@ -110,18 +115,21 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
             <TableCell>{token.description}</TableCell>
             <TableCell align="right">
                 {hideToken ? token.token_value : token.token_value.replace(/[a-zA-Z0-9]/g, '*')}
-                <IconButton onClick={() => setHideToken(!hideToken)}>
-                    { hideToken ? <VisibilityIcon /> : <VisibilityOffIcon /> }
+                <IconButton onClick={() => setHideToken(!hideToken)} size="small">
+                    { hideToken ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" /> }
                 </IconButton>
-                <IconButton onClick={handleCopy}>
-                    {isCopied ? <CheckIcon /> : <ContentCopyIcon />}
+                <IconButton onClick={handleCopy} size="small">
+                    {isCopied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
+                </IconButton>
+                <IconButton onClick={() => onRoll(token)} size="small" title="Roll Token">
+                    <RefreshIcon fontSize="small" />
                 </IconButton>
             </TableCell>
             <TableCell align="right">
                 <CategoryPicker
                     onChange={handleChange}
                     categories={categories}
-                    isCategories={token.categories}
+                    isCategories={tokenDetail.categories}
                 />
             </TableCell>
             <TableCell>
@@ -139,32 +147,32 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 function ApiTokenPage() {
     const { currentBranch } = useBranch();
     // State info for the Page
-    const [tokens, setTokens] = React.useState<IApiToken[]>([]);
+    const [tokens, setTokens] = React.useState<IRestTokenDetail[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
     // search and pagination
-    const [visibleRows, setVisibleRows] = React.useState<IApiToken[]>([]);
-    const comparator = BY_ID;
+    const [visibleRows, setVisibleRows] = React.useState<IRestTokenDetail[]>([]);
+    const comparator = (a: IRestTokenDetail, b: IRestTokenDetail) => a.token.id.localeCompare(b.token.id);
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => tokens.filter(x => {
             return quickSearch?.test(KVaddRAW(ApiTokenToKV(x))) ?? true;
         }),
-        [quickSearch, tokens, categories],
+        [quickSearch, tokens],
     );
 
     // Memoize the download rows to avoid unnecessary transformations
     const downloadRows = React.useMemo(
         () => filteredRows.map(row => ApiTokenToKV(row)),
-        [filteredRows, categories],
+        [filteredRows],
     );
 
     // Track the object (if any) for which a delete confirmation is open
     const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<IApiToken | null>(null);
 
     // Load tokens (& Categories) From backend
-    React.useEffect(() => {
+    const fetchData = React.useCallback(() => {
         Promise.all([ getTokens(currentBranch), getCategories(currentBranch)])
             .then(([tokenData, categoryData]) => {
                 setTokens(tokenData);
@@ -172,6 +180,10 @@ function ApiTokenPage() {
             })
             .catch((error) => console.error("Error:", error));
     }, [currentBranch]);
+
+    React.useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     // Edit Dialog State
     const [editToken, setEditToken] = React.useState<TriState<IApiToken>>(TriState.CLOSED);
@@ -186,8 +198,8 @@ function ApiTokenPage() {
     const handleSave = async (tokenID: string|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
-            const newTok = await createToken(currentBranch, token)
-            setTokens([...tokens, newTok]);
+            await createToken(currentBranch, token)
+            fetchData();
          }
         handleEditDialogClose();
     };
@@ -200,18 +212,18 @@ function ApiTokenPage() {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
             deleteToken(currentBranch, isDeleteDialogOpen.id).then(() => {
-                // remove token with ID from the store
-                setTokens(tokens.filter(tok => tok.id !== isDeleteDialogOpen.id));
+                // refresh the list
+                fetchData();
             });
         }
         setDeleteDialogOpen(null);
     }
 
-    // save an updated URL object in the urls cache
-    const handleUpdateToken = React.useCallback(
-        (newToken: IApiToken) => setTokens(tokens.map(t => t.id === newToken.id ? newToken : t)),
-        [tokens]
-    );
+    const handleRoll = React.useCallback((token: IApiToken) => {
+        rollToken(currentBranch, token.id).then(() => {
+            fetchData();
+        }).catch((error) => console.error("Error rolling token:", error));
+    }, [currentBranch, fetchData]);
 
     return (
         <>
@@ -245,13 +257,14 @@ function ApiTokenPage() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {visibleRows.map(token =>
+                                    {visibleRows.map(detail =>
                                         <BuildRow
-                                            key={token.id}
-                                            token={token}
+                                            key={detail.token.id}
+                                            tokenDetail={detail}
                                             categories={categories}
                                             onEdit={handleEditOpen}
-                                            onDelete={() => handleDelete(token)}
+                                            onDelete={() => handleDelete(detail.token)}
+                                            onRoll={handleRoll}
                                             branch={currentBranch}
                                         />
                                     )}

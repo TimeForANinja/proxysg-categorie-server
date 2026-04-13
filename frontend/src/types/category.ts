@@ -1,28 +1,33 @@
 import {FieldDefinition, SHARED_DEFINITIONS} from "../searchParser/fieldDefinition";
 import {StringKV} from "./stringKV";
+import {DataOutput} from "./api";
 
-export interface IMutableCategory {
+export interface ICategory {
+    id: string;
     name: string;
 }
 
-export interface ICategory extends IMutableCategory {
-    id: string;
-    members: string[];
+export interface ICategoryInput {
+    name: string;
 }
+
+export type IMutableCategory = ICategoryInput;
+
+export type ICategoryOutput = DataOutput<ICategory>;
+export type IListCategoryOutput = DataOutput<ICategory[]>;
 
 export const CategoryToKV = (x: ICategory): StringKV => {
     return {
         id: x.id,
         name: x.name,
-        members: x.members.join(', '),
     }
 }
 
 export const CategoryFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.id,
     { field: "name", description: "Name" },
-    { field: "members", description: "CSV of member category names" },
 ]
+
 export const CategoryFieldsRaw: FieldDefinition[] = [
     ...CategoryFields,
     SHARED_DEFINITIONS.raw,

@@ -1,16 +1,11 @@
-/**
- * Utility interface for generalizing data thats referencing other entries
- * e.g.: a commit or atomic that has a reference to the url/category/token it was created for
- */
+import {DataOutput} from "./api";
 
-export interface ICommit {
-    author: string;
+export interface IRestCommit {
+    uuid: string;
     description: string;
-    head: IStateTreeRootNode;
-    parent_commit_hash: string;
+    author: string;
+    created_at: number;
+    parent_commit?: string;
 }
 
-export interface IStateTreeRootNode {
-    categories: string[];
-    tokens: string[];
-}
+export type IListHistoryOutput = DataOutput<IRestCommit[]>;
