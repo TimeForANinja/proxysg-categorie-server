@@ -15,7 +15,7 @@ import {
     TableCell,
     Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import DownloadIcon from "@mui/icons-material/Download"
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import InfoIcon from '@mui/icons-material/Info';
@@ -71,7 +71,7 @@ export const ListHeader = (props: ListHeaderProps) => {
         <>
             { /* Search Bar */ }
             <Grid size={support_create ? 8 : 11}>
-                <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
+                <Box component="div" sx={{ padding: "2px", display: "flex", flexDirection: "column", gap: 2 }}>
                     <TextField
                         margin="dense"
                         label="Quick Search"
@@ -98,7 +98,7 @@ export const ListHeader = (props: ListHeaderProps) => {
             { /* Add-Button */ }
             { support_create && (
                 <Grid size={3}>
-                    <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
+                    <Box component="div" sx={{ padding: "2px", display: "flex", flexDirection: "column", gap: 2 }}>
                         <Button
                             variant="outlined"
                             onClick={() => onCreate!()}
@@ -110,7 +110,7 @@ export const ListHeader = (props: ListHeaderProps) => {
             )}
             { /* Download Button for visible rows */ }
             <Grid size={1}>
-                <Box style={{padding: 2}} display="flex" flexDirection="column" gap={2}>
+                <Box component="div" sx={{ padding: "2px", display: "flex", flexDirection: "column", gap: 2 }}>
                     <Button
                         aria-label="delete"
                         color="primary"
@@ -142,8 +142,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                         <Grid
                             container
                             spacing={2}
-                            justifyContent="center"
-                            alignItems="flex-start"
+                            sx={{ justifyContent: "center", alignItems: "flex-start" }}
                         >
                             {/* Current Search Tree */}
                             {myTree && (

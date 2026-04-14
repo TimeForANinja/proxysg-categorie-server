@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List as tList
 from marshmallow.fields import Integer, List, String
+from marshmallow.validate import OneOf
 
 from marshmallow_dataclass import class_schema
 from util.schema import desc, to_field
@@ -49,7 +50,11 @@ class RestCommit:
 
 @dataclass
 class RestBranchInfo:
-    name: str = to_field(String(required=True, metadata=desc('Name of the Branch')))
+    name: str = to_field(String(
+        required=True,
+        validate=OneOf(['ro', 'rw']),
+        metadata=desc('Name of the Branch')
+    ))
     permission: str = to_field(String(required=True, metadata=desc('Permission for the Branch (ro/rw)')))
 
 

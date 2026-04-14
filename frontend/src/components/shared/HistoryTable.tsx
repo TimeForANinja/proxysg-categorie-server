@@ -19,12 +19,7 @@ function HistoryTable(props: HistoryTableProps) {
     return (
         <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 160px)' }}>
             <Table
-                sx={{
-                    minWidth: 650,
-                    '& .MuiTableCell-stickyHeader': {
-                        backgroundColor: '#1e1e1e !important',
-                    }
-                }}
+                sx={{ minWidth: 650 }}
                 size="small"
                 stickyHeader
             >

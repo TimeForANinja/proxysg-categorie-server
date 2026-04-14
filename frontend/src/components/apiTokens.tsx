@@ -17,7 +17,7 @@ import {
     TableRow,
     TextField,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2'
+import Grid from '@mui/material/Grid'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -152,7 +152,7 @@ function ApiTokenPage() {
 
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IRestTokenDetail[]>([]);
-    const comparator = (a: IRestTokenDetail, b: IRestTokenDetail) => a.token.id.localeCompare(b.token.id);
+    const comparator = React.useCallback((a: IRestTokenDetail, b: IRestTokenDetail) => a.token.id.localeCompare(b.token.id), []);
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
@@ -183,7 +183,7 @@ function ApiTokenPage() {
 
     React.useEffect(() => {
         fetchData();
-    }, [fetchData]);
+    }, []);
 
     // Edit Dialog State
     const [editToken, setEditToken] = React.useState<TriState<IApiToken>>(TriState.CLOSED);
@@ -230,8 +230,7 @@ function ApiTokenPage() {
             <Grid
                 container
                 spacing={1}
-                justifyContent="center"
-                alignItems="center"
+                sx={{ justifyContent: "center", alignItems: "center" }}
             >
                 <ListHeader
                     onCreate={handleEditOpen}
@@ -340,7 +339,7 @@ function EditDialog(props: EditDialogProps) {
         <Dialog open={token.isOpen()} onClose={onClose} onKeyDown={handleKeyDown}>
             <DialogTitle>Edit API Token</DialogTitle>
             <DialogContent>
-                <Box display="flex" flexDirection="column" gap={2}>
+                <Box component="div" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <TextField
                         label="Description"
                         value={description}

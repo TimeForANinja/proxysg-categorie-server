@@ -6,6 +6,8 @@ import { useBranch } from '../../hooks/useBranch';
 import { getBranches } from '../../api/branch';
 import { IRestBranchInfo } from '../../types/branch';
 
+const RO_VALUE = 'ro'
+
 const BranchSelector = () => {
     const { currentBranch, setCurrentBranch, isLocked, setIsLocked } = useBranch();
     const [branches, setBranches] = useState<IRestBranchInfo[]>([]);
@@ -29,7 +31,7 @@ const BranchSelector = () => {
     useEffect(() => {
         const branchInfo = branches.find(b => b.name === currentBranch);
         if (branchInfo) {
-            setIsLocked(branchInfo.permission === 'read_only');
+            setIsLocked(branchInfo.permission === RO_VALUE);
         }
     }, [currentBranch, branches, setIsLocked]);
 
@@ -66,7 +68,7 @@ const BranchSelector = () => {
                 >
                     {branches.map((branch) => (
                         <MenuItem key={branch.name} value={branch.name}>
-                            <Typography variant="body2" sx={{ color: branch.permission === 'read_only' ? '#ff1744' : 'inherit' }}>
+                            <Typography variant="body2" sx={{ color: branch.permission === RO_VALUE ? '#ff1744' : 'inherit' }}>
                                 {branch.name}
                             </Typography>
                         </MenuItem>

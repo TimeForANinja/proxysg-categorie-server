@@ -15,7 +15,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
@@ -66,7 +66,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         const remaining = cats.length - limit;
 
         return (
-            <Stack direction="row" spacing={0.5} flexWrap="wrap">
+            <Stack component="div" direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                 {displayed.map(c => (
                     <Chip key={c.category.id} label={c.category.name} size="small" variant="outlined" />
                 ))}
@@ -152,7 +152,7 @@ function MatchingListPage() {
 
     // search and pagination
     const [visibleRows, setVisibleRows] = React.useState<IRestURLDetail[]>([]);
-    const comparator = (a: IRestURLDetail, b: IRestURLDetail): number => a.url.url.localeCompare(b.url.url);
+    const comparator = React.useCallback((a: IRestURLDetail, b: IRestURLDetail): number => a.url.url.localeCompare(b.url.url), []);
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
     // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
@@ -182,8 +182,7 @@ function MatchingListPage() {
             <Grid
                 container
                 spacing={1}
-                justifyContent="center"
-                alignItems="center"
+                sx={{ justifyContent: "center", alignItems: "center" }}
             >
                 <ListHeader
                     onCreate={null}

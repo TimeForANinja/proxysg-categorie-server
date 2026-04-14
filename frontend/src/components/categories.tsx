@@ -17,7 +17,7 @@ import {
     TextField,
     IconButton,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -193,8 +193,7 @@ function CategoriesPage() {
             <Grid
                 container
                 spacing={1}
-                justifyContent="center"
-                alignItems="center"
+                sx={{ justifyContent: "center", alignItems: "center" }}
             >
                 <ListHeader
                     onCreate={handleEditOpen}
@@ -296,7 +295,7 @@ function EditDialog(props: EditDialogProps) {
         <Dialog open={category.isOpen()} onClose={onClose} onKeyDown={handleKeyDown}>
             <DialogTitle>Edit Category</DialogTitle>
             <DialogContent>
-                <Box display="flex" flexDirection="column" gap={2}>
+                <Box component="div" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <TextField
                         label="Name"
                         value={name}

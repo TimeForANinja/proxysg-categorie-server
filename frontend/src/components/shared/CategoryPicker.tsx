@@ -36,9 +36,9 @@ export function CategoryPicker(props: CategoryPickerProps) {
             getOptionLabel={(cat) => cat.name}
             value={isCategories}
             onChange={handleChange}
-            renderTags={(values, getTagProps) =>
+            renderValue={(values, getItemProps) =>
                 values.map((val, index: number) => {
-                    const { key, ...tagProps } = getTagProps({ index });
+                    const { key, ...tagProps } = getItemProps({ index });
                     return (
                         <Chip
                             variant="outlined"

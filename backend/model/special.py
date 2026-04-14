@@ -21,15 +21,17 @@ class SpecialModel:
 
     def fetch_commits(self, branch: str) -> List[RestCommit]:
         """Fetch a list of recent Commits by Name"""
-        head_commit = Commit.read_branch(self.backend, branch)
         commits = []
 
+        # load first / current commit
+        core = Core.read(self.backend)
+        uut_hash = core.branches[branch]
+
         # Iterate over all elements in our linked list
-        uut = head_commit.parent_commit_hash
-        while uut is not None:
-            c = Commit.read(self.backend, uut)
+        while uut_hash is not None:
+            c = Commit.read(self.backend, uut_hash)
             commits.append(c.to_rest(self.backend))
-            uut = c.parent_commit_hash
+            uut_hash = c.parent_commit_hash
 
         return commits
 

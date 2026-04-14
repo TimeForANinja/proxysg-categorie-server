@@ -1,5 +1,5 @@
 import React from 'react';
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 
 import {getHistory} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
@@ -24,8 +24,7 @@ function HistoryPage() {
             <Grid
                 container
                 spacing={1}
-                justifyContent="center"
-                alignItems="center"
+                sx={{ justifyContent: "center", alignItems: "center" }}
             >
                 <Grid size={12}>
                     <HistoryTable
