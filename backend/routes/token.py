@@ -66,7 +66,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(list_category_output_schema)
     def get_token_categories(branch: str, token_id: str) -> ListCategoryOutput:
         db = get_db()
-        categories = db.tokens.get_token_categories(branch, token_id)
+        categories = db.mappings.get_token_categories(branch, token_id)
         return ListCategoryOutput(
             status='success',
             message='Token category mappings fetched successfully',
@@ -79,7 +79,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(generic_output_schema)
     def add_token_category(branch: str, token_id: str, mapping_data: TokenCategoryMappingInput) -> GenericOutput:
         db = get_db()
-        db.tokens.add_token_category(branch, token_id, mapping_data.category_id)
+        db.mappings.add_token_category(branch, token_id, mapping_data.category_id)
         return GenericOutput(
             status='success',
             message='Category added to token successfully',
@@ -90,7 +90,7 @@ def add_token_bp(app: APIFlask):
     @token_bp.output(generic_output_schema)
     def delete_token_category(branch: str, token_id: str, category_id: str) -> GenericOutput:
         db = get_db()
-        db.tokens.delete_token_category(branch, token_id, category_id)
+        db.mappings.delete_token_category(branch, token_id, category_id)
         return GenericOutput(
             status='success',
             message='Category removed from token successfully',

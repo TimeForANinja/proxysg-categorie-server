@@ -4,6 +4,7 @@ from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 from model.types.shared import Constraint
+from model.types.token import Token
 from model.types.url import URL
 from model.types.core import Commit
 from routes.types.url import RestConstrainedURL
@@ -40,6 +41,15 @@ class MappingModel:
     def add_url_category(self, branch: str, category_id: str, url_id: str, constraint: Optional[Constraint]) -> None:
         """Add a new url <-> category mapping"""
         commit = Commit.read_branch(self.backend, branch)
+
+        # verify that url and category exist
+        url_ids = [URL.read(self.backend, url_hash).id for url_hash in commit.head.urls]
+        if url_id not in url_ids:
+            raise Exception(f"url with id {url_id} does not exist")
+
+        category_ids = [Category.read(self.backend, cat_hash).id for cat_hash in commit.head.categories]
+        if category_id not in category_ids:
+            raise Exception(f"category with id {category_id} does not exist")
 
         # create mapping
         new_mapping = URLCategoryMapping(
@@ -100,6 +110,15 @@ class MappingModel:
         """Add a category <-> token mapping"""
         commit = Commit.read_branch(self.backend, branch)
 
+        # verify that token and category exist
+        token_ids = [Token.read(self.backend, token_hash).id for token_hash in commit.head.tokens]
+        if token_id not in token_ids:
+            raise Exception(f"token with id {token_id} does not exist")
+
+        category_ids = [Category.read(self.backend, cat_hash).id for cat_hash in commit.head.categories]
+        if category_id not in category_ids:
+            raise Exception(f"category with id {category_id} does not exist")
+
         new_mapping = TokenCategoryMapping(
             token_id=token_id,
             category_id=category_id
@@ -128,7 +147,7 @@ class MappingModel:
             raise Exception("Mapping not found")
 
         # update commit, removing the mapping
-        commit.head.url_category_mappings.remove(found_map)
+        commit.head.token_category_mappings.remove(found_map)
 
         # update branch with new commit
         commit.write_branch(self.backend, branch)

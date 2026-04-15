@@ -1,11 +1,30 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested
+from apiflask.fields import List, Nested, String
 from typing import List as tList
 from marshmallow_dataclass import class_schema
 
 from routes.types.url import RestURLDetail, rest_url_detail_schema
 from util.schema import desc, to_field
 from routes.schemas.generic_output import GenericOutput
+from model.types.url import URL, url_schema
+
+
+@dataclass
+class URLInput:
+    url: str = to_field(String(
+        required=True,
+        metadata=desc('Value of the URL')
+    ))
+
+
+@dataclass
+class URLOutput(GenericOutput):
+    """Output schema for a single URL"""
+    data: URL = to_field(Nested(
+        url_schema,
+        required=True,
+        metadata=desc('URL'),
+    ))
 
 
 @dataclass
@@ -18,4 +37,6 @@ class ListURLOutput(GenericOutput):
     ))
 
 
-list_url_output_schema = class_schema(ListURLOutput)
+list_url_output_schema = class_schema(ListURLOutput)()
+url_input_schema = class_schema(URLInput)()
+url_output_schema = class_schema(URLOutput)()

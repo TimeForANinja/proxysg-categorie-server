@@ -41,6 +41,7 @@ export const URLMappingToKV = (x: IRestURLDetail): StringKV => {
     return {
         id: x.url.id,
         url: x.url.url,
+        cats: x.categories.map(x => x.category.name).join(', '),
         categories: x.categories.map(c => c.category.name).join(', '),
     };
 }

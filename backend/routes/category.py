@@ -54,7 +54,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(constrained_url_list_output_schema)
     def get_category_urls(branch: str, category_id: str) -> ConstrainedURLListOutput:
         db = get_db()
-        constrained_urls = db.categories.get_category_urls(branch, category_id)
+        constrained_urls = db.mappings.get_category_urls(branch, category_id)
         return ConstrainedURLListOutput(
             status='success',
             message='Category URL mappings fetched successfully',
@@ -67,7 +67,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(generic_output_schema)
     def add_category_url(branch: str, category_id: str, mapping_data: URLCategoryMappingInput) -> GenericOutput:
         db = get_db()
-        db.categories.add_url_category(
+        db.mappings.add_url_category(
             branch,
             category_id,
             mapping_data.url,
@@ -83,7 +83,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(generic_output_schema)
     def delete_category_url(branch: str, category_id: str, url: str) -> GenericOutput:
         db = get_db()
-        db.categories.delete_url_category(branch, category_id, url)
+        db.mappings.delete_url_category(branch, category_id, url)
         return GenericOutput(
             status='success',
             message='URL removed from category successfully',

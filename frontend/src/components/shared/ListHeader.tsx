@@ -29,7 +29,7 @@ import {useQueryParamState} from "../../hooks/useQueryParamState";
 
 
 interface ListHeaderProps {
-    onCreate: null | (() => void),
+    onCreate: () => void,
     setQuickSearch: (parser: SearchParser | null) => void,
     addElement: string,
     downloadRows:  StringKV[],
@@ -44,7 +44,7 @@ export const ListHeader = (props: ListHeaderProps) => {
         availableFields,
     } = props;
 
-    const support_create = onCreate != null;
+    const support_create = true;
 
     const [myTree, setMyTree] = React.useState<SearchParser | null>(null);
     const [treeError, setTreeError] = React.useState<string | null>(null);

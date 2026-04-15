@@ -69,16 +69,19 @@ class SpecialModel:
             ]
         }
 
-        # Build Mappings for URL -> List of Categories
-        data: Dict[str, RestURLDetail] = {}
+        # create base-objects for every URL
+        data: Dict[str, RestURLDetail] = {
+            url_id: RestURLDetail(
+                url=url_lut[url_id],
+                categories=[],
+            )
+            for url_id in url_lut
+        }
+
+        # fill our categories property based on our mappings
         for map_hash in head_commit.head.url_category_mappings:
             mapping = URLCategoryMapping.read(self.backend, map_hash)
 
-            if mapping.url_id not in data:
-                data[mapping.url_id] = RestURLDetail(
-                    url = url_lut[mapping.url_id],
-                    categories = [],
-                )
             data[mapping.url_id].categories.append(
                 RestConstrainedCategory(
                     category=category_lut[mapping.category_id],
@@ -108,15 +111,19 @@ class SpecialModel:
             ]
         }
 
-        data: Dict[str, RestTokenDetail] = {}
+        # create base-objects for every Token
+        data: Dict[str, RestTokenDetail] = {
+            token_id: RestTokenDetail(
+                token=token_lut[token_id],
+                categories=[],
+            )
+            for token_id in token_lut
+        }
+
+        # fill our categories property based on our mappings
         for map_hash in head_commit.head.token_category_mappings:
             mapping = TokenCategoryMapping.read(self.backend, map_hash)
 
-            if mapping.token_id not in data:
-                data[mapping.token_id] = RestTokenDetail(
-                    token=token_lut[mapping.token_id],
-                    categories=[],
-                )
             data[mapping.token_id].categories.append(
                 category_lut[mapping.category_id]
             )
