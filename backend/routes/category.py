@@ -4,7 +4,7 @@ from log import log_debug
 from routes.schemas.category import ListCategoryOutput, CategoryOutput, category_input_schema, CategoryInput, \
     url_category_mapping_input_schema, URLCategoryMappingInput, ConstrainedURLListOutput, category_output_schema, \
     list_category_output_schema, constrained_url_list_output_schema
-from routes.schemas.error import ErrorResponse
+from routes.schemas.error import ErrorResponse, OutCanError
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 
 
@@ -35,6 +35,21 @@ def add_category_bp(app: APIFlask):
         return CategoryOutput(
             status='success',
             message='Category created successfully',
+            data=category,
+        )
+
+    @category_bp.put('/api/branch/<branch>/category/<category_id>')
+    @category_bp.doc(summary='Update a Category', description='Update a Category by ID for a given branch', tags=['Categories'])
+    @category_bp.input(category_input_schema, location='json', arg_name='category_data')
+    @category_bp.output(category_output_schema)
+    def update_category(branch: str, category_id: str, category_data: CategoryInput) -> OutCanError[CategoryOutput]:
+        db = get_db()
+        category, error = db.categories.update_category(branch, category_id, category_data.name)
+        if error:
+            return ErrorResponse(error)
+        return CategoryOutput(
+            status='success',
+            message='Category updated successfully',
             data=category,
         )
 

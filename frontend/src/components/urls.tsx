@@ -20,12 +20,15 @@ import {
     TableRow,
     TextField,
     Typography,
+    Tooltip,
 } from "@mui/material";
 import Grid from '@mui/material/Grid';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 import {addURLCategory, createURL, deleteURL, deleteURLCategory, getURLs, updateURL} from "../api/url"
 import {ListHeader} from "./shared/ListHeader";
@@ -34,7 +37,7 @@ import {SearchParser} from "../searchParser";
 import {getHistory} from "../api/history";
 import {KVaddRAW} from "../types/stringKV";
 import { useBranch } from "../hooks/useBranch";
-import {IRestURLDetail, UrlMappingFieldsRaw, URLMappingToKV} from "../types/url";
+import {IConstraint, IRestURLDetail, UrlMappingFieldsRaw, URLMappingToKV} from "../types/url";
 import HistoryTable from "./shared/HistoryTable";
 import {IRestCommit} from "../types/history";
 import {TriState} from "../types/EditDialogState";
@@ -43,6 +46,7 @@ import {CategoryPicker} from "./shared/CategoryPicker";
 import {getCategories} from "../api/category";
 import {buildLUTFromID, getLUTValues, LUT} from "../types/LookUpTable";
 import {ICategory} from "../types/category";
+import {formatConstraint} from "../util/DateString";
 import {simpleStringCheck} from "../util/InputValidators";
 
 interface BuildRowProps {
@@ -67,6 +71,11 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const [history, setHistory] = React.useState<IRestCommit[]>([]);
     const [categorySearch, setCategorySearch] = React.useState('');
 
+    // State for the "Add Mapping" row
+    const [newCategoryId, setNewCategoryId] = React.useState<string | null>(null);
+    const [newStartDate, setNewStartDate] = React.useState<string>('');
+    const [newEndDate, setNewEndDate] = React.useState<string>('');
+
     const toggleOpen = () => {
         if (!open && history.length === 0) {
             getHistory(branch).then(setHistory).catch(console.error);
@@ -78,17 +87,33 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         m.category.name.toLowerCase().includes(categorySearch.toLowerCase())
     );
 
-    const handleCategoryChange = (newCats: string[], added: string[], removed: string[]) => {
-        const tasks = [];
-        for (const a of added) {
-            tasks.push(addURLCategory(branch, a, { url: urlDetail.url.id }));
-        }
-        for (const r of removed) {
-            tasks.push(deleteURLCategory(branch, r, urlDetail.url.id));
-        }
-        Promise.all(tasks).then(() => {
+    const handleAddMapping = async () => {
+        if (!newCategoryId) return;
+
+        const start = newStartDate ? Math.floor(new Date(newStartDate).getTime() / 1000) : 0;
+        const end = newEndDate ? Math.floor(new Date(newEndDate).getTime() / 1000) : 0;
+
+        try {
+            await addURLCategory(branch, newCategoryId, {
+                url: urlDetail.url.id,
+                constraint: (start || end) ? { comment: '', start, end } : undefined
+            });
+            setNewCategoryId(null);
+            setNewStartDate('');
+            setNewEndDate('');
             onRefresh();
-        });
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleDeleteMapping = async (categoryId: string) => {
+        try {
+            await deleteURLCategory(branch, categoryId, urlDetail.url.id);
+            onRefresh();
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const renderCategories = () => {
@@ -99,9 +124,28 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
         return (
             <Stack component="div" direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
-                {displayed.map(c => (
-                    <Chip key={c.category.id} label={c.category.name} size="small" variant="outlined" />
-                ))}
+                {displayed.map(c => {
+                    const chip = (
+                        <Chip
+                            key={c.category.id}
+                            label={c.category.name}
+                            size="small"
+                            variant="outlined"
+                            icon={c.constraint ? (
+                                <AccessTimeIcon sx={{ fontSize: '14px !important' }} />
+                            ) : undefined}
+                        />
+                    );
+
+                    if (c.constraint) {
+                        return (
+                            <Tooltip key={c.category.id} title={formatConstraint(c.constraint)}>
+                                {chip}
+                            </Tooltip>
+                        );
+                    }
+                    return chip;
+                })}
                 {remaining > 0 && (
                     <Chip label={`+${remaining} more tags`} size="small" variant="outlined" />
                 )}
@@ -146,13 +190,6 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                                             URL Category Mappings
                                         </Typography>
                                     </Box>
-                                    <Box sx={{ mb: 2 }}>
-                                        <CategoryPicker
-                                            isCategories={urlDetail.categories.map(c => c.category)}
-                                            onChange={handleCategoryChange}
-                                            categories={categories}
-                                        />
-                                    </Box>
                                     <TextField
                                         size="small"
                                         placeholder="Search mappings..."
@@ -166,15 +203,74 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                                                 <TableRow>
                                                     <TableCell>Category</TableCell>
                                                     <TableCell>Constraint</TableCell>
+                                                    <TableCell align="right" style={{ width: 50 }}>Actions</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {filteredMappings.map((m) => (
-                                                    <TableRow key={m.category.id}>
-                                                        <TableCell>{m.category.name}</TableCell>
-                                                        <TableCell>{m.constraint?.comment || '-'}</TableCell>
-                                                    </TableRow>
-                                                ))}
+                                                <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                                                    <TableCell>
+                                                        <Autocomplete
+                                                            size="small"
+                                                            options={getLUTValues(categories)}
+                                                            getOptionLabel={(option) => option.name}
+                                                            renderInput={(params) => <TextField {...params} label="Select Category" />}
+                                                            value={newCategoryId ? categories[newCategoryId] : null}
+                                                            onChange={(_, newValue) => setNewCategoryId(newValue?.id ?? null)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <TextField
+                                                                type="date"
+                                                                size="small"
+                                                                value={newStartDate}
+                                                                onChange={(e) => setNewStartDate(e.target.value)}
+                                                                InputLabelProps={{ shrink: true }}
+                                                            />
+                                                            <Typography sx={{ alignSelf: 'center' }}>-</Typography>
+                                                            <TextField
+                                                                type="date"
+                                                                size="small"
+                                                                value={newEndDate}
+                                                                onChange={(e) => setNewEndDate(e.target.value)}
+                                                                InputLabelProps={{ shrink: true }}
+                                                            />
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell align="right">
+                                                        <IconButton
+                                                            size="small"
+                                                            color="primary"
+                                                            onClick={handleAddMapping}
+                                                            disabled={!newCategoryId}
+                                                        >
+                                                            <AddIcon />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                </TableRow>
+                                                {filteredMappings.map((m) => {
+                                                    return (
+                                                        <TableRow key={m.category.id}>
+                                                            <TableCell>{m.category.name}</TableCell>
+                                                            <TableCell>
+                                                                {m.constraint ? (
+                                                                    <Tooltip title={`Start: ${m.constraint.start ? new Date(m.constraint.start * 1000).toLocaleDateString() : 'N/A'}, End: ${m.constraint.end ? new Date(m.constraint.end * 1000).toLocaleDateString() : 'N/A'}`}>
+                                                                        <span>{formatConstraint(m.constraint)}</span>
+                                                                    </Tooltip>
+                                                                ) : '-'}
+                                                            </TableCell>
+                                                            <TableCell align="right">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDeleteMapping(m.category.id)}
+                                                                    color="error"
+                                                                >
+                                                                    <DeleteIcon fontSize="inherit" />
+                                                                </IconButton>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
                                             </TableBody>
                                         </Table>
                                     </TableContainer>
@@ -183,7 +279,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                                     <Typography variant="h6" gutterBottom component="div">
                                         History
                                     </Typography>
-                                    <HistoryTable commits={history} />
+                                    <HistoryTable commits={history} small={true} />
                                 </Grid>
                             </Grid>
                         </Box>

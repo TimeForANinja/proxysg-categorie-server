@@ -32,6 +32,24 @@ export const createToken = async (branch: string, token: IApiTokenInput): Promis
     return data.data;
 };
 
+export const updateToken = async (branch: string, id: string, token: IApiTokenInput): Promise<IApiToken> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(token),
+    });
+
+    const data: IApiTokenOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to update token.`);
+    }
+
+    return data.data;
+};
+
 export const deleteToken = async (branch: string, id: string): Promise<GenericOutput> => {
     const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
         method: 'DELETE',

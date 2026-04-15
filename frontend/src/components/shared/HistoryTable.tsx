@@ -7,25 +7,26 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import {IRestCommit} from "../../types/history";
-import {formatUnixTimestamp} from "../../util/DateString";
+import {formatUnixTimestamp, formatUnixDateOnly} from "../../util/DateString";
 
 interface HistoryTableProps {
     commits: IRestCommit[],
+    small?: boolean,
 }
 
 function HistoryTable(props: HistoryTableProps) {
-    const { commits } = props;
+    const { commits, small } = props;
 
     return (
         <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 160px)' }}>
             <Table
-                sx={{ minWidth: 650 }}
+                sx={{ minWidth: small ? 300 : 650 }}
                 size="small"
                 stickyHeader
             >
                 <TableHead>
                     <TableRow>
-                        <TableCell component="th" scope="row">Commit-ID</TableCell>
+                        {!small && <TableCell component="th" scope="row">Commit-ID</TableCell>}
                         <TableCell>Time</TableCell>
                         <TableCell>User</TableCell>
                         <TableCell>Description</TableCell>
@@ -34,11 +35,13 @@ function HistoryTable(props: HistoryTableProps) {
                 <TableBody>
                     {commits.map((commit) => (
                         <TableRow key={commit.uuid}>
-                            <TableCell sx={{ fontFamily: 'monospace' }}>
-                                {commit.uuid.substring(0, 8)}
-                            </TableCell>
+                            {!small && (
+                                <TableCell sx={{ fontFamily: 'monospace' }}>
+                                    {commit.uuid.substring(0, 8)}
+                                </TableCell>
+                            )}
                             <TableCell>
-                                {formatUnixTimestamp(commit.created_at)}
+                                {small ? formatUnixDateOnly(commit.created_at) : formatUnixTimestamp(commit.created_at)}
                             </TableCell>
                             <TableCell>{commit.author}</TableCell>
                             <TableCell>{commit.description}</TableCell>

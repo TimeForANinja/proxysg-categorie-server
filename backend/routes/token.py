@@ -38,6 +38,21 @@ def add_token_bp(app: APIFlask):
             data=token,
         )
 
+    @token_bp.put('/api/branch/<branch>/token/<token_id>')
+    @token_bp.doc(summary='Update a Token', description='Update a Token by ID for a given branch', tags=['Tokens'])
+    @token_bp.input(token_input_schema, location='json', arg_name='token_data')
+    @token_bp.output(token_output_schema)
+    def update_token(branch: str, token_id: str, token_data: TokenInput) -> OutCanError[TokenOutput]:
+        db = get_db()
+        token, error = db.tokens.update_token(branch, token_id, token_data.description)
+        if error:
+            return ErrorResponse(error)
+        return TokenOutput(
+            status='success',
+            message='Token updated successfully',
+            data=token,
+        )
+
     @token_bp.delete('/api/branch/<branch>/token/<token_id>')
     @token_bp.doc(summary='Delete a Token', description='Delete a Token by ID for a given branch', tags=['Tokens'])
     @token_bp.output(generic_output_schema)

@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -28,6 +29,7 @@ import {
     createCategory,
     deleteCategory,
     getCategories,
+    updateCategory,
 } from "../api/category";
 import { getHistory } from "../api/history";
 import {ListHeader} from "./shared/ListHeader";
@@ -46,6 +48,7 @@ import HistoryTable from "./shared/HistoryTable";
 
 interface BuildRowProps {
     category: ICategory,
+    onEdit: (cat: ICategory) => void,
     onDelete: (cat: ICategory) => void,
     branch: string,
 }
@@ -60,6 +63,7 @@ interface BuildRowProps {
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const {
         category,
+        onEdit,
         onDelete,
         branch,
     } = props;
@@ -100,6 +104,9 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                 <TableCell align="right">
                     <IconButton aria-label="search URLs with this category" onClick={handleSearchInUrls} size="small">
                         <SearchIcon />
+                    </IconButton>
+                    <IconButton aria-label="edit category" onClick={() => onEdit(category)} size="small">
+                        <EditIcon />
                     </IconButton>
                     <IconButton aria-label="delete category" onClick={() => onDelete(category)} size="small">
                         <DeleteIcon />
@@ -169,6 +176,10 @@ function CategoriesPage() {
             // add the new category
             const newCat = await createCategory(currentBranch, category)
             setCategory(pushLUT(categories, newCat));
+        } else {
+            // update existing category
+            const updatedCat = await updateCategory(currentBranch, catID, category);
+            setCategory(pushLUT(categories, updatedCat));
         }
         handleEditDialogClose();
     };
@@ -219,6 +230,7 @@ function CategoriesPage() {
                                         <BuildRow
                                             key={cat.id}
                                             category={cat}
+                                            onEdit={handleEditOpen}
                                             onDelete={handleDelete}
                                             branch={currentBranch}
                                         />

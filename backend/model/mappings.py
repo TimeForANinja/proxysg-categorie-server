@@ -52,6 +52,12 @@ class MappingModel:
         if category_id not in category_ids:
             return ModelError(f"category with id {category_id} does not exist")
 
+        # check if mapping already exists
+        for map_hash in commit.head.url_category_mappings:
+            mapping = URLCategoryMapping.read(self.backend, map_hash)
+            if mapping.url_id == url_id and mapping.category_id == category_id:
+                return ModelError(f"mapping between url {url_id} and category {category_id} already exists")
+
         # create mapping
         new_mapping = URLCategoryMapping(
             url_id=url_id,
@@ -121,6 +127,12 @@ class MappingModel:
         category_ids = [Category.read(self.backend, cat_hash).id for cat_hash in commit.head.categories]
         if category_id not in category_ids:
             return ModelError(f"category with id {category_id} does not exist")
+
+        # check if mapping already exists
+        for map_hash in commit.head.token_category_mappings:
+            mapping = TokenCategoryMapping.read(self.backend, map_hash)
+            if mapping.token_id == token_id and mapping.category_id == category_id:
+                return ModelError(f"mapping between token {token_id} and category {category_id} already exists")
 
         new_mapping = TokenCategoryMapping(
             token_id=token_id,

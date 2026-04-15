@@ -20,6 +20,18 @@ export const formatUnixTimestamp = (timestamp: number): string => {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
+export const formatUnixDateOnly = (timestamp: number): string => {
+    if (timestamp === 0) {
+        return 'never';
+    }
+    const date = new Date(timestamp * TIME_SECONDS);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+};
+
 // Utility method to calculate a Date-Time-Stamp to include in filenames
 export const formatDateForFilename = (date: Date = new Date()): string => {
     const year = date.getFullYear();
@@ -51,3 +63,15 @@ export const formatDuration = (seconds: number) => {
     if (remainingSeconds > 0 || (hours === 0 && minutes === 0)) str += `${remainingSeconds.toString().padStart(2, "0")}s`;
     return str;
 }
+
+export interface IConstraint {
+    comment: string;
+    start: number;
+    end: number;
+}
+
+export const formatConstraint = (constraint: IConstraint): string => {
+    const startDate = constraint.start ? new Date(constraint.start * 1000).toISOString().split('T')[0] : '...';
+    const endDate = constraint.end ? new Date(constraint.end * 1000).toISOString().split('T')[0] : '...';
+    return `${startDate} - ${endDate}`;
+};

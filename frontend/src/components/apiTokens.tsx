@@ -27,7 +27,7 @@ import EditIcon from "@mui/icons-material/Edit"
 
 import RefreshIcon from "@mui/icons-material/Refresh"
 
-import {addTokenCategory, createToken, deleteToken, deleteTokenCategory, getTokens, rollToken} from "../api/token";
+import {addTokenCategory, createToken, deleteToken, deleteTokenCategory, getTokens, rollToken, updateToken} from "../api/token";
 import {getCategories} from "../api/category";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
@@ -56,6 +56,7 @@ interface BuildRowProps {
     onEdit: (token: IApiToken) => void,
     onDelete: (token: IApiToken) => void,
     onRoll: (token: IApiToken) => void,
+    onRefresh: () => void,
     branch: string,
 }
 /**
@@ -73,6 +74,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         onEdit,
         onDelete,
         onRoll,
+        onRefresh,
         branch,
     } = props;
 
@@ -101,7 +103,9 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         for (const r of removed) {
             tasks.push(deleteTokenCategory(branch, token.id, r))
         }
-        Promise.all(tasks)
+        Promise.all(tasks).then(() => {
+            onRefresh();
+        });
     }
 
     return (
@@ -200,7 +204,11 @@ function ApiTokenPage() {
             // add new token
             await createToken(currentBranch, token)
             fetchData();
-         }
+        } else {
+            // update existing token
+            await updateToken(currentBranch, tokenID, token)
+            fetchData();
+        }
         handleEditDialogClose();
     };
 
@@ -264,6 +272,7 @@ function ApiTokenPage() {
                                             onEdit={handleEditOpen}
                                             onDelete={() => handleDelete(detail.token)}
                                             onRoll={handleRoll}
+                                            onRefresh={fetchData}
                                             branch={currentBranch}
                                         />
                                     )}

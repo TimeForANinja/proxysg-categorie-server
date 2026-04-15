@@ -45,3 +45,21 @@ export const deleteCategory = async (branch: string, id: string): Promise<Generi
 
     return data;
 };
+
+export const updateCategory = async (branch: string, id: string, category: ICategoryInput): Promise<ICategory> => {
+    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(category),
+    });
+
+    const data: ICategoryOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to update category.`);
+    }
+
+    return data.data;
+};
