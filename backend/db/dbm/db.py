@@ -4,12 +4,9 @@ from contextlib import contextmanager
 from typing import Generator, Dict, Any, List
 
 from db.abc.db import DBInterface
+from db.abc.constants import KEY_LENGTH, MAX_COMPACT_LIST_SIZE, TYPE_ID_LIST_SMALL, TYPE_ID_LIST_LARGE
 from db.dbm.util.simple_bson import encode_dict_str, decode_dict_str, encode_list_str, decode_list_str
 from db.dbm.util.hash import sha256_hash
-
-
-KEY_LENGTH = 2
-MAX_COMPACT_LIST_SIZE = 100
 
 
 class DBMDB(DBInterface):
@@ -40,6 +37,7 @@ class DBMDB(DBInterface):
         with self.get_connection() as con:
             con[key] = value
 
+
     def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
         # fetch from db
         with self.get_connection() as con:
@@ -55,6 +53,7 @@ class DBMDB(DBInterface):
                 con[entry_hash] = entry_bson
             return entry_hash
 
+
     def fetch_id_list(self, obj_hash: str) -> List[str]:
         # fetch from db
         with self.get_connection() as con:
@@ -62,9 +61,9 @@ class DBMDB(DBInterface):
             data_dict = decode_dict_str(data_bson)
 
             # check if the list is type small or large
-            if data_dict.get("_type") == "id_list_large":
+            if data_dict.get("_type") == TYPE_ID_LIST_LARGE:
                 return self._fetch_id_list_large(data_dict)
-            elif data_dict.get("_type") == "id_list_small":
+            elif data_dict.get("_type") == TYPE_ID_LIST_SMALL:
                 return self._fetch_id_list_small(data_dict)
             else:
                 raise ValueError("Invalid ID list type")
@@ -94,7 +93,7 @@ class DBMDB(DBInterface):
 
     def _insert_id_list_small(self, entries: List[str]) -> str:
         data = {
-            "_type": "id_list_small",
+            "_type": TYPE_ID_LIST_SMALL,
             "list": entries
         }
         with self.get_connection() as con:
@@ -112,7 +111,7 @@ class DBMDB(DBInterface):
 
         with self.get_connection() as con:
             # insert subsets, and track them for the superset
-            superset = {"_type": "id_list_large"}
+            superset = {"_type": TYPE_ID_LIST_LARGE}
             for key, val in subsets.items():
                 subset_bson = encode_list_str(val)
                 subset_hash = sha256_hash(subset_bson)
