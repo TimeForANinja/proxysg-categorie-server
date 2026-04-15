@@ -2,6 +2,7 @@ from typing import Optional, Union, Tuple
 from uuid import uuid4
 
 from db.abc.db import DBInterface
+from model.types.error import CanError, ModelError
 from model.types.mappings import TokenCategoryMapping
 from model.types.token import Token
 from model.types.core import Commit
@@ -18,13 +19,13 @@ class TokenModel:
                 return token, token_hash
         return None, None
 
-    def roll_token(self, branch: str, token_id: str) -> Token:
+    def roll_token(self, branch: str, token_id: str) -> CanError[Token]:
         """Roll the value of a Token"""
         commit = Commit.read_branch(self.backend, branch)
 
         token, token_hash = self._find_token(commit, token_id)
         if not token:
-            raise Exception("Token not found")
+            return None, ModelError("Token not found")
 
         # update token
         token.token_value = str(uuid4())
@@ -37,7 +38,7 @@ class TokenModel:
         # update branch with new commit
         commit.write_branch(self.backend, branch)
 
-        return token
+        return token, None
 
     def create_token(self, branch: str, description: str) -> Token:
         """Create a new Token"""
@@ -63,13 +64,13 @@ class TokenModel:
             self,
             branch: str, token_id: str,
             description: Optional[str],
-    ) -> Token:
+    ) -> CanError[Token]:
         """Update the description of an existing Token"""
         commit = Commit.read_branch(self.backend, branch)
 
         token, token_hash = self._find_token(commit, token_id)
         if not token:
-            raise Exception("Token not found")
+            return None, ModelError("Token not found")
 
         # update token
         if description is not None:
@@ -83,15 +84,15 @@ class TokenModel:
         # update branch with new commit
         commit.write_branch(self.backend, branch)
 
-        return token
+        return token, None
 
-    def delete_token(self, branch: str, token_id: str) -> None:
+    def delete_token(self, branch: str, token_id: str) -> Optional[ModelError]:
         """Delete a Token by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
         token, token_hash = self._find_token(commit, token_id)
         if not token:
-            raise Exception("Token not found")
+            return ModelError("Token not found")
 
         # update commit, removing the token
         commit.head.tokens.remove(token_hash)
@@ -99,6 +100,7 @@ class TokenModel:
 
         # update branch with new commit
         commit.write_branch(self.backend, branch)
+        return None
 
     def _remove_token_related(self, commit: Commit, token_id: str) -> None:
         # all mappings using this token

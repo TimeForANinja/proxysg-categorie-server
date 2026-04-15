@@ -4,6 +4,7 @@ from log import log_debug
 from routes.schemas.category import ListCategoryOutput, CategoryOutput, category_input_schema, CategoryInput, \
     url_category_mapping_input_schema, URLCategoryMappingInput, ConstrainedURLListOutput, category_output_schema, \
     list_category_output_schema, constrained_url_list_output_schema
+from routes.schemas.error import ErrorResponse
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 
 
@@ -42,7 +43,9 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(generic_output_schema)
     def delete_category(branch: str, category_id: str) -> GenericOutput:
         db = get_db()
-        db.categories.delete_category(branch, category_id)
+        error = db.categories.delete_category(branch, category_id)
+        if error:
+            return ErrorResponse(error)
         return GenericOutput(
             status='success',
             message='Category deleted successfully',
@@ -67,12 +70,14 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(generic_output_schema)
     def add_category_url(branch: str, category_id: str, mapping_data: URLCategoryMappingInput) -> GenericOutput:
         db = get_db()
-        db.mappings.add_url_category(
+        error = db.mappings.add_url_category(
             branch,
             category_id,
             mapping_data.url,
             mapping_data.constraint,
         )
+        if error:
+            return ErrorResponse(error)
         return GenericOutput(
             status='success',
             message='URL added to category successfully',
@@ -83,7 +88,9 @@ def add_category_bp(app: APIFlask):
     @category_bp.output(generic_output_schema)
     def delete_category_url(branch: str, category_id: str, url: str) -> GenericOutput:
         db = get_db()
-        db.mappings.delete_url_category(branch, category_id, url)
+        error = db.mappings.delete_url_category(branch, category_id, url)
+        if error:
+            return ErrorResponse(error)
         return GenericOutput(
             status='success',
             message='URL removed from category successfully',

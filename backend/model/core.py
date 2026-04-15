@@ -3,6 +3,7 @@ from datetime import datetime
 
 from db.abc.db import DBInterface
 from model.types.core import Core, Commit
+from model.types.error import ModelError, CanError
 from routes.types.core import RestCommit
 from util.branch_names import BRANCH_PROD, user_branch_name
 
@@ -42,7 +43,7 @@ class CoreModel:
         return new_commit.to_rest(self.backend)
 
 
-    def commit(self, author: str, description: str) -> Commit:
+    def commit(self, author: str, description: str) -> CanError[Commit]:
         """Commit staged changes to the production Tag"""
         core = Core.read(self.backend)
         prod_commit_hash = core.branches[BRANCH_PROD]
@@ -50,7 +51,7 @@ class CoreModel:
         # fetch current user commit
         user_commit = Commit.read(self.backend, user_branch_name(author))
         if user_commit.parent_commit_hash != prod_commit_hash:
-            raise Exception("User Branch is not based on the latest production commit")
+            return None, ModelError("User Branch is not based on the latest production commit")
 
         # update for publishing
         user_commit.description = description
@@ -63,4 +64,4 @@ class CoreModel:
         # this also clears the uuid, so that it does not get reused
         self.reset_user_branch(author)
 
-        return user_commit
+        return user_commit, None

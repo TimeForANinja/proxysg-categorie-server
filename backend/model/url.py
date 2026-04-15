@@ -4,6 +4,7 @@ from uuid import uuid4
 from db.abc.db import DBInterface
 from model.types.core import Commit
 from model.types.mappings import URLCategoryMapping
+from model.types.error import ModelError, CanError
 from model.types.url import URL
 
 
@@ -41,13 +42,13 @@ class URLModel:
             self,
             branch: str, url_id: str,
             value: Optional[str],
-    ) -> URL:
+    ) -> CanError[URL]:
         """Update the value of an existing URL"""
         commit = Commit.read_branch(self.backend, branch)
 
         url, url_hash = self._find_url(commit, url_id)
         if not url:
-            raise Exception("URL not found")
+            return None, ModelError("URL not found")
 
         # update url
         if value:
@@ -61,15 +62,15 @@ class URLModel:
         # update branch with new commit
         commit.write_branch(self.backend, branch)
 
-        return url
+        return url, None
 
-    def delete_url(self, branch: str, url_id: str) -> None:
+    def delete_url(self, branch: str, url_id: str) -> Optional[ModelError]:
         """Delete a URL by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
         url, url_hash = self._find_url(commit, url_id)
         if not url:
-            raise Exception("URL not found")
+            return ModelError("URL not found")
 
         # update commit, removing the url
         commit.head.urls.remove(url_hash)
@@ -77,6 +78,7 @@ class URLModel:
 
         # update branch with new commit
         commit.write_branch(self.backend, branch)
+        return None
 
     def _remove_url_related(self, commit: Commit, url_id: str) -> None:
         # all mappings using this url

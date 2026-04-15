@@ -4,6 +4,7 @@ from uuid import uuid4
 from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Commit
+from model.types.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 
 
@@ -41,13 +42,13 @@ class CategoryModel:
             self,
             branch: str, category_id: str,
             name: Optional[str],
-    ) -> Category:
+    ) -> CanError[Category]:
         """Update the name of an existing Category"""
         commit = Commit.read_branch(self.backend, branch)
 
         cat, cat_hash = self._find_category(commit, category_id)
         if not cat:
-            raise Exception("Category not found")
+            return None, ModelError("Category not found")
 
         # update category
         if name:
@@ -61,15 +62,15 @@ class CategoryModel:
         # update branch with new commit
         commit.write_branch(self.backend, branch)
 
-        return cat
+        return cat, None
 
-    def delete_category(self, branch: str, category_id: str) -> None:
+    def delete_category(self, branch: str, category_id: str) -> Optional[ModelError]:
         """Delete a Category by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
         cat, cat_hash = self._find_category(commit, category_id)
         if not cat:
-            raise Exception("Category not found")
+            return ModelError("Category not found")
 
         # update commit, removing the category
         commit.head.categories.remove(cat_hash)
@@ -77,6 +78,7 @@ class CategoryModel:
 
         # update branch with new commit
         commit.write_branch(self.backend, branch)
+        return None
 
     def _remove_category_related(self, commit: Commit, category_id: str) -> None:
         # all mappings using this category
