@@ -90,7 +90,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     // helper function, triggered when the "copy" button is pressed
     const handleCopy = async () => {
         // copy ID to clipboard
-        await navigator.clipboard.writeText(token.token_value);
+        await navigator.clipboard.writeText(`${window.location.origin}/api/compile/${token.token_value}`);
 
         // Change the look of the icon for a few seconds
         setIsCopied(true);

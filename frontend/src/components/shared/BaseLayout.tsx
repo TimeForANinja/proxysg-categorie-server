@@ -6,10 +6,15 @@ import {
     Typography,
     Button,
     Box,
+    IconButton,
+    Menu,
+    MenuItem,
 } from '@mui/material';
 import BranchSelector from './BranchSelector';
 import {OptBoolean} from "../../types/OptionalBool";
 import {useAuth} from "../../hooks/useLogin";
+import {AccountCircle} from "@mui/icons-material";
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const BaseLayout = () => {
     const authMgmt = useAuth();
@@ -23,6 +28,9 @@ const BaseLayout = () => {
         // if loggedIn is unknown -> wait for login check
         // if loggedIn is true -> do nothing and stay on this page
     }, [authMgmt, navigate])
+
+    const [isMenuOpen, setMenuOpen] = React.useState<boolean>(false);
+    const menuRef = React.useRef(null);
 
     return (
         <>
@@ -47,10 +55,41 @@ const BaseLayout = () => {
                     <Button color="inherit" onClick={() => navigate("/history")}>History</Button>
                     <Box sx={{ flexGrow: 1 }} />
 
-                    { /* Branch Selector to the right */ }
+                    { /* Branch Selector and User Icon to the right */ }
                     <BranchSelector />
+                    <IconButton ref={menuRef}
+                                size="large"
+                                edge="end"
+                                aria-label="account of current user"
+                                aria-controls='primary-search-account-menu'
+                                aria-haspopup="true"
+                                onClick={() => setMenuOpen(true)}
+                                color="inherit"
+                    >
+                        <AccountCircle />
+                    </IconButton>
                 </Toolbar>
             </AppBar>
+
+            { /* User Menu */ }
+            <Menu
+                anchorEl={menuRef.current}
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+                id='primary-search-account-menu'
+                keepMounted
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+                open={isMenuOpen}
+                onClose={() => setMenuOpen(false)}
+            >
+                <MenuItem disabled={true}>Signed in as: {authMgmt.username}</MenuItem>
+                <MenuItem onClick={() => authMgmt.logout()}>Logout</MenuItem>
+            </Menu>
 
             <Outlet/>
         </>

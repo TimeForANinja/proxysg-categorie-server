@@ -36,7 +36,24 @@ class HistoryInput:
         metadata=desc('List of all UUIDs to filter by relevance for'),
     ), default=None)
 
+@dataclass
+class CommitInput:
+    message: str = to_field(String(
+        required=True,
+        metadata=desc("Commit message"),
+    ))
+
+@dataclass
+class CommitOutput(GenericOutput):
+    """Output schema for a list of recent commits"""
+    data: RestCommit = to_field(Nested(
+        rest_commit_schema,
+        required=True,
+        metadata=desc('new Commit'),
+    ))
 
 history_input_schema = class_schema(HistoryInput)()
 list_branches_output_schema = class_schema(ListBranchesOutput)()
 list_history_output_schema = class_schema(ListHistoryOutput)()
+commit_input_schema = class_schema(CommitInput)()
+commit_output_schema = class_schema(CommitOutput)()

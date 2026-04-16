@@ -2,12 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { FormControl, Select, MenuItem, Box, Divider, Typography } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import { useBranch } from '../../hooks/useBranch';
+import {DEFAULT_BRANCH, useBranch} from '../../hooks/useBranch';
 import { getBranches } from '../../api/branch';
 import { IRestBranchInfo } from '../../types/branch';
 import {useAuth} from "../../hooks/useLogin";
 
-const RO_VALUE = 'ro'
+const RO_VALUE = 'ro';
+
+const sort_branches = (list: IRestBranchInfo[]): IRestBranchInfo[] => {
+    return list.sort((a, b) => {
+        // default should always be first
+        if (a.name == DEFAULT_BRANCH) {
+            return -1;
+        } else if (b.name == DEFAULT_BRANCH) {
+            return 1;
+        }
+        // next should be the user branch, identified by not being ro
+        if (a.permission !== RO_VALUE) {
+            return -1;
+        } else if (b.permission !== RO_VALUE) {
+            return 1;
+        }
+        // lastly, sort alphabetically
+        return a.name.localeCompare(b.name);
+    });
+};
 
 const BranchSelector = () => {
     const authMgmt = useAuth();
@@ -69,7 +88,7 @@ const BranchSelector = () => {
                         '.MuiSvgIcon-root': { color: activeColor }
                     }}
                 >
-                    {branches.map((branch) => (
+                    {sort_branches(branches).map((branch) => (
                         <MenuItem key={branch.name} value={branch.name}>
                             <Typography variant="body2" sx={{ color: branch.permission === RO_VALUE ? '#ff1744' : 'inherit' }}>
                                 {branch.name}

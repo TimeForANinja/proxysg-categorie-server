@@ -31,3 +31,22 @@ export const resetBranches = async (userToken: string): Promise<GenericOutput> =
 
     return data;
 }
+
+export const doCommit = async (userToken: string, message: string): Promise<GenericOutput> => {
+    const response = await fetch('/api/me/commit', {
+        method: 'POST',
+        headers: {
+            'jwt-token': userToken,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+    });
+
+    const data: GenericOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to reset branches`);
+    }
+
+    return data;
+}

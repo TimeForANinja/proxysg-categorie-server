@@ -5,7 +5,9 @@ from auth.auth_user import AuthUser
 from db.db_singleton import get_db
 from log import log_debug
 from routes.schemas.core import ListBranchesOutput, ListHistoryOutput, list_branches_output_schema, \
-    list_history_output_schema, history_input_schema, HistoryInput
+    list_history_output_schema, history_input_schema, HistoryInput, CommitInput, commit_input_schema, CommitOutput, \
+    commit_output_schema
+from routes.schemas.error import ErrorResponse, OutCanError
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 from routes.types.core import RestBranchInfo
 
@@ -47,18 +49,49 @@ def add_core_bp(app: APIFlask):
             data=data,
         )
 
-    @core_bp.post('/api/branch/<branch>/history')
+    @core_bp.get('/api/branch/<branch>/history')
     @core_bp.doc(summary='List commit history', description='Fetch a list of recent commits for a given branch', tags=['Core'])
+    @core_bp.output(list_history_output_schema)
+    @core_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
+    def get_history(branch: str) -> ListHistoryOutput:
+        db = get_db()
+        commits = db.specials.fetch_commits(branch, None)
+        return ListHistoryOutput(
+            status='success',
+            message='History fetched successfully',
+            data=commits,
+        )
+
+    @core_bp.post('/api/branch/<branch>/history')
+    @core_bp.doc(summary='List commit history', description='Fetch a list of recent commits for a given branch, including filtering for specific uuid involvement', tags=['Core'])
     @core_bp.input(history_input_schema, location='json', arg_name='history_filter_data')
     @core_bp.output(list_history_output_schema)
     @core_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
-    def get_history(branch: str, history_filter_data: HistoryInput) -> ListHistoryOutput:
+    def get_history_filter(branch: str, history_filter_data: HistoryInput) -> ListHistoryOutput:
         db = get_db()
         commits = db.specials.fetch_commits(branch, history_filter_data.filter_uuid)
         return ListHistoryOutput(
             status='success',
             message='History fetched successfully',
             data=commits,
+        )
+
+    @core_bp.post('/api/me/commit')
+    @core_bp.doc(summary='Commit ', description='Commit current User-Branch to Prod', tags=['Core'])
+    @core_bp.input(commit_input_schema, location='json', arg_name='input_data')
+    @core_bp.output(commit_output_schema)
+    @core_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
+    def do_commit(input_data: CommitInput) -> OutCanError[CommitOutput]:
+        user: AuthUser = auth.current_user
+
+        db = get_db()
+        commit, error = db.core.commit(user.username, input_data.message)
+        if error:
+            return ErrorResponse(error)
+        return CommitOutput(
+            status='success',
+            message='Successfully committed to production',
+            data=commit,
         )
 
     app.register_blueprint(core_bp)

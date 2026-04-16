@@ -10,12 +10,16 @@ interface BranchContextType {
 const UseBranch = createContext<BranchContextType | undefined>(undefined);
 
 export const BranchProvider = ({ children }: { children: ReactNode }) => {
-    // Default branch is "b_prod"
-    const [currentBranch, setCurrentBranch] = useState<string>('b_prod');
+    const [currentBranch, setCurrentBranch] = useState<string>(readBranch());
     const [isLocked, setIsLocked] = useState<boolean>(false);
 
+    const set_branch_wrapper = React.useCallback((branch: string) => {
+        saveBranch(branch);
+        setCurrentBranch(branch);
+    }, [setCurrentBranch]);
+
     return (
-        <UseBranch.Provider value={{ currentBranch, setCurrentBranch, isLocked, setIsLocked }}>
+        <UseBranch.Provider value={{ currentBranch, setCurrentBranch: set_branch_wrapper, isLocked, setIsLocked }}>
             {children}
         </UseBranch.Provider>
     );
@@ -28,3 +32,18 @@ export const useBranch = () => {
     }
     return context;
 };
+
+const LOCAL_STORAGE_KEY_BRANCH = 'app_branch';
+export const DEFAULT_BRANCH = 'b_prod';
+
+export const readBranch = (): string => {
+    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_BRANCH) ?? '{}')?.branch ?? DEFAULT_BRANCH;
+}
+
+export const removeBranch = () => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY_BRANCH)
+}
+
+export const saveBranch = (branch: string) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY_BRANCH, JSON.stringify({ branch }));
+}

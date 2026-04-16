@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     React.useEffect(() => {
         AuthManager.getInitialState().then(state => setState(state));
-    },[])
+    }, []);
 
     if (authManager.loggedIn === OptBoolean.Unknown) {
         return (
@@ -130,16 +130,16 @@ export const useAuth = (): AuthManager => {
     return context;
 };
 
-const LOCAL_STORAGE_KEY = 'app_user';
+const LOCAL_STORAGE_KEY_USER = 'app_user';
 
 export const readLoginToken = (): IUser => {
-    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) ?? '{}');
+    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_USER) ?? '{}');
 }
 
 export const removeLoginToken = () => {
-    localStorage.removeItem(LOCAL_STORAGE_KEY)
+    localStorage.removeItem(LOCAL_STORAGE_KEY_USER)
 }
 
 export const saveLoginToken = (user: IUser) => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+    localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(user));
 }
