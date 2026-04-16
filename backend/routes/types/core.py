@@ -4,6 +4,9 @@ from marshmallow.fields import Integer, List, String
 from marshmallow.validate import OneOf
 
 from marshmallow_dataclass import class_schema
+
+from auth.auth_user import AuthUser
+from util.branch_names import BRANCH_PROD, user_branch_name
 from util.schema import desc, to_field
 
 
@@ -56,6 +59,12 @@ class RestBranchInfo:
         metadata=desc('Name of the Branch')
     ))
     permission: str = to_field(String(required=True, metadata=desc('Permission for the Branch (ro/rw)')))
+
+    @classmethod
+    def get_permission(cls, branch: str, user: AuthUser) -> str:
+        if branch == user_branch_name(user.username):
+            return 'rw'
+        return 'ro'
 
 
 rest_commit_schema = class_schema(RestCommit)()

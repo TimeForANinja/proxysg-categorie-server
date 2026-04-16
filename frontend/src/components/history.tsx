@@ -5,13 +5,16 @@ import {getHistory} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
 import {useBranch} from "../hooks/useBranch";
 import {IRestCommit} from "../types/history";
+import {useAuth} from "../hooks/useLogin";
 
 function HistoryPage() {
+    const authMgmt = useAuth();
     const { currentBranch } = useBranch();
+
     const [commits, setCommits] = React.useState<IRestCommit[]>([]);
 
     React.useEffect(() => {
-        getHistory(currentBranch)
+        getHistory(authMgmt.token, currentBranch)
             .then((commitData) => {
                 // save history to state
                 setCommits(commitData);

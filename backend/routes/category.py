@@ -1,4 +1,6 @@
 from apiflask import APIBlueprint, APIFlask
+
+from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
 from log import log_debug
 from routes.schemas.category import ListCategoryOutput, CategoryOutput, category_input_schema, CategoryInput, \
@@ -10,12 +12,15 @@ from routes.schemas.generic_output import GenericOutput, generic_output_schema
 
 def add_category_bp(app: APIFlask):
     log_debug('ROUTES', 'Adding Category Blueprint')
+    auth_if = get_auth_if(app)
+    auth = auth_if.get_auth()
     category_bp = APIBlueprint('Categories', __name__)
 
 
     @category_bp.get('/api/branch/<branch>/category')
     @category_bp.doc(summary='List all Categories', description='List all Categories for a given branch', tags=['Categories'])
     @category_bp.output(list_category_output_schema)
+    @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
     def get_categories(branch: str) -> ListCategoryOutput:
         db = get_db()
         categories = db.specials.fetch_categories(branch)
@@ -29,6 +34,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.doc(summary='Create a Category', description='Create a new Category for a given branch', tags=['Categories'])
     @category_bp.input(category_input_schema, location='json', arg_name='category_data')
     @category_bp.output(category_output_schema)
+    @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_category(branch: str, category_data: CategoryInput) -> CategoryOutput:
         db = get_db()
         category = db.categories.create_category(branch, category_data.name)
@@ -42,6 +48,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.doc(summary='Update a Category', description='Update a Category by ID for a given branch', tags=['Categories'])
     @category_bp.input(category_input_schema, location='json', arg_name='category_data')
     @category_bp.output(category_output_schema)
+    @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_category(branch: str, category_id: str, category_data: CategoryInput) -> OutCanError[CategoryOutput]:
         db = get_db()
         category, error = db.categories.update_category(branch, category_id, category_data.name)
@@ -56,6 +63,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.delete('/api/branch/<branch>/category/<category_id>')
     @category_bp.doc(summary='Delete a Category', description='Delete a Category by ID for a given branch', tags=['Categories'])
     @category_bp.output(generic_output_schema)
+    @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_category(branch: str, category_id: str) -> GenericOutput:
         db = get_db()
         error = db.categories.delete_category(branch, category_id)
@@ -70,6 +78,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.get('/api/branch/<branch>/category/<category_id>/url')
     @category_bp.doc(summary='List all URLs in Category', description='List all URLs and their constraints for a given category', tags=['Categories', 'Urls', 'Mapping'])
     @category_bp.output(constrained_url_list_output_schema)
+    @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
     def get_category_urls(branch: str, category_id: str) -> ConstrainedURLListOutput:
         db = get_db()
         constrained_urls = db.mappings.get_category_urls(branch, category_id)
@@ -83,6 +92,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.doc(summary='Add URL to Category', description='Add a new URL mapping to a category', tags=['Categories', 'Urls', 'Mapping'])
     @category_bp.input(url_category_mapping_input_schema, location='json', arg_name='mapping_data')
     @category_bp.output(generic_output_schema)
+    @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def add_category_url(branch: str, category_id: str, mapping_data: URLCategoryMappingInput) -> GenericOutput:
         db = get_db()
         error = db.mappings.add_url_category(
@@ -101,6 +111,7 @@ def add_category_bp(app: APIFlask):
     @category_bp.delete('/api/branch/<branch>/category/<category_id>/url/<url>')
     @category_bp.doc(summary='Remove URL from Category', description='Remove a URL mapping from a category', tags=['Categories', 'Urls', 'Mapping'])
     @category_bp.output(generic_output_schema)
+    @category_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_category_url(branch: str, category_id: str, url: str) -> GenericOutput:
         db = get_db()
         error = db.mappings.delete_url_category(branch, category_id, url)

@@ -8,7 +8,9 @@ import HistoryPage from "./components/history";
 import HomePage from "./components/home";
 import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
-import { BranchProvider } from "./hooks/useBranch";
+import {BranchProvider} from "./hooks/useBranch";
+import {AuthProvider} from "./hooks/useLogin";
+import LoginPage from "./components/login";
 
 function App() {
     const router = createBrowserRouter([
@@ -38,18 +40,24 @@ function App() {
             ],
         },
 
+        {
+            path: "/login",
+            element: <LoginPage/>,
+        },
+
         // Default wildcard route to redirect to "/"
         {
             path: "*",
             element: <RedirectToHome/>,
         },
-
     ]);
 
     return (
-        <BranchProvider>
-            <RouterProvider router={router}/>
-        </BranchProvider>
+        <AuthProvider>
+            <BranchProvider>
+                <RouterProvider router={router}/>
+            </BranchProvider>
+        </AuthProvider>
     );
 }
 

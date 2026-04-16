@@ -8,9 +8,21 @@ import {
     Box,
 } from '@mui/material';
 import BranchSelector from './BranchSelector';
+import {OptBoolean} from "../../types/OptionalBool";
+import {useAuth} from "../../hooks/useLogin";
 
 const BaseLayout = () => {
+    const authMgmt = useAuth();
     const navigate= useNavigate();
+
+    React.useEffect(() => {
+        if (authMgmt.loggedIn === OptBoolean.No) {
+            // if we are not logged in, then enforce login
+            navigate('/login');
+        }
+        // if loggedIn is unknown -> wait for login check
+        // if loggedIn is true -> do nothing and stay on this page
+    }, [authMgmt, navigate])
 
     return (
         <>

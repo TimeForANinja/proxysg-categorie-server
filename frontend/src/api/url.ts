@@ -3,8 +3,10 @@ import {GenericOutput} from "../types/api";
 
 const getBaseUrl = (branch: string) => `/api/branch/${branch}`;
 
-export const getURLs = async (branch: string): Promise<IRestURLDetail[]> => {
-    const response = await fetch(`${getBaseUrl(branch)}/url`);
+export const getURLs = async (userToken: string, branch: string): Promise<IRestURLDetail[]> => {
+    const response = await fetch(`${getBaseUrl(branch)}/url`, {
+        headers: { 'jwt-token': userToken },
+    });
     const data: IListURLOutput = await response.json();
 
     if (!response.ok || data.status === "failed") {
@@ -14,10 +16,11 @@ export const getURLs = async (branch: string): Promise<IRestURLDetail[]> => {
     return data.data;
 }
 
-export const createURL = async (branch: string, url: string): Promise<IURL> => {
+export const createURL = async (userToken: string, branch: string, url: string): Promise<IURL> => {
     const response = await fetch(`${getBaseUrl(branch)}/url`, {
         method: 'POST',
         headers: {
+            'jwt-token': userToken,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ url }),
@@ -32,10 +35,11 @@ export const createURL = async (branch: string, url: string): Promise<IURL> => {
     return data.data;
 }
 
-export const updateURL = async (branch: string, urlId: string, url: string): Promise<IURL> => {
+export const updateURL = async (userToken: string, branch: string, urlId: string, url: string): Promise<IURL> => {
     const response = await fetch(`${getBaseUrl(branch)}/url/${urlId}`, {
         method: 'PUT',
         headers: {
+            'jwt-token': userToken,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ url }),
@@ -50,12 +54,10 @@ export const updateURL = async (branch: string, urlId: string, url: string): Pro
     return data.data;
 }
 
-export const deleteURL = async (branch: string, urlId: string): Promise<GenericOutput> => {
+export const deleteURL = async (userToken: string, branch: string, urlId: string): Promise<GenericOutput> => {
     const response = await fetch(`${getBaseUrl(branch)}/url/${urlId}`, {
         method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'jwt-token': userToken },
     });
 
     const data: GenericOutput = await response.json();
@@ -67,10 +69,11 @@ export const deleteURL = async (branch: string, urlId: string): Promise<GenericO
     return data;
 }
 
-export const addURLCategory = async (branch: string, categoryId: string, mapping: IURLCategoryMappingInput): Promise<GenericOutput> => {
+export const addURLCategory = async (userToken: string, branch: string, categoryId: string, mapping: IURLCategoryMappingInput): Promise<GenericOutput> => {
     const response = await fetch(`${getBaseUrl(branch)}/category/${categoryId}/url`, {
         method: 'POST',
         headers: {
+            'jwt-token': userToken,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(mapping),
@@ -85,12 +88,10 @@ export const addURLCategory = async (branch: string, categoryId: string, mapping
     return data;
 }
 
-export const deleteURLCategory = async (branch: string, categoryId: string, url: string): Promise<GenericOutput> => {
+export const deleteURLCategory = async (userToken: string, branch: string, categoryId: string, url: string): Promise<GenericOutput> => {
     const response = await fetch(`${getBaseUrl(branch)}/category/${categoryId}/url/${url}`, {
         method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'jwt-token': userToken },
     });
 
     const data: GenericOutput = await response.json();

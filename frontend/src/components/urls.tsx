@@ -37,17 +37,17 @@ import {SearchParser} from "../searchParser";
 import {getHistory} from "../api/history";
 import {KVaddRAW} from "../types/stringKV";
 import { useBranch } from "../hooks/useBranch";
-import {IConstraint, IRestURLDetail, UrlMappingFieldsRaw, URLMappingToKV} from "../types/url";
+import {IRestURLDetail, UrlMappingFieldsRaw, URLMappingToKV} from "../types/url";
 import HistoryTable from "./shared/HistoryTable";
 import {IRestCommit} from "../types/history";
 import {TriState} from "../types/EditDialogState";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
-import {CategoryPicker} from "./shared/CategoryPicker";
 import {getCategories} from "../api/category";
 import {buildLUTFromID, getLUTValues, LUT} from "../types/LookUpTable";
 import {ICategory} from "../types/category";
 import {formatConstraint} from "../util/DateString";
 import {simpleStringCheck} from "../util/InputValidators";
+import {useAuth} from "../hooks/useLogin";
 
 interface BuildRowProps {
     urlDetail: IRestURLDetail,
@@ -67,6 +67,8 @@ interface BuildRowProps {
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const { urlDetail, branch, onEdit, onDelete, categories, onRefresh } = props;
+    const authMgmt = useAuth();
+
     const [open, setOpen] = React.useState(false);
     const [history, setHistory] = React.useState<IRestCommit[]>([]);
     const [categorySearch, setCategorySearch] = React.useState('');
@@ -78,7 +80,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
-            getHistory(branch, [urlDetail.url.id]).then(setHistory).catch(console.error);
+            getHistory(authMgmt.token, branch, [urlDetail.url.id]).then(setHistory).catch(console.error);
         }
         setOpen(!open);
     };
@@ -99,7 +101,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         const end = newEndDate ? Math.floor(new Date(newEndDate).getTime() / 1000) : 0;
 
         try {
-            await addURLCategory(branch, newCategoryId, {
+            await addURLCategory(authMgmt.token, branch, newCategoryId, {
                 url: urlDetail.url.id,
                 constraint: (start || end) ? { comment: '', start, end } : undefined
             });
@@ -114,7 +116,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const handleDeleteMapping = async (categoryId: string) => {
         try {
-            await deleteURLCategory(branch, categoryId, urlDetail.url.id);
+            await deleteURLCategory(authMgmt.token, branch, categoryId, urlDetail.url.id);
             onRefresh();
         } catch (e) {
             console.error(e);
@@ -292,7 +294,9 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 });
 
 function MatchingListPage() {
+    const authMgmt = useAuth();
     const {currentBranch} = useBranch();
+
     // State info for the Page
     const [urls, setURLs] = React.useState<IRestURLDetail[]>([]);
     const [categories, setCategories] = React.useState<LUT<ICategory>>({});
@@ -317,7 +321,7 @@ function MatchingListPage() {
 
     // Load urls From backend
     const fetchData = React.useCallback(() => {
-        Promise.all([getURLs(currentBranch), getCategories(currentBranch)])
+        Promise.all([getURLs(authMgmt.token, currentBranch), getCategories(authMgmt.token, currentBranch)])
             .then(([urlsData, categoriesData]) => {
                 setURLs(urlsData);
                 setCategories(buildLUTFromID(categoriesData));
@@ -344,7 +348,7 @@ function MatchingListPage() {
     }, []);
     const handleDeleteConfirmation = (del: boolean) => {
         if (del && isDeleteDialogOpen != null) {
-            deleteURL(currentBranch, isDeleteDialogOpen.url.id).then(() => {
+            deleteURL(authMgmt.token, currentBranch, isDeleteDialogOpen.url.id).then(() => {
                 fetchData();
             });
         }
@@ -354,10 +358,10 @@ function MatchingListPage() {
     const handleSave = async (id: string | null, urlValue: string) => {
         if (id == null) {
             // create new URL
-            await createURL(currentBranch, urlValue);
+            await createURL(authMgmt.token, currentBranch, urlValue);
         } else {
             // update existing URL
-            await updateURL(currentBranch, id, urlValue);
+            await updateURL(authMgmt.token, currentBranch, id, urlValue);
         }
         fetchData();
         handleEditDialogClose();

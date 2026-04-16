@@ -47,6 +47,7 @@ import {
 import {ICategory} from "../types/category";
 import {KVaddRAW} from "../types/stringKV";
 import {useBranch} from "../hooks/useBranch";
+import {useAuth} from "../hooks/useLogin";
 
 const TIME_SECONDS = 1000;
 
@@ -77,6 +78,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         onRefresh,
         branch,
     } = props;
+    const authMgmt = useAuth();
 
     const token = tokenDetail.token;
 
@@ -98,10 +100,10 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const handleChange = (newCats: string[], added: string[], removed: string[]) => {
         const tasks = []
         for (const a of added) {
-            tasks.push(addTokenCategory(branch, token.id, a))
+            tasks.push(addTokenCategory(authMgmt.token, branch, token.id, a))
         }
         for (const r of removed) {
-            tasks.push(deleteTokenCategory(branch, token.id, r))
+            tasks.push(deleteTokenCategory(authMgmt.token, branch, token.id, r))
         }
         Promise.all(tasks).then(() => {
             onRefresh();
@@ -149,6 +151,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 });
 
 function ApiTokenPage() {
+    const authMgmt = useAuth();
     const { currentBranch } = useBranch();
     // State info for the Page
     const [tokens, setTokens] = React.useState<IRestTokenDetail[]>([]);
@@ -177,7 +180,7 @@ function ApiTokenPage() {
 
     // Load tokens (& Categories) From backend
     const fetchData = React.useCallback(() => {
-        Promise.all([ getTokens(currentBranch), getCategories(currentBranch)])
+        Promise.all([ getTokens(authMgmt.token, currentBranch), getCategories(authMgmt.token, currentBranch)])
             .then(([tokenData, categoryData]) => {
                 setTokens(tokenData);
                 setCategory(buildLUTFromID(categoryData))
@@ -202,11 +205,11 @@ function ApiTokenPage() {
     const handleSave = async (tokenID: string|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
-            await createToken(currentBranch, token)
+            await createToken(authMgmt.token, currentBranch, token)
             fetchData();
         } else {
             // update existing token
-            await updateToken(currentBranch, tokenID, token)
+            await updateToken(authMgmt.token, currentBranch, tokenID, token)
             fetchData();
         }
         handleEditDialogClose();
@@ -219,7 +222,7 @@ function ApiTokenPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteToken(currentBranch, isDeleteDialogOpen.id).then(() => {
+            deleteToken(authMgmt.token, currentBranch, isDeleteDialogOpen.id).then(() => {
                 // refresh the list
                 fetchData();
             });
@@ -228,7 +231,7 @@ function ApiTokenPage() {
     }
 
     const handleRoll = React.useCallback((token: IApiToken) => {
-        rollToken(currentBranch, token.id).then(() => {
+        rollToken(authMgmt.token, currentBranch, token.id).then(() => {
             fetchData();
         }).catch((error) => console.error("Error rolling token:", error));
     }, [currentBranch, fetchData]);

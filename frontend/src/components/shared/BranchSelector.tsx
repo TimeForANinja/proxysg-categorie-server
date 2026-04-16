@@ -5,15 +5,18 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { useBranch } from '../../hooks/useBranch';
 import { getBranches } from '../../api/branch';
 import { IRestBranchInfo } from '../../types/branch';
+import {useAuth} from "../../hooks/useLogin";
 
 const RO_VALUE = 'ro'
 
 const BranchSelector = () => {
+    const authMgmt = useAuth();
     const { currentBranch, setCurrentBranch, isLocked, setIsLocked } = useBranch();
+
     const [branches, setBranches] = useState<IRestBranchInfo[]>([]);
 
     const refreshBranches = () => {
-        getBranches().then(data => {
+        getBranches(authMgmt.token).then(data => {
             setBranches(data);
             if (data.length > 0) {
                 const names = data.map(b => b.name);

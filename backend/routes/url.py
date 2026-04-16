@@ -1,4 +1,6 @@
 from apiflask import APIBlueprint, APIFlask
+
+from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
 from log import log_debug
 from routes.schemas.error import OutCanError, ErrorResponse
@@ -9,11 +11,14 @@ from routes.schemas.url import ListURLOutput, list_url_output_schema, url_input_
 
 def add_url_bp(app: APIFlask):
     log_debug('ROUTES', 'Adding URL Blueprint')
+    auth_if = get_auth_if(app)
+    auth = auth_if.get_auth()
     url_bp = APIBlueprint('Urls', __name__)
 
     @url_bp.get('/api/branch/<branch>/url')
     @url_bp.doc(summary='List all URLs', description='List all URLs and their categories for a given branch', tags=['Urls'])
     @url_bp.output(list_url_output_schema)
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RO])
     def get_urls(branch: str) -> ListURLOutput:
         db = get_db()
         urls = db.specials.fetch_url_list(branch)
@@ -27,6 +32,7 @@ def add_url_bp(app: APIFlask):
     @url_bp.doc(summary='Create a URL', description='Create a new URL for a given branch', tags=['Urls'])
     @url_bp.input(url_input_schema, location='json', arg_name='url_data')
     @url_bp.output(url_output_schema)
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def create_url(branch: str, url_data: URLInput) -> URLOutput:
         db = get_db()
         url = db.urls.create_url(branch, url_data.url)
@@ -40,6 +46,7 @@ def add_url_bp(app: APIFlask):
     @url_bp.doc(summary='Update a URL', description='Update a URL by ID for a given branch', tags=['Urls'])
     @url_bp.input(url_input_schema, location='json', arg_name='url_data')
     @url_bp.output(url_output_schema)
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def update_url(branch: str, url_id: str, url_data: URLInput) -> OutCanError[URLOutput]:
         db = get_db()
         url, error = db.urls.update_url(branch, url_id, url_data.url)
@@ -54,6 +61,7 @@ def add_url_bp(app: APIFlask):
     @url_bp.delete('/api/branch/<branch>/url/<url_id>')
     @url_bp.doc(summary='Delete a URL', description='Delete a URL by ID for a given branch', tags=['Urls'])
     @url_bp.output(generic_output_schema)
+    @url_bp.auth_required(auth, roles=[auth_if.AUTH_ROLES_RW])
     def delete_url(branch: str, url_id: str) -> GenericOutput:
         db = get_db()
         error = db.urls.delete_url(branch, url_id)

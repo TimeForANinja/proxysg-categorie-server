@@ -45,6 +45,7 @@ import {IRestCommit} from "../types/history";
 import {KVaddRAW} from "../types/stringKV";
 import {useBranch} from "../hooks/useBranch";
 import HistoryTable from "./shared/HistoryTable";
+import {useAuth} from "../hooks/useLogin";
 
 interface BuildRowProps {
     category: ICategory,
@@ -67,7 +68,9 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         onDelete,
         branch,
     } = props;
+    const authMgmt = useAuth();
     const navigate = useNavigate();
+
     const [open, setOpen] = React.useState(false);
     const [history, setHistory] = React.useState<IRestCommit[]>([]);
 
@@ -82,7 +85,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
-            getHistory(branch, [category.id]).then(setHistory).catch(console.error);
+            getHistory(authMgmt.token, branch, [category.id]).then(setHistory).catch(console.error);
         }
         setOpen(!open);
     };
@@ -127,6 +130,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 });
 
 function CategoriesPage() {
+    const authMgmt = useAuth();
     const { currentBranch } = useBranch();
     // State info for the Page
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
@@ -154,7 +158,7 @@ function CategoriesPage() {
 
     // load categories from the backend
     React.useEffect(() => {
-        Promise.all([getCategories(currentBranch)])
+        Promise.all([getCategories(authMgmt.token, currentBranch)])
             .then(([categoriesData]) => {
                 setCategory(buildLUTFromID(categoriesData));
             })
@@ -174,11 +178,11 @@ function CategoriesPage() {
     const handleSave = async (catID: string | null, category: IMutableCategory) => {
         if (catID == null) {
             // add the new category
-            const newCat = await createCategory(currentBranch, category)
+            const newCat = await createCategory(authMgmt.token, currentBranch, category)
             setCategory(pushLUT(categories, newCat));
         } else {
             // update existing category
-            const updatedCat = await updateCategory(currentBranch, catID, category);
+            const updatedCat = await updateCategory(authMgmt.token, currentBranch, catID, category);
             setCategory(pushLUT(categories, updatedCat));
         }
         handleEditDialogClose();
@@ -191,7 +195,7 @@ function CategoriesPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteCategory(currentBranch, isDeleteDialogOpen.id).then(() => {
+            deleteCategory(authMgmt.token, currentBranch, isDeleteDialogOpen.id).then(() => {
                 // remove category with ID from the store
                 setCategory(filterLUT(categories, (cat => cat.id !== isDeleteDialogOpen.id)));
             });

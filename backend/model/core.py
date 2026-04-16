@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+from auth.auth_user import AuthUser
 from db.abc.db import DBInterface
 from model.types.core import Core, Commit
 from model.types.error import ModelError, CanError
@@ -42,6 +43,12 @@ class CoreModel:
         )
         new_commit.write_branch(self.backend, user_branch_name(user))
         return new_commit.to_rest(self.backend)
+
+    def check_init(self, user: AuthUser) -> None:
+        """Check if we need to initialize a user"""
+        core = Core.read(self.backend)
+        if user_branch_name(user.username) not in core.branches:
+            self.reset_user_branch(user.username)
 
 
     def commit(self, author: str, description: str) -> CanError[Commit]:
