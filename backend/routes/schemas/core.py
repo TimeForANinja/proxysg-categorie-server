@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from apiflask.fields import List, Nested
-from typing import List as tList
+from typing import List as tList, Optional
+
+from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
 
 from routes.types.core import RestCommit, rest_commit_schema, rest_branch_info_schema, RestBranchInfo
@@ -26,6 +28,15 @@ class ListHistoryOutput(GenericOutput):
         metadata=desc('List of Commits'),
     ))
 
+@dataclass
+class HistoryInput:
+    filter_uuid: Optional[List[str]] = to_field(List(
+        String(required=True, metadata=desc('ID')),
+        required=False,
+        metadata=desc('List of all UUIDs to filter by relevance for'),
+    ), default=None)
 
+
+history_input_schema = class_schema(HistoryInput)()
 list_branches_output_schema = class_schema(ListBranchesOutput)()
 list_history_output_schema = class_schema(ListHistoryOutput)()

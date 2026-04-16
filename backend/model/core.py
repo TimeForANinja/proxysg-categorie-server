@@ -38,6 +38,7 @@ class CoreModel:
             created_at=int(datetime.now().timestamp()),
             head=Commit.read(self.backend, prod_commit_hash).head,
             parent_commit_hash=prod_commit_hash,
+            ref_changed_uuid=[],
         )
         new_commit.write_branch(self.backend, user_branch_name(user))
         return new_commit.to_rest(self.backend)

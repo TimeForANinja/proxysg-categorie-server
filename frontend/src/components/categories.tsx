@@ -82,7 +82,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
-            getHistory(branch).then(setHistory).catch(console.error);
+            getHistory(branch, [category.id]).then(setHistory).catch(console.error);
         }
         setOpen(!open);
     };

@@ -2,7 +2,7 @@ from apiflask import APIBlueprint, APIFlask
 from db.db_singleton import get_db
 from log import log_debug
 from routes.schemas.core import ListBranchesOutput, ListHistoryOutput, list_branches_output_schema, \
-    list_history_output_schema
+    list_history_output_schema, history_input_schema, HistoryInput
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 from routes.types.core import RestBranchInfo
 
@@ -41,12 +41,13 @@ def add_core_bp(app: APIFlask):
             data=data,
         )
 
-    @core_bp.get('/api/branch/<branch>/history')
+    @core_bp.post('/api/branch/<branch>/history')
     @core_bp.doc(summary='List commit history', description='Fetch a list of recent commits for a given branch', tags=['Core'])
+    @core_bp.input(history_input_schema, location='json', arg_name='history_filter_data')
     @core_bp.output(list_history_output_schema)
-    def get_history(branch: str) -> ListHistoryOutput:
+    def get_history(branch: str, history_filter_data: HistoryInput) -> ListHistoryOutput:
         db = get_db()
-        commits = db.specials.fetch_commits(branch)
+        commits = db.specials.fetch_commits(branch, history_filter_data.filter_uuid)
         return ListHistoryOutput(
             status='success',
             message='History fetched successfully',

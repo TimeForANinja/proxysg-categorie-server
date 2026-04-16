@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from db.abc.db import DBInterface
 from model.types.category import Category
@@ -19,8 +19,18 @@ class SpecialModel:
         self.backend = backend
 
 
-    def fetch_commits(self, branch: str) -> List[RestCommit]:
-        """Fetch a list of recent Commits by Name"""
+    def fetch_commits(
+            self,
+            branch: str,
+            filter_uuid: Optional[List[str]],
+    ) -> List[RestCommit]:
+        """
+        Fetch a list of recent Commits by Name
+
+        :param branch: The branch to fetch commits from
+        :param filter_uuid: The UUIDs to filter by, or None to ignore this filter
+        :return: A (filtered) list of Commits
+        """
         commits = []
 
         # load first / current commit
@@ -30,10 +40,20 @@ class SpecialModel:
         # Iterate over all elements in our linked list
         while uut_hash is not None:
             c = Commit.read(self.backend, uut_hash)
-            commits.append(c.to_rest(self.backend))
+
+            # check our filters and add to our list if we match
+            if (
+                not filter_uuid
+                or
+                any(x in c.ref_changed_uuid for x in filter_uuid)
+            ):
+                commits.append(c.to_rest(self.backend))
+
+            # update our pointer to the next commit
             uut_hash = c.parent_commit_hash
 
         return commits
+
 
     def list_branches(self) -> List[str]:
         """Fetch a list of all Branches"""

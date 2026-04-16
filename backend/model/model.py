@@ -40,6 +40,7 @@ class MyModel:
                     token_category_mappings=[],
                 ),
                 parent_commit_hash=None,
+                ref_changed_uuid=[],
             )
             first_commit_hash = first_commit.write(self.backend)
             # create core object

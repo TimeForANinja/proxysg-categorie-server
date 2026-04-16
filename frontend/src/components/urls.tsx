@@ -78,7 +78,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
-            getHistory(branch).then(setHistory).catch(console.error);
+            getHistory(branch, [urlDetail.url.id]).then(setHistory).catch(console.error);
         }
         setOpen(!open);
     };
@@ -86,6 +86,11 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const filteredMappings = urlDetail.categories.filter(m =>
         m.category.name.toLowerCase().includes(categorySearch.toLowerCase())
     );
+
+    const availableCategories = React.useMemo(() => {
+        const usedCategoryIds = new Set(urlDetail.categories.map(m => m.category.id));
+        return getLUTValues(categories).filter(c => !usedCategoryIds.has(c.id));
+    }, [categories, urlDetail.categories]);
 
     const handleAddMapping = async () => {
         if (!newCategoryId) return;
@@ -211,7 +216,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                                                     <TableCell>
                                                         <Autocomplete
                                                             size="small"
-                                                            options={getLUTValues(categories)}
+                                                            options={availableCategories}
                                                             getOptionLabel={(option) => option.name}
                                                             renderInput={(params) => <TextField {...params} label="Select Category" />}
                                                             value={newCategoryId ? categories[newCategoryId] : null}
@@ -225,7 +230,6 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                                                                 size="small"
                                                                 value={newStartDate}
                                                                 onChange={(e) => setNewStartDate(e.target.value)}
-                                                                InputLabelProps={{ shrink: true }}
                                                             />
                                                             <Typography sx={{ alignSelf: 'center' }}>-</Typography>
                                                             <TextField
@@ -233,7 +237,6 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                                                                 size="small"
                                                                 value={newEndDate}
                                                                 onChange={(e) => setNewEndDate(e.target.value)}
-                                                                InputLabelProps={{ shrink: true }}
                                                             />
                                                         </Box>
                                                     </TableCell>
@@ -254,9 +257,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                                                             <TableCell>{m.category.name}</TableCell>
                                                             <TableCell>
                                                                 {m.constraint ? (
-                                                                    <Tooltip title={`Start: ${m.constraint.start ? new Date(m.constraint.start * 1000).toLocaleDateString() : 'N/A'}, End: ${m.constraint.end ? new Date(m.constraint.end * 1000).toLocaleDateString() : 'N/A'}`}>
-                                                                        <span>{formatConstraint(m.constraint)}</span>
-                                                                    </Tooltip>
+                                                                    <span>{formatConstraint(m.constraint)}</span>
                                                                 ) : '-'}
                                                             </TableCell>
                                                             <TableCell align="right">

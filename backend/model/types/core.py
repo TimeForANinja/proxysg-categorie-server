@@ -1,8 +1,13 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from db.abc.db import DBInterface
 from db.dbm.util.simple_bson import encode_dict_str
+from model.types.category import Category
+from model.types.mappings import TokenCategoryMapping, URLCategoryMapping
+from model.types.token import Token
+from model.types.url import URL
+from model.util_changes import list_obj_diff
 from routes.types.core import RestCommit, RestStateRootTreeRootNode
 
 # Pointer towards the current Core Object
@@ -40,6 +45,7 @@ class Commit:
     created_at: int
     head: StateTreeRootNode # Root Node holding all Data
     parent_commit_hash: Optional[str] # Hash of the parent commit, None if it's the root commit
+    ref_changed_uuid: List[str] # uuid of changed objects - allows faster filtering in hindsight
 
     def to_rest(self, backend: DBInterface) -> RestCommit:
         parent_uuid: Optional[str] = None
@@ -57,6 +63,7 @@ class Commit:
     def write(self, backend: DBInterface) -> str:
         """write commit to db, and return hash"""
         head_hash = self.head.write(backend)
+        changes_hash = backend.insert_id_list(self.head.changed_compared_to(backend, self.parent_commit_hash))
         return backend.insert_obj({
             "uuid": self.uuid,
             "author": self.author,
@@ -64,6 +71,7 @@ class Commit:
             "created_at": self.created_at,
             "head": head_hash,
             "parent_commit_hash": self.parent_commit_hash,
+            "ref_changed_hash": changes_hash,
         })
 
     @staticmethod
@@ -71,6 +79,7 @@ class Commit:
         """read commit from db from hash"""
         raw_commit = backend.fetch_obj(obj_hash)
         head = StateTreeRootNode.read(backend, raw_commit["head"])
+        changes = backend.fetch_id_list(raw_commit["ref_changed_hash"])
         return Commit(
             uuid=raw_commit["uuid"],
             author=raw_commit["author"],
@@ -78,6 +87,7 @@ class Commit:
             created_at=raw_commit["created_at"],
             head=head,
             parent_commit_hash=raw_commit["parent_commit_hash"],
+            ref_changed_uuid=changes,
         )
 
     def write_branch(self, backend: DBInterface, branch: str):
@@ -137,3 +147,37 @@ class StateTreeRootNode:
             url_category_mappings=url_category_mappings,
             token_category_mappings=token_category_mappings,
         )
+
+    def changed_compared_to(self, backend: DBInterface, other_hash: Optional[str]) -> List[str]:
+        changed_uuid = set()
+        comp = Commit.read(backend, other_hash) if other_hash else None
+
+        # compare all objects
+        changed_uuid.update(list_obj_diff(
+            backend,
+            self.urls, comp.head.urls if comp else None,
+            URL, ["id"]
+        ))
+        changed_uuid.update(list_obj_diff(
+            backend,
+            self.tokens, comp.head.tokens if comp else None,
+            Token, ["id"]
+        ))
+        changed_uuid.update(list_obj_diff(
+            backend,
+            self.categories, comp.head.categories if comp else None,
+            Category, ["id"]
+        ))
+        # compare mappings
+        changed_uuid.update(list_obj_diff(
+            backend,
+            self.token_category_mappings, comp.head.token_category_mappings if comp else None,
+            TokenCategoryMapping, ["token_id", "category_id"]
+        ))
+        changed_uuid.update(list_obj_diff(
+            backend,
+            self.url_category_mappings, comp.head.url_category_mappings if comp else None,
+            URLCategoryMapping, ["url_id", "category_id"]
+        ))
+
+        return list(changed_uuid)
