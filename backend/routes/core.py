@@ -4,6 +4,7 @@ from auth.auth_singleton import get_auth_if
 from auth.auth_user import AuthUser
 from db.db_singleton import get_db
 from log import log_debug
+from model.special import ERROR_NOT_FOUND
 from routes.schemas.core import ListBranchesOutput, ListHistoryOutput, list_branches_output_schema, \
     list_history_output_schema, history_input_schema, HistoryInput, CommitInput, commit_input_schema, CommitOutput, \
     commit_output_schema
@@ -92,6 +93,32 @@ def add_core_bp(app: APIFlask):
             status='success',
             message='Successfully committed to production',
             data=commit,
+        )
+
+
+    @core_bp.get('/api/compile/<string:token_uuid>')
+    @core_bp.doc(summary='Compile Categories', description='Compile Categories for the provided Token')
+    def handle_compile(token_uuid: str):
+        db_if = get_db()
+        content, error = db_if.specials.compile_categories(token_uuid)
+        if error == ERROR_NOT_FOUND:
+            return (
+                'Token not found',
+                404,
+                {'Content-Type': 'text/plain'},
+            )
+
+        if error:
+            return (
+                'Error during compilation',
+                500,
+                {'Content-Type': 'text/plain'},
+            )
+
+        return (
+            content,
+            200,
+            {'Content-Type': 'text/plain'},
         )
 
     app.register_blueprint(core_bp)

@@ -3,15 +3,19 @@ from typing import List, Dict, Optional
 from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Core
+from model.types.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 from model.types.token import Token
 from model.types.url import URL
+from model.util_build_localdb import build_localdb
 from routes.types.core import RestCommit
 from routes.schemas.url import RestURLDetail
 from model.types.core import Commit
 from routes.types.token import RestTokenDetail
 from routes.types.url import RestConstrainedCategory
+from util.branch_names import BRANCH_PROD
 
+ERROR_NOT_FOUND = ModelError("Not Found")
 
 class SpecialModel:
     """Special Read-Only Routes useful for the Frontend"""
@@ -149,3 +153,38 @@ class SpecialModel:
             )
 
         return list(data.values())
+
+
+    def compile_categories(self, token_val: str) -> CanError[str]:
+        commit = Commit.read_branch(self.backend, BRANCH_PROD)
+
+        token = None
+        for token_hash in commit.head.tokens:
+            t = Token.read(self.backend, token_hash)
+            print(">", [t.token_value, t.id, t.description, token_val])
+            if t.token_value == token_val:
+                token = t
+
+        if not token:
+            return None, ERROR_NOT_FOUND
+
+        # TODO: update token usage
+
+        categories = [
+            Category.read(self.backend, cat_hash)
+            for cat_hash in commit.head.categories
+        ]
+        urls = [
+            URL.read(self.backend, url_hash)
+            for url_hash in commit.head.urls
+        ]
+        cat_mappings = [
+            TokenCategoryMapping.read(self.backend, map_hash)
+            for map_hash in commit.head.token_category_mappings
+        ]
+        url_mappings = [
+            URLCategoryMapping.read(self.backend, map_hash)
+            for map_hash in commit.head.url_category_mappings
+        ]
+
+        return build_localdb(token, urls, categories, cat_mappings, url_mappings), None
