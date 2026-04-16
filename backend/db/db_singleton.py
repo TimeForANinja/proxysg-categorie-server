@@ -1,7 +1,7 @@
-import os
 from flask import current_app
 from db.dbm.db import DBMDB
 from db.mongo.db import MongoDB
+from db.sqlite.db import SQLiteDB
 from db.cache.db import CacheDB
 from model.model import MyModel
 from log import log_info, log_debug
@@ -34,6 +34,11 @@ def get_db() -> MyModel:
             collection_name = mongo_cfg.get('COLLECTION', 'data')
             log_info('DB', 'Creating MongoDB DB', {'host': host, 'port': port, 'db': database_name})
             backend = MongoDB(host, port, database_name, collection_name)
+        elif db_type == 'sqlite':
+            sqlite_cfg = db_cfg.get('SQLITE', {})
+            database_name = sqlite_cfg.get('FILENAME', './data/mydatabase.sqlite')
+            log_info('DB', 'Creating SQLite DB', {'db': database_name})
+            backend = SQLiteDB(database_name)
         else:
             raise ValueError(f"Unsupported DB_TYPE: {db_type}")
 

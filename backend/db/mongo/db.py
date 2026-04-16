@@ -51,7 +51,7 @@ class MongoDB(DBInterface):
         return data
 
     def insert_obj(self, entry: Dict[Any, Any]) -> str:
-        # reuse the same hash function as DBM for constitency
+        # reuse the same hash function as DBM for consistency
         entry_hash = sha256_hash(encode_dict_str(entry))
         
         self.collection.update_one(
@@ -105,7 +105,7 @@ class MongoDB(DBInterface):
             "list": entries
         }
 
-        # reuse the same hash function as DBM for constitency
+        # reuse the same hash function as DBM for consistency
         data_hash = sha256_hash(encode_dict_str(data))
 
         self.collection.update_one(
