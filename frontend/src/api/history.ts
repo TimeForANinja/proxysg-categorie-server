@@ -1,16 +1,16 @@
 import {IRestCommit, IListHistoryOutput} from "../types/history";
 
-const baseUrl = '/api/branch';
 
 interface IHistoryInput {
     filter_uuid?: string[];
 }
 
+
 export const getHistory = async (userToken: string, branch: string, filter_uuid?: string[]): Promise<IRestCommit[]> => {
     let body: IHistoryInput = {}
     if (filter_uuid) body['filter_uuid'] = filter_uuid;
 
-    const response = await fetch(`${baseUrl}/${branch}/history`, {
+    const response = await fetch(`/api/branch/${branch}/history`, {
         method: 'POST',
         headers: {
             'jwt-token': userToken,

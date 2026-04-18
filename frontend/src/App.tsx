@@ -11,6 +11,7 @@ import {RedirectToHome} from "./RedirectToHome";
 import {BranchProvider} from "./hooks/useBranch";
 import {AuthProvider} from "./hooks/useLogin";
 import LoginPage from "./components/login";
+import SettingsPage from "./components/settings";
 
 
 function App() {
@@ -33,6 +34,10 @@ function App() {
                 {
                     path: "/url",
                     element: <MatchingListPage/>,
+                },
+                {
+                    path: "/settings",
+                    element: <SettingsPage/>,
                 },
                 {
                     path: "/",

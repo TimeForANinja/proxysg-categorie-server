@@ -14,7 +14,7 @@ import BranchSelector from './BranchSelector';
 import {OptBoolean} from "../../types/OptionalBool";
 import {useAuth} from "../../hooks/useLogin";
 import {AccountCircle} from "@mui/icons-material";
-import SettingsIcon from '@mui/icons-material/Settings';
+
 
 const BaseLayout = () => {
     const authMgmt = useAuth();
@@ -88,9 +88,11 @@ const BaseLayout = () => {
                 onClose={() => setMenuOpen(false)}
             >
                 <MenuItem disabled={true}>Signed in as: {authMgmt.username}</MenuItem>
+                <MenuItem onClick={() => navigate("/settings")}>Settings</MenuItem>
                 <MenuItem onClick={() => authMgmt.logout()}>Logout</MenuItem>
             </Menu>
 
+            { /* Outlet for the main content */}
             <Outlet/>
         </>
     );

@@ -1,10 +1,9 @@
 import {ICategory, ICategoryInput, ICategoryOutput, IListCategoryOutput} from "../types/category";
 import {GenericOutput} from "../types/api";
 
-const getBaseUrl = (branch: string) => `/api/branch/${branch}/category`;
 
 export const getCategories = async (userToken: string, branch: string): Promise<ICategory[]> => {
-    const response = await fetch(getBaseUrl(branch), {
+    const response = await fetch(`/api/branch/${branch}/category`, {
         headers: { 'jwt-token': userToken },
     });
     const data: IListCategoryOutput = await response.json();
@@ -16,8 +15,8 @@ export const getCategories = async (userToken: string, branch: string): Promise<
     return data.data;
 }
 
-export const createCategory = async (userToken: string, branch: string, category: ICategoryInput): Promise<ICategory> => {
-    const response = await fetch(getBaseUrl(branch), {
+export const createCategory = async (userToken: string, category: ICategoryInput): Promise<ICategory> => {
+    const response = await fetch('/api/branch/@me/category', {
         method: 'POST',
         headers: {
             'jwt-token': userToken,
@@ -35,8 +34,8 @@ export const createCategory = async (userToken: string, branch: string, category
     return data.data;
 };
 
-export const deleteCategory = async (userToken: string, branch: string, id: string): Promise<GenericOutput> => {
-    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
+export const deleteCategory = async (userToken: string, id: string): Promise<GenericOutput> => {
+    const response = await fetch(`/api/branch/@me/category/${id}`, {
         method: 'DELETE',
         headers: { 'jwt-token': userToken },
     });
@@ -50,8 +49,8 @@ export const deleteCategory = async (userToken: string, branch: string, id: stri
     return data;
 };
 
-export const updateCategory = async (userToken: string, branch: string, id: string, category: ICategoryInput): Promise<ICategory> => {
-    const response = await fetch(`${getBaseUrl(branch)}/${id}`, {
+export const updateCategory = async (userToken: string, id: string, category: ICategoryInput): Promise<ICategory> => {
+    const response = await fetch(`/api/branch/@me/category/${id}`, {
         method: 'PUT',
         headers: {
             'jwt-token': userToken,
