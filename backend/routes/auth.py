@@ -2,8 +2,8 @@ from apiflask import APIBlueprint
 
 from auth.auth_singleton import get_auth_if
 from db.db_singleton import get_db
-from log import log_debug
-from model.types.error import ModelError
+from util.log import log_debug
+from model.util.error import ModelError
 from routes.schemas.auth import jwt_header_schema, JWTHeaderInput, VerifyOutput, verify_output_schema, LoginOutput, \
     login_output_schema, LoginInput, login_input_schema, LoginOutputData
 from routes.schemas.error import ErrorResponse, OutCanError

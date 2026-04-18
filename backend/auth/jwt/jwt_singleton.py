@@ -1,9 +1,13 @@
 from apiflask import APIFlask
 
-from auth.util.jwt_handler import JWTHandler
+from auth.jwt.jwt_handler import JWTHandler
 
 
 def get_jwt_handler(app: APIFlask) -> JWTHandler:
+    """
+    Returns the JWTHandler singleton instance.
+    Initializes it on the first call with configuration from `JWT: LIFETIME` and `JWT: SECRET`.
+    """
     with app.app_context():
         jwt_handler = app.config.get('SINGLETONS', {}).get('JWT', None)
 

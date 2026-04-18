@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from model.types.error import ModelError
+from model.util.error import ModelError
 from routes.schemas.generic_output import GenericOutput
 
 

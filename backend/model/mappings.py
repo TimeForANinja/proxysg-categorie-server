@@ -1,12 +1,10 @@
-from typing import List, Dict, Optional
+from typing import List, Optional
 
 from db.abc.db import DBInterface
 from model.types.category import Category
-from model.types.error import ModelError
+from model.util.error import ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 from model.types.shared import Constraint
-from model.types.token import Token
-from model.types.url import URL
 from model.types.core import Commit
 from routes.types.url import RestConstrainedURL
 
@@ -20,13 +18,8 @@ class MappingModel:
         """Fetch all URLs related to a Category"""
         commit = Commit.read_branch(self.backend, branch)
 
-        # Fetch all URL, and build LUT
-        url_lut: Dict[str, URL] = {
-            u.id: u for u in [
-                URL.read(self.backend, url_hash)
-                for url_hash in commit.head.urls
-            ]
-        }
+        # Fetch URL LUT
+        url_lut = commit.head.url_lut(self.backend)
 
         data: List[RestConstrainedURL] = []
         for map_hash in commit.head.url_category_mappings:
@@ -44,12 +37,12 @@ class MappingModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # verify that url and category exist
-        url_ids = [URL.read(self.backend, url_hash).id for url_hash in commit.head.urls]
-        if url_id not in url_ids:
+        url_lut = commit.head.url_lut(self.backend)
+        if url_id not in url_lut:
             return ModelError(f"url with id {url_id} does not exist")
 
-        category_ids = [Category.read(self.backend, cat_hash).id for cat_hash in commit.head.categories]
-        if category_id not in category_ids:
+        category_lut = commit.head.category_lut(self.backend)
+        if category_id not in category_lut:
             return ModelError(f"category with id {category_id} does not exist")
 
         # check if mapping already exists
@@ -100,13 +93,9 @@ class MappingModel:
         """Fetch all categories related to a Token"""
         commit = Commit.read_branch(self.backend, branch)
 
-        # Fetch all Category, and build LUT
-        category_lut: Dict[str, Category] = {
-            c.id: c for c in [
-                Category.read(self.backend, cat_hash)
-                for cat_hash in commit.head.categories
-            ]
-        }
+        # Fetch Category LUT
+        category_lut = commit.head.category_lut(self.backend)
+
         data: List[Category] = []
         for map_hash in commit.head.token_category_mappings:
             mapping = TokenCategoryMapping.read(self.backend, map_hash)
@@ -120,12 +109,12 @@ class MappingModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # verify that token and category exist
-        token_ids = [Token.read(self.backend, token_hash).id for token_hash in commit.head.tokens]
-        if token_id not in token_ids:
+        token_lut = commit.head.token_lut(self.backend)
+        if token_id not in token_lut:
             return ModelError(f"token with id {token_id} does not exist")
 
-        category_ids = [Category.read(self.backend, cat_hash).id for cat_hash in commit.head.categories]
-        if category_id not in category_ids:
+        category_lut = commit.head.category_lut(self.backend)
+        if category_id not in category_lut:
             return ModelError(f"category with id {category_id} does not exist")
 
         # check if mapping already exists

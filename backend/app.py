@@ -13,7 +13,7 @@ from routes.category import add_category_bp
 from routes.core import add_core_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
-from log import setup_logging, log_info, log_error, log_debug
+from util.log import setup_logging, log_info, log_error, log_debug
 
 
 # Initialize APIFlask instead of Flask
@@ -95,16 +95,15 @@ def handle_error(error):
 def teardown(_exception: Any):
     # the exception parameter must be defined, or else Flask crashes
     log_debug("APP", "App teardown called")
-    # after fixing the code to not keep sqlite sessions open, no further teardown is required
-    # TODO: call db close
+    # No cleanup required for individual connections
     pass
 
 
 def init_background(a: APIFlask):
     log_debug("APP", "App init_background called")
     # start background tasks, make sure to trigger this only in one worker
-    # TODO: implement background tasks
-    pass
+    # TODO: implement bg tasks
+    #start_background_tasks(a)
 
 
 def migrate_db(a: APIFlask):

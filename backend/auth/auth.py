@@ -2,7 +2,7 @@ from typing import Optional, List, Tuple
 from apiflask import HTTPTokenAuth
 
 from auth.auth_realm import AuthRealmInterface
-from auth.auth_user import AuthUser, AUTH_ROLES_RO, AUTH_ROLES_RW
+from auth.auth_user import AuthUser
 
 
 # HTTP Header name for the Auth token
@@ -11,14 +11,9 @@ AUTH_TOKEN_KEY = 'jwt-token'
 
 class AuthHandler:
     """
-    This interface defines all methods required for:
-    * API Auth calls like login
-    * API restrictions based on the apiflask HTTPTokenAuth
+    Coordinator for multiple authentication realms.
+    Integrates with APIFlask's HTTPTokenAuth to provide authentication and authorization.
     """
-    # constants
-    AUTH_ROLES_RO = AUTH_ROLES_RO
-    AUTH_ROLES_RW = AUTH_ROLES_RW
-
     # vars
     realms: List[AuthRealmInterface]
 
@@ -27,10 +22,10 @@ class AuthHandler:
 
     def verify_token(self, token: str) -> Optional[AuthUser]:
         """
-        Validate if the provided token is valid
+        Validate if the provided token is valid by checking it against all configured realms.
 
-        :param token: Token to validate
-        :return: AuthUser object if valid, else None
+        :param token: JWT token to validate.
+        :return: AuthUser object if the token is valid in any realm, else None.
         """
         for realm in self.realms:
             user = realm.verify_token(token)
@@ -40,13 +35,12 @@ class AuthHandler:
 
     def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
         """
-        Check a login attempt
+        Check a login attempt against all configured realms.
+        Returns the first successful match.
 
-        Custom function to resolve User to Token, which will then be used for API calls
-
-        :param username: Username
-        :param password: Password
-        :return: Token if valid, else None
+        :param username: Username.
+        :param password: Password.
+        :return: A tuple of (token, AuthUser) if successful, else None.
         """
         for realm in self.realms:
             result = realm.check_login(username, password)
@@ -58,19 +52,19 @@ class AuthHandler:
     def get_auth(self) -> HTTPTokenAuth:
         """
         Build the Auth object requested by APIFlask.
+        Implemented as a Singleton.
         """
         if self.auth is None:
-            self.auth = _build_auth(self)
+            self.auth = _build_flask_auth(self)
         return self.auth
 
 
-def _build_auth(auth_if: AuthHandler):
+def _build_flask_auth(auth_if: AuthHandler):
     """
     Utility class to build the HTTPTokenAuth object.
     The object is required to use the APIFlask-integrated authentication mechanism.
     This is a simple process, since the AuthHandler defines all methods required.
     """
-
     auth = HTTPTokenAuth(
         scheme='Bearer',
         header=AUTH_TOKEN_KEY,

@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass
 from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
@@ -11,6 +12,14 @@ class Token:
     id: str = to_field(String(required=True, metadata=desc('ID of the token')))
     token_value: str = to_field(String(required=True, metadata=desc('Value of the token')))
     description: str = to_field(String(required=False, metadata=desc('Description of the token')))
+
+    @staticmethod
+    def new(description: str) -> 'Token':
+        return Token(
+            id=str(uuid.uuid4()),
+            token_value=str(uuid.uuid4()),
+            description=description,
+        )
 
     def write(self, backend: DBInterface) -> str:
         return backend.insert_obj({

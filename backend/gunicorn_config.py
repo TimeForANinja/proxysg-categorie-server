@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 from app import app, init_background, migrate_db
-from log import log_debug
+from util.log import log_debug
 
 LOCK_FILE = "/tmp/proxysg_background_initialized"
 

@@ -5,12 +5,19 @@ from typing import Generator, Dict, Any, List
 
 from db.abc.db import DBInterface
 from db.abc.constants import KEY_LENGTH, MAX_COMPACT_LIST_SIZE, TYPE_ID_LIST_SMALL, TYPE_ID_LIST_LARGE
-from db.dbm.util.hash import sha256_hash
-from db.dbm.util.simple_bson import encode_dict_str, decode_dict_str, decode_list_str, encode_list_str
+from db.util.hash import sha256_hash
+from db.util.simple_bson import encode_dict_str, decode_dict_str, decode_list_str, encode_list_str
 
 
 class SQLiteDB(DBInterface):
+    """
+    Persistent Database implementation using SQLite.
+    Provides a robust, single-file relational database backend.
+    """
     def __init__(self, db_path: str):
+        """
+        :param db_path: Path to the SQLite database file.
+        """
         super().__init__()
         self.db_path = db_path
         self._initialize_db()
@@ -24,6 +31,10 @@ class SQLiteDB(DBInterface):
 
     @contextmanager
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
+        """
+        Context manager to provide a thread-safe connection to the SQLite database.
+        Ensures the connection is closed after each operation.
+        """
         con = sqlite3.connect(self.db_path)
         try:
             yield con

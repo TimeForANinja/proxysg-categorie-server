@@ -1,10 +1,9 @@
 from typing import Optional, Union, Tuple
-from uuid import uuid4
 
 from db.abc.db import DBInterface
 from model.types.core import Commit
 from model.types.mappings import URLCategoryMapping
-from model.types.error import ModelError, CanError
+from model.util.error import ModelError, CanError
 from model.types.url import URL
 
 
@@ -24,10 +23,7 @@ class URLModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # create url
-        new_url = URL(
-            id=str(uuid4()),
-            url=value,
-        )
+        new_url = URL.new(value)
         new_url_hash = new_url.write(self.backend)
 
         # update commit with new url

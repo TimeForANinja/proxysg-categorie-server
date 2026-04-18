@@ -5,17 +5,27 @@ from typing import Generator, Dict, Any, List
 
 from db.abc.db import DBInterface
 from db.abc.constants import KEY_LENGTH, MAX_COMPACT_LIST_SIZE, TYPE_ID_LIST_SMALL, TYPE_ID_LIST_LARGE
-from db.dbm.util.simple_bson import encode_dict_str, decode_dict_str, encode_list_str, decode_list_str
-from db.dbm.util.hash import sha256_hash
+from db.util.simple_bson import encode_dict_str, decode_dict_str, encode_list_str, decode_list_str
+from db.util.hash import sha256_hash
 
 
 class DBMDB(DBInterface):
+    """
+    Persistent Database implementation using the Python `dbm` module.
+    Ideal for simple, file-based key-value storage without external dependencies.
+    """
     def __init__(self, filename):
+        """
+        :param filename: Path to the DBM database file.
+        """
         super().__init__()
         self.filename = filename
 
     @contextmanager
-    def get_connection(self) -> Generator[dbm._Database]:
+    def get_connection(self) -> Generator[dbm._Database, None, None]:
+        """
+        Context manager to handle open/close of the DBM file for each operation.
+        """
         with dbm.open(self.filename, "c") as db:
             yield db
 

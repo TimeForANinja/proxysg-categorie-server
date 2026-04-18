@@ -1,10 +1,9 @@
 from typing import Optional, Union, Tuple
-from uuid import uuid4
 
 from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Commit
-from model.types.error import CanError, ModelError
+from model.util.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 
 
@@ -24,10 +23,7 @@ class CategoryModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # create category
-        new_category = Category(
-            id=str(uuid4()),
-            name=name,
-        )
+        new_category = Category.new(name)
         new_category_hash = new_category.write(self.backend)
 
         # update commit with new category

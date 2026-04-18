@@ -2,7 +2,7 @@ from typing import Optional, Union, Tuple
 from uuid import uuid4
 
 from db.abc.db import DBInterface
-from model.types.error import CanError, ModelError
+from model.util.error import CanError, ModelError
 from model.types.mappings import TokenCategoryMapping
 from model.types.token import Token
 from model.types.core import Commit
@@ -45,11 +45,7 @@ class TokenModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # create token
-        new_token = Token(
-            id=str(uuid4()),
-            token_value=str(uuid4()),
-            description=description,
-        )
+        new_token = Token.new(description)
         new_token_hash = new_token.write(self.backend)
 
         # update commit with new token

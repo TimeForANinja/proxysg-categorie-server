@@ -3,11 +3,10 @@ from typing import List, Dict, Optional
 from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Core
-from model.types.error import CanError, ModelError
+from model.util.build_localdb import build_localdb
+from model.util.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 from model.types.token import Token
-from model.types.url import URL
-from model.util_build_localdb import build_localdb
 from routes.types.core import RestCommit
 from routes.schemas.url import RestURLDetail
 from model.types.core import Commit
@@ -15,7 +14,9 @@ from routes.types.token import RestTokenDetail
 from routes.types.url import RestConstrainedCategory
 from util.branch_names import BRANCH_PROD
 
+
 ERROR_NOT_FOUND = ModelError("Not Found")
+
 
 class SpecialModel:
     """Special Read-Only Routes useful for the Frontend"""
@@ -45,9 +46,9 @@ class SpecialModel:
         while uut_hash is not None:
             c = Commit.read(self.backend, uut_hash)
 
-            # check our filters and add to our list if we match
+            # check our filters (if provided) and add to our list if we match
             if (
-                not filter_uuid
+                filter_uuid is None
                 or
                 any(x in c.ref_changed_uuid for x in filter_uuid)
             ):
@@ -68,30 +69,16 @@ class SpecialModel:
     def fetch_categories(self, branch: str) -> List[Category]:
         """Fetch a list of all Categories"""
         head_commit = Commit.read_branch(self.backend, branch)
-        return [
-            Category.read(self.backend, h)
-            for h in head_commit.head.categories
-        ]
+        category_lut = head_commit.head.category_lut(self.backend)
+        return list(category_lut.values())
 
     def fetch_url_list(self, branch: str) -> List[RestURLDetail]:
         """Fetch a list of all URLs"""
         head_commit = Commit.read_branch(self.backend, branch)
 
-        # Fetch all URL, and build LUT
-        url_lut: Dict[str, URL] = {
-            u.id: u for u in [
-                URL.read(self.backend, url_hash)
-                for url_hash in head_commit.head.urls
-            ]
-        }
-
-        # Fetch all Category, and build a LUT
-        category_lut: Dict[str, Category] = {
-            c.id: c for c in [
-                Category.read(self.backend, cat_hash)
-                for cat_hash in head_commit.head.categories
-            ]
-        }
+        # Fetch LUTs
+        url_lut = head_commit.head.url_lut(self.backend)
+        category_lut = head_commit.head.category_lut(self.backend)
 
         # create base-objects for every URL
         data: Dict[str, RestURLDetail] = {
@@ -102,7 +89,7 @@ class SpecialModel:
             for url_id in url_lut
         }
 
-        # fill our categories property based on our mappings
+        # fill our category properties based on our mappings
         for map_hash in head_commit.head.url_category_mappings:
             mapping = URLCategoryMapping.read(self.backend, map_hash)
 
@@ -119,21 +106,9 @@ class SpecialModel:
         """Fetch a list of all Tokens"""
         head_commit = Commit.read_branch(self.backend, branch)
 
-        # Fetch all Token, and build LUT
-        token_lut: Dict[str, Token] = {
-            t.id: t for t in [
-                Token.read(self.backend, token_hash)
-                for token_hash in head_commit.head.tokens
-            ]
-        }
-
-        # Fetch all Category, and build a LUT
-        category_lut: Dict[str, Category] = {
-            c.id: c for c in [
-                Category.read(self.backend, cat_hash)
-                for cat_hash in head_commit.head.categories
-            ]
-        }
+        # Fetch LUTs
+        token_lut = head_commit.head.token_lut(self.backend)
+        category_lut = head_commit.head.category_lut(self.backend)
 
         # create base-objects for every Token
         data: Dict[str, RestTokenDetail] = {
@@ -144,7 +119,7 @@ class SpecialModel:
             for token_id in token_lut
         }
 
-        # fill our categories property based on our mappings
+        # fill our category properties based on our mappings
         for map_hash in head_commit.head.token_category_mappings:
             mapping = TokenCategoryMapping.read(self.backend, map_hash)
 
@@ -170,14 +145,8 @@ class SpecialModel:
 
         # TODO: update token usage
 
-        categories = [
-            Category.read(self.backend, cat_hash)
-            for cat_hash in commit.head.categories
-        ]
-        urls = [
-            URL.read(self.backend, url_hash)
-            for url_hash in commit.head.urls
-        ]
+        categories = commit.head.category_lut(self.backend)
+        urls = commit.head.url_lut(self.backend)
         cat_mappings = [
             TokenCategoryMapping.read(self.backend, map_hash)
             for map_hash in commit.head.token_category_mappings

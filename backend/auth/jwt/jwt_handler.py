@@ -2,7 +2,7 @@ import jwt
 import datetime
 from typing import Optional
 
-from auth.util.jwt_data import TokenData
+from auth.jwt.jwt_data import TokenData
 
 
 class JWTHandler:
@@ -31,7 +31,6 @@ class JWTHandler:
         token: str = jwt.encode(payload, self.secret_key, algorithm='HS256')
         return token
 
-
     def verify_token(self, token: str) -> Optional[TokenData]:
         """
         Verify a JWT token and return the decoded payload if valid.
@@ -46,6 +45,7 @@ class JWTHandler:
             if not data:
                 # the token Content is invalid
                 return None
+            # TokenData#from_dict handles errors internally and just returns "None"
             return TokenData.from_dict(data)
         except jwt.ExpiredSignatureError:
             # the token has expired

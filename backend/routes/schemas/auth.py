@@ -1,6 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
-
 from apiflask.fields import String
 from marshmallow.fields import Nested
 from marshmallow_dataclass import class_schema

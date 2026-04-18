@@ -4,14 +4,37 @@ from pymongo import MongoClient
 
 from db.abc.db import DBInterface
 from db.abc.constants import KEY_LENGTH, MAX_COMPACT_LIST_SIZE, TYPE_ID_LIST_SMALL, TYPE_ID_LIST_LARGE
-from db.dbm.util.simple_bson import encode_dict_str, encode_list_str
-from db.dbm.util.hash import sha256_hash
+from db.util.simple_bson import encode_dict_str, encode_list_str
+from db.util.hash import sha256_hash
 
 
 class MongoDB(DBInterface):
-    def __init__(self, host: str, port: int, database_name: str, collection_name: str = "data"):
+    """
+    Persistent Database implementation using MongoDB.
+    Suitable for distributed environments or when high availability and scalability are required.
+    """
+    def __init__(self, host: str, port: int, database_name: str, username: str = None, password: str = None, auth_source: str = None, connect_direct: bool = False, collection_name: str = "data"):
+        """
+        Initialize the MongoDB connection and ensure indexes.
+
+        :param host: MongoDB server hostname.
+        :param port: MongoDB server port.
+        :param database_name: Name of the database to use.
+        :param username: Username for authentication.
+        :param password: Password for authentication.
+        :param auth_source: Database to authenticate against.
+        :param connect_direct: Whether to connect directly to the host.
+        :param collection_name: Name of the collection for data storage.
+        """
         super().__init__()
-        self.client = MongoClient(host, port)
+        self.client = MongoClient(
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            authSource=auth_source,
+            directConnection=connect_direct
+        )
         self.db = self.client[database_name]
         self.collection = self.db[collection_name]
 

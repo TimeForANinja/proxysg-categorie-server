@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass
 from apiflask.fields import String
 from marshmallow_dataclass import class_schema
@@ -10,6 +11,13 @@ from util.schema import desc, to_field
 class URL:
     id: str = to_field(String(required=True, metadata=desc('ID of the URL')))
     url: str = to_field(String(required=True, metadata=desc('Value of the URL')))
+
+    @staticmethod
+    def new(value: str) -> 'URL':
+        return URL(
+            id=str(uuid.uuid4()),
+            url=value
+        )
 
     def write(self, backend: DBInterface) -> str:
         return backend.insert_obj({

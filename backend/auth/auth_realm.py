@@ -1,37 +1,55 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
+from apiflask import APIFlask
 
 from auth.auth_user import AuthUser
+from auth.jwt.jwt_handler import JWTHandler
 
 
 class AuthRealmInterface(ABC):
     """
-    This interface defines all methods required for:
-    * API Auth calls like login
-    * API restrictions based on the apiflask HTTPTokenAuth
+    Interface for authentication providers (realms).
+    Every authentication module must implement this interface.
     """
 
     @abstractmethod
     def verify_token(self, token: str) -> Optional[AuthUser]:
         """
-        Validate if the provided token is valid
+        Validate a JWT token and return the associated AuthUser.
 
-        Overwrite for the flask.HTTPTokenAuth
-
-        :param token: Token to validate
-        :return: AuthUser object if valid, else None
+        :param token: JWT token to validate.
+        :return: AuthUser object if valid, else None.
         """
         pass
 
     @abstractmethod
     def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
         """
-        Check a login attempt
+        Validate credentials and return a session token and the user object.
 
-        Custom function to resolve User to Token, which will then be used for API calls
+        :param username: Username.
+        :param password: Password.
+        :return: A tuple of (token, AuthUser) if valid, else None.
+        """
+        pass
 
-        :param username: Username
-        :param password: Password
-        :return: Token if valid, else None
+
+class AuthProviderInterface(ABC):
+    """
+    Interface for the Plugin API of authentication providers.
+    Every provider module must define a class named "AuthProvider" that implements this interface.
+    """
+
+    @abstractmethod
+    def auth_fits(self, app: APIFlask, auth_type: str) -> bool:
+        """
+        Return True if this module handles the provided auth_type.
+        """
+        pass
+
+    @abstractmethod
+    def build_auth_realm(self, app: APIFlask, jwt: JWTHandler) -> AuthRealmInterface:
+        """
+        Factory function to instantiate the provider's realm implementation.
         """
         pass

@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass
 from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
@@ -10,6 +11,13 @@ from util.schema import desc, to_field
 class Category:
     id: str = to_field(String(required=True, metadata=desc('ID of the Category')))
     name: str = to_field(String(required=True, metadata=desc('Name of the Category')))
+
+    @staticmethod
+    def new(name: str) -> 'Category':
+        return Category(
+            id=str(uuid.uuid4()),
+            name=name
+        )
 
     def write(self, backend: DBInterface) -> str:
         return backend.insert_obj({

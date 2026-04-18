@@ -1,14 +1,15 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from db.abc.db import DBInterface
-from db.dbm.util.simple_bson import encode_dict_str
+from db.util.simple_bson import encode_dict_str
 from model.types.category import Category
 from model.types.mappings import TokenCategoryMapping, URLCategoryMapping
 from model.types.token import Token
 from model.types.url import URL
-from model.util_changes import list_obj_diff
-from routes.types.core import RestCommit, RestStateRootTreeRootNode
+from model.util.diff import list_obj_diff
+from routes.types.core import RestCommit
+
 
 # Pointer towards the current Core Object
 POINTER_CORE = "pointer_core"
@@ -61,7 +62,7 @@ class Commit:
         )
 
     def write(self, backend: DBInterface) -> str:
-        """write commit to db, and return hash"""
+        """write commit to db and return hash"""
         head_hash = self.head.write(backend)
         changes_hash = backend.insert_id_list(self.head.changed_compared_to(backend, self.parent_commit_hash))
         return backend.insert_obj({
@@ -113,10 +114,6 @@ class StateTreeRootNode:
     urls: List[str]
     url_category_mappings: List[str]
     token_category_mappings: List[str]
-
-    def to_rest(self) -> RestStateRootTreeRootNode:
-        # TODO: implement, or check if we even need this at all???
-        pass
 
     def write(self, backend: DBInterface) -> str:
         cat_list_hash = backend.insert_id_list(self.categories)
@@ -181,3 +178,27 @@ class StateTreeRootNode:
         ))
 
         return list(changed_uuid)
+
+    def url_lut(self, backend: DBInterface) -> Dict[str, URL]:
+        return {
+            u.id: u for u in [
+                URL.read(backend, url_hash)
+                for url_hash in self.urls
+            ]
+        }
+
+    def category_lut(self, backend: DBInterface) -> Dict[str, Category]:
+        return {
+            c.id: c for c in [
+                Category.read(backend, cat_hash)
+                for cat_hash in self.categories
+            ]
+        }
+
+    def token_lut(self, backend: DBInterface) -> Dict[str, Token]:
+        return {
+            c.id: c for c in [
+                Token.read(backend, tok_hash)
+                for tok_hash in self.tokens
+            ]
+        }

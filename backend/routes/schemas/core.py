@@ -37,6 +37,18 @@ class HistoryInput:
     ), default=None)
 
 @dataclass
+class ExistingDBInput:
+    """Class representing the DB Structure loaded from an existing DB File"""
+    category_db: str = to_field(String(
+        required=True,
+        metadata=desc('^Content of the existing category DB'),
+    ))
+    prefix: str = to_field(String(
+        required=True,
+        metadata=desc('Prefix of the existing category DB'),
+    ))
+
+@dataclass
 class CommitInput:
     message: str = to_field(String(
         required=True,
@@ -55,5 +67,6 @@ class CommitOutput(GenericOutput):
 history_input_schema = class_schema(HistoryInput)()
 list_branches_output_schema = class_schema(ListBranchesOutput)()
 list_history_output_schema = class_schema(ListHistoryOutput)()
+existing_db_input_schema = class_schema(ExistingDBInput)()
 commit_input_schema = class_schema(CommitInput)()
 commit_output_schema = class_schema(CommitOutput)()
