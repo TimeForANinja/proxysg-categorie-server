@@ -10,10 +10,12 @@ export interface IApiToken {
     description: string;
 }
 
-export type IMutableApiToken = IApiTokenInput;
-
-export interface IApiTokenInput {
+export interface IApiTokenCreateInput {
     description: string;
+}
+
+export interface IApiTokenUpdateInput {
+    description?: string;
 }
 
 export interface IRestTokenDetail {

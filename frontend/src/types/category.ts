@@ -5,13 +5,21 @@ import {DataOutput} from "./api";
 export interface ICategory {
     id: string;
     name: string;
+    description: string;
+    color: number;
 }
 
-export interface ICategoryInput {
+export interface ICategoryCreateInput {
     name: string;
+    description: string;
+    color?: number;
 }
 
-export type IMutableCategory = ICategoryInput;
+export interface ICategoryUpdateInput {
+    name?: string;
+    description?: string;
+    color?: number;
+}
 
 export type ICategoryOutput = DataOutput<ICategory>;
 export type IListCategoryOutput = DataOutput<ICategory[]>;
@@ -20,12 +28,16 @@ export const CategoryToKV = (x: ICategory): StringKV => {
     return {
         id: x.id,
         name: x.name,
+        description: x.description,
+        color: x.color.toString(),
     }
 }
 
 export const CategoryFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.id,
     { field: "name", description: "Name" },
+    SHARED_DEFINITIONS.description,
+    { field: "color", description: "Color" },
 ]
 
 export const CategoryFieldsRaw: FieldDefinition[] = [

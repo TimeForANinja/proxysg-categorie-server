@@ -31,7 +31,8 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import RefreshIcon from "@mui/icons-material/Refresh"
 
-import {addTokenCategory, createToken, deleteToken, deleteTokenCategory, getTokens, rollToken, updateToken} from "../api/token";
+import {createToken, deleteToken, getTokens, rollToken, updateToken} from "../api/token";
+import {addTokenCategory, deleteTokenCategory} from "../api/mapping";
 import {getCategories} from "../api/category";
 import {getHistory} from "../api/history";
 import {ListHeader} from "./shared/ListHeader";
@@ -44,7 +45,8 @@ import {simpleStringCheck} from "../util/InputValidators";
 import {SearchParser} from "../searchParser";
 import {
     IApiToken,
-    IMutableApiToken,
+    IApiTokenCreateInput,
+    IApiTokenUpdateInput,
     ApiTokenToKV,
     ApiTokenFieldsRaw,
     IRestTokenDetail
@@ -253,13 +255,13 @@ function ApiTokenPage() {
     }, []);
 
     // create or edit a new object
-    const handleSave = async (tokenID: string | null, token: IMutableApiToken) => {
+    const handleSave = async (tokenID: string | null, token: IApiTokenCreateInput | IApiTokenUpdateInput) => {
         if (tokenID == null) {
             // add new token
-            await createToken(authMgmt.token, token);
+            await createToken(authMgmt.token, token as IApiTokenCreateInput);
         } else {
             // update existing token
-            await updateToken(authMgmt.token, tokenID, token);
+            await updateToken(authMgmt.token, tokenID, token as IApiTokenUpdateInput);
         }
         fetchData();
         handleEditDialogClose();
@@ -290,16 +292,18 @@ function ApiTokenPage() {
             <Grid
                 container
                 spacing={1}
-                sx={{ justifyContent: "center", alignItems: "center" }}
+                sx={{ justifyContent: "center" }}
             >
-                <ListHeader
-                    onCreate={handleEditOpen}
-                    setQuickSearch={setQuickSearch}
-                    addElement={"Token"}
-                    downloadRows={downloadRows}
-                    availableFields={ApiTokenFieldsRaw}
-                    isLocked={isLocked}
-                />
+                <Grid size={12}>
+                    <ListHeader
+                        onCreate={handleEditOpen}
+                        setQuickSearch={setQuickSearch}
+                        addElement={"Token"}
+                        downloadRows={downloadRows}
+                        availableFields={ApiTokenFieldsRaw}
+                        isLocked={isLocked}
+                    />
+                </Grid>
                 <Grid size={12}>
                     <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>
                 </Grid>
@@ -360,7 +364,7 @@ function ApiTokenPage() {
 interface EditDialogProps {
     token: TriState<IApiToken>,
     onClose: () => void,
-    onSave: (id: string | null, token: IMutableApiToken) => void
+    onSave: (id: string | null, token: IApiTokenCreateInput | IApiTokenUpdateInput) => void
 }
 function EditDialog(props: EditDialogProps) {
     const { token, onClose, onSave } = props;

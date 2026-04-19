@@ -21,23 +21,42 @@ import {
     TextField,
     Typography,
     Tooltip,
+    Tabs,
+    Tab,
+    Divider,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
 } from "@mui/material";
+import Timeline from '@mui/lab/Timeline';
+import TimelineItem from '@mui/lab/TimelineItem';
+import TimelineSeparator from '@mui/lab/TimelineSeparator';
+import TimelineConnector from '@mui/lab/TimelineConnector';
+import TimelineContent from '@mui/lab/TimelineContent';
+import TimelineDot from '@mui/lab/TimelineDot';
+import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
 import Grid from '@mui/material/Grid';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import HistoryIcon from '@mui/icons-material/History';
+import CategoryIcon from '@mui/icons-material/Category';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
-import {addURLCategory, createURL, deleteURL, deleteURLCategory, getURLs, updateURL} from "../api/url"
+import {createURL, deleteURL, getURLs, updateURL} from "../api/url"
+import {addURLCategory, deleteURLCategory} from "../api/mapping"
 import {ListHeader} from "./shared/ListHeader";
 import {MyPaginator} from "./shared/MyPaginator";
 import {SearchParser} from "../searchParser";
 import {getHistory} from "../api/history";
 import {KVaddRAW} from "../types/stringKV";
 import { useBranch } from "../hooks/useBranch";
-import {IRestURLDetail, UrlMappingFieldsRaw, URLMappingToKV} from "../types/url";
+import {IRestURLDetail, UrlMappingFieldsRaw, URLMappingToKV, IURLCreateInput, IURLUpdateInput} from "../types/url";
 import HistoryTable from "./shared/HistoryTable";
 import {IRestCommit} from "../types/history";
 import {TriState} from "../types/EditDialogState";
@@ -45,7 +64,8 @@ import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {getCategories} from "../api/category";
 import {UrlCategoryMappings} from "./shared/UrlCategoryMappings";
 import {ICategory} from "../types/category";
-import {formatConstraint} from "../util/DateString";
+import {CategoryChip} from "./shared/CategoryChip";
+import {formatConstraint, formatUnixTimestamp, formatUnixDateOnly} from "../util/DateString";
 import {simpleStringCheck} from "../util/InputValidators";
 import {useAuth} from "../hooks/useLogin";
 import {buildLUTFromID, LUT} from "../types/LookUpTable";
@@ -58,6 +78,7 @@ interface BuildRowProps {
     onDelete: (url: IRestURLDetail) => void,
     categories: LUT<ICategory>,
     onRefresh: () => void,
+    index: number,
 }
 /**
  * Renders a table row for a URL entry.
@@ -68,11 +89,12 @@ interface BuildRowProps {
  * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
-    const { urlDetail, branch, isLocked, onEdit, onDelete, categories, onRefresh } = props;
+    const { urlDetail, branch, isLocked, onEdit, onDelete, categories, onRefresh, index } = props;
     const authMgmt = useAuth();
 
     const [open, setOpen] = React.useState(false);
     const [history, setHistory] = React.useState<IRestCommit[]>([]);
+    const [tabValue, setTabValue] = React.useState(0);
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
@@ -93,11 +115,9 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
             <Stack component="div" direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                 {displayed.map(c => {
                     const chip = (
-                        <Chip
+                        <CategoryChip
                             key={c.category.id}
-                            label={c.category.name}
-                            size="small"
-                            variant="outlined"
+                            category={c.category}
                             icon={c.constraint ? (
                                 <AccessTimeIcon sx={{ fontSize: '14px !important' }} />
                             ) : undefined}
@@ -120,6 +140,68 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         );
     };
 
+    const renderExperimentalContent = () => {
+        const mappings = (
+            <UrlCategoryMappings
+                urlDetail={urlDetail}
+                isLocked={isLocked}
+                categories={categories}
+                onRefresh={onRefresh}
+            />
+        );
+
+        const timeline = (
+            <Box sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TimelineIcon fontSize="small" /> Activity Timeline
+                </Typography>
+                {history.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                        No history available for this URL.
+                    </Typography>
+                ) : (
+                    <Timeline position="right" sx={{ p: 0, m: 0 }}>
+                        {history.map((commit, i) => (
+                            <TimelineItem key={commit.uuid}>
+                                <TimelineOppositeContent sx={{ py: '12px', px: 2, flex: 0.15, minWidth: 120 }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {formatUnixTimestamp(commit.created_at)}
+                                    </Typography>
+                                </TimelineOppositeContent>
+                                <TimelineSeparator>
+                                    <TimelineDot color="primary" variant="outlined" />
+                                    {i < history.length - 1 && <TimelineConnector />}
+                                </TimelineSeparator>
+                                <TimelineContent sx={{ py: '12px', px: 2 }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                        {commit.author}
+                                    </Typography>
+                                    <Typography variant="body2">{commit.description}</Typography>
+                                </TimelineContent>
+                            </TimelineItem>
+                        ))}
+                    </Timeline>
+                )}
+            </Box>
+        );
+
+        return (
+            <Paper variant="outlined" sx={{ width: '100%', mb: 1 }}>
+                <Tabs
+                    value={tabValue}
+                    onChange={(_, v) => setTabValue(v)}
+                    sx={{ borderBottom: 1, borderColor: 'divider', px: 2, bgcolor: 'grey.50' }}
+                >
+                    <Tab icon={<CategoryIcon />} label="Mappings" iconPosition="start" />
+                    <Tab icon={<HistoryIcon />} label="History" iconPosition="start" />
+                </Tabs>
+                <Box sx={{ minHeight: 200 }}>
+                    {tabValue === 0 ? mappings : timeline}
+                </Box>
+            </Paper>
+        );
+    };
+
     return (
         <React.Fragment>
             <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
@@ -134,6 +216,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                 </TableCell>
                 <TableCell>{urlDetail.url.id}</TableCell>
                 <TableCell>{urlDetail.url.url}</TableCell>
+                <TableCell>{urlDetail.url.description}</TableCell>
                 <TableCell>
                     {renderCategories()}
                 </TableCell>
@@ -151,25 +234,18 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingRight: 0 }} colSpan={6}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
-                        <Box sx={{ margin: 1 }}>
-                            <Grid container spacing={2}>
-                                <Grid size={7.2}> {/* 60% */}
-                                    <UrlCategoryMappings
-                                        urlDetail={urlDetail}
-                                        isLocked={isLocked}
-                                        categories={categories}
-                                        onRefresh={onRefresh}
-                                    />
-                                </Grid>
-                                <Grid size={4.8}> {/* 40% */}
-                                    <Typography variant="h6" gutterBottom component="div">
-                                        History
-                                    </Typography>
-                                    <HistoryTable commits={history} small={true} />
-                                </Grid>
-                            </Grid>
+                        <Box sx={{ 
+                            ml: 2, 
+                            mr: 0, 
+                            mb: 2, 
+                            mt: 1, 
+                            borderLeft: '4px solid', 
+                            borderColor: 'primary.main',
+                            pl: 2
+                        }}>
+                            {renderExperimentalContent()}
                         </Box>
                     </Collapse>
                 </TableCell>
@@ -239,13 +315,13 @@ function MatchingListPage() {
         setDeleteDialogOpen(null);
     };
 
-    const handleSave = async (id: string | null, urlValue: string) => {
+    const handleSave = async (id: string | null, urlValue: string, description: string) => {
         if (id == null) {
             // create new URL
-            await createURL(authMgmt.token, urlValue);
+            await createURL(authMgmt.token, {url: urlValue, description});
         } else {
             // update existing URL
-            await updateURL(authMgmt.token, id, urlValue);
+            await updateURL(authMgmt.token, id, {url: urlValue, description});
         }
         fetchData();
         handleEditDialogClose();
@@ -256,16 +332,18 @@ function MatchingListPage() {
             <Grid
                 container
                 spacing={1}
-                sx={{ justifyContent: "center", alignItems: "center" }}
+                sx={{ justifyContent: "center" }}
             >
-                <ListHeader
-                    onCreate={() => handleEditOpen()}
-                    setQuickSearch={setQuickSearch}
-                    addElement={"URL"}
-                    downloadRows={downloadRows}
-                    availableFields={UrlMappingFieldsRaw}
-                    isLocked={isLocked}
-                />
+                <Grid size={12}>
+                    <ListHeader
+                        onCreate={() => handleEditOpen()}
+                        setQuickSearch={setQuickSearch}
+                        addElement={"URL"}
+                        downloadRows={downloadRows}
+                        availableFields={UrlMappingFieldsRaw}
+                        isLocked={isLocked}
+                    />
+                </Grid>
                 <Grid size={12}>
                     <Paper>
                         <TableContainer component={Paper} style={{maxHeight: 'calc(100vh - 190px)', overflow: 'auto'}}>
@@ -275,12 +353,13 @@ function MatchingListPage() {
                                         <TableCell style={{ width: 40 }} />
                                         <TableCell>ID</TableCell>
                                         <TableCell>URL</TableCell>
+                                        <TableCell>Description</TableCell>
                                         <TableCell>Categories</TableCell>
                                         <TableCell align="right"></TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {visibleRows.map(urlMap =>
+                                    {visibleRows.map((urlMap, index) =>
                                         <BuildRow
                                             key={urlMap.url.id}
                                             urlDetail={urlMap}
@@ -290,6 +369,7 @@ function MatchingListPage() {
                                             onDelete={handleDelete}
                                             categories={categories}
                                             onRefresh={fetchData}
+                                            index={index}
                                         />
                                     )}
                                 </TableBody>
@@ -321,12 +401,13 @@ function MatchingListPage() {
 interface EditDialogProps {
     urlDetail: TriState<IRestURLDetail>,
     onClose: () => void,
-    onSave: (id: string | null, url: string) => void,
+    onSave: (id: string | null, url: string, description: string) => void,
 }
 function EditDialog(props: EditDialogProps) {
     const { urlDetail, onClose, onSave } = props;
 
     const [url, setUrl] = React.useState('');
+    const [description, setDescription] = React.useState('');
 
     // validate inputs
     const urlError: string|null = React.useMemo(
@@ -337,8 +418,10 @@ function EditDialog(props: EditDialogProps) {
     React.useEffect(() => {
         if (!urlDetail.isNull()) {
             setUrl(urlDetail.getValue()!.url.url);
+            setDescription(urlDetail.getValue()!.url.description);
         } else {
             setUrl("");
+            setDescription("");
         }
     }, [urlDetail]);
 
@@ -348,7 +431,7 @@ function EditDialog(props: EditDialogProps) {
             return;
         }
 
-        onSave(urlDetail.getValue()?.url.id ?? null, url);
+        onSave(urlDetail.getValue()?.url.id ?? null, url, description);
     };
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -359,7 +442,7 @@ function EditDialog(props: EditDialogProps) {
 
     return (
         <Dialog open={urlDetail.isOpen()} onClose={onClose} onKeyDown={handleKeyDown}>
-            <DialogTitle>{urlDetail.getValue() ? 'Edit URL' : 'Add URL'}</DialogTitle>
+            <DialogTitle>{urlDetail.isNew() ? 'Add URL' : 'Edit URL'}</DialogTitle>
             <DialogContent>
                 <Box component="div" sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
                     <TextField
@@ -371,11 +454,20 @@ function EditDialog(props: EditDialogProps) {
                         required
                         fullWidth
                     />
+                    <TextField
+                        label="Description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        required
+                        fullWidth
+                        multiline
+                        rows={2}
+                    />
                 </Box>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleSave} disabled={urlError != null}>Save</Button>
                 <Button onClick={onClose}>Cancel</Button>
+                <Button onClick={handleSave} disabled={urlError != null} variant="contained">Save</Button>
             </DialogActions>
         </Dialog>
     );

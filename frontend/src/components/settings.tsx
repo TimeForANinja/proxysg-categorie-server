@@ -19,15 +19,17 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import {resetBranches} from "../api/branch";
+import {cleanupBranch, resetBranches} from "../api/branch";
 import {useAuth} from "../hooks/useLogin";
 import {useBranch} from "../hooks/useBranch";
 import UploadPage from "./shared/upload";
-import {getMetrics, IMetricsData} from "../api/metrics";
+import {cleanupCore, getMetrics, IMetricsData} from "../api/core";
+import {useNotification} from "../hooks/useNotification";
 
 
 const SettingsPage: React.FC = () => {
     const authMgmt = useAuth();
+    const notification = useNotification();
     const { isLocked } = useBranch();
     const [metrics, setMetrics] = useState<IMetricsData>({});
 
@@ -44,8 +46,31 @@ const SettingsPage: React.FC = () => {
         refreshMetrics();
     }, []);
 
-    const onResetBranchPressed = () => {
-        resetBranches(authMgmt.token);
+    const onResetBranchPressed = async () => {
+        try {
+            await resetBranches(authMgmt.token);
+            notification.showSuccess("Branch reset successfully");
+        } catch (e: any) {
+            notification.showError(e.message || "Failed to reset branch");
+        }
+    };
+
+    const onCleanupCorePressed = async () => {
+        try {
+            await cleanupCore(authMgmt.token);
+            notification.showSuccess("Core cleanup triggered successfully");
+        } catch (e: any) {
+            notification.showError(e.message || "Failed to cleanup core");
+        }
+    };
+
+    const onCleanupBranchPressed = async () => {
+        try {
+            await cleanupBranch(authMgmt.token);
+            notification.showSuccess("Branch cleanup triggered successfully");
+        } catch (e: any) {
+            notification.showError(e.message || "Failed to cleanup branch");
+        }
     };
 
     return (
@@ -119,6 +144,12 @@ const SettingsPage: React.FC = () => {
                                     <Stack spacing={2} sx={{ mb: 2 }}>
                                         <Button variant="contained" color="warning" onClick={onResetBranchPressed} disabled={isLocked}>
                                             Reset User-Branch
+                                        </Button>
+                                        <Button variant="contained" color="primary" onClick={onCleanupBranchPressed} disabled={isLocked}>
+                                            Cleanup User-Branch
+                                        </Button>
+                                        <Button variant="contained" color="primary" onClick={onCleanupCorePressed}>
+                                            Cleanup Core
                                         </Button>
                                     </Stack>
                                 </AccordionDetails>

@@ -15,7 +15,9 @@ import {
     TableHead,
     TableRow,
     TextField,
+    Typography,
     IconButton,
+    Tooltip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -40,12 +42,13 @@ import {buildLUTFromID, filterLUT, getLUTValues, LUT, pushLUT} from "../types/Lo
 import {simpleNameCheck} from "../util/InputValidators";
 import {BY_ID} from "../util/comparator";
 import {SearchParser} from "../searchParser";
-import {CategoryFieldsRaw, CategoryToKV, ICategory, IMutableCategory} from "../types/category";
+import {CategoryFieldsRaw, CategoryToKV, ICategory, ICategoryCreateInput, ICategoryUpdateInput} from "../types/category";
 import {IRestCommit} from "../types/history";
 import {KVaddRAW} from "../types/stringKV";
 import {useBranch} from "../hooks/useBranch";
 import HistoryTable from "./shared/HistoryTable";
 import {useAuth} from "../hooks/useLogin";
+import { colorLUT, getForegroundColor } from '../util/colormixer';
 
 interface BuildRowProps {
     category: ICategory,
@@ -108,6 +111,22 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                 </TableCell>
                 <TableCell>{category.id}</TableCell>
                 <TableCell>{category.name}</TableCell>
+                <TableCell>{category.description}</TableCell>
+                <TableCell>
+                    <Box sx={{
+                        width: 24,
+                        height: 24,
+                        bgcolor: `#${category.color.toString(16).padStart(6, '0')}`,
+                        border: '1px solid grey',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: getForegroundColor(`#${category.color.toString(16).padStart(6, '0')}`),
+                        fontSize: '10px',
+                        fontWeight: 'bold'
+                    }} />
+                </TableCell>
                 <TableCell align="right">
                     <IconButton aria-label="search URLs with this category" onClick={handleSearchInUrls} size="small">
                         <SearchIcon />
@@ -183,14 +202,14 @@ function CategoriesPage() {
     }, []);
 
     // create or edit a new object
-    const handleSave = async (catID: string | null, category: IMutableCategory) => {
+    const handleSave = async (catID: string | null, category: ICategoryCreateInput | ICategoryUpdateInput) => {
         if (catID == null) {
             // add the new category
-            const newCat = await createCategory(authMgmt.token, category);
+            const newCat = await createCategory(authMgmt.token, category as ICategoryCreateInput);
             setCategory(pushLUT(categories, newCat));
         } else {
             // update existing category
-            const updatedCat = await updateCategory(authMgmt.token, catID, category);
+            const updatedCat = await updateCategory(authMgmt.token, catID, category as ICategoryUpdateInput);
             setCategory(pushLUT(categories, updatedCat));
         }
         handleEditDialogClose();
@@ -216,16 +235,18 @@ function CategoriesPage() {
             <Grid
                 container
                 spacing={1}
-                sx={{ justifyContent: "center", alignItems: "center" }}
+                sx={{ justifyContent: "center" }}
             >
-                <ListHeader
-                    onCreate={handleEditOpen}
-                    setQuickSearch={setQuickSearch}
-                    addElement={"Category"}
-                    downloadRows={downloadRows}
-                    availableFields={CategoryFieldsRaw}
-                    isLocked={isLocked}
-                />
+                <Grid size={12}>
+                    <ListHeader
+                        onCreate={handleEditOpen}
+                        setQuickSearch={setQuickSearch}
+                        addElement={"Category"}
+                        downloadRows={downloadRows}
+                        availableFields={CategoryFieldsRaw}
+                        isLocked={isLocked}
+                    />
+                </Grid>
                 <Grid size={12}>
                     <Paper>
                         <TableContainer component={Paper} style={{maxHeight: 'calc(100vh - 190px)', overflow: 'auto'}}>
@@ -235,6 +256,8 @@ function CategoriesPage() {
                                         <TableCell style={{ width: 40 }} />
                                         <TableCell component="th" scope="row">ID</TableCell>
                                         <TableCell>Name</TableCell>
+                                        <TableCell>Description</TableCell>
+                                        <TableCell>Color</TableCell>
                                         <TableCell align="right"></TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -278,12 +301,14 @@ function CategoriesPage() {
 interface EditDialogProps {
     category: TriState<ICategory>,
     onClose: () => void,
-    onSave: (id: string | null, category: IMutableCategory) => void
+    onSave: (id: string | null, category: ICategoryCreateInput | ICategoryUpdateInput) => void
 }
 function EditDialog(props: EditDialogProps) {
     let {category, onClose, onSave} = props;
 
     const [name, setName] = React.useState('');
+    const [description, setDescription] = React.useState('');
+    const [color, setColor] = React.useState<number>(0);
 
     // validate inputs
     const nameError: string|null = React.useMemo(
@@ -296,8 +321,12 @@ function EditDialog(props: EditDialogProps) {
         // else force clear the fields
         if (!category.isNull()) {
             setName(category.getValue()!.name);
+            setDescription(category.getValue()!.description);
+            setColor(category.getValue()!.color);
         } else {
-            setName("")
+            setName("");
+            setDescription("");
+            setColor(0);
         }
     }, [category]);
 
@@ -307,8 +336,10 @@ function EditDialog(props: EditDialogProps) {
             return;
         }
 
-        onSave(category.getValue()?.id ?? null, {name});
-        setName("")
+        onSave(category.getValue()?.id ?? null, {name, description, color});
+        setName("");
+        setDescription("");
+        setColor(0);
     };
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -319,9 +350,9 @@ function EditDialog(props: EditDialogProps) {
 
     return (
         <Dialog open={category.isOpen()} onClose={onClose} onKeyDown={handleKeyDown}>
-            <DialogTitle>Edit Category</DialogTitle>
+            <DialogTitle>{category.isNew() ? "Create Category" : "Edit Category"}</DialogTitle>
             <DialogContent>
-                <Box component="div" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box component="div" sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
                     <TextField
                         label="Name"
                         value={name}
@@ -329,12 +360,77 @@ function EditDialog(props: EditDialogProps) {
                         error={nameError != null}
                         helperText={nameError ? nameError : ''}
                         required
+                        fullWidth
                     />
+                    <TextField
+                        label="Description"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        required
+                        fullWidth
+                        multiline
+                        rows={2}
+                    />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Typography variant="caption" color="text.secondary">Quick Color Selection</Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                            {Object.entries(colorLUT).map(([id, profile]) => (
+                                <Tooltip key={id} title={profile.name}>
+                                    <Box
+                                        onClick={() => setColor(parseInt(profile.bg.replace('#', ''), 16))}
+                                        sx={{
+                                            width: 32,
+                                            height: 32,
+                                            bgcolor: profile.bg,
+                                            borderRadius: '50%',
+                                            cursor: 'pointer',
+                                            border: color === parseInt(profile.bg.replace('#', ''), 16) ? '3px solid black' : '1px solid grey',
+                                            '&:hover': {
+                                                opacity: 0.8,
+                                                transform: 'scale(1.1)'
+                                            },
+                                            transition: 'transform 0.1s'
+                                        }}
+                                    />
+                                </Tooltip>
+                            ))}
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">Custom Color</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <input
+                                id="category-color-picker"
+                                type="color"
+                                value={`#${color.toString(16).padStart(6, '0')}`}
+                                onChange={e => setColor(parseInt(e.target.value.replace('#', ''), 16))}
+                                style={{
+                                    width: '60px',
+                                    height: '60px',
+                                    padding: 0,
+                                    border: '1px solid rgba(0, 0, 0, 0.23)',
+                                    borderRadius: '4px',
+                                    background: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            />
+                            <TextField
+                                value={`#${color.toString(16).padStart(6, '0').toUpperCase()}`}
+                                onChange={e => {
+                                    const val = e.target.value.replace('#', '');
+                                    if (/^[0-9A-Fa-f]{0,6}$/.test(val)) {
+                                        setColor(parseInt(val || '0', 16));
+                                    }
+                                }}
+                                size="small"
+                                label="Hex Code"
+                                sx={{ flexGrow: 1 }}
+                            />
+                        </Box>
+                    </Box>
                 </Box>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleSave}>Save</Button>
                 <Button onClick={onClose}>Cancel</Button>
+                <Button onClick={handleSave} variant="contained">Save</Button>
             </DialogActions>
         </Dialog>
     );

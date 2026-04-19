@@ -13,6 +13,7 @@ import {AuthProvider} from "./hooks/useLogin";
 import {NotificationProvider} from "./hooks/useNotification";
 import LoginPage from "./components/login";
 import SettingsPage from "./components/settings";
+import TestPage from "./components/test";
 
 
 function App() {
@@ -39,6 +40,10 @@ function App() {
                 {
                     path: "/settings",
                     element: <SettingsPage/>,
+                },
+                {
+                    path: "/test",
+                    element: <TestPage/>,
                 },
                 {
                     path: "/",

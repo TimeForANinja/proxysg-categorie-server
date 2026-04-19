@@ -30,4 +30,8 @@ export class TriState<T> {
         }
         return this.value as T;
     }
+
+    isNew(): boolean {
+        return this.value === TriState.NEW.value;
+    }
 }

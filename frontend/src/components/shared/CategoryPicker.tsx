@@ -1,9 +1,10 @@
 import React from "react";
-import {Autocomplete, Box, Chip, TextField} from "@mui/material";
+import {Autocomplete, Box, TextField} from "@mui/material";
 
 import {getLUTValues, LUT} from "../../types/LookUpTable";
 import {ICategory} from "../../types/category";
 import {CompareLists} from "../../util/ArrayDiff";
+import {CategoryChip} from "./CategoryChip";
 
 interface CategoryPickerProps {
     isCategories: ICategory[],
@@ -44,10 +45,9 @@ export function CategoryPicker(props: CategoryPickerProps) {
                 values.map((val, index: number) => {
                     const { key, ...tagProps } = getItemProps({ index });
                     return (
-                        <Chip
-                            variant="outlined"
-                            label={val.name}
+                        <CategoryChip
                             key={key}
+                            category={val}
                             {...tagProps}
                         />
                     );
@@ -55,8 +55,19 @@ export function CategoryPicker(props: CategoryPickerProps) {
             }
             renderOption={(props, option) => {
                 const { key, ...optionProps } = props;
+                const colorHex = `#${option.color.toString(16).padStart(6, '0')}`;
                 return (
                     <li key={key} {...optionProps}>
+                        <Box
+                            sx={{
+                                width: 16,
+                                height: 16,
+                                borderRadius: '50%',
+                                bgcolor: colorHex,
+                                mr: 1,
+                                border: '1px solid grey'
+                            }}
+                        />
                         <Box
                             sx={{
                                 flexGrow: 1,

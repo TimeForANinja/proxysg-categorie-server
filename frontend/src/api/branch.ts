@@ -43,7 +43,7 @@ export const doCommit = async (userToken: string, message: string): Promise<Gene
     const data: GenericOutput = await response.json();
 
     if (!response.ok || data.status === "failed") {
-        throw new Error(data.message || `Failed to reset branches`);
+        throw new Error(data.message || `Failed to commit changes`);
     }
 
     return data;
@@ -69,7 +69,23 @@ export const loadExisting = async (
     const data: GenericOutput = await response.json();
 
     if (!response.ok || data.status === "failed") {
-        throw new Error(data.message || `Failed to reset branches`);
+        throw new Error(data.message || `Failed to import category database`);
+    }
+
+    return data;
+}
+
+
+export const cleanupBranch = async (userToken: string): Promise<GenericOutput> => {
+    const response = await fetch('/api/branch/@me/cleanup', {
+        method: 'POST',
+        headers: { 'jwt-token': userToken },
+    });
+
+    const data: GenericOutput = await response.json();
+
+    if (!response.ok || data.status === "failed") {
+        throw new Error(data.message || `Failed to cleanup branch`);
     }
 
     return data;

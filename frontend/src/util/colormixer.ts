@@ -16,7 +16,7 @@ type ColorProfile = {
 type ColorLUT = Record<number, ColorProfile>;
 
 // Function to calculate `fg` based on the contrast with the `bg`
-const getForegroundColor = (backgroundColor: string): string => {
+export const getForegroundColor = (backgroundColor: string): string => {
     // Calculate contrast with white (#FFFFFF) and black (#000000)
     const contrastWithWhite = chroma.contrast(backgroundColor, '#FFFFFF');
     const contrastWithBlack = chroma.contrast(backgroundColor, '#000000');

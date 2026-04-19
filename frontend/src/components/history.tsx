@@ -1,12 +1,10 @@
 import React from 'react';
-import Grid from "@mui/material/Grid";
-
 import {getHistory} from "../api/history";
 import HistoryTable from "./shared/HistoryTable";
 import {useBranch} from "../hooks/useBranch";
 import {IRestCommit} from "../types/history";
 import {useAuth} from "../hooks/useLogin";
-import {Box, Button, TextField} from "@mui/material";
+import {Box, Button, TextField, Card, CardContent, Typography, Divider, Stack} from "@mui/material";
 import {doCommit} from "../api/branch";
 import {useNotification} from "../hooks/useNotification";
 
@@ -44,47 +42,63 @@ function HistoryPage() {
     };
 
     return (
-        <>
-            <Grid
-                container
-                spacing={1}
-                sx={{ justifyContent: "center", alignItems: "center" }}
-            >
-                { /* Commit Message Input and Button - only show if branch is not locked */ }
-                {!isLocked && (
-                    <>
-                        <Grid size={8}>
-                            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-                                <TextField
-                                    margin="dense"
-                                    label="Commit Message"
-                                    size="small"
-                                    variant="filled"
-                                    value={commitMessage}
-                                    onChange={(e) => setCommitMessage(e.target.value)}
-                                />
-                            </Box>
-                        </Grid>
+        <Stack spacing={4} sx={{ maxWidth: '1200px', margin: '0 auto', p: 2 }}>
+            { /* Commit Section */ }
+            {!isLocked && (
+                <Card variant="outlined" sx={{ bgcolor: 'action.hover' }}>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                            Commit Changes
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Provide a descriptive message for your changes before committing them to the branch.
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+                            <TextField
+                                fullWidth
+                                label="Commit Message"
+                                placeholder="What did you change?"
+                                variant="outlined"
+                                value={commitMessage}
+                                onChange={(e) => setCommitMessage(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                        onCommit();
+                                    }
+                                }}
+                                multiline
+                                rows={2}
+                            />
+                            <Button
+                                variant="contained"
+                                onClick={() => onCommit()}
+                                sx={{ height: '56px', minWidth: '120px' }}
+                                disabled={!commitMessage.trim()}
+                            >
+                                Commit
+                            </Button>
+                        </Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                            Tip: Press Ctrl+Enter to commit quickly.
+                        </Typography>
+                    </CardContent>
+                </Card>
+            )}
 
-                        <Grid size={3}>
-                            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => onCommit()}
-                                >Commit</Button>
-                            </Box>
-                        </Grid>
-                    </>
-                )}
-
-                { /* Table of recent commits */ }
-                <Grid size={12}>
-                    <HistoryTable
-                        commits={commits}
-                    />
-                </Grid>
-            </Grid>
-        </>
+            { /* History Section */ }
+            <Box>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    Recent Commits
+                    <Typography variant="body2" component="span" color="text.secondary">
+                        ({commits.length})
+                    </Typography>
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Card variant="outlined">
+                    <HistoryTable commits={commits} />
+                </Card>
+            </Box>
+        </Stack>
     );
 }
 

@@ -6,6 +6,17 @@ import {DataOutput} from "./api";
 export interface IURL {
     id: string;
     url: string;
+    description: string;
+}
+
+export interface IURLCreateInput {
+    url: string;
+    description?: string;
+}
+
+export interface IURLUpdateInput {
+    url?: string;
+    description?: string;
 }
 
 export interface IConstraint {
@@ -25,7 +36,7 @@ export interface IRestConstrainedCategory {
 }
 
 export interface IURLCategoryMappingInput {
-    url: string;
+    url_id: string;
     constraint?: IConstraint;
 }
 

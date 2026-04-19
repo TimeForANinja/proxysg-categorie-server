@@ -30,7 +30,7 @@ const BaseLayout = () => {
     }, [authMgmt, navigate])
 
     const [isMenuOpen, setMenuOpen] = React.useState<boolean>(false);
-    const menuRef = React.useRef<HTMLElement | null>(null);
+    const menuRef = React.useRef<HTMLButtonElement | null>(null);
 
     return (
         <>
@@ -49,6 +49,7 @@ const BaseLayout = () => {
 
                     { /* Center Buttons, surrounded by flexGrow to center */ }
                     <Box sx={{ flexGrow: 1 }} />
+                    <Button color="inherit" onClick={() => navigate("/test")}>Test</Button>
                     <Button color="inherit" onClick={() => navigate("/url")}>URLs</Button>
                     <Button color="inherit" onClick={() => navigate("/token")}>Api Tokens</Button>
                     <Button color="inherit" onClick={() => navigate("/category")}>Categories</Button>
@@ -57,14 +58,15 @@ const BaseLayout = () => {
 
                     { /* Branch Selector and User Icon to the right */ }
                     <BranchSelector />
-                    <IconButton ref={menuRef}
-                                size="large"
-                                edge="end"
-                                aria-label="account of current user"
-                                aria-controls='primary-search-account-menu'
-                                aria-haspopup="true"
-                                onClick={() => setMenuOpen(true)}
-                                color="inherit"
+                    <IconButton
+                        ref={menuRef}
+                        size="large"
+                        edge="end"
+                        aria-label="account of current user"
+                        aria-controls='primary-search-account-menu'
+                        aria-haspopup="true"
+                        onClick={() => setMenuOpen(true)}
+                        color="inherit"
                     >
                         <AccountCircle />
                     </IconButton>

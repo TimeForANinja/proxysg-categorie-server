@@ -14,6 +14,10 @@ import {
     TableBody,
     TableCell,
     Typography,
+    Card,
+    CardContent,
+    Stack,
+    Tooltip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import DownloadIcon from "@mui/icons-material/Download"
@@ -70,84 +74,87 @@ export const ListHeader = (props: ListHeaderProps) => {
     }, [debouncedSearchString, setQuickSearch, availableFields]);
 
     return (
-        <>
-            { /* Search Bar */ }
-            <Grid size={support_create ? 8 : 11}>
-                <Box component="div" sx={{ padding: "2px", display: "flex", flexDirection: "column", gap: 2 }}>
-                    <TextField
-                        margin="dense"
-                        label="Quick Search"
-                        size="small"
-                        variant="filled"
-                        value={searchStringInput}
-                        onChange={event => setSearchStringInput(event.target.value)}
-                        slotProps={{
-                            input: {
-                                endAdornment: <InputAdornment position="end">
-                                    <IconButton
-                                        aria-label={isInfoOpen ? 'hide Info' : 'display Info'}
-                                        onClick={() => setIsInfoOpen(!isInfoOpen)}
-                                        edge="end"
+        <Box sx={{ m: 3 }}>
+            { /* Header Box */ }
+            <Card variant="outlined" sx={{ bgcolor: 'action.hover', mb: 2 }}>
+                <CardContent sx={{ '&:last-child': { pb: 2 } }}>
+                    <Grid container spacing={2}>
+                        { /* Search Bar */ }
+                        <Grid size={{ xs: 12, md: support_create ? 7 : 10 }}>
+                            <TextField
+                                fullWidth
+                                label="Quick Search"
+                                size="small"
+                                variant="outlined"
+                                value={searchStringInput}
+                                onChange={event => setSearchStringInput(event.target.value)}
+                                slotProps={{
+                                    input: {
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <Tooltip title={isInfoOpen ? 'Hide Search Help' : 'Show Search Help'}>
+                                                    <IconButton
+                                                        onClick={() => setIsInfoOpen(!isInfoOpen)}
+                                                        edge="end"
+                                                        size="small"
+                                                    >
+                                                        {isInfoOpen ? <InfoIcon color="primary" /> : <InfoOutlinedIcon />}
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </InputAdornment>
+                                        )
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        { /* Add-Button */ }
+                        { support_create && (
+                            <Grid size={{ xs: 9, md: 4 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    onClick={() => onCreate!()}
+                                    sx={{ height: '40px', maxWidth: '300px' }}
+                                >
+                                    + Add {addElement}
+                                </Button>
+                            </Grid>
+                        )}
+                        { /* Download Button */ }
+                        <Grid size={{ xs: 3, md: support_create ? 1 : 2 }} sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                            <Tooltip title="Download CSV">
+                                <Button
+                                    aria-label="download csv"
+                                    color="primary"
+                                    variant="outlined"
+                                    component="span"
+                                    sx={{ minWidth: '40px', width: '40px', height: '40px', p: 0 }}
+                                >
+                                    <CSVLink
+                                        data={downloadRows!}
+                                        separator={";"}
+                                        filename={`download_${addElement.toLowerCase()}_${formatDateForFilename()}.csv`}
+                                        target="_blank"
+                                        style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
                                     >
-                                        {isInfoOpen ? <InfoIcon/> : <InfoOutlinedIcon/>}
-                                    </IconButton>
-                                </InputAdornment>
-                            }
-                        }}
-                    />
-                </Box>
-            </Grid>
-            { /* Add-Button */ }
-            { support_create && (
-                <Grid size={3}>
-                    <Box component="div" sx={{ padding: "2px", display: "flex", flexDirection: "column", gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            onClick={() => onCreate!()}
-                        >
-                            + Add {addElement}
-                        </Button>
-                    </Box>
-                </Grid>
-            )}
-            { /* Download Button for visible rows */ }
-            <Grid size={1}>
-                <Box component="div" sx={{ padding: "2px", display: "flex", flexDirection: "column", gap: 2 }}>
-                    <Button
-                        aria-label="download csv"
-                        color="primary"
-                        variant="outlined"
-                        component="span"
-                    >
-                        <CSVLink
-                            data={downloadRows!}
-                            separator={";"}
-                            filename={`download_${addElement.toLowerCase()}_${formatDateForFilename()}.csv`}
-                            target="_blank"
-                            style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}
-                        >
-                            <DownloadIcon />
-                        </CSVLink>
-                    </Button>
-                </Box>
-            </Grid>
+                                        <DownloadIcon />
+                                    </CSVLink>
+                                </Button>
+                            </Tooltip>
+                        </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
+
             { /* Search Syntax Error (if any) */ }
             { treeError && (
-                <Grid size={12}>
-                    <Alert severity="error">Invalid Search: { treeError }</Alert>
-                </Grid>
+                <Alert severity="error" sx={{ mb: 2 }}>Invalid Search: { treeError }</Alert>
             )}
+
             { /* Search Syntax Guide & Examples */ }
             { isInfoOpen && (
-                <Grid size={12}>
-                    <Alert
-                        severity="info"
-                    >
-                        <Grid
-                            container
-                            spacing={2}
-                            sx={{ justifyContent: "center", alignItems: "flex-start" }}
-                        >
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    <Grid container spacing={2} sx={{ justifyContent: "center" }}>
                             {/* Current Search Tree */}
                             {myTree && (
                                 <Grid size={12}>
@@ -299,8 +306,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                             </Grid>
                         </Grid>
                     </Alert>
-                </Grid>
             )}
-        </>
+        </Box>
     )
 }

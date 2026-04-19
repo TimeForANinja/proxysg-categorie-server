@@ -1,4 +1,4 @@
-import {IApiToken, IApiTokenInput, IApiTokenOutput, IListTokenOutput, IRestTokenDetail} from "../types/apiToken";
+import {IApiToken, IApiTokenCreateInput, IApiTokenUpdateInput, IApiTokenOutput, IListTokenOutput, IRestTokenDetail} from "../types/apiToken";
 import {GenericOutput} from "../types/api";
 
 
@@ -15,7 +15,7 @@ export const getTokens = async (userToken: string, branch: string): Promise<IRes
     return data.data;
 }
 
-export const createToken = async (userToken: string, token: IApiTokenInput): Promise<IApiToken> => {
+export const createToken = async (userToken: string, token: IApiTokenCreateInput): Promise<IApiToken> => {
     const response = await fetch(`/api/branch/@me/token`, {
         method: 'POST',
         headers: {
@@ -34,9 +34,9 @@ export const createToken = async (userToken: string, token: IApiTokenInput): Pro
     return data.data;
 };
 
-export const updateToken = async (userToken: string, id: string, token: IApiTokenInput): Promise<IApiToken> => {
+export const updateToken = async (userToken: string, id: string, token: IApiTokenUpdateInput): Promise<IApiToken> => {
     const response = await fetch(`/api/branch/@me/token/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
             'jwt-token': userToken,
             'Content-Type': 'application/json',
@@ -86,39 +86,3 @@ export const deleteToken = async (userToken: string, id: string): Promise<Generi
     return data;
 }
 
-
-export const addTokenCategory = async (userToken: string, id: string, categoryId: string): Promise<GenericOutput> => {
-    const response = await fetch(`/api/branch/@me/token/${id}/category`, {
-        method: 'POST',
-        headers: {
-            'jwt-token': userToken,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            category_id: categoryId
-        }),
-    });
-
-    const data: GenericOutput = await response.json();
-
-    if (!response.ok || data.status === "failed") {
-        throw new Error(data.message || `Failed to add category ${categoryId} to token with id: ${id}`);
-    }
-
-    return data;
-}
-
-export const deleteTokenCategory = async (userToken: string, id: string, categoryId: string): Promise<GenericOutput> => {
-    const response = await fetch(`/api/branch/@me/token/${id}/category/${categoryId}`, {
-        method: 'DELETE',
-        headers: { 'jwt-token': userToken },
-    });
-
-    const data: GenericOutput = await response.json();
-
-    if (!response.ok || data.status === "failed") {
-        throw new Error(data.message || `Failed to remove category ${categoryId} from token with id: ${id}`);
-    }
-
-    return data;
-}

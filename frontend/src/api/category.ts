@@ -1,4 +1,4 @@
-import {ICategory, ICategoryInput, ICategoryOutput, IListCategoryOutput} from "../types/category";
+import {ICategory, ICategoryCreateInput, ICategoryUpdateInput, ICategoryOutput, IListCategoryOutput} from "../types/category";
 import {GenericOutput} from "../types/api";
 
 
@@ -15,7 +15,7 @@ export const getCategories = async (userToken: string, branch: string): Promise<
     return data.data;
 }
 
-export const createCategory = async (userToken: string, category: ICategoryInput): Promise<ICategory> => {
+export const createCategory = async (userToken: string, category: ICategoryCreateInput): Promise<ICategory> => {
     const response = await fetch('/api/branch/@me/category', {
         method: 'POST',
         headers: {
@@ -49,9 +49,9 @@ export const deleteCategory = async (userToken: string, id: string): Promise<Gen
     return data;
 };
 
-export const updateCategory = async (userToken: string, id: string, category: ICategoryInput): Promise<ICategory> => {
+export const updateCategory = async (userToken: string, id: string, category: ICategoryUpdateInput): Promise<ICategory> => {
     const response = await fetch(`/api/branch/@me/category/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
             'jwt-token': userToken,
             'Content-Type': 'application/json',

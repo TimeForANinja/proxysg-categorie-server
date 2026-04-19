@@ -12,13 +12,17 @@ import {
     TableRow,
     TextField,
     Typography,
+    Collapse,
+    Grid,
+    Button, Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { addURLCategory, deleteURLCategory } from "../../api/url";
+import { addURLCategory, deleteURLCategory } from "../../api/mapping";
 import { useAuth } from "../../hooks/useLogin";
 import { IRestURLDetail } from "../../types/url";
 import { ICategory } from "../../types/category";
+import { CategoryChip } from "./CategoryChip";
 import { LUT, getLUTValues } from "../../types/LookUpTable";
 import { formatConstraint } from "../../util/DateString";
 
@@ -42,6 +46,9 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
     const [newCategoryId, setNewCategoryId] = React.useState<string | null>(null);
     const [newStartDate, setNewStartDate] = React.useState<string>('');
     const [newEndDate, setNewEndDate] = React.useState<string>('');
+    const [newComment, setNewComment] = React.useState<string>('');
+
+    const [isAddExpanded, setIsAddExpanded] = React.useState(false);
 
     const filteredMappings = React.useMemo(() => {
         return urlDetail.categories.filter(m =>
@@ -62,12 +69,14 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
 
         try {
             await addURLCategory(authMgmt.token, newCategoryId, {
-                url: urlDetail.url.id,
-                constraint: (start || end) ? { comment: '', start, end } : undefined
+                url_id: urlDetail.url.id,
+                constraint: (start || end || newComment) ? { comment: newComment, start, end } : undefined
             });
             setNewCategoryId(null);
             setNewStartDate('');
             setNewEndDate('');
+            setNewComment('');
+            setIsAddExpanded(false);
             onRefresh();
         } catch (e) {
             console.error('Failed to add mapping:', e);
@@ -84,93 +93,159 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
     };
 
     return (
-        <Box sx={{ margin: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="h6" gutterBottom component="div">
-                    URL Category Mappings
+        <Box sx={{ p: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                    URL Mappings
                 </Typography>
+                {!isLocked && (
+                    <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={isAddExpanded ? <DeleteIcon /> : <AddIcon />}
+                        onClick={() => setIsAddExpanded(!isAddExpanded)}
+                        color={isAddExpanded ? "inherit" : "primary"}
+                    >
+                        {isAddExpanded ? "Cancel" : "Add Mapping"}
+                    </Button>
+                )}
             </Box>
+
+            <Collapse in={isAddExpanded}>
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'primary.50', borderColor: 'primary.light' }}>
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 5 }}>
+                            <Autocomplete
+                                size="small"
+                                options={availableCategories}
+                                getOptionLabel={(option) => option.name}
+                                renderInput={(params) => <TextField {...params} label="Category" required />}
+                                value={newCategoryId ? categories[newCategoryId] : null}
+                                onChange={(_, newValue) => setNewCategoryId(newValue?.id ?? null)}
+                                renderOption={(props, option) => {
+                                    const { key, ...optionProps } = props;
+                                    const colorHex = `#${option.color.toString(16).padStart(6, '0')}`;
+                                    return (
+                                        <li key={key} {...optionProps}>
+                                            <Box
+                                                sx={{
+                                                    width: 16,
+                                                    height: 16,
+                                                    borderRadius: '50%',
+                                                    bgcolor: colorHex,
+                                                    mr: 1,
+                                                    border: '1px solid grey'
+                                                }}
+                                            />
+                                            {option.name}
+                                        </li>
+                                    );
+                                }}
+                                fullWidth
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <TextField
+                                    type="date"
+                                    size="small"
+                                    label="Start"
+                                    slotProps={{ inputLabel: { shrink: true } }}
+                                    value={newStartDate}
+                                    onChange={(e) => setNewStartDate(e.target.value)}
+                                    fullWidth
+                                />
+                                <TextField
+                                    type="date"
+                                    size="small"
+                                    label="End"
+                                    slotProps={{ inputLabel: { shrink: true } }}
+                                    value={newEndDate}
+                                    onChange={(e) => setNewEndDate(e.target.value)}
+                                    fullWidth
+                                />
+                            </Box>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                            <TextField
+                                size="small"
+                                label="Comment"
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                fullWidth
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <IconButton
+                                color="primary"
+                                onClick={handleAddMapping}
+                                disabled={!newCategoryId}
+                                sx={{ bgcolor: 'white', '&:hover': { bgcolor: 'primary.100' }, width: 40, height: 40 }}
+                            >
+                                <AddIcon />
+                            </IconButton>
+                        </Grid>
+                    </Grid>
+                </Paper>
+            </Collapse>
+
             <TextField
                 size="small"
-                placeholder="Search mappings..."
+                placeholder="Filter mappings by category name..."
                 value={categorySearch}
                 onChange={(e) => setCategorySearch(e.target.value)}
                 sx={{ mb: 1, width: '100%' }}
             />
-            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 300 }}>
+            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 350 }}>
                 <Table size="small" stickyHeader>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Category</TableCell>
-                            <TableCell>Constraint</TableCell>
-                            <TableCell align="right" style={{ width: 50 }}>Actions</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Time Range</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Comment</TableCell>
+                            <TableCell align="right" style={{ width: 50 }} sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {!isLocked && (
-                            <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                                <TableCell>
-                                    <Autocomplete
-                                        size="small"
-                                        options={availableCategories}
-                                        getOptionLabel={(option) => option.name}
-                                        renderInput={(params) => <TextField {...params} label="Select Category" />}
-                                        value={newCategoryId ? categories[newCategoryId] : null}
-                                        onChange={(_, newValue) => setNewCategoryId(newValue?.id ?? null)}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <TextField
-                                            type="date"
-                                            size="small"
-                                            value={newStartDate}
-                                            onChange={(e) => setNewStartDate(e.target.value)}
-                                        />
-                                        <Typography sx={{ alignSelf: 'center' }}>-</Typography>
-                                        <TextField
-                                            type="date"
-                                            size="small"
-                                            value={newEndDate}
-                                            onChange={(e) => setNewEndDate(e.target.value)}
-                                        />
-                                    </Box>
-                                </TableCell>
-                                <TableCell align="right">
-                                    <IconButton
-                                        size="small"
-                                        color="primary"
-                                        onClick={handleAddMapping}
-                                        disabled={!newCategoryId}
-                                    >
-                                        <AddIcon />
-                                    </IconButton>
+                        {filteredMappings.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={4} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                                    No mappings found.
                                 </TableCell>
                             </TableRow>
+                        ) : (
+                            filteredMappings.map((m) => {
+                                const timeRange = m.constraint ? (
+                                    `${m.constraint.start ? new Date(m.constraint.start * 1000).toISOString().split('T')[0] : '...'} - ${m.constraint.end ? new Date(m.constraint.end * 1000).toISOString().split('T')[0] : '...'}`
+                                ) : '-';
+                                return (
+                                    <TableRow key={m.category.id} hover>
+                                        <TableCell>
+                                            <CategoryChip category={m.category} />
+                                        </TableCell>
+                                        <TableCell sx={{ fontSize: '0.85rem' }}>
+                                            {timeRange}
+                                        </TableCell>
+                                        <TableCell sx={{ fontSize: '0.85rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            <Tooltip title={m.constraint?.comment || ''}>
+                                                <span>{m.constraint?.comment || '-'}</span>
+                                            </Tooltip>
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {!isLocked && (
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleDeleteMapping(m.category.id)}
+                                                    color="error"
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
-                        {filteredMappings.map((m) => {
-                            return (
-                                <TableRow key={m.category.id}>
-                                    <TableCell>{m.category.name}</TableCell>
-                                    <TableCell>
-                                        {m.constraint ? (
-                                            <span>{formatConstraint(m.constraint)}</span>
-                                        ) : '-'}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        {!isLocked && (
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleDeleteMapping(m.category.id)}
-                                                color="error"
-                                            >
-                                                <DeleteIcon fontSize="inherit" />
-                                            </IconButton>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
                     </TableBody>
                 </Table>
             </TableContainer>
