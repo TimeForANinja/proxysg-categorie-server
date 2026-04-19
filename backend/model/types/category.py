@@ -13,8 +13,8 @@ from util.schema import desc, to_field
 class Category:
     id: str = to_field(String(required=True, metadata=desc("ID of the Category")))
     name: str = to_field(String(required=True, metadata=desc("Name of the Category")))
-    description: str = to_field(String(required=False, metadata=desc("Description of the Category")))
-    color: int = to_field(Integer(required=False, metadata=desc("Color of the Category")))
+    description: str = to_field(String(required=True, metadata=desc("Description of the Category")))
+    color: int = to_field(Integer(required=True, metadata=desc("Color of the Category")))
 
     @staticmethod
     def new(name: str, description: str) -> 'Category':

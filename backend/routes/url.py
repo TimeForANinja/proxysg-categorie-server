@@ -8,8 +8,8 @@ from db.db_singleton import get_db
 from util.log import log_debug
 from routes.schemas.error import OutCanError, ErrorResponse
 from routes.schemas.generic_output import generic_output_schema, GenericOutput
-from routes.schemas.url import ListURLOutput, list_url_output_schema, url_input_schema, url_output_schema, URLInput, \
-    URLOutput, url_test_input_schema, URLTestInput, URLTestOutput, url_test_output_schema
+from routes.schemas.url import ListURLOutput, list_url_output_schema, url_create_input_schema, url_update_input_schema, url_output_schema, URLCreateInput, \
+    URLUpdateInput, URLOutput, url_test_input_schema, URLTestInput, URLTestOutput, url_test_output_schema
 
 
 def add_url_bp(app: APIFlask):
@@ -34,10 +34,10 @@ def add_url_bp(app: APIFlask):
 
     @url_bp.post("/api/branch/@me/url")
     @url_bp.doc(summary="Create a URL", description="Create a new URL for a user branch", tags=["URLs"])
-    @url_bp.input(url_input_schema, location="json", arg_name="url_data")
+    @url_bp.input(url_create_input_schema, location="json", arg_name="url_data")
     @url_bp.output(url_output_schema)
     @url_bp.auth_required(auth, roles=[AuthRoles.RW])
-    def create_url(url_data: URLInput) -> URLOutput:
+    def create_url(url_data: URLCreateInput) -> URLOutput:
         user: AuthUser = cast(AuthUser, auth.current_user)
 
         db = get_db()
@@ -49,12 +49,12 @@ def add_url_bp(app: APIFlask):
             data=url,
         )
 
-    @url_bp.put("/api/branch/@me/url/<url_id>")
+    @url_bp.patch("/api/branch/@me/url/<url_id>")
     @url_bp.doc(summary="Update a URL", description="Update a URL by ID for a given branch", tags=["URLs"])
-    @url_bp.input(url_input_schema, location="json", arg_name="url_data")
+    @url_bp.input(url_update_input_schema, location="json", arg_name="url_data")
     @url_bp.output(url_output_schema)
     @url_bp.auth_required(auth, roles=[AuthRoles.RW])
-    def update_url(url_id: str, url_data: URLInput) -> OutCanError[URLOutput]:
+    def update_url(url_id: str, url_data: URLUpdateInput) -> OutCanError[URLOutput]:
         user: AuthUser = cast(AuthUser, auth.current_user)
 
         db = get_db()

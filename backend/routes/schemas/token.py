@@ -10,9 +10,16 @@ from routes.schemas.generic_output import GenericOutput
 
 
 @dataclass
-class TokenInput:
+class TokenCreateInput:
     description: str = to_field(String(
         required=True,
+        metadata=desc("Description of the token"),
+    ))
+
+@dataclass
+class TokenUpdateInput:
+    description: str = to_field(String(
+        required=False,
         metadata=desc("Description of the token"),
     ))
 
@@ -37,4 +44,5 @@ class ListTokenOutput(GenericOutput):
 
 token_output_schema = class_schema(TokenOutput)()
 list_token_output_schema = class_schema(ListTokenOutput)()
-token_input_schema = class_schema(TokenInput)()
+token_create_input_schema = class_schema(TokenCreateInput)()
+token_update_input_schema = class_schema(TokenUpdateInput)()

@@ -8,9 +8,24 @@ from routes.schemas.generic_output import GenericOutput
 
 
 @dataclass
-class CategoryInput:
+class CategoryCreateInput:
     name: str = to_field(String(
         required=True,
+        metadata=desc("Name of the category")
+    ))
+    description: str = to_field(String(
+        required=True,
+        metadata=desc("Description of the category")
+    ))
+    color: int = to_field(Integer(
+        required=False,
+        metadata=desc("Color of the category")
+    ))
+
+@dataclass
+class CategoryUpdateInput:
+    name: str = to_field(String(
+        required=False,
         metadata=desc("Name of the category")
     ))
     description: str = to_field(String(
@@ -32,5 +47,6 @@ class CategoryOutput(GenericOutput):
     ))
 
 
-category_input_schema = class_schema(CategoryInput)()
+category_create_input_schema = class_schema(CategoryCreateInput)()
+category_update_input_schema = class_schema(CategoryUpdateInput)()
 category_output_schema = class_schema(CategoryOutput)()

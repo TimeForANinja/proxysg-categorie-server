@@ -14,7 +14,7 @@ from util.schema import desc, to_field
 class URL:
     id: str = to_field(String(required=True, metadata=desc("ID of the URL")))
     url: str = to_field(String(required=True, metadata=desc("Value of the URL")))
-    description: str = to_field(String(required=False, metadata=desc("Description of the URL")))
+    description: str = to_field(String(required=True, metadata=desc("Description of the URL")))
 
     @staticmethod
     def new(value: str, description: str) -> 'URL':

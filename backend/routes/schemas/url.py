@@ -10,9 +10,21 @@ from model.types.url import URL, url_schema
 
 
 @dataclass
-class URLInput:
+class URLCreateInput:
     url: str = to_field(String(
         required=True,
+        metadata=desc("Value of the URL")
+    ))
+    description: str = to_field(String(
+        required=False,
+        metadata=desc("Description of the URL")
+    ))
+
+
+@dataclass
+class URLUpdateInput:
+    url: str = to_field(String(
+        required=False,
         metadata=desc("Value of the URL")
     ))
     description: str = to_field(String(
@@ -60,7 +72,8 @@ class URLTestOutput(GenericOutput):
 
 
 list_url_output_schema = class_schema(ListURLOutput)()
-url_input_schema = class_schema(URLInput)()
+url_create_input_schema = class_schema(URLCreateInput)()
+url_update_input_schema = class_schema(URLUpdateInput)()
 url_output_schema = class_schema(URLOutput)()
 url_test_input_schema = class_schema(URLTestInput)()
 url_test_output_schema = class_schema(URLTestOutput)()

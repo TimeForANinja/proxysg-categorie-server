@@ -7,8 +7,8 @@ from auth.auth_user import AuthUser
 from db.db_singleton import get_db
 from routes.schemas.mappings import list_category_output_schema, ListCategoryOutput
 from util.log import log_debug
-from routes.schemas.category import category_output_schema, \
-    category_input_schema, CategoryInput, CategoryOutput
+from routes.schemas.category import category_output_schema, category_create_input_schema, category_update_input_schema, \
+    CategoryCreateInput, CategoryUpdateInput, CategoryOutput
 from routes.schemas.error import ErrorResponse, OutCanError
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 
@@ -35,10 +35,10 @@ def add_category_bp(app: APIFlask):
 
     @category_bp.post("/api/branch/@me/category")
     @category_bp.doc(summary="Create a Category", description="Create a new Category for a given branch", tags=["Categories"])
-    @category_bp.input(category_input_schema, location="json", arg_name="category_data")
+    @category_bp.input(category_create_input_schema, location="json", arg_name="category_data")
     @category_bp.output(category_output_schema)
     @category_bp.auth_required(auth, roles=[AuthRoles.RW])
-    def create_category(category_data: CategoryInput) -> CategoryOutput:
+    def create_category(category_data: CategoryCreateInput) -> CategoryOutput:
         user: AuthUser = cast(AuthUser, auth.current_user)
 
         db = get_db()
@@ -55,12 +55,12 @@ def add_category_bp(app: APIFlask):
             data=category,
         )
 
-    @category_bp.put("/api/branch/@me/category/<category_id>")
+    @category_bp.patch("/api/branch/@me/category/<category_id>")
     @category_bp.doc(summary="Update a Category", description="Update a Category by ID for a given branch", tags=["Categories"])
-    @category_bp.input(category_input_schema, location="json", arg_name="category_data")
+    @category_bp.input(category_update_input_schema, location="json", arg_name="category_data")
     @category_bp.output(category_output_schema)
     @category_bp.auth_required(auth, roles=[AuthRoles.RW])
-    def update_category(category_id: str, category_data: CategoryInput) -> OutCanError[CategoryOutput]:
+    def update_category(category_id: str, category_data: CategoryUpdateInput) -> OutCanError[CategoryOutput]:
         user: AuthUser = cast(AuthUser, auth.current_user)
 
         db = get_db()

@@ -8,8 +8,8 @@ from db.db_singleton import get_db
 from util.log import log_debug
 from routes.schemas.error import OutCanError, ErrorResponse
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
-from routes.schemas.token import ListTokenOutput, TokenOutput, token_input_schema, TokenInput, list_token_output_schema, \
-    token_output_schema
+from routes.schemas.token import ListTokenOutput, TokenOutput, token_create_input_schema, token_update_input_schema, \
+    TokenCreateInput, TokenUpdateInput, list_token_output_schema, token_output_schema
 
 
 def add_token_bp(app: APIFlask):
@@ -34,10 +34,10 @@ def add_token_bp(app: APIFlask):
 
     @token_bp.post("/api/branch/@me/token")
     @token_bp.doc(summary="Create a Token", description="Create a new Token for a given branch", tags=["Tokens"])
-    @token_bp.input(token_input_schema, location="json", arg_name="token_data")
+    @token_bp.input(token_create_input_schema, location="json", arg_name="token_data")
     @token_bp.output(token_output_schema)
     @token_bp.auth_required(auth, roles=[AuthRoles.RW])
-    def create_token(token_data: TokenInput) -> TokenOutput:
+    def create_token(token_data: TokenCreateInput) -> TokenOutput:
         user: AuthUser = cast(AuthUser, auth.current_user)
 
         db = get_db()
@@ -49,12 +49,12 @@ def add_token_bp(app: APIFlask):
             data=token,
         )
 
-    @token_bp.put("/api/branch/@me/token/<token_id>")
+    @token_bp.patch("/api/branch/@me/token/<token_id>")
     @token_bp.doc(summary="Update a Token", description="Update a Token by ID for a given branch", tags=["Tokens"])
-    @token_bp.input(token_input_schema, location="json", arg_name="token_data")
+    @token_bp.input(token_update_input_schema, location="json", arg_name="token_data")
     @token_bp.output(token_output_schema)
     @token_bp.auth_required(auth, roles=[AuthRoles.RW])
-    def update_token(token_id: str, token_data: TokenInput) -> OutCanError[TokenOutput]:
+    def update_token(token_id: str, token_data: TokenUpdateInput) -> OutCanError[TokenOutput]:
         user: AuthUser = cast(AuthUser, auth.current_user)
 
         db = get_db()
