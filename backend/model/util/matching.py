@@ -21,7 +21,7 @@ def best_match_url(candidate: str, urls: Iterable[URL]) -> Optional[URL]:
             # perfect match, so stop the search
             best_url = u
             break
-        if candidate.endswith('.' + u.url):
+        if candidate.endswith("." + u.url):
             # we've found part of the hostname
             score = len(u.url)
             # only save if this is the best we've found

@@ -12,9 +12,10 @@ from routes.schemas.error import ErrorResponse, OutCanError
 def add_auth_bp(app):
     log_debug("ROUTES", "Adding Authentication Blueprint")
     auth_if = get_auth_if(app)
-    auth_bp = APIBlueprint("authentication", __name__)
+    auth_bp = APIBlueprint("authentication", __name__, tag="Auth")
 
     @auth_bp.post("/api/auth/verify")
+    @auth_bp.doc(summary="Verify JWT Token", description="Verify a JWT Token and return the user data", tags=["Auth"])
     @auth_bp.input(jwt_header_schema, location="headers", arg_name="token")
     @auth_bp.output(verify_output_schema)
     def handle_verify(token: JWTHeaderInput) -> OutCanError[VerifyOutput]:
@@ -29,6 +30,7 @@ def add_auth_bp(app):
             )
 
     @auth_bp.post("/api/auth/login")
+    @auth_bp.doc(summary="Login", description="Login to the API", tags=["Auth"])
     @auth_bp.input(login_input_schema, location="json", arg_name="login_input")
     @auth_bp.output(login_output_schema)
     def handle_auth(login_input: LoginInput) -> OutCanError[LoginOutput]:

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from marshmallow.fields import Integer, String
+from apiflask.fields import Integer, String
 from marshmallow.validate import OneOf
 from marshmallow_dataclass import class_schema
 

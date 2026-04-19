@@ -1,22 +1,11 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested, Dict
-from typing import List as tList, Dict as tDict, Optional, Any
-
-from marshmallow.fields import String
+from apiflask.fields import List, Nested, String
+from typing import List as tList, Optional
 from marshmallow_dataclass import class_schema
 
 from routes.types.core import RestCommit, rest_commit_schema, rest_branch_info_schema, RestBranchInfo
 from util.schema import desc, to_field
 from routes.schemas.generic_output import GenericOutput
-
-
-@dataclass
-class ListMetricsOutput(GenericOutput):
-    """Output schema for a list of branches"""
-    data: tDict[str, Any] = to_field(Dict(
-            required=True,
-            metadata=desc("Dictionary of Metrics"),
-    ))
 
 
 @dataclass
@@ -45,17 +34,6 @@ class HistoryInput:
         metadata=desc("List of all UUIDs to filter by relevance for"),
     ), default=None)
 
-@dataclass
-class ExistingDBInput:
-    """Class representing the DB Structure loaded from an existing DB File"""
-    category_db: str = to_field(String(
-        required=True,
-        metadata=desc("^Content of the existing category DB"),
-    ))
-    prefix: str = to_field(String(
-        required=True,
-        metadata=desc("Prefix of the existing category DB"),
-    ))
 
 @dataclass
 class CommitInput:
@@ -73,10 +51,8 @@ class CommitOutput(GenericOutput):
         metadata=desc("new Commit"),
     ))
 
-list_metrics_output_schema = class_schema(ListMetricsOutput)()
 history_input_schema = class_schema(HistoryInput)()
 list_branches_output_schema = class_schema(ListBranchesOutput)()
 list_history_output_schema = class_schema(ListHistoryOutput)()
-existing_db_input_schema = class_schema(ExistingDBInput)()
 commit_input_schema = class_schema(CommitInput)()
 commit_output_schema = class_schema(CommitOutput)()

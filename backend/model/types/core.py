@@ -6,12 +6,11 @@ from typing import Dict, List, Optional, cast
 from db.abc.constants import TYPE_KEY, TypeIDs
 from db.abc.db import DBInterface
 from model.types.category import Category
-from model.types.mappings import TokenCategoryMapping, URLCategoryMapping
+from model.types.mappings import TokenCategoryMapping, URLCategoryMapping, ChildCategoryMapping
 from model.types.token import Token
 from model.types.url import URL
 from model.util.diff import list_obj_diff
 from routes.types.core import RestCommit
-from model.types.mappings import ChildCategoryMapping
 from db.util.simple_bson import bson_encode, bson_decode
 
 

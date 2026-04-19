@@ -11,6 +11,8 @@ from db.db_singleton import get_db, close_connection
 from routes.auth import add_auth_bp
 from routes.category import add_category_bp
 from routes.core import add_core_bp
+from routes.mappings import add_mapping_bp
+from routes.special import add_special_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
 from util.log import setup_logging, log_info, log_debug, log_error_obj
@@ -51,8 +53,10 @@ if app.config.get("PROXY_FIX", "false").lower() == "true":
 
 # Register blueprints
 add_auth_bp(app)
-add_core_bp(app)
 add_category_bp(app)
+add_core_bp(app)
+add_mapping_bp(app)
+add_special_bp(app)
 add_token_bp(app)
 add_url_bp(app)
 

@@ -1,17 +1,51 @@
-from typing import Optional
+from typing import Optional, cast, List, Dict
+from apiflask import APIFlask
 
 from db.abc.db import DBInterface
 from model.types.core import Commit
-from model.types.mappings import URLCategoryMapping
+from model.types.mappings import URLCategoryMapping, ChildCategoryMapping
 from model.util.error import ModelError, CanError
 from model.types.url import URL
 from model.util.find import find_in_lists, find_all_in_lists
+from model.util.matching import best_match_url, unnest_categories
+from model.util.util_query_bc import ServerCredentials, FAILED_LOOKUP, query_url
+from routes.types.url import RestTestResult, RestURLDetail, RestConstrainedCategory
+from util.branch_names import BRANCH_PROD
 
 
 class URLModel:
     def __init__(self, backend: DBInterface):
         self.backend = backend
 
+
+    def fetch_urls(self, branch: str) -> List[RestURLDetail]:
+        """Fetch a list of all URLs"""
+        head_commit = Commit.read_branch(self.backend, branch)
+
+        # Fetch LUTs
+        url_lut = head_commit.head.url_lut(self.backend)
+        category_lut = head_commit.head.category_lut(self.backend)
+
+        # create base-objects for every URL
+        data: Dict[str, RestURLDetail] = {
+            url_id: RestURLDetail(
+                url=url_lut[url_id],
+                categories=[],
+            )
+            for url_id in url_lut
+        }
+
+        # fill our category properties based on our mappings
+        mappings = URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings)
+        for mapping in mappings:
+            data[mapping.url_id].categories.append(
+                RestConstrainedCategory(
+                    category=category_lut[mapping.category_id],
+                    constraint=mapping.constraint,
+                )
+            )
+
+        return list(data.values())
 
     def create_url(self, branch: str, value: str, description: str) -> URL:
         """Create a new URL"""
@@ -91,3 +125,51 @@ class URLModel:
             lambda m: m.url_id != url_id
         )
         commit.head.url_category_mappings = keep_hashes
+
+
+    def test_url(self, app: APIFlask, url: str) -> RestTestResult:
+        # 1) Normalize input to a hostname
+        hostname = url.strip().lower()
+
+        # 2) Fetch all URLs and select the best match by comparing the longest suffix that matched
+        head_commit = Commit.read_branch(self.backend, BRANCH_PROD)
+        url_lut = head_commit.head.url_lut(self.backend)
+        best_match = best_match_url(hostname, url_lut.values())
+
+        # 3) Fetch all categories that match the best match
+        cat_lut = head_commit.head.category_lut(self.backend)
+        matching_cats = []
+        if best_match:
+            direct_matching_cats, _ = find_in_lists(
+                URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings),
+                head_commit.head.url_category_mappings,
+                lambda m: m.url_id == cast(URL, best_match).id
+            )
+            matching_cats.extend([c.name for c in direct_matching_cats])
+            # unnest to also get all Partents of the matched categories
+            child_cat_map = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
+            matching_cats.extend([
+                parent_cat.name
+                for c in direct_matching_cats
+                for parent_cat in unnest_categories(
+                    cat_lut[c.category_id],
+                    cat_lut,
+                    child_cat_map,
+                    True,
+                )
+            ])
+
+        # 4) Query BlueCoat category for the provided hostname
+        try:
+            credentials = ServerCredentials.from_env(app)
+            bc_categories = query_url(credentials, hostname)
+        except Exception:
+            bc_categories = [FAILED_LOOKUP]
+
+        return RestTestResult(
+            input=url,
+            normalized_input=hostname,
+            matched_url=best_match.url if best_match else "N/A",
+            local_categories=[cat.name for cat in matching_cats],
+            bc_categories=bc_categories,
+        )

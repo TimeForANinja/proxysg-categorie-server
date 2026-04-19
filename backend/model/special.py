@@ -1,5 +1,5 @@
-from typing import List, Dict, Optional, cast
-from apiflask import APIFlask
+from collections import defaultdict
+from typing import List
 
 from db.abc.db import DBInterface
 from model.types.category import Category
@@ -8,16 +8,11 @@ from model.types.url import URL
 from model.util.build_localdb import build_localdb
 from model.util.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping, ChildCategoryMapping
-from model.util.find import find_in_lists
-from routes.types.core import RestCommit
-from routes.schemas.url import RestURLDetail
+from model.util.parse_localdb import ExistingCat
 from model.types.core import Commit
-from routes.types.token import RestTokenDetail
-from routes.types.url import RestConstrainedCategory, RestTestResult
 from model.types.metrics import TokenUsage, BCCategory
 from util.branch_names import BRANCH_PROD
-from model.util.util_query_bc import ServerCredentials, query_url, FAILED_LOOKUP
-from model.util.matching import best_match_url, unnest_categories
+from model.util.matching import unnest_categories
 
 
 ERROR_NOT_FOUND = ModelError("Not Found")
@@ -29,111 +24,7 @@ class SpecialModel:
         self.backend = backend
 
 
-    def fetch_commits(
-            self,
-            branch: str,
-            filter_uuid: Optional[List[str]],
-    ) -> List[RestCommit]:
-        """
-        Fetch a list of recent Commits by Name
-
-        :param branch: The branch to fetch commits from
-        :param filter_uuid: The UUIDs to filter by, or None to ignore this filter
-        :return: A (filtered) list of Commits
-        """
-        commits = []
-
-        # load first / current commit
-        core = Core.read(self.backend)
-        uut_hash = core.branches[branch]
-
-        # Iterate over all elements in our linked list
-        while uut_hash is not None:
-            c = Commit.read(self.backend, uut_hash)
-
-            # check our filters (if provided) and add to our list if we match
-            if (
-                filter_uuid is None
-                or
-                any(x in c.ref_changed_uuid for x in filter_uuid)
-            ):
-                commits.append(c.to_rest(self.backend))
-
-            # update our pointer to the next commit
-            uut_hash = c.parent_commit_hash
-
-        return commits
-
-
-    def list_branches(self) -> List[str]:
-        """Fetch a list of all Branches"""
-        core = Core.read(self.backend)
-        return list(core.branches.keys())
-
-
-    def fetch_categories(self, branch: str) -> List[Category]:
-        """Fetch a list of all Categories"""
-        head_commit = Commit.read_branch(self.backend, branch)
-        category_lut = head_commit.head.category_lut(self.backend)
-        return list(category_lut.values())
-
-    def fetch_url_list(self, branch: str) -> List[RestURLDetail]:
-        """Fetch a list of all URLs"""
-        head_commit = Commit.read_branch(self.backend, branch)
-
-        # Fetch LUTs
-        url_lut = head_commit.head.url_lut(self.backend)
-        category_lut = head_commit.head.category_lut(self.backend)
-
-        # create base-objects for every URL
-        data: Dict[str, RestURLDetail] = {
-            url_id: RestURLDetail(
-                url=url_lut[url_id],
-                categories=[],
-            )
-            for url_id in url_lut
-        }
-
-        # fill our category properties based on our mappings
-        mappings = URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings)
-        for mapping in mappings:
-            data[mapping.url_id].categories.append(
-                RestConstrainedCategory(
-                    category=category_lut[mapping.category_id],
-                    constraint=mapping.constraint,
-                )
-            )
-
-        return list(data.values())
-
-    def fetch_tokens(self, branch: str) -> List[RestTokenDetail]:
-        """Fetch a list of all Tokens"""
-        head_commit = Commit.read_branch(self.backend, branch)
-
-        # Fetch LUTs
-        token_lut = head_commit.head.token_lut(self.backend)
-        category_lut = head_commit.head.category_lut(self.backend)
-
-        # create base-objects for every Token
-        data: Dict[str, RestTokenDetail] = {
-            token_id: RestTokenDetail(
-                token=token_lut[token_id],
-                categories=[],
-            )
-            for token_id in token_lut
-        }
-
-        # fill our category properties based on our mappings
-        mappings = TokenCategoryMapping.batch_read(self.backend, head_commit.head.token_category_mappings)
-        for mapping in mappings:
-            data[mapping.token_id].categories.append(
-                category_lut[mapping.category_id]
-            )
-
-        return list(data.values())
-
-
-    def compile_categories(self, token_val: str) -> CanError[str]:
+    def compile_localdb(self, token_val: str) -> CanError[str]:
         commit = Commit.read_branch(self.backend, BRANCH_PROD)
 
         # fetch all tokens and search for our token by value
@@ -156,6 +47,55 @@ class SpecialModel:
             token, urls, categories,
             cat_mappings, url_mappings, child_cat_mappings
         ), None
+
+
+    def batch_import(self, branch: str, data: List[ExistingCat]) -> None:
+        commit = Commit.read_branch(self.backend, branch)
+
+        # 1. batch insert (new) URLs
+        existing_url_name_lut = {url.url: url for url in commit.head.url_lut(self.backend).values()}
+        required_urls = set([url for cat in data for url in cat.urls])
+        missing_urls = required_urls - set(existing_url_name_lut.keys())
+        new_urls = [URL.new(url, "") for url in missing_urls]
+        new_url_hashes = URL.batch_write(self.backend, new_urls)
+        for url in new_urls:
+            existing_url_name_lut[url.url] = url
+        commit.head.urls.extend(new_url_hashes)
+
+        # 2. batch insert (new) Categories
+        existing_cat_name_lut = {cat.name: cat for cat in commit.head.category_lut(self.backend).values()}
+        required_cats = set([cat.name for cat in data])
+        missing_cats = required_cats - set(existing_cat_name_lut.keys())
+        new_cats = [Category.new(cat, "") for cat in missing_cats]
+        new_cat_hashes = Category.batch_write(self.backend, new_cats)
+        for cat in new_cats:
+            existing_cat_name_lut[cat.name] = cat
+        commit.head.categories.extend(new_cat_hashes)
+
+        # 3. batch insert (new) Mappings
+        missing_mappings = set()
+        # build a LUT of existing mappings
+        existing_mapping_lut = defaultdict(list)
+        for mapping in URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings):
+            existing_mapping_lut[mapping.category_id].append(mapping.url_id)
+        for cat in data:
+            # resolve IDs using our LUT
+            cat_obj = existing_cat_name_lut[cat.name]
+            existing_mappings = set(existing_mapping_lut[cat_obj.id])
+            # iterate through urls of the category and add mapping if not already mapped
+            for url_value in cat.urls:
+                url_obj = existing_url_name_lut[url_value]
+                if url_obj.id not in existing_mappings:
+                    # since tuples are immutable, they still get deduplicated by the set
+                    missing_mappings.add((url_obj.id, cat_obj.id))
+        # push new mappings to DB
+        new_mapping_hashes = URLCategoryMapping.batch_write(self.backend, [
+            URLCategoryMapping(url_id, cat_id, None) for url_id, cat_id in missing_mappings
+        ])
+        commit.head.url_category_mappings.extend(new_mapping_hashes)
+
+        # update branch with new tree
+        commit.write_branch(self.backend, branch)
 
 
     def cleanup_unused(self, branch: str) -> None:
@@ -248,51 +188,3 @@ class SpecialModel:
             bc for bc in bc_cat_list
             if bc.url_value in known_urls
         ])
-
-
-    def test_url(self, app: APIFlask, url: str) -> RestTestResult:
-        # 1) Normalize input to a hostname
-        hostname = url.strip().lower()
-
-        # 2) Fetch all URLs and select the best match by comparing the longest suffix that matched
-        head_commit = Commit.read_branch(self.backend, BRANCH_PROD)
-        url_lut = head_commit.head.url_lut(self.backend)
-        best_match = best_match_url(hostname, url_lut.values())
-
-        # 3) Fetch all categories that match the best match
-        cat_lut = head_commit.head.category_lut(self.backend)
-        matching_cats = []
-        if best_match:
-            direct_matching_cats, _ = find_in_lists(
-                URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings),
-                head_commit.head.url_category_mappings,
-                lambda m: m.url_id == cast(URL, best_match).id
-            )
-            matching_cats.extend([c.name for c in direct_matching_cats])
-            # unnest to also get all Partents of the matched categories
-            child_cat_map = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
-            matching_cats.extend([
-                parent_cat.name
-                for c in direct_matching_cats
-                for parent_cat in unnest_categories(
-                    cat_lut[c.category_id],
-                    cat_lut,
-                    child_cat_map,
-                    True,
-                )
-            ])
-
-        # 4) Query BlueCoat category for the provided hostname
-        try:
-            credentials = ServerCredentials.from_env(app)
-            bc_categories = query_url(credentials, hostname)
-        except Exception:
-            bc_categories = [FAILED_LOOKUP]
-
-        return RestTestResult(
-            input=url,
-            normalized_input=hostname,
-            matched_url=best_match.url if best_match else "N/A",
-            local_categories=[cat.name for cat in matching_cats],
-            bc_categories=bc_categories,
-        )

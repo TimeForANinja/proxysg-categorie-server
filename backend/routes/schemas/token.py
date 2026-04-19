@@ -34,15 +34,7 @@ class ListTokenOutput(GenericOutput):
         metadata=desc("List of Tokens"),
     ))
 
-@dataclass
-class TokenCategoryMappingInput:
-    category_id: str = to_field(String(
-        required=True,
-        metadata=desc("ID of the Category")
-    ))
-
 
 token_output_schema = class_schema(TokenOutput)()
 list_token_output_schema = class_schema(ListTokenOutput)()
-token_category_mapping_input_schema = class_schema(TokenCategoryMappingInput)()
 token_input_schema = class_schema(TokenInput)()

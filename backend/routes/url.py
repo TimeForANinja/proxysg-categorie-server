@@ -25,7 +25,7 @@ def add_url_bp(app: APIFlask):
     @url_bp.auth_required(auth, roles=[AuthRoles.RO])
     def get_urls(branch: str) -> ListURLOutput:
         db = get_db()
-        urls = db.specials.fetch_url_list(branch)
+        urls = db.urls.fetch_urls(branch)
         return ListURLOutput(
             status="success",
             message="URLs fetched successfully",
@@ -87,13 +87,13 @@ def add_url_bp(app: APIFlask):
 
 
     @url_bp.post("/api/test")
-    @url_bp.doc(summary="Delete a URL", description="Delete a URL by ID for a given branch", tags=["URLs"])
+    @url_bp.doc(summary="Delete a URL", description="Delete a URL by ID for a given branch", tags=["URLs", "Special"])
     @url_bp.input(url_test_input_schema, location="json", arg_name="test_data")
     @url_bp.output(url_test_output_schema)
     @url_bp.auth_required(auth, roles=[AuthRoles.RO])
     def do_test_url(test_data: URLTestInput) -> URLTestOutput:
         db = get_db()
-        result = db.specials.test_url(test_data.url)
+        result = db.urls.test_url(test_data.url)
 
         return URLTestOutput(
             status="success",

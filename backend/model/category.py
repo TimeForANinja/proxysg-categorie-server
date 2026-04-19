@@ -1,18 +1,23 @@
-from typing import Optional
+from typing import Optional, List
 
 from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Commit
 from model.util.error import CanError, ModelError
-from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
+from model.types.mappings import URLCategoryMapping, TokenCategoryMapping, ChildCategoryMapping
 from model.util.find import find_in_lists, find_all_in_lists
-from model.types.mappings import ChildCategoryMapping
 
 
 class CategoryModel:
     def __init__(self, backend: DBInterface):
         self.backend = backend
 
+
+    def fetch_categories(self, branch: str) -> List[Category]:
+        """Fetch a list of all Categories"""
+        head_commit = Commit.read_branch(self.backend, branch)
+        category_lut = head_commit.head.category_lut(self.backend)
+        return list(category_lut.values())
 
     def create_category(self, branch: str, name: str, description: str, color: Optional[int]) -> Category:
         """Add a new Category with the given name"""

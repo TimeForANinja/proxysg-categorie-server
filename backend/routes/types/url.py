@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested
+from apiflask.fields import List, Nested, String
 from typing import List as tList, Optional
-from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
 
 from model.types.category import category_schema, Category

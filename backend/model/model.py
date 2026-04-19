@@ -16,12 +16,13 @@ class MyModel:
         self.backend = backend
 
         # init submodules
-        self.categories = CategoryModel(backend)
         self.core = CoreModel(backend)
-        self.mappings = MappingModel(backend)
         self.specials = SpecialModel(backend)
+
+        self.categories = CategoryModel(backend)
         self.tokens = TokenModel(backend)
         self.urls = URLModel(backend)
+        self.mappings = MappingModel(backend)
 
     def migrate(self):
         # try to load "core" object
