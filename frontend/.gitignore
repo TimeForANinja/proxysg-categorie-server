@@ -2,6 +2,7 @@
 
 # custom
 .idea
+apidocs
 
 # dependencies
 /node_modules
