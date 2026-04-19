@@ -1,22 +1,17 @@
-from typing import Optional, Union, Tuple
+from typing import Optional
 
 from db.abc.db import DBInterface
 from model.types.core import Commit
 from model.types.mappings import URLCategoryMapping
 from model.util.error import ModelError, CanError
 from model.types.url import URL
+from model.util.find import find_in_lists, find_all_in_lists
 
 
 class URLModel:
     def __init__(self, backend: DBInterface):
         self.backend = backend
 
-    def _find_url(self, commit: Commit, url_id: str) -> Union[Tuple[URL, str], Tuple[None, None]]:
-        for url_hash in commit.head.urls:
-            url = URL.read(self.backend, url_hash)
-            if url.id == url_id:
-                return url, url_hash
-        return None, None
 
     def create_url(self, branch: str, value: str) -> URL:
         """Create a new URL"""
@@ -24,7 +19,7 @@ class URLModel:
 
         # create url
         new_url = URL.new(value)
-        new_url_hash = new_url.write(self.backend)
+        new_url_hash = URL.batch_write(self.backend, [new_url])[0]
 
         # update commit with new url
         commit.head.urls.append(new_url_hash)
@@ -42,7 +37,11 @@ class URLModel:
         """Update the value of an existing URL"""
         commit = Commit.read_branch(self.backend, branch)
 
-        url, url_hash = self._find_url(commit, url_id)
+        url, url_hash = find_in_lists(
+            URL.batch_read(self.backend, commit.head.urls),
+            commit.head.urls,
+            lambda u: u.id == url_id
+        )
         if not url:
             return None, ModelError("URL not found")
 
@@ -64,7 +63,11 @@ class URLModel:
         """Delete a URL by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
-        url, url_hash = self._find_url(commit, url_id)
+        url, url_hash = find_in_lists(
+            URL.batch_read(self.backend, commit.head.urls),
+            commit.head.urls,
+            lambda u: u.id == url_id
+        )
         if not url:
             return ModelError("URL not found")
 
@@ -77,11 +80,11 @@ class URLModel:
         return None
 
     def _remove_url_related(self, commit: Commit, url_id: str) -> None:
-        # all mappings using this url
-        category_mappings_to_remove = []
-        for map_hash in commit.head.url_category_mappings:
-            mapping = URLCategoryMapping.read(self.backend, map_hash)
-            if mapping.url_id == url_id:
-                category_mappings_to_remove.append(map_hash)
-        for m in category_mappings_to_remove:
-            commit.head.url_category_mappings.remove(m)
+        mappings = URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings)
+        # filter out all hashes that use this token
+        _, keep_hashes = find_all_in_lists(
+            mappings,
+            commit.head.url_category_mappings,
+            lambda m: m.url_id != url_id
+        )
+        commit.head.url_category_mappings = keep_hashes

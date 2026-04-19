@@ -6,7 +6,6 @@ from model.types.core import Core
 from model.util.build_localdb import build_localdb
 from model.util.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
-from model.types.token import Token
 from routes.types.core import RestCommit
 from routes.schemas.url import RestURLDetail
 from model.types.core import Commit
@@ -90,9 +89,8 @@ class SpecialModel:
         }
 
         # fill our category properties based on our mappings
-        for map_hash in head_commit.head.url_category_mappings:
-            mapping = URLCategoryMapping.read(self.backend, map_hash)
-
+        mappings = URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings)
+        for mapping in mappings:
             data[mapping.url_id].categories.append(
                 RestConstrainedCategory(
                     category=category_lut[mapping.category_id],
@@ -120,9 +118,8 @@ class SpecialModel:
         }
 
         # fill our category properties based on our mappings
-        for map_hash in head_commit.head.token_category_mappings:
-            mapping = TokenCategoryMapping.read(self.backend, map_hash)
-
+        mappings = TokenCategoryMapping.batch_read(self.backend, head_commit.head.token_category_mappings)
+        for mapping in mappings:
             data[mapping.token_id].categories.append(
                 category_lut[mapping.category_id]
             )
@@ -133,13 +130,9 @@ class SpecialModel:
     def compile_categories(self, token_val: str) -> CanError[str]:
         commit = Commit.read_branch(self.backend, BRANCH_PROD)
 
-        token = None
-        for token_hash in commit.head.tokens:
-            t = Token.read(self.backend, token_hash)
-            print(">", [t.token_value, t.id, t.description, token_val])
-            if t.token_value == token_val:
-                token = t
-
+        # fetch all tokens and search for our token by value
+        token_lut = commit.head.token_lut(self.backend)
+        token = next((t for t in token_lut.values() if t.token_value == token_val), None)
         if not token:
             return None, ERROR_NOT_FOUND
 
@@ -147,13 +140,7 @@ class SpecialModel:
 
         categories = commit.head.category_lut(self.backend)
         urls = commit.head.url_lut(self.backend)
-        cat_mappings = [
-            TokenCategoryMapping.read(self.backend, map_hash)
-            for map_hash in commit.head.token_category_mappings
-        ]
-        url_mappings = [
-            URLCategoryMapping.read(self.backend, map_hash)
-            for map_hash in commit.head.url_category_mappings
-        ]
+        cat_mappings = TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings)
+        url_mappings = URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings)
 
         return build_localdb(token, urls, categories, cat_mappings, url_mappings), None

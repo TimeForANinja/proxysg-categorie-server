@@ -1,8 +1,10 @@
 import uuid
 from dataclasses import dataclass
+from typing import List
 from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
 
+from db.abc.constants import TYPE_KEY, TypeIDs
 from db.abc.db import DBInterface
 from util.schema import desc, to_field
 
@@ -19,19 +21,25 @@ class Category:
             name=name
         )
 
-    def write(self, backend: DBInterface) -> str:
-        return backend.insert_obj({
-            "id": self.id,
-            "name": self.name,
-        })
+    @staticmethod
+    def batch_write(backend: DBInterface, categories: List['Category']) -> List[str]:
+        return backend.batch_insert_obj([
+            {
+                TYPE_KEY: TypeIDs.TYPE_ID_CATEGORY,
+                "id": c.id,
+                "name": c.name,
+            } for c in categories
+        ])
 
     @staticmethod
-    def read(backend: DBInterface, obj_hash: str) -> 'Category':
-        raw_category = backend.fetch_obj(obj_hash)
-        return Category(
-            id=raw_category["id"],
-            name=raw_category["name"],
-        )
+    def batch_read(backend: DBInterface, obj_hashes: List[str]) -> List['Category']:
+        raw_categories = backend.batch_fetch_obj(obj_hashes)
+        return [
+            Category(
+                id=c["id"],
+                name=c["name"],
+            ) for c in raw_categories
+        ]
 
 
 category_schema = class_schema(Category)()

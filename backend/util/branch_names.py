@@ -12,6 +12,15 @@ class BranchPermissionFlag(str, enum.Enum):
     READ_ONLY = "ro"
     READ_WRITE = "rw"
 
+    def __str__(self) -> str:
+        """
+        this __str__ is required to return the value of the enum instead of its name.
+        This is an issue with marshmallow_dataclass (used in the routes),
+        which serializes Enums using str() when the field is typed as a string,
+        returning the enum name instead of value (e.g., "BranchPermissionFlag.READ_ONLY").
+        """
+        return self.value
+
 
 def user_branch_name(user: str) -> str:
     """Build the Branch Name for a User-Branch"""

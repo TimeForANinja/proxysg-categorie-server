@@ -1,22 +1,17 @@
-from typing import Optional, Union, Tuple
+from typing import Optional
 
 from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Commit
 from model.util.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
+from model.util.find import find_in_lists, find_all_in_lists
 
 
 class CategoryModel:
     def __init__(self, backend: DBInterface):
         self.backend = backend
 
-    def _find_category(self, commit: Commit, cat_id: str) -> Union[Tuple[Category, str], Tuple[None, None]]:
-        for category_hash in commit.head.categories:
-            category = Category.read(self.backend, category_hash)
-            if category.id == cat_id:
-                return category, category_hash
-        return None, None
 
     def create_category(self, branch: str, name: str) -> Category:
         """Add a new Category with the given name"""
@@ -24,7 +19,7 @@ class CategoryModel:
 
         # create category
         new_category = Category.new(name)
-        new_category_hash = new_category.write(self.backend)
+        new_category_hash = Category.batch_write(self.backend, [new_category])[0]
 
         # update commit with new category
         commit.head.categories.append(new_category_hash)
@@ -42,7 +37,11 @@ class CategoryModel:
         """Update the name of an existing Category"""
         commit = Commit.read_branch(self.backend, branch)
 
-        cat, cat_hash = self._find_category(commit, category_id)
+        cat, cat_hash = find_in_lists(
+            Category.batch_read(self.backend, commit.head.categories),
+            commit.head.categories,
+            lambda u: u.id == category_id
+        )
         if not cat:
             return None, ModelError("Category not found")
 
@@ -64,7 +63,11 @@ class CategoryModel:
         """Delete a Category by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
-        cat, cat_hash = self._find_category(commit, category_id)
+        cat, cat_hash = find_in_lists(
+            Category.batch_read(self.backend, commit.head.categories),
+            commit.head.categories,
+            lambda u: u.id == category_id
+        )
         if not cat:
             return ModelError("Category not found")
 
@@ -77,19 +80,20 @@ class CategoryModel:
         return None
 
     def _remove_category_related(self, commit: Commit, category_id: str) -> None:
-        # all mappings using this category
-        url_mappings_to_remove = []
-        for map_hash in commit.head.url_category_mappings:
-            mapping = URLCategoryMapping.read(self.backend, map_hash)
-            if mapping.category_id == category_id:
-                url_mappings_to_remove.append(map_hash)
-        for m in url_mappings_to_remove:
-            commit.head.url_category_mappings.remove(m)
+        url_mappings = URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings)
+        token_mappings = TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings)
+        # filter out all hashes that use this token
 
-        token_mappings_to_remove = []
-        for map_hash in commit.head.token_category_mappings:
-            mapping = TokenCategoryMapping.read(self.backend, map_hash)
-            if mapping.category_id == category_id:
-                token_mappings_to_remove.append(map_hash)
-        for m in token_mappings_to_remove:
-            commit.head.token_category_mappings.remove(m)
+        _, keep_url_hashes = find_all_in_lists(
+            url_mappings,
+            commit.head.url_category_mappings,
+            lambda m: m.category_id != category_id
+        )
+        commit.head.url_category_mappings = keep_url_hashes
+
+        _, keep_token_hashes = find_all_in_lists(
+            token_mappings,
+            commit.head.token_category_mappings,
+            lambda m: m.category_id != category_id
+        )
+        commit.head.token_category_mappings = keep_token_hashes

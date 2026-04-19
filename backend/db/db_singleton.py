@@ -32,7 +32,7 @@ def get_db() -> MyModel:
         #################
         if db_type == 'dbm':
             dbm_cfg = db_cfg.get('DBM', {})
-            database_name = dbm_cfg.get('FILENAME', './data/mydatabase.db')
+            database_name = dbm_cfg.get('FILENAME', './data/mydatabase.dbm')
             log_info('DB', 'Creating DBM DB', {'db': database_name})
             backend = DBMDB(database_name)
         elif db_type == 'mongo':

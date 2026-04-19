@@ -1,7 +1,10 @@
-from typing import Any, Dict, List
-from cachetools import LFUCache
+from typing import Any, Dict, List, Optional, TypeVar, Callable
+from cachetools import LFUCache, Cache
 
 from db.abc.db import DBInterface
+
+
+T = TypeVar('T')
 
 
 DEFAULT_CACHE_CAPACITY = 1_000_000
@@ -23,7 +26,6 @@ class CacheDB(DBInterface):
         super().__init__()
         self.capacity = capacity
 
-        self.kv_cache = LFUCache(maxsize=capacity)
         self.obj_cache = LFUCache(maxsize=capacity)
         self.id_list_cache = LFUCache(maxsize=capacity)
 
@@ -35,41 +37,80 @@ class CacheDB(DBInterface):
         Clear all local caches and forward the close command to the parent backend.
         """
         # clear cache by reinitializing
-        self.kv_cache = LFUCache(maxsize=self.capacity)
         self.obj_cache = LFUCache(maxsize=self.capacity)
         self.id_list_cache = LFUCache(maxsize=self.capacity)
         # then forward call to parent
         self.parent.close()
 
+    @staticmethod
+    def _generic_cached_fetch(
+            keys: List[str],
+            cache: Cache[str, T],
+            fetch_upstream: Callable[[List[str]], List[T]]
+    ) -> List[T]:
+        """
+        Generic method to fetch data from the cache, or if not found, fetch from the upstream DB.
 
-    def has_key(self, key: str) -> bool:
-        return self.parent.has_key(key)
+        :param keys: The keys to fetch from the cache or upstream.
+        :param cache: The cache to check for existing values.
+        :param fetch_upstream: The function to fetch (missing) values from the upstream DB.
+        :return: List of fetched values corresponding to the input keys.
+        """
+        results: List[Optional[T]] = [None] * len(keys)
+        missing_indices: List[int] = []
+
+        # check cache first
+        for i, key in enumerate(keys):
+            if key in cache:
+                cached = cache[key]
+                if hasattr(cached, "copy"):
+                    # create a copy before returning, to avoid modifying cached data
+                    # (e.g., fetching an array and pushing a new element to it)
+                    results[i] = cached.copy()
+                else:
+                    results[i] = cached
+            else:
+                missing_indices.append(i)
+
+        if missing_indices:
+            # fetch missing values from upstream
+            fetched_values = fetch_upstream([
+                keys[i] for i in missing_indices
+            ])
+            for i, val in zip(missing_indices, fetched_values):
+                results[i] = val
+                # add to cache for future use
+                cache[keys[i]] = val
+
+        return results
 
 
-    def fetch_kv(self, key: str) -> str|bytes:
-        if key not in self.kv_cache:
-            self.kv_cache[key] = self.parent.fetch_kv(key)
-        return self.kv_cache[key]
+    def batch_fetch_kv(self, keys: List[str]) -> List[str | bytes]:
+        return CacheDB._generic_cached_fetch(keys, self.obj_cache, self.parent.batch_fetch_kv)
 
-    def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
-        if obj_hash not in self.obj_cache:
-            self.obj_cache[obj_hash] = self.parent.fetch_obj(obj_hash)
-        return self.obj_cache[obj_hash]
+    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
+        return CacheDB._generic_cached_fetch(obj_hashes, self.obj_cache, self.parent.batch_fetch_obj)
 
-    def fetch_id_list(self, obj_hash: str) -> List[str]:
-        if obj_hash not in self.id_list_cache:
-            self.id_list_cache[obj_hash] = self.parent.fetch_id_list(obj_hash)
-        return self.id_list_cache[obj_hash]
+    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+        return CacheDB._generic_cached_fetch(obj_hashes, self.id_list_cache, self.parent.batch_fetch_id_list)
 
 
-    def insert_kv(self, key: str, value: str|bytes):
-        # pass all writes to parent
-        return self.parent.insert_kv(key, value)
+    def batch_insert_kv(self, keys: List[str], values: List[str | bytes]) -> None:
+        self.parent.batch_insert_kv(keys, values)
+        # update cache
+        for key, val in zip(keys, values):
+            self.obj_cache[key] = val
 
-    def insert_obj(self, entry: Dict[Any, Any]) -> str:
-        # pass all writes to parent
-        return self.parent.insert_obj(entry)
+    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+        keys = self.parent.batch_insert_obj(entries)
+        # update cache
+        for key, val in zip(keys, entries):
+            self.obj_cache[key] = val
+        return keys
 
-    def insert_id_list(self, entries: List[str]) -> str:
-        # pass all writes to parent
-        return self.parent.insert_id_list(entries)
+    def batch_insert_id_list(self, entries_list: List[List[str]]) -> List[str]:
+        keys = self.parent.batch_insert_id_list(entries_list)
+        # update cache
+        for key, val in zip(keys, entries_list):
+            self.id_list_cache[key] = val
+        return keys

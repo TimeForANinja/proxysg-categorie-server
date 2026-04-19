@@ -1,12 +1,12 @@
 import dbm
-from collections import defaultdict
 from contextlib import contextmanager
-from typing import Generator, Dict, Any, List
+from typing import Generator, Dict, Any, List, cast, Optional
 
 from db.abc.db import DBInterface
-from db.abc.constants import KEY_LENGTH, MAX_COMPACT_LIST_SIZE, TYPE_ID_LIST_SMALL, TYPE_ID_LIST_LARGE
-from db.util.simple_bson import encode_dict_str, decode_dict_str, encode_list_str, decode_list_str
+from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
+from db.util.simple_bson import bson_encode, bson_decode, BSON_SUPPORTED_TYPES
 from db.util.hash import sha256_hash
+from util.list_subset import strip_type, build_superset
 
 
 class DBMDB(DBInterface):
@@ -24,7 +24,7 @@ class DBMDB(DBInterface):
     @contextmanager
     def get_connection(self) -> Generator[dbm._Database, None, None]:
         """
-        Context manager to handle open/close of the DBM file for each operation.
+        Context manager to handle the open/close actions of the DBM file for each operation.
         """
         with dbm.open(self.filename, "c") as db:
             yield db
@@ -34,104 +34,101 @@ class DBMDB(DBInterface):
         pass
 
 
-    def has_key(self, key: str) -> bool:
+    @contextmanager
+    def _get_con(self, con: Optional[dbm._Database] = None) -> Generator[dbm._Database, None, None]:
+        """Utility function to handle the connection argument"""
+        if con:
+            yield con
+            return
+
+        # No connection provided, open a new one
+        with self.get_connection() as c:
+            yield c
+
+
+    def _generic_fetch_decode(self, keys: List[str], con: Optional[dbm._Database] = None) -> List[BSON_SUPPORTED_TYPES]:
+        return [
+            bson_decode(cast(bytes, data))
+            for data in self.batch_fetch_kv(keys, con)
+        ]
+
+    def _generic_insert_encode(self, entries: List[BSON_SUPPORTED_TYPES], con: Optional[dbm._Database] = None) -> List[str]:
+        # reuse the same hash function as DBM for consistency
+        bsons = [bson_encode(e) for e in entries]
+        hashes = [sha256_hash(b) for b in bsons]
+        self.batch_insert_kv(hashes, bsons, con)
+        return hashes
+
+
+    def batch_fetch_kv(self, keys: List[str], existing_con: Optional[dbm._Database] = None) -> List[str | bytes]:
+        with self._get_con(existing_con) as con:
+            return [con[key] for key in keys]
+
+    def batch_insert_kv(self, keys: List[str], values: List[str | bytes], existing_con: Optional[dbm._Database] = None) -> None:
+        with self._get_con(existing_con) as con:
+            for key, value in zip(keys, values):
+                con[key] = value
+
+
+    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
+        return cast(List[Dict[str, Any]], self._generic_fetch_decode(obj_hashes))
+
+    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+        return self._generic_insert_encode(entries)
+
+
+    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+        results = []
         with self.get_connection() as con:
-            return key in con
+            # get "root" for all lists
+            data_dicts = cast(List[Dict[str, Any]], self._generic_fetch_decode(obj_hashes, con))
+            for data_dict, obj_hash in zip(data_dicts, obj_hashes):
+                # check if the list is type small or large
+                if data_dict.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_LARGE:
+                    # TODO: batch-operations for large lists not yet implemented
+                    results.append(self._fetch_id_list_large(data_dict, con))
+                elif data_dict.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_SMALL:
+                    results.append(self._fetch_id_list_small(data_dict))
+                else:
+                    raise ValueError("Invalid ID list type")
+        return results
 
-
-    def fetch_kv(self, key: str) -> str|bytes:
-        with self.get_connection() as con:
-            return con[key]
-
-    def insert_kv(self, key: str, value: str|bytes):
-        with self.get_connection() as con:
-            con[key] = value
-
-
-    def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
-        # fetch from db
-        with self.get_connection() as con:
-            obj_bson = con[obj_hash]
-            obj = decode_dict_str(obj_bson)
-            return obj
-
-    def insert_obj(self, entry: Dict[Any, Any]) -> str:
-        with self.get_connection() as con:
-            entry_bson = encode_dict_str(entry)
-            entry_hash = sha256_hash(entry_bson)
-            if entry_hash not in con:
-                con[entry_hash] = entry_bson
-            return entry_hash
-
-
-    def fetch_id_list(self, obj_hash: str) -> List[str]:
-        # fetch from db
-        with self.get_connection() as con:
-            data_bson = con[obj_hash]
-            data_dict = decode_dict_str(data_bson)
-
-            # check if the list is type small or large
-            if data_dict.get("_type") == TYPE_ID_LIST_LARGE:
-                return self._fetch_id_list_large(data_dict)
-            elif data_dict.get("_type") == TYPE_ID_LIST_SMALL:
-                return self._fetch_id_list_small(data_dict)
-            else:
-                raise ValueError("Invalid ID list type")
-
-    def _fetch_id_list_small(self, data: Dict[Any, Any]) -> List[str]:
+    def _fetch_id_list_small(self, data: Dict[str, Any]) -> List[str]:
         return data["list"]
 
-    def _fetch_id_list_large(self, data: Dict[Any, Any]) -> List[str]:
-        # fetch subsets from db
+    def _fetch_id_list_large(self, data: Dict[str, Any], con: dbm._Database) -> List[str]:
+        # extract subsets from the database
+        subset_hashes = strip_type(data)
+        # fetch subsets from db using existing connection
+        subsets = cast(List[str], cast(object, self._generic_fetch_decode(list(subset_hashes.values()), con)))
+        # The subsets in large lists are expected to be just the suffixes
+        return [
+            key + s
+            for key, s in zip(subset_hashes.keys(), subsets)
+        ]
+
+    def batch_insert_id_list(self, entries_list: List[List[str]]) -> List[str]:
+        results = []
         with self.get_connection() as con:
-            entries = []
-            for key, subset_hash in data.items():
-                if key == "_type":
-                    continue
-                subset_bson = con[subset_hash]
-                subset = decode_list_str(subset_bson)
-                entries.extend([key + s for s in subset])
-            return entries
+            # Insert lists one by one to the DB
+            for entries in entries_list:
+                # If the list is small, insert it directly to improve performance
+                if len(entries) <= MAX_COMPACT_LIST_SIZE:
+                    results.append(self._insert_id_list_small(entries, con))
+                else:
+                    # TODO: batch-operations for large lists not yet implemented
+                    results.append(self._insert_id_list_large(entries, con))
+        return results
 
-    def insert_id_list(self, entries: List[str]) -> str:
-        # Insert a List of IDs into the DB
-        # If the list is small, insert it directly to improve performance
-        if len(entries) <= MAX_COMPACT_LIST_SIZE:
-            return self._insert_id_list_small(entries)
-        else:
-            return self._insert_id_list_large(entries)
-
-    def _insert_id_list_small(self, entries: List[str]) -> str:
+    def _insert_id_list_small(self, entries: List[str], con: dbm._Database) -> str:
         data = {
-            "_type": TYPE_ID_LIST_SMALL,
+            TYPE_KEY: TypeIDs.TYPE_ID_LIST_SMALL,
             "list": entries
         }
-        with self.get_connection() as con:
-            data_bson = encode_dict_str(data)
-            data_hash = sha256_hash(data_bson)
-            if data_hash not in con:
-                con[data_hash] = data_bson
-            return data_hash
+        return self._generic_insert_encode([data], con)[0]
 
-    def _insert_id_list_large(self, entries: List[str]) -> str:
-        subsets = defaultdict(list)
-        for x in entries:
-            key, val = x[:KEY_LENGTH], x[KEY_LENGTH:]
-            subsets[key].append(val)
-
-        with self.get_connection() as con:
-            # insert subsets, and track them for the superset
-            superset = {"_type": TYPE_ID_LIST_LARGE}
-            for key, val in subsets.items():
-                subset_bson = encode_list_str(val)
-                subset_hash = sha256_hash(subset_bson)
-                if subset_hash not in con:
-                    con[subset_hash] = subset_bson
-                superset[key] = subset_hash
-
-            # now create and store the superset
-            superset_bson = encode_dict_str(superset)
-            superset_hash = sha256_hash(superset_bson)
-            if superset_hash not in con:
-                con[superset_hash] = superset_bson
-            return superset_hash
+    def _insert_id_list_large(self, entries: List[str], con: dbm._Database) -> str:
+        raw_data = build_superset(entries)
+        hashes = self._generic_insert_encode(raw_data, con)
+        # last item and therefor also hash is the superset hash
+        return hashes[-1]

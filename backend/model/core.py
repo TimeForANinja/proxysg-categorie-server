@@ -1,4 +1,5 @@
 import uuid
+from collections import defaultdict
 from datetime import datetime
 from typing import List
 
@@ -80,39 +81,46 @@ class CoreModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # 1. batch insert (new) URLs
-        url_name_lut = {url.url: url for url in commit.head.url_lut(self.backend).values()}
+        existing_url_name_lut = {url.url: url for url in commit.head.url_lut(self.backend).values()}
         required_urls = set([url for cat in data for url in cat.urls])
-        for url_value in required_urls:
-            if url_value not in url_name_lut:
-                new_url = URL.new(url_value)
-                commit.head.urls.append(new_url.write(self.backend))
-                url_name_lut[url_value] = new_url
+        missing_urls = required_urls - set(existing_url_name_lut.keys())
+        new_urls = [URL.new(url) for url in missing_urls]
+        new_url_hashes = URL.batch_write(self.backend, new_urls)
+        for url in new_urls:
+            existing_url_name_lut[url.url] = url
+        commit.head.urls.extend(new_url_hashes)
 
         # 2. batch insert (new) Categories
-        cat_name_lut = {cat.name: cat for cat in commit.head.category_lut(self.backend).values()}
-        required_categories = set([cat.name for cat in data])
-        for cat_name in required_categories:
-            if cat_name not in cat_name_lut:
-                new_cat = Category.new(cat_name)
-                commit.head.categories.append(new_cat.write(self.backend))
-                cat_name_lut[cat_name] = new_cat
+        existing_cat_name_lut = {cat.name: cat for cat in commit.head.category_lut(self.backend).values()}
+        required_cats = set([cat.name for cat in data])
+        missing_cats = required_cats - set(existing_cat_name_lut.keys())
+        new_cats = [Category.new(cat) for cat in missing_cats]
+        new_cat_hashes = Category.batch_write(self.backend, new_cats)
+        for cat in new_cats:
+            existing_cat_name_lut[cat.name] = cat
+        commit.head.categories.extend(new_cat_hashes)
 
         # 3. batch insert (new) Mappings
+        missing_mappings = set()
+        # build a LUT of existing mappings
+        existing_mapping_lut = defaultdict(list)
+        for mapping in URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings):
+            existing_mapping_lut[mapping.category_id].append(mapping.url_id)
         for cat in data:
-            cat_obj = cat_name_lut[cat.name]
-            # build set of urls already mapped to this category
-            existing_mappings = set()
-            for map_hash in commit.head.url_category_mappings:
-                mapping = URLCategoryMapping.read(self.backend, map_hash)
-                if mapping.category_id == cat_obj.id:
-                    existing_mappings.add(mapping.url_id)
+            # resolve IDs using our LUT
+            cat_obj = existing_cat_name_lut[cat.name]
+            existing_mappings = set(existing_mapping_lut[cat_obj.id])
             # iterate through urls of the category and add mapping if not already mapped
             for url_value in cat.urls:
-                url_obj = url_name_lut[url_value]
+                url_obj = existing_url_name_lut[url_value]
                 if url_obj.id not in existing_mappings:
-                    mapping = URLCategoryMapping(url_obj.id, cat_obj.id, None)
-                    mapping_hash = mapping.write(self.backend)
-                    commit.head.url_category_mappings.append(mapping_hash)
+                    # since tuples are immutable, they still get deduplicated by the set
+                    missing_mappings.add((url_obj.id, cat_obj.id))
+        # push new mappings to DB
+        new_mapping_hashes = URLCategoryMapping.batch_write(self.backend, [
+            URLCategoryMapping(url_id, cat_id, None) for url_id, cat_id in missing_mappings
+        ])
+        commit.head.url_category_mappings.extend(new_mapping_hashes)
 
         # update branch with new tree
         commit.write_branch(self.backend, branch)

@@ -1,8 +1,11 @@
 import uuid
 from dataclasses import dataclass
+from typing import List
+
 from apiflask.fields import String
 from marshmallow_dataclass import class_schema
 
+from db.abc.constants import TYPE_KEY, TypeIDs
 from db.abc.db import DBInterface
 from util.schema import desc, to_field
 
@@ -19,19 +22,25 @@ class URL:
             url=value
         )
 
-    def write(self, backend: DBInterface) -> str:
-        return backend.insert_obj({
-            "id": self.id,
-            "url": self.url,
-        })
+    @staticmethod
+    def batch_write(backend: DBInterface, urls: List['URL']) -> List[str]:
+        return backend.batch_insert_obj([
+            {
+                TYPE_KEY: TypeIDs.TYPE_ID_URL,
+                "id": u.id,
+                "url": u.url,
+            } for u in urls
+        ])
 
     @staticmethod
-    def read(backend: DBInterface, obj_hash: str) -> 'URL':
-        raw_url = backend.fetch_obj(obj_hash)
-        return URL(
-            id=raw_url["id"],
-            url=raw_url["url"],
-        )
+    def batch_read(backend: DBInterface, obj_hashes: List[str]) -> List['URL']:
+        raw_urls = backend.batch_fetch_obj(obj_hashes)
+        return [
+            URL(
+                id=u["id"],
+                url=u["url"],
+            ) for u in raw_urls
+        ]
 
 
 url_schema = class_schema(URL)()

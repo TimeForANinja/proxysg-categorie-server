@@ -1,8 +1,10 @@
 import uuid
 from dataclasses import dataclass
+from typing import List
 from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
 
+from db.abc.constants import TYPE_KEY, TypeIDs
 from db.abc.db import DBInterface
 from util.schema import desc, to_field
 
@@ -21,21 +23,27 @@ class Token:
             description=description,
         )
 
-    def write(self, backend: DBInterface) -> str:
-        return backend.insert_obj({
-            "id": self.id,
-            "token_value": self.token_value,
-            "description": self.description,
-        })
+    @staticmethod
+    def batch_write(backend: DBInterface, tokens: List['Token']) -> List[str]:
+        return backend.batch_insert_obj([
+            {
+                TYPE_KEY: TypeIDs.TYPE_ID_TOKEN,
+                "id": t.id,
+                "token_value": t.token_value,
+                "description": t.description,
+            } for t in tokens
+        ])
 
     @staticmethod
-    def read(backend: DBInterface, obj_hash: str) -> 'Token':
-        raw_token = backend.fetch_obj(obj_hash)
-        return Token(
-            id=raw_token["id"],
-            token_value=raw_token["token_value"],
-            description=raw_token["description"],
-        )
+    def batch_read(backend: DBInterface, obj_hashes: List[str]) -> List['Token']:
+        raw_token = backend.batch_fetch_obj(obj_hashes)
+        return [
+            Token(
+                id=t["id"],
+                token_value=t["token_value"],
+                description=t["description"],
+            ) for t in raw_token
+        ]
 
 
 token_schema = class_schema(Token)()

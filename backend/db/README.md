@@ -33,20 +33,20 @@ The database system is configured via environment variables (or `app.config`).
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB__TYPE` | (required) | Type of backend: `dbm`, `mongo`, or `sqlite`. |
-| `DB__CACHE_DISABLED` | `false` | Set to `true` to disable the LFU caching layer. |
-| `DB__DBM__FILENAME` | `./data/mydatabase.db` | File path for the DBM backend. |
-| `DB__MONGO__HOST` | `localhost` | MongoDB server hostname. |
-| `DB__MONGO__PORT` | `27017` | MongoDB server port. |
-| `DB__MONGO__DATABASE` | `proxysg` | MongoDB database name. |
-| `DB__MONGO__USERNAME` | (optional) | Username for MongoDB authentication. |
-| `DB__MONGO__PASSWORD` | (optional) | Password for MongoDB authentication. |
-| `DB__MONGO__AUTHSOURCE` | (database) | Database to authenticate against (defaults to `DB__MONGO__DATABASE`). |
-| `DB__MONGO__CONNECT_DIRECT` | `false` | Whether to connect directly to the host (bypass replica set discovery). |
-| `DB__MONGO__COLLECTION` | `data` | MongoDB collection name. |
-| `DB__SQLITE__FILENAME` | `./data/mydatabase.sqlite` | File path for the SQLite backend. |
+| Variable                    | Default                    | Description                                                             |
+|-----------------------------|----------------------------|-------------------------------------------------------------------------|
+| `DB__TYPE`                  | (required)                 | Type of backend: `dbm`, `mongo`, or `sqlite`.                           |
+| `DB__CACHE_DISABLED`        | `false`                    | Set to `true` to disable the LFU caching layer.                         |
+| `DB__DBM__FILENAME`         | `./data/mydatabase.dbm`    | File path for the DBM backend.                                          |
+| `DB__MONGO__HOST`           | `localhost`                | MongoDB server hostname.                                                |
+| `DB__MONGO__PORT`           | `27017`                    | MongoDB server port.                                                    |
+| `DB__MONGO__DATABASE`       | `proxysg`                  | MongoDB database name.                                                  |
+| `DB__MONGO__USERNAME`       | (optional)                 | Username for MongoDB authentication.                                    |
+| `DB__MONGO__PASSWORD`       | (optional)                 | Password for MongoDB authentication.                                    |
+| `DB__MONGO__AUTHSOURCE`     | (database)                 | Database to authenticate against (defaults to `DB__MONGO__DATABASE`).   |
+| `DB__MONGO__CONNECT_DIRECT` | `false`                    | Whether to connect directly to the host (bypass replica set discovery). |
+| `DB__MONGO__COLLECTION`     | `data`                     | MongoDB collection name.                                                |
+| `DB__SQLITE__FILENAME`      | `./data/mydatabase.sqlite` | File path for the SQLite backend.                                       |
 
 ### Backend Specifics
 

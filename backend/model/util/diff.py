@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 from db.abc.db import DBInterface
@@ -7,15 +8,17 @@ def list_obj_diff(backend: DBInterface, a: List[str], b: Optional[List[str]], cl
     """
     List the IDs of all objects that have been modified (added or removed) between two lists.
     """
-    collector = set()
-
     new_obj, del_obj = list_diff(a, b)
-    for obj_hash in new_obj + del_obj:
-        url = cls.read(backend, obj_hash)
-        for p in props:
-            collector.add(getattr(url, p))
 
-    return list(collector)
+    modified_objects = cls.batch_read(backend, new_obj + del_obj)
+
+    # convert to set to deduplicate
+    return list(set([
+        getattr(obj, p)
+        for obj in modified_objects
+        for p in props
+        if hasattr(obj, p)
+    ]))
 
 
 def list_diff(a: List[str], b: Optional[List[str]]) -> Tuple[List[str], List[str]]:

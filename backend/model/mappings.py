@@ -6,6 +6,7 @@ from model.util.error import ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 from model.types.shared import Constraint
 from model.types.core import Commit
+from model.util.find import find_in_lists
 from routes.types.url import RestConstrainedURL
 
 
@@ -21,16 +22,15 @@ class MappingModel:
         # Fetch URL LUT
         url_lut = commit.head.url_lut(self.backend)
 
-        data: List[RestConstrainedURL] = []
-        for map_hash in commit.head.url_category_mappings:
-            mapping = URLCategoryMapping.read(self.backend, map_hash)
-            if mapping.category_id == category_id:
-                data.append(RestConstrainedURL(
-                    url=url_lut[mapping.url_id],
-                    constraint=mapping.constraint,
-                ))
-
-        return data
+        mappings = URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings)
+        return [
+            RestConstrainedURL(
+                url=url_lut[mapping.url_id],
+                constraint=mapping.constraint,
+            )
+            for mapping in mappings
+            if mapping.category_id == category_id
+        ]
 
     def add_url_category(self, branch: str, category_id: str, url_id: str, constraint: Optional[Constraint]) -> Optional[ModelError]:
         """Add a new url <-> category mapping"""
@@ -46,18 +46,22 @@ class MappingModel:
             return ModelError(f"category with id {category_id} does not exist")
 
         # check if mapping already exists
-        for map_hash in commit.head.url_category_mappings:
-            mapping = URLCategoryMapping.read(self.backend, map_hash)
-            if mapping.url_id == url_id and mapping.category_id == category_id:
-                return ModelError(f"mapping between url {url_id} and category {category_id} already exists")
+        mapping, _ = find_in_lists(
+            URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings),
+            commit.head.url_category_mappings,
+            lambda m: m.url_id == url_id and m.category_id == category_id
+        )
+        if mapping:
+            return ModelError(f"mapping between url {url_id} and category {category_id} already exists")
 
         # create mapping
-        new_mapping = URLCategoryMapping(
-            url_id=url_id,
-            category_id=category_id,
-            constraint=constraint
-        )
-        new_map_hash = new_mapping.write(self.backend)
+        new_map_hash = URLCategoryMapping.batch_write(self.backend, [
+            URLCategoryMapping(
+                url_id=url_id,
+                category_id=category_id,
+                constraint=constraint
+            )
+        ])[0]
 
         # update commit with new mapping
         commit.head.url_category_mappings.append(new_map_hash)
@@ -71,18 +75,16 @@ class MappingModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # find mapping
-        found_map: Optional[str] = None
-        for map_hash in commit.head.url_category_mappings:
-            mapping = URLCategoryMapping.read(self.backend, map_hash)
-            if mapping.url_id == url_id and mapping.category_id == category_id:
-                found_map = map_hash
-                break
-
-        if not found_map:
+        _, mapping_hash = find_in_lists(
+            URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings),
+            commit.head.url_category_mappings,
+            lambda m: m.url_id == url_id and m.category_id == category_id
+        )
+        if not mapping_hash:
             return ModelError("Mapping not found")
 
         # update commit, removing the mapping
-        commit.head.url_category_mappings.remove(found_map)
+        commit.head.url_category_mappings.remove(mapping_hash)
 
         # update branch with new commit
         commit.write_branch(self.backend, branch)
@@ -96,13 +98,12 @@ class MappingModel:
         # Fetch Category LUT
         category_lut = commit.head.category_lut(self.backend)
 
-        data: List[Category] = []
-        for map_hash in commit.head.token_category_mappings:
-            mapping = TokenCategoryMapping.read(self.backend, map_hash)
-            if mapping.token_id == token_id:
-                data.append(category_lut[mapping.category_id])
-
-        return data
+        mappings = TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings)
+        return [
+            category_lut[mapping.category_id]
+            for mapping in mappings
+            if mapping.token_id == token_id
+        ]
 
     def add_token_category(self, branch: str, token_id: str, category_id: str) -> Optional[ModelError]:
         """Add a category <-> token mapping"""
@@ -118,16 +119,20 @@ class MappingModel:
             return ModelError(f"category with id {category_id} does not exist")
 
         # check if mapping already exists
-        for map_hash in commit.head.token_category_mappings:
-            mapping = TokenCategoryMapping.read(self.backend, map_hash)
-            if mapping.token_id == token_id and mapping.category_id == category_id:
-                return ModelError(f"mapping between token {token_id} and category {category_id} already exists")
-
-        new_mapping = TokenCategoryMapping(
-            token_id=token_id,
-            category_id=category_id
+        mapping, _ = find_in_lists(
+            TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings),
+            commit.head.token_category_mappings,
+            lambda m: m.token_id == token_id and m.category_id == category_id
         )
-        new_map_hash = new_mapping.write(self.backend)
+        if mapping:
+            return ModelError(f"mapping between token {token_id} and category {category_id} already exists")
+
+        new_map_hash = TokenCategoryMapping.batch_write(self.backend, [
+            TokenCategoryMapping(
+                token_id=token_id,
+                category_id=category_id,
+            )
+        ])[0]
 
         # update commit with new mapping
         commit.head.token_category_mappings.append(new_map_hash)
@@ -141,18 +146,16 @@ class MappingModel:
         commit = Commit.read_branch(self.backend, branch)
 
         # find mapping
-        found_map: Optional[str] = None
-        for map_hash in commit.head.token_category_mappings:
-            mapping = TokenCategoryMapping.read(self.backend, map_hash)
-            if mapping.token_id == token_id and mapping.category_id == category_id:
-                found_map = map_hash
-                break
-
-        if not found_map:
+        _, mapping_hash = find_in_lists(
+            TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings),
+            commit.head.token_category_mappings,
+            lambda m: m.token_id == token_id and m.category_id == category_id
+        )
+        if not mapping_hash:
             return ModelError("Mapping not found")
 
         # update commit, removing the mapping
-        commit.head.token_category_mappings.remove(found_map)
+        commit.head.token_category_mappings.remove(mapping_hash)
 
         # update branch with new commit
         commit.write_branch(self.backend, branch)

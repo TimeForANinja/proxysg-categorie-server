@@ -39,12 +39,12 @@ auth/
 
 Authentication is configured via environment variables (or `app.config`).
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `AUTH__ORDER` | `local` | Comma-separated list of auth providers (realms) in priority order. |
-| `JWT__SECRET` | (required) | Secret key for JWT signing. |
-| `JWT__LIFETIME` | `21600` | JWT token lifetime in seconds (default: 6 hours). |
-| `AUTH__LOCAL__USER` | `admin` | Username for the static (`local`) auth provider. |
-| `AUTH__LOCAL__PASSWORD` | `nw_admin_2025` | Password for the static (`local`) auth provider. |
+| Variable                | Default         | Description                                                        |
+|-------------------------|-----------------|--------------------------------------------------------------------|
+| `AUTH__ORDER`           | `local`         | Comma-separated list of auth providers (realms) in priority order. |
+| `JWT__SECRET`           | (required)      | Secret key for JWT signing.                                        |
+| `JWT__LIFETIME`         | `21600`         | JWT token lifetime in seconds (default: 6 hours).                  |
+| `AUTH__LOCAL__USER`     | `admin`         | Username for the static (`local`) auth provider.                   |
+| `AUTH__LOCAL__PASSWORD` | `nw_admin_2025` | Password for the static (`local`) auth provider.                   |
 
 To enable your new provider, add its identifier (the one matched by `auth_fits`) to the `AUTH__ORDER` configuration.

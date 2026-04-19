@@ -1,4 +1,4 @@
-from typing import Optional, Union, Tuple
+from typing import Optional
 from uuid import uuid4
 
 from db.abc.db import DBInterface
@@ -6,24 +6,22 @@ from model.util.error import CanError, ModelError
 from model.types.mappings import TokenCategoryMapping
 from model.types.token import Token
 from model.types.core import Commit
+from model.util.find import find_in_lists, find_all_in_lists
 
 
 class TokenModel:
     def __init__(self, backend: DBInterface):
         self.backend = backend
 
-    def _find_token(self, commit: Commit, token_id: str) -> Union[Tuple[Token, str], Tuple[None, None]]:
-        for token_hash in commit.head.tokens:
-            token = Token.read(self.backend, token_hash)
-            if token.id == token_id:
-                return token, token_hash
-        return None, None
-
     def roll_token(self, branch: str, token_id: str) -> CanError[Token]:
         """Roll the value of a Token"""
         commit = Commit.read_branch(self.backend, branch)
 
-        token, token_hash = self._find_token(commit, token_id)
+        token, token_hash = find_in_lists(
+            Token.batch_read(self.backend, commit.head.tokens),
+            commit.head.tokens,
+            lambda u: u.id == token_id
+        )
         if not token:
             return None, ModelError("Token not found")
 
@@ -46,7 +44,7 @@ class TokenModel:
 
         # create token
         new_token = Token.new(description)
-        new_token_hash = new_token.write(self.backend)
+        new_token_hash = Token.batch_write(self.backend, [new_token])[0]
 
         # update commit with new token
         commit.head.tokens.append(new_token_hash)
@@ -64,7 +62,11 @@ class TokenModel:
         """Update the description of an existing Token"""
         commit = Commit.read_branch(self.backend, branch)
 
-        token, token_hash = self._find_token(commit, token_id)
+        token, token_hash = find_in_lists(
+            Token.batch_read(self.backend, commit.head.tokens),
+            commit.head.tokens,
+            lambda u: u.id == token_id
+        )
         if not token:
             return None, ModelError("Token not found")
 
@@ -86,7 +88,11 @@ class TokenModel:
         """Delete a Token by ID"""
         commit = Commit.read_branch(self.backend, branch)
 
-        token, token_hash = self._find_token(commit, token_id)
+        token, token_hash = find_in_lists(
+            Token.batch_read(self.backend, commit.head.tokens),
+            commit.head.tokens,
+            lambda u: u.id == token_id
+        )
         if not token:
             return ModelError("Token not found")
 
@@ -99,11 +105,11 @@ class TokenModel:
         return None
 
     def _remove_token_related(self, commit: Commit, token_id: str) -> None:
-        # all mappings using this token
-        category_mappings_to_remove = []
-        for map_hash in commit.head.token_category_mappings:
-            mapping = TokenCategoryMapping.read(self.backend, map_hash)
-            if mapping.token_id == token_id:
-                category_mappings_to_remove.append(map_hash)
-        for m in category_mappings_to_remove:
-            commit.head.token_category_mappings.remove(m)
+        mappings = TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings)
+        # filter out all hashes that use this token
+        _, keep_hashes = find_all_in_lists(
+            mappings,
+            commit.head.token_category_mappings,
+            lambda m: m.token_id != token_id
+        )
+        commit.head.token_category_mappings = keep_hashes

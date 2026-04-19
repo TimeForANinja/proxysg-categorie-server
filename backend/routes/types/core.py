@@ -22,12 +22,12 @@ class RestCommit:
 
 @dataclass
 class RestBranchInfo:
-    name: str = to_field(String(
+    name: str = to_field(String(required=True, metadata=desc('Name of the Branch')))
+    permission: str = to_field(String(
         required=True,
         validate=OneOf([BranchPermissionFlag.READ_ONLY, BranchPermissionFlag.READ_WRITE]),
-        metadata=desc('Name of the Branch')
+        metadata=desc('Permission for the Branch (ro/rw)')
     ))
-    permission: str = to_field(String(required=True, metadata=desc('Permission for the Branch (ro/rw)')))
 
 
 rest_commit_schema = class_schema(RestCommit)()

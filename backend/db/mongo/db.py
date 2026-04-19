@@ -1,11 +1,11 @@
-from collections import defaultdict
 from typing import Dict, Any, List, Mapping
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 
 from db.abc.db import DBInterface
-from db.abc.constants import KEY_LENGTH, MAX_COMPACT_LIST_SIZE, TYPE_ID_LIST_SMALL, TYPE_ID_LIST_LARGE
-from db.util.simple_bson import encode_dict_str, encode_list_str
+from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
+from db.util.simple_bson import bson_encode
 from db.util.hash import sha256_hash
+from util.list_subset import strip_type, build_superset
 
 
 class MongoDB(DBInterface):
@@ -38,85 +38,98 @@ class MongoDB(DBInterface):
         self.db = self.client[database_name]
         self.collection = self.db[collection_name]
 
-        # Create an index on "_key" for fast lookups
+        # Create an index on our "_key" for fast lookups
         self.collection.create_index("_key", unique=True)
 
     def close(self):
         self.client.close()
 
 
-    def has_key(self, key: str) -> bool:
-        return self.collection.find_one({"_key": key}) is not None
+    def _generic_batch_fetch(self, keys: List[str]) -> List[Any]:
+        return self.batch_fetch_kv(keys)
 
-
-    def fetch_kv(self, key: str) -> str|bytes:
-        doc = self.collection.find_one({"_key": key})
-        if doc is None:
-            raise KeyError(key)
-        return doc["value"]
-
-    def insert_kv(self, key: str, value: str|bytes):
-        self.collection.update_one(
-            {"_key": key},
-            {"$set": {"value": value}},
-            upsert=True
-        )
-
-
-    def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
-        doc = self.collection.find_one({"_key": obj_hash})
-        if doc is None:
-            raise KeyError(obj_hash)
-        # MongoDB already stores the data as a dict, so no typecast required
-
-        # We need to remove the _id from the result if we ever fetched the whole doc.
-        data = doc["data"]
-        return data
-
-    def insert_obj(self, entry: Dict[Any, Any]) -> str:
+    def _generic_batch_insert(self, values: List[Any]) -> List[str]:
         # reuse the same hash function as DBM for consistency
-        entry_hash = sha256_hash(encode_dict_str(entry))
-        
-        self.collection.update_one(
-            {"_key": entry_hash},
-            {"$set": {"data": entry}},
-            upsert=True
-        )
-        return entry_hash
+        hashes = [sha256_hash(bson_encode(v)) for v in values]
+        self.batch_insert_kv(hashes, values)
+        return hashes
 
 
-    def fetch_id_list(self, obj_hash: str) -> List[str]:
-        doc = self.collection.find_one({"_key": obj_hash})
-        if doc is None:
-            raise KeyError(obj_hash)
+    def batch_fetch_kv(self, keys: List[str]) -> List[str | bytes]:
+        docs = {
+            # mongodb already stores data as dict, so no conversion required
+            doc["_key"]: doc["data"]
+            for doc
+            in self.collection.find({"_key": {"$in": keys}})
+        }
+        results = []
+        for key in keys:
+            if key not in docs:
+                raise KeyError(key)
+            results.append(docs[key])
+        return results
+
+    def batch_insert_kv(self, keys: List[str], values: List[str | bytes]) -> None:
+        # reuse the same hash function as DBM for consistency
+        operations = [
+            UpdateOne(
+                {"_key": key},
+                # mongodb already stores data as dict, so no conversion required.
+                # Stores in the "data" field to support additional types like List.
+                {"$set": {"data": value}},
+                upsert=True
+            )
+            for key, value in zip(keys, values)
+        ]
+        if operations:
+            self.collection.bulk_write(operations)
+
+
+    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
+        return self._generic_batch_fetch(obj_hashes)
+
+    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+        return self._batch_insert_kv(entries)
+
+
+    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+        # TODO: batch-operations not yet implemented, so simply loop the non-batch fetch
+        return [
+            self._fetch_id_list(x) for x in obj_hashes
+        ]
+
+    def _fetch_id_list(self, obj_hash: str) -> List[str]:
+        doc: Dict[str, Any] = self._generic_batch_fetch([obj_hash])[0]
 
         # Check if the list is stored in the new dictionary format (small or large)
-        if doc.get("_type") == TYPE_ID_LIST_LARGE:
+        if doc.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_LARGE:
             return self._fetch_id_list_large(doc)
-        elif doc.get("_type") == TYPE_ID_LIST_SMALL:
+        elif doc.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_SM:
             return self._fetch_id_list_small(doc)
-
-        raise ValueError("Invalid ID list format in MongoDB")
+        else:
+            raise ValueError("Invalid ID list format in MongoDB")
 
     def _fetch_id_list_small(self, data: Mapping[str, Any]) -> List[str]:
         return data["list"]
 
     def _fetch_id_list_large(self, data: Mapping[str, Any]) -> List[str]:
-        entries = []
-        for key, subset_hash in data.items():
-            if key == "_type":
-                continue
+        # extract subsets from the database
+        subset_hashes = strip_type(dict(data))
+        # fetch subsets from db using existing connection
+        subsets = self._generic_batch_fetch(list(subset_hashes.values()))
+        # The subsets in large lists are expected to be just the suffixes
+        return [
+            key + s
+            for key, s in zip(subset_hashes.keys(), subsets)
+        ]
 
-            subset_doc = self.collection.find_one({"_key": subset_hash})
-            if subset_doc is None:
-                raise KeyError(subset_hash)
+    def batch_insert_id_list(self, entries_list: List[List[str]]) -> List[str]:
+        # TODO: batch-operations not yet implemented, so simply loop the non-batch insert
+        return [
+            self._insert_id_list(x) for x in entries_list
+        ]
 
-            # Subsets are stored as lists in "list" field, similar to a small list
-            subset = subset_doc["list"]
-            entries.extend([key + s for s in subset])
-        return entries
-
-    def insert_id_list(self, entries: List[str]) -> str:
+    def _insert_id_list(self, entries: List[str]) -> str:
         if len(entries) <= MAX_COMPACT_LIST_SIZE:
             return self._insert_id_list_small(entries)
         else:
@@ -124,43 +137,13 @@ class MongoDB(DBInterface):
 
     def _insert_id_list_small(self, entries: List[str]) -> str:
         data = {
-            "_type": TYPE_ID_LIST_SMALL,
+            TYPE_KEY: TypeIDs.TYPE_ID_LIST_SMALL,
             "list": entries
         }
-
-        # reuse the same hash function as DBM for consistency
-        data_hash = sha256_hash(encode_dict_str(data))
-
-        self.collection.update_one(
-            {"_key": data_hash},
-            {"$set": data},
-            upsert=True
-        )
-        return data_hash
+        return self._generic_batch_insert([data])[0]
 
     def _insert_id_list_large(self, entries: List[str]) -> str:
-        subsets = defaultdict(list)
-        for x in entries:
-            key, val = x[:KEY_LENGTH], x[KEY_LENGTH:]
-            subsets[key].append(val)
-
-        # insert subsets, and track them for the superset
-        superset = {"_type": TYPE_ID_LIST_LARGE}
-        for key, val in subsets.items():
-            list_hash = sha256_hash(encode_list_str(val))
-            # Store subset. We use "list" field to store the actual list of suffixes.
-            self.collection.update_one(
-                {"_key": list_hash},
-                {"$set": {"list": val}},
-                upsert=True
-            )
-            superset[key] = list_hash
-
-        # now create and store the superset
-        superset_hash = sha256_hash(encode_dict_str(superset))
-        self.collection.update_one(
-            {"_key": superset_hash},
-            {"$set": superset},
-            upsert=True
-        )
-        return superset_hash
+        raw_data = build_superset(entries)
+        hashes = self._generic_batch_insert(raw_data)
+        # last item and therefor also hash is the superset hash
+        return hashes[-1]

@@ -31,9 +31,10 @@ class StaticAuthRealm(AuthRealmInterface):
             # Token is invalid or expired
             log_error('AUTH', f'Authentication failed: Invalid or expired token from SRC_IP:{request.remote_addr}')
             return None
-        
-        log_info('AUTH', f'Authentication successful: User {token_data.user.username} from SRC_IP:{request.remote_addr}')
-        return token_data.to_auth_user()
+
+        auth_user = token_data.to_auth_user()
+        log_info('AUTH', f'Authentication successful: User {token_data.user.username} from SRC_IP:{request.remote_addr}', auth_user)
+        return auth_user
 
     def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
         """
@@ -43,11 +44,11 @@ class StaticAuthRealm(AuthRealmInterface):
             log_error('AUTH', f'Login failed: Invalid credentials for user {username} from SRC_IP:{request.remote_addr}')
             return None
 
-        log_info('AUTH', f'Login successful: User {username} from SRC_IP:{request.remote_addr}')
         auth_user = AuthUser(
             username=username,
             roles=[AuthRoles.RO, AuthRoles.RW]
         )
+        log_info('AUTH', f'Login successful: User {username} from SRC_IP:{request.remote_addr}', auth_user)
         token_data = TokenData(
             user=auth_user,
             realm='static',

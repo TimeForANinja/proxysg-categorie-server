@@ -1,12 +1,12 @@
 import sqlite3
-from collections import defaultdict
 from contextlib import contextmanager
-from typing import Generator, Dict, Any, List
+from typing import Generator, Dict, Any, List, cast, Optional
 
 from db.abc.db import DBInterface
-from db.abc.constants import KEY_LENGTH, MAX_COMPACT_LIST_SIZE, TYPE_ID_LIST_SMALL, TYPE_ID_LIST_LARGE
+from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
 from db.util.hash import sha256_hash
-from db.util.simple_bson import encode_dict_str, decode_dict_str, decode_list_str, encode_list_str
+from db.util.simple_bson import bson_encode, bson_decode, BSON_SUPPORTED_TYPES
+from util.list_subset import strip_type, build_superset
 
 
 class SQLiteDB(DBInterface):
@@ -30,11 +30,15 @@ class SQLiteDB(DBInterface):
             con.commit()
 
     @contextmanager
-    def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
+    def get_connection(self, existing_con: Optional[sqlite3.Connection] = None) -> Generator[sqlite3.Connection, None, None]:
         """
         Context manager to provide a thread-safe connection to the SQLite database.
         Ensures the connection is closed after each operation.
         """
+        if existing_con:
+            yield existing_con
+            return
+
         con = sqlite3.connect(self.db_path)
         try:
             yield con
@@ -42,100 +46,115 @@ class SQLiteDB(DBInterface):
             con.close()
 
     def close(self):
-        # sqlite connection is managed by context manager per operation
+        # context manager manages sqlite connection per operation, so no need to close
         pass
 
 
-    def has_key(self, key: str) -> bool:
-        with self.get_connection() as con:
-            cur = con.execute("SELECT 1 FROM kv WHERE key = ?", (key,))
-            return cur.fetchone() is not None
+    def _generic_fetch_decode(self, obj_hashes: List[str], con: Optional[sqlite3.Connection] = None) -> List[BSON_SUPPORTED_TYPES]:
+        return [
+            bson_decode(cast(bytes, v))
+            for v in self.batch_fetch_kv(obj_hashes, con)
+        ]
+
+    def _generic_insert_encode(self, entries: List[BSON_SUPPORTED_TYPES], con: Optional[sqlite3.Connection] = None) -> List[str]:
+        # reuse the same hash function as DBM for consistency
+        bsons = [bson_encode(e) for e in entries]
+        hashes = [sha256_hash(b) for b in bsons]
+        self.batch_insert_kv(hashes, bsons, con)
+        return hashes
 
 
-    def fetch_kv(self, key: str) -> str | bytes:
-        with self.get_connection() as con:
-            cur = con.execute("SELECT value FROM kv WHERE key = ?", (key,))
-            row = cur.fetchone()
-            if row is None:
-                raise KeyError(key)
-            return row[0]
+    def batch_fetch_kv(self, keys: List[str], ex_con: Optional[sqlite3.Connection] = None) -> List[str | bytes]:
+        if not keys:
+            return []
+        with self.get_connection(ex_con) as con:
+            placeholders = ",".join(["?"] * len(keys))
+            cur = con.execute(f"SELECT key, value FROM kv WHERE key IN ({placeholders})", keys)
+            docs = {row[0]: row[1] for row in cur.fetchall()}
+            results = []
+            for key in keys:
+                if key not in docs:
+                    raise KeyError(key)
+                results.append(docs[key])
+            return results
 
-    def insert_kv(self, key: str, value: str | bytes):
-        with self.get_connection() as con:
-            con.execute(
+    def batch_insert_kv(self, keys: List[str], values: List[str | bytes], ex_con: Optional[sqlite3.Connection] = None) -> None:
+        if not keys:
+            return
+        with self.get_connection(ex_con) as con:
+            con.executemany(
                 "INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)",
-                (key, value)
+                zip(keys, values)
             )
             con.commit()
 
 
-    def fetch_obj(self, obj_hash: str) -> Dict[Any, Any]:
-        value = self.fetch_kv(obj_hash)
-        return decode_dict_str(value)
+    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
+        return cast(
+            List[Dict[str, Any]],
+            self._generic_fetch_decode(obj_hashes)
+        )
 
-    def insert_obj(self, entry: Dict[Any, Any]) -> str:
-        # reuse the same hash function as DBM for consistency
-        entry_bson = encode_dict_str(entry)
-        entry_hash = sha256_hash(entry_bson)
-        self.insert_kv(entry_hash, entry_bson)
-        return entry_hash
+    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+        return self._generic_insert_encode(entries)
 
 
-    def fetch_id_list(self, obj_hash: str) -> List[str]:
-        data_json = self.fetch_kv(obj_hash)
-        data_dict = decode_dict_str(data_json)
+    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+        # TODO: batch-operations not yet implemented, so simply loop the non-batch fetch
+        with self.get_connection() as con:
+            return [
+                self._fetch_id_list(x, con) for x in obj_hashes
+            ]
 
-        if data_dict.get("_type") == TYPE_ID_LIST_LARGE:
-            return self._fetch_id_list_large(data_dict)
-        elif data_dict.get("_type") == TYPE_ID_LIST_SMALL:
+    def _fetch_id_list(self, obj_hash: str, con: sqlite3.Connection) -> List[str]:
+        data_dict: Dict[str, Any] = cast(
+            List[Dict[str, Any]],
+            self._generic_fetch_decode([obj_hash], con)
+        )[0]
+
+        if data_dict.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_LARGE:
+            return self._fetch_id_list_large(data_dict, con)
+        elif data_dict.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_SMALL:
             return self._fetch_id_list_small(data_dict)
         else:
             raise ValueError("Invalid ID list type")
 
-    def _fetch_id_list_small(self, data: Dict[Any, Any]) -> List[str]:
+    def _fetch_id_list_small(self, data: Dict[str, Any]) -> List[str]:
         return data["list"]
 
-    def _fetch_id_list_large(self, data: Dict[Any, Any]) -> List[str]:
-        entries = []
-        for key, subset_hash in data.items():
-            if key == "_type":
-                continue
-            subset_bson = self.fetch_kv(subset_hash)
-            subset = decode_list_str(subset_bson)
-            # The subsets in large lists are expected to be the suffixes
-            entries.extend([key + s for s in subset])
-        return entries
+    def _fetch_id_list_large(self, data: Dict[str, Any], con: sqlite3.Connection) -> List[str]:
+        # extract subsets from the database
+        subset_hashes = strip_type(data)
+        # fetch subsets from db using existing connection
+        subsets = cast(List[str], cast(object, self._generic_fetch_decode(list(subset_hashes.values()), con)))
+        # The subsets in large lists are expected to be just the suffixes
+        return [
+            key + s
+            for key, s in zip(subset_hashes.keys(), subsets)
+        ]
 
-    def insert_id_list(self, entries: List[str]) -> str:
+    def batch_insert_id_list(self, entries_list: List[List[str]]) -> List[str]:
+        # TODO: batch-operations not yet implemented, so simply loop the non-batch insert
+        with self.get_connection() as con:
+            return [
+                self._insert_id_list(x, con) for x in entries_list
+            ]
+
+    def _insert_id_list(self, entries: List[str], con: sqlite3.Connection) -> str:
         if len(entries) <= MAX_COMPACT_LIST_SIZE:
-            return self._insert_id_list_small(entries)
+            return self._insert_id_list_small(entries, con)
         else:
-            return self._insert_id_list_large(entries)
+            return self._insert_id_list_large(entries, con)
 
-    def _insert_id_list_small(self, entries: List[str]) -> str:
+    def _insert_id_list_small(self, entries: List[str], con: sqlite3.Connection) -> str:
         data = {
-            "_type": TYPE_ID_LIST_SMALL,
+            TYPE_KEY: TypeIDs.TYPE_ID_LIST_SMALL,
             "list": entries
         }
-        data_bson = encode_dict_str(data)
-        data_hash = sha256_hash(data_bson)
-        self.insert_kv(data_hash, data_bson)
-        return data_hash
+        return self._generic_insert_encode([data], con)[0]
 
-    def _insert_id_list_large(self, entries: List[str]) -> str:
-        subsets = defaultdict(list)
-        for x in entries:
-            key, val = x[:KEY_LENGTH], x[KEY_LENGTH:]
-            subsets[key].append(val)
-
-        superset = {"_type": TYPE_ID_LIST_LARGE}
-        for key, val in subsets.items():
-            subset_bson = encode_list_str(val)
-            subset_hash = sha256_hash(subset_bson)
-            self.insert_kv(subset_hash, subset_bson)
-            superset[key] = subset_hash
-
-        superset_json = encode_dict_str(superset)
-        superset_hash = sha256_hash(superset_json)
-        self.insert_kv(superset_hash, superset_json)
-        return superset_hash
+    def _insert_id_list_large(self, entries: List[str], con: sqlite3.Connection) -> str:
+        raw_data = build_superset(entries)
+        hashes = self._generic_insert_encode(raw_data, con)
+        # last item and therefor also hash is the superset hash
+        return hashes[-1]

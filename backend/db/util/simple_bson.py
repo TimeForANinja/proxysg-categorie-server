@@ -1,35 +1,16 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
 import bson
 
 
-def encode_list_str(values: List[str]) -> bytes:
-    """Encode a list[str] into BSON bytes."""
-    return bson.encode({'list': values})
+BSON_SUPPORTED_TYPES = Union[List[str], Dict[str, Any]]
 
 
-def decode_list_str(data: bytes) -> List[str]:
-    """Decode BSON bytes back into a list[str]."""
+def bson_encode(value: BSON_SUPPORTED_TYPES) -> bytes:
+    """Encode a complex object into BSON bytes."""
+    return bson.encode({'data': value})
+
+
+def bson_decode(data: bytes) -> BSON_SUPPORTED_TYPES:
+    """Encode a complex object from BSON bytes."""
     doc = bson.decode(data)
-    return doc["list"]
-
-
-def _encode_dict_str_list_str(mapping: Dict[str, List[str]]) -> bytes:
-    """Encode a dict[str, list[str]] into BSON bytes."""
-    return bson.encode({'dict': mapping})
-
-
-def _decode_dict_str_list_str(data: bytes) -> Dict[str, List[str]]:
-    """Decode BSON bytes back into a dict[str, list[str]]."""
-    doc = bson.decode(data)
-    return doc["dict"]
-
-
-def encode_dict_str(mapping: Dict[str, Any]) -> bytes:
-    """Encode a dict[str, str] into BSON bytes."""
-    return bson.encode({'dict': mapping})
-
-
-def decode_dict_str(data: bytes) -> Dict[str, Any]:
-    """Decode BSON bytes back into a dict[str, str]."""
-    doc = bson.decode(data)
-    return doc["dict"]
+    return doc["data"]

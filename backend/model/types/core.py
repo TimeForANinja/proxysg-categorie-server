@@ -1,15 +1,17 @@
+import uuid
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional, cast
 
+from db.abc.constants import TYPE_KEY, TypeIDs
 from db.abc.db import DBInterface
-from db.util.simple_bson import encode_dict_str
 from model.types.category import Category
 from model.types.mappings import TokenCategoryMapping, URLCategoryMapping
 from model.types.token import Token
 from model.types.url import URL
 from model.util.diff import list_obj_diff
 from routes.types.core import RestCommit
-
+from util.simple_bson import bson_encode, bson_decode
 
 # Pointer towards the current Core Object
 POINTER_CORE = "pointer_core"
@@ -23,15 +25,17 @@ class Core:
 
     def write(self, backend: DBInterface):
         # same as insert_obj, but with predefined key
-        entry_bson = encode_dict_str({
+        entry_bson = bson_encode({
+            TYPE_KEY: TypeIDs.TYPE_ID_CORE,
             "version": self.version,
             "branches": self.branches,
         })
-        backend.insert_kv(POINTER_CORE, entry_bson)
+        backend.batch_insert_kv([POINTER_CORE], [entry_bson])
 
     @staticmethod
     def read(backend: DBInterface) -> 'Core':
-        raw_core = backend.fetch_obj(POINTER_CORE)
+        raw_core_str = backend.batch_fetch_kv([POINTER_CORE])[0]
+        raw_core = bson_decode(cast(bytes, raw_core_str))
         return Core(
             version=raw_core["version"],
             branches=raw_core["branches"],
@@ -64,8 +68,11 @@ class Commit:
     def write(self, backend: DBInterface) -> str:
         """write commit to db and return hash"""
         head_hash = self.head.write(backend)
-        changes_hash = backend.insert_id_list(self.head.changed_compared_to(backend, self.parent_commit_hash))
-        return backend.insert_obj({
+        changes_hash = backend.batch_insert_id_list([
+            self.head.changed_compared_to(backend, self.parent_commit_hash),
+        ])[0]
+        return backend.batch_insert_obj([{
+            TYPE_KEY: TypeIDs.TYPE_ID_COMMIT,
             "uuid": self.uuid,
             "author": self.author,
             "description": self.description,
@@ -73,14 +80,32 @@ class Commit:
             "head": head_hash,
             "parent_commit_hash": self.parent_commit_hash,
             "ref_changed_hash": changes_hash,
-        })
+        }])[0]
+
+    @staticmethod
+    def new(author: str, description: str, parent: Optional[str]) -> 'Commit':
+        return Commit(
+                uuid=str(uuid.uuid4()),
+                author=author,
+                description=description,
+                created_at=int(datetime.now().timestamp()),
+                head=StateTreeRootNode(
+                    categories=[],
+                    tokens=[],
+                    urls=[],
+                    url_category_mappings=[],
+                    token_category_mappings=[],
+                ),
+                parent_commit_hash=parent,
+                ref_changed_uuid=[],
+            )
 
     @staticmethod
     def read(backend: DBInterface, obj_hash: str) -> 'Commit':
         """read commit from db from hash"""
-        raw_commit = backend.fetch_obj(obj_hash)
+        raw_commit = backend.batch_fetch_obj([obj_hash])[0]
         head = StateTreeRootNode.read(backend, raw_commit["head"])
-        changes = backend.fetch_id_list(raw_commit["ref_changed_hash"])
+        changes = backend.batch_fetch_id_list([raw_commit["ref_changed_hash"]])[0]
         return Commit(
             uuid=raw_commit["uuid"],
             author=raw_commit["author"],
@@ -116,33 +141,38 @@ class StateTreeRootNode:
     token_category_mappings: List[str]
 
     def write(self, backend: DBInterface) -> str:
-        cat_list_hash = backend.insert_id_list(self.categories)
-        tok_list_hash = backend.insert_id_list(self.tokens)
-        url_list_hash = backend.insert_id_list(self.urls)
-        url_cat_map_hash = backend.insert_id_list(self.url_category_mappings)
-        tok_cat_map_hash = backend.insert_id_list(self.token_category_mappings)
-        return backend.insert_obj({
-            "categories": cat_list_hash,
-            "tokens": tok_list_hash,
-            "urls": url_list_hash,
-            "url_category_mappings": url_cat_map_hash,
-            "token_category_mappings": tok_cat_map_hash,
-        })
+        id_list_hashes = backend.batch_insert_id_list([
+            self.categories,
+            self.tokens,
+            self.urls,
+            self.url_category_mappings,
+            self.token_category_mappings
+        ])
+        return backend.batch_insert_obj([{
+            TYPE_KEY: TypeIDs.TYPE_ID_STATE_TREE,
+            "categories": id_list_hashes[0],
+            "tokens": id_list_hashes[1],
+            "urls": id_list_hashes[2],
+            "url_category_mappings": id_list_hashes[3],
+            "token_category_mappings": id_list_hashes[4],
+        }])[0]
 
     @staticmethod
     def read(backend: DBInterface, obj_hash: str) -> 'StateTreeRootNode':
-        raw_head = backend.fetch_obj(obj_hash)
-        categories = backend.fetch_id_list(raw_head["categories"])
-        tokens = backend.fetch_id_list(raw_head["tokens"])
-        urls = backend.fetch_id_list(raw_head["urls"])
-        url_category_mappings = backend.fetch_id_list(raw_head["url_category_mappings"])
-        token_category_mappings = backend.fetch_id_list(raw_head["token_category_mappings"])
+        raw_head = backend.batch_fetch_obj([obj_hash])[0]
+        id_lists = backend.batch_fetch_id_list([
+            raw_head["categories"],
+            raw_head["tokens"],
+            raw_head["urls"],
+            raw_head["url_category_mappings"],
+            raw_head["token_category_mappings"],
+        ])
         return StateTreeRootNode(
-            categories=categories,
-            tokens=tokens,
-            urls=urls,
-            url_category_mappings=url_category_mappings,
-            token_category_mappings=token_category_mappings,
+            categories=id_lists[0],
+            tokens=id_lists[1],
+            urls=id_lists[2],
+            url_category_mappings=id_lists[3],
+            token_category_mappings=id_lists[4],
         )
 
     def changed_compared_to(self, backend: DBInterface, other_hash: Optional[str]) -> List[str]:
@@ -181,24 +211,19 @@ class StateTreeRootNode:
 
     def url_lut(self, backend: DBInterface) -> Dict[str, URL]:
         return {
-            u.id: u for u in [
-                URL.read(backend, url_hash)
-                for url_hash in self.urls
-            ]
+            u.id: u
+            for u in URL.batch_read(backend, self.urls)
         }
 
     def category_lut(self, backend: DBInterface) -> Dict[str, Category]:
+
         return {
-            c.id: c for c in [
-                Category.read(backend, cat_hash)
-                for cat_hash in self.categories
-            ]
+            c.id: c
+            for c in Category.batch_read(backend, self.categories)
         }
 
     def token_lut(self, backend: DBInterface) -> Dict[str, Token]:
         return {
-            c.id: c for c in [
-                Token.read(backend, tok_hash)
-                for tok_hash in self.tokens
-            ]
+            c.id: c
+            for c in Token.batch_read(backend, self.tokens)
         }
