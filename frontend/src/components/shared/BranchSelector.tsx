@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { FormControl, Select, MenuItem, Box, Divider, Typography } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
@@ -32,9 +32,9 @@ const BranchSelector = () => {
     const authMgmt = useAuth();
     const { currentBranch, setCurrentBranch, isLocked, setIsLocked } = useBranch();
 
-    const [branches, setBranches] = useState<IRestBranchInfo[]>([]);
+    const [branches, setBranches] = React.useState<IRestBranchInfo[]>([]);
 
-    const refreshBranches = () => {
+    React.useEffect(() => {
         getBranches(authMgmt.token).then(data => {
             setBranches(data);
             if (data.length > 0) {
@@ -44,18 +44,16 @@ const BranchSelector = () => {
                 }
             }
         }).catch(err => console.error("Failed to load branches", err));
-    };
+    }, [authMgmt.token, currentBranch, setCurrentBranch]);
 
-    useEffect(() => {
-        refreshBranches();
-    }, []);
-
-    useEffect(() => {
+    React.useEffect(() => {
         const branchInfo = branches.find(b => b.name === currentBranch);
         if (branchInfo) {
             setIsLocked(branchInfo.permission === RO_VALUE);
         }
     }, [currentBranch, branches, setIsLocked]);
+
+    const sortedBranches = React.useMemo(() => sort_branches(branches), [branches]);
 
     const activeColor = isLocked ? '#ff1744' : 'white';
 
@@ -88,7 +86,7 @@ const BranchSelector = () => {
                         '.MuiSvgIcon-root': { color: activeColor }
                     }}
                 >
-                    {sort_branches(branches).map((branch) => (
+                    {sortedBranches.map((branch) => (
                         <MenuItem key={branch.name} value={branch.name}>
                             <Typography variant="body2" sx={{ color: branch.permission === RO_VALUE ? '#ff1744' : 'inherit' }}>
                                 {branch.name}

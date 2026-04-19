@@ -20,25 +20,26 @@ export function CategoryPicker(props: CategoryPickerProps) {
     } = props;
 
     // helper function, triggered when the category selector changes
-    const handleChange = (event: React.SyntheticEvent, new_cats: ICategory[]) => {
-        if (Array.isArray(new_cats)) {
-            const currentIds = isCategories.map(c => c.id);
-            const newIds = new_cats.map(c => c.id);
-            const { added, removed } = CompareLists(currentIds, newIds);
-            onChange(newIds, added, removed);
-        }
+    const handleChange = (_event: React.SyntheticEvent, new_cats: ICategory[]) => {
+        const currentIds = isCategories.map(c => c.id);
+        const newIds = new_cats.map(c => c.id);
+        const { added, removed } = CompareLists(currentIds, newIds);
+        onChange(newIds, added, removed);
     };
+
+    const categoryOptions = React.useMemo(() => getLUTValues(categories), [categories]);
 
     return (
         <Autocomplete
             multiple
             disableCloseOnSelect
             size="small"
-            options={getLUTValues(categories)}
+            options={categoryOptions}
             getOptionLabel={(cat) => cat.name}
             value={isCategories}
             onChange={handleChange}
             disabled={disabled}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
             renderValue={(values, getItemProps) =>
                 values.map((val, index: number) => {
                     const { key, ...tagProps } = getItemProps({ index });
@@ -52,32 +53,17 @@ export function CategoryPicker(props: CategoryPickerProps) {
                     );
                 })
             }
-            isOptionEqualToValue={(a, b) => a.id === b.id}
-            renderOption={(props, option, { selected }) => {
+            renderOption={(props, option) => {
                 const { key, ...optionProps } = props;
                 return (
                     <li key={key} {...optionProps}>
                         <Box
-                            component="span"
                             sx={{
-                                width: 14,
-                                height: 14,
-                                flexShrink: 0,
-                                borderRadius: '3px',
-                                mr: 1,
-                                mt: '2px',
-                            }}
-                        />
-                        <Box
-                            sx={(t) => ({
                                 flexGrow: 1,
                                 '& span': {
-                                    color: '#8b949e',
-                                    ...t.applyStyles('light', {
-                                        color: '#586069',
-                                    }),
+                                    color: 'text.secondary',
                                 },
-                            })}
+                            }}
                         >
                             {option.name}
                         </Box>

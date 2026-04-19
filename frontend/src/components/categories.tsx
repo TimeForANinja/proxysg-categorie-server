@@ -87,9 +87,11 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
-            getHistory(authMgmt.token, branch, [category.id]).then(setHistory).catch(console.error);
+            getHistory(authMgmt.token, branch, [category.id])
+                .then(setHistory)
+                .catch(err => console.error('Failed to load history:', err));
         }
-        setOpen(!open);
+        setOpen(prev => !prev);
     };
 
     return (
@@ -156,7 +158,7 @@ function CategoriesPage() {
     // Memoize the download rows to avoid unnecessary transformations
     const downloadRows = React.useMemo(
         () => filteredRows.map(row => CategoryToKV(row)),
-        [filteredRows, categories],
+        [filteredRows],
     );
 
     // Track the object (if any) for which a delete confirmation is open
@@ -176,15 +178,15 @@ function CategoriesPage() {
     const handleEditOpen = React.useCallback((category: ICategory | null = null) => {
         setEditCategory(category ? new TriState(category) : TriState.NEW);
     }, []);
-    const handleEditDialogClose = () => {
+    const handleEditDialogClose = React.useCallback(() => {
         setEditCategory(TriState.CLOSED);
-    };
+    }, []);
 
     // create or edit a new object
     const handleSave = async (catID: string | null, category: IMutableCategory) => {
         if (catID == null) {
             // add the new category
-            const newCat = await createCategory(authMgmt.token, category)
+            const newCat = await createCategory(authMgmt.token, category);
             setCategory(pushLUT(categories, newCat));
         } else {
             // update existing category
@@ -198,16 +200,16 @@ function CategoriesPage() {
         // show the dialogue to confirm the deletion
         setDeleteDialogOpen(category);
     }, []);
-    const handleDeleteConfirmation = (del: boolean) => {
+
+    const handleDeleteConfirmation = async (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteCategory(authMgmt.token, isDeleteDialogOpen.id).then(() => {
-                // remove category with ID from the store
-                setCategory(filterLUT(categories, (cat => cat.id !== isDeleteDialogOpen.id)));
-            });
+            await deleteCategory(authMgmt.token, isDeleteDialogOpen.id);
+            // remove category with ID from the store
+            setCategory(filterLUT(categories, (cat => cat.id !== isDeleteDialogOpen.id)));
         }
         setDeleteDialogOpen(null);
-    }
+    };
 
     return (
         <>

@@ -15,14 +15,12 @@ interface ConfirmDeletionDialogProps {
     body: string,
     isOpen: boolean,
 }
-export function ConfirmDeletionDialog(props: ConfirmDeletionDialogProps) {
-    const {
-        onConfirmation,
-        header,
-        body,
-        isOpen,
-    } = props;
-
+export function ConfirmDeletionDialog({
+    onConfirmation,
+    header,
+    body,
+    isOpen,
+}: ConfirmDeletionDialogProps) {
     return (
         <Dialog
             open={isOpen}
@@ -40,10 +38,10 @@ export function ConfirmDeletionDialog(props: ConfirmDeletionDialogProps) {
             </DialogContent>
             <DialogActions>
                 <Button onClick={() => onConfirmation(false)}>Disagree</Button>
-                <Button onClick={() => onConfirmation(true)} autoFocus>
+                <Button onClick={() => onConfirmation(true)} autoFocus variant="contained" color="error">
                     Agree
                 </Button>
             </DialogActions>
         </Dialog>
-    )
+    );
 }

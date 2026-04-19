@@ -76,9 +76,11 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
-            getHistory(authMgmt.token, branch, [urlDetail.url.id]).then(setHistory).catch(console.error);
+            getHistory(authMgmt.token, branch, [urlDetail.url.id])
+                .then(setHistory)
+                .catch(err => console.error('Failed to load history:', err));
         }
-        setOpen(!open);
+        setOpen(prev => !prev);
     };
 
     const renderCategories = () => {
@@ -216,27 +218,26 @@ function MatchingListPage() {
         fetchData();
     }, [fetchData]);
 
-    // Edit Dialog State
     const [editURL, setEditURL] = React.useState<TriState<IRestURLDetail>>(TriState.CLOSED);
     const handleEditOpen = React.useCallback((url: IRestURLDetail | null = null) => {
         setEditURL(url ? new TriState(url) : TriState.NEW);
     }, []);
-    const handleEditDialogClose = () => {
+    const handleEditDialogClose = React.useCallback(() => {
         setEditURL(TriState.CLOSED);
-    };
+    }, []);
 
     const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState<IRestURLDetail | null>(null);
     const handleDelete = React.useCallback((url: IRestURLDetail) => {
         setDeleteDialogOpen(url);
     }, []);
-    const handleDeleteConfirmation = (del: boolean) => {
+
+    const handleDeleteConfirmation = async (del: boolean) => {
         if (del && isDeleteDialogOpen != null) {
-            deleteURL(authMgmt.token, isDeleteDialogOpen.url.id).then(() => {
-                fetchData();
-            });
+            await deleteURL(authMgmt.token, isDeleteDialogOpen.url.id);
+            fetchData();
         }
         setDeleteDialogOpen(null);
-    }
+    };
 
     const handleSave = async (id: string | null, urlValue: string) => {
         if (id == null) {

@@ -60,23 +60,24 @@ const UploadPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Reset states
+
+        // Track state
+        if (isLocked) return;
         setIsLoading(true);
 
         try {
+            let content = '';
             if (uploadType === 'file' && files.length > 0) {
-                // If it's an array of files, read each one and concatenate with 2 newlines
-                const fileContents = await Promise.all(
-                    files.map(file => file.text())
-                );
-                // send the array of files and get a task ID
-                await loadExisting(token, fileContents.join('\n\n'), prefix);
+                // If it's an array of files we simply read all of them and join them with newlines
+                const fileContents = await Promise.all(files.map(file => file.text()));
+                content = fileContents.join('\n\n');
             } else if (uploadType === 'text' && text.trim()) {
-                // send the text and get task ID
-                await loadExisting(token, text, prefix);
+                content = text;
             } else {
                 throw new Error('Please provide a file or text to upload');
             }
+
+            await loadExisting(token, content, prefix);
 
             // Reset form
             setFiles([]);

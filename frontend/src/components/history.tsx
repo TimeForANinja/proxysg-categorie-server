@@ -8,10 +8,12 @@ import {IRestCommit} from "../types/history";
 import {useAuth} from "../hooks/useLogin";
 import {Box, Button, TextField} from "@mui/material";
 import {doCommit} from "../api/branch";
+import {useNotification} from "../hooks/useNotification";
 
 function HistoryPage() {
     const authMgmt = useAuth();
     const { currentBranch, isLocked } = useBranch();
+    const { showError } = useNotification();
 
     const [commits, setCommits] = React.useState<IRestCommit[]>([]);
 
@@ -33,13 +35,13 @@ function HistoryPage() {
 
     const onCommit = async () => {
         if (!commitMessage.trim()) {
-            alert("Please enter a commit message");
+            showError("Please enter a commit message");
             return;
         }
         await doCommit(authMgmt.token, commitMessage);
         setCommitMessage(""); // Clear the commit message after submission
         fetchData();
-    }
+    };
 
     return (
         <>

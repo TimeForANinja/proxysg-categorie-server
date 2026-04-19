@@ -31,20 +31,20 @@ function LoginPage() {
         // Validate Data
         // Check if the user has entered both fields correctly
         if ('' === usernameField) {
-            setUsernameError('Please enter your username')
-            return
+            setUsernameError('Please enter your username');
+            return;
         }
         if (!/^[a-zA-Z0-9_-]+$/.test(usernameField)) {
-            setUsernameError('Please enter a valid username')
-            return
+            setUsernameError('Please enter a valid username');
+            return;
         }
-        if ('' === usernameField) {
-            setPasswordError('Please enter a password')
-            return
+        if ('' === passwordField) {
+            setPasswordError('Please enter a password');
+            return;
         }
-        if (usernameField.length < 4) {
-            setPasswordError('The password must be 4 characters or longer')
-            return
+        if (passwordField.length < 4) {
+            setPasswordError('The password must be 4 characters or longer');
+            return;
         }
 
         // Authentication call

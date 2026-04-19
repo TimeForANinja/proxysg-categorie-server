@@ -43,9 +43,11 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
     const [newStartDate, setNewStartDate] = React.useState<string>('');
     const [newEndDate, setNewEndDate] = React.useState<string>('');
 
-    const filteredMappings = urlDetail.categories.filter(m =>
-        m.category.name.toLowerCase().includes(categorySearch.toLowerCase())
-    );
+    const filteredMappings = React.useMemo(() => {
+        return urlDetail.categories.filter(m =>
+            m.category.name.toLowerCase().includes(categorySearch.toLowerCase())
+        );
+    }, [urlDetail.categories, categorySearch]);
 
     const availableCategories = React.useMemo(() => {
         const usedCategoryIds = new Set(urlDetail.categories.map(m => m.category.id));
@@ -68,7 +70,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
             setNewEndDate('');
             onRefresh();
         } catch (e) {
-            console.error(e);
+            console.error('Failed to add mapping:', e);
         }
     };
 
@@ -77,7 +79,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
             await deleteURLCategory(authMgmt.token, categoryId, urlDetail.url.id);
             onRefresh();
         } catch (e) {
-            console.error(e);
+            console.error('Failed to delete mapping:', e);
         }
     };
 

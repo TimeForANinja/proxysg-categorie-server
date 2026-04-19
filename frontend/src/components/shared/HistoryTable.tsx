@@ -14,9 +14,7 @@ interface HistoryTableProps {
     small?: boolean,
 }
 
-function HistoryTable(props: HistoryTableProps) {
-    const { commits, small } = props;
-
+function HistoryTable({ commits, small }: HistoryTableProps) {
     return (
         <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 160px)' }}>
             <Table
@@ -26,7 +24,7 @@ function HistoryTable(props: HistoryTableProps) {
             >
                 <TableHead>
                     <TableRow>
-                        {!small && <TableCell component="th" scope="row">Commit-ID</TableCell>}
+                        {!small && <TableCell>Commit-ID</TableCell>}
                         <TableCell>Time</TableCell>
                         <TableCell>User</TableCell>
                         <TableCell>Description</TableCell>
@@ -34,7 +32,7 @@ function HistoryTable(props: HistoryTableProps) {
                 </TableHead>
                 <TableBody>
                     {commits.map((commit) => (
-                        <TableRow key={commit.uuid}>
+                        <TableRow key={commit.uuid} hover>
                             {!small && (
                                 <TableCell sx={{ fontFamily: 'monospace' }}>
                                     {commit.uuid.substring(0, 8)}
@@ -50,7 +48,7 @@ function HistoryTable(props: HistoryTableProps) {
                 </TableBody>
             </Table>
         </TableContainer>
-    )
+    );
 }
 
 export default HistoryTable;

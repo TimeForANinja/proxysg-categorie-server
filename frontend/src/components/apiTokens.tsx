@@ -124,9 +124,11 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
-            getHistory(authMgmt.token, branch, [token.id]).then(setHistory).catch(console.error);
+            getHistory(authMgmt.token, branch, [token.id])
+                .then(setHistory)
+                .catch(err => console.error('Failed to load history:', err));
         }
-        setOpen(!open);
+        setOpen(prev => !prev);
     };
 
     return (
@@ -246,21 +248,20 @@ function ApiTokenPage() {
     const handleEditOpen = React.useCallback((token: IApiToken | null = null) => {
         setEditToken(token ? new TriState(token) : TriState.NEW);
     }, []);
-    const handleEditDialogClose = () => {
+    const handleEditDialogClose = React.useCallback(() => {
         setEditToken(TriState.CLOSED);
-    };
+    }, []);
 
     // create or edit a new object
-    const handleSave = async (tokenID: string|null, token: IMutableApiToken) => {
+    const handleSave = async (tokenID: string | null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
-            await createToken(authMgmt.token, token)
-            fetchData();
+            await createToken(authMgmt.token, token);
         } else {
             // update existing token
-            await updateToken(authMgmt.token, tokenID, token)
-            fetchData();
+            await updateToken(authMgmt.token, tokenID, token);
         }
+        fetchData();
         handleEditDialogClose();
     };
 
@@ -268,22 +269,21 @@ function ApiTokenPage() {
         // show the dialogue to confirm the deletion
         setDeleteDialogOpen(token);
     }, []);
-    const handleDeleteConfirmation = (del: boolean) => {
+
+    const handleDeleteConfirmation = async (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteToken(authMgmt.token, isDeleteDialogOpen.id).then(() => {
-                // refresh the list
-                fetchData();
-            });
+            await deleteToken(authMgmt.token, isDeleteDialogOpen.id);
+            fetchData();
         }
         setDeleteDialogOpen(null);
-    }
+    };
 
     const handleRoll = React.useCallback((token: IApiToken) => {
-        rollToken(authMgmt.token, token.id).then(() => {
-            fetchData();
-        }).catch((error) => console.error("Error rolling token:", error));
-    }, [fetchData]);
+        rollToken(authMgmt.token, token.id)
+            .then(fetchData)
+            .catch(err => console.error('Failed to roll token:', err));
+    }, [authMgmt.token, fetchData]);
 
     return (
         <>

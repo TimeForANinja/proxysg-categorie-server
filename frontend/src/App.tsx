@@ -10,6 +10,7 @@ import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
 import {BranchProvider} from "./hooks/useBranch";
 import {AuthProvider} from "./hooks/useLogin";
+import {NotificationProvider} from "./hooks/useNotification";
 import LoginPage from "./components/login";
 import SettingsPage from "./components/settings";
 
@@ -60,9 +61,11 @@ function App() {
 
     return (
         <AuthProvider>
-            <BranchProvider>
-                <RouterProvider router={router}/>
-            </BranchProvider>
+            <NotificationProvider>
+                <BranchProvider>
+                    <RouterProvider router={router}/>
+                </BranchProvider>
+            </NotificationProvider>
         </AuthProvider>
     );
 }

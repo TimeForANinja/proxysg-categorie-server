@@ -30,7 +30,7 @@ const BaseLayout = () => {
     }, [authMgmt, navigate])
 
     const [isMenuOpen, setMenuOpen] = React.useState<boolean>(false);
-    const menuRef = React.useRef(null);
+    const menuRef = React.useRef<HTMLElement | null>(null);
 
     return (
         <>
@@ -47,7 +47,7 @@ const BaseLayout = () => {
                         CatTracker
                     </Typography>
 
-                    { /* Center Buttons, surrounded by flewGrow to center */ }
+                    { /* Center Buttons, surrounded by flexGrow to center */ }
                     <Box sx={{ flexGrow: 1 }} />
                     <Button color="inherit" onClick={() => navigate("/url")}>URLs</Button>
                     <Button color="inherit" onClick={() => navigate("/token")}>Api Tokens</Button>
@@ -75,7 +75,7 @@ const BaseLayout = () => {
             <Menu
                 anchorEl={menuRef.current}
                 anchorOrigin={{
-                    vertical: 'top',
+                    vertical: 'bottom',
                     horizontal: 'right',
                 }}
                 id='primary-search-account-menu'
@@ -87,9 +87,9 @@ const BaseLayout = () => {
                 open={isMenuOpen}
                 onClose={() => setMenuOpen(false)}
             >
-                <MenuItem disabled={true}>Signed in as: {authMgmt.username}</MenuItem>
-                <MenuItem onClick={() => navigate("/settings")}>Settings</MenuItem>
-                <MenuItem onClick={() => authMgmt.logout()}>Logout</MenuItem>
+                <MenuItem disabled>Signed in as: {authMgmt.username}</MenuItem>
+                <MenuItem onClick={() => { setMenuOpen(false); navigate("/settings"); }}>Settings</MenuItem>
+                <MenuItem onClick={() => { setMenuOpen(false); authMgmt.logout(); }}>Logout</MenuItem>
             </Menu>
 
             { /* Outlet for the main content */}

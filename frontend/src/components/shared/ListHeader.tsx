@@ -61,8 +61,8 @@ export const ListHeader = (props: ListHeaderProps) => {
         try {
             tree = BuildSyntaxTree(debouncedSearchString, availableFields);
             setTreeError(null);
-        } catch(e: Error | any) {
-            setTreeError(e?.message);
+        } catch(e: any) {
+            setTreeError(e?.message || 'Unknown parsing error');
         }
         setMyTree(tree);
         // propagate changes to the parent component
@@ -114,15 +114,17 @@ export const ListHeader = (props: ListHeaderProps) => {
             <Grid size={1}>
                 <Box component="div" sx={{ padding: "2px", display: "flex", flexDirection: "column", gap: 2 }}>
                     <Button
-                        aria-label="delete"
+                        aria-label="download csv"
                         color="primary"
                         variant="outlined"
+                        component="span"
                     >
                         <CSVLink
                             data={downloadRows!}
                             separator={";"}
-                            filename={`download_${formatDateForFilename()}.csv`}
+                            filename={`download_${addElement.toLowerCase()}_${formatDateForFilename()}.csv`}
                             target="_blank"
+                            style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}
                         >
                             <DownloadIcon />
                         </CSVLink>
