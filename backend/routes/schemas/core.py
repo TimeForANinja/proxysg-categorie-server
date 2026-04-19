@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested
-from typing import List as tList, Optional
+from apiflask.fields import List, Nested, Dict
+from typing import List as tList, Dict as tDict, Optional, Any
 
 from marshmallow.fields import String
 from marshmallow_dataclass import class_schema
@@ -8,6 +8,15 @@ from marshmallow_dataclass import class_schema
 from routes.types.core import RestCommit, rest_commit_schema, rest_branch_info_schema, RestBranchInfo
 from util.schema import desc, to_field
 from routes.schemas.generic_output import GenericOutput
+
+
+@dataclass
+class ListMetricsOutput(GenericOutput):
+    """Output schema for a list of branches"""
+    data: tDict[str, Any] = to_field(Dict(
+            required=True,
+            metadata=desc('Dictionary of Metrics'),
+    ))
 
 
 @dataclass
@@ -64,6 +73,7 @@ class CommitOutput(GenericOutput):
         metadata=desc('new Commit'),
     ))
 
+list_metrics_output_schema = class_schema(ListMetricsOutput)()
 history_input_schema = class_schema(HistoryInput)()
 list_branches_output_schema = class_schema(ListBranchesOutput)()
 list_history_output_schema = class_schema(ListHistoryOutput)()

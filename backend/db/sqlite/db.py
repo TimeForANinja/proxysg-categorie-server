@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from contextlib import contextmanager
 from typing import Generator, Dict, Any, List, cast, Optional
 
@@ -48,6 +49,13 @@ class SQLiteDB(DBInterface):
     def close(self):
         # context manager manages sqlite connection per operation, so no need to close
         pass
+
+    def get_metrics(self) -> Dict[str, Any]:
+        return {
+            "db-type": "SQLite",
+            "db-path": self.filename,
+            "db-file-size": os.path.getsize(self.filename),
+        }
 
 
     def _generic_fetch_decode(self, obj_hashes: List[str], con: Optional[sqlite3.Connection] = None) -> List[BSON_SUPPORTED_TYPES]:

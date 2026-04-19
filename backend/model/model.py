@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from db.abc.db import DBInterface
 from model.category import CategoryModel
 from model.mappings import MappingModel
@@ -39,3 +41,14 @@ class MyModel:
                 branches={BRANCH_PROD: first_commit_hash},
             )
             new_core.write(self.backend)
+
+    def get_metrics(self) -> Dict[str, Any]:
+        prod_commit = Commit.read_branch(self.backend, BRANCH_PROD)
+        return {
+            **self.backend.get_metrics(),
+            "model-categories": len(prod_commit.head.categories),
+            "model-tokens": len(prod_commit.head.tokens),
+            "model-urls": len(prod_commit.head.urls),
+            "model-url-category-mappings": len(prod_commit.head.url_category_mappings),
+            "model-token-category-mappings": len(prod_commit.head.token_category_mappings),
+        }

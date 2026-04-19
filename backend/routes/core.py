@@ -12,7 +12,7 @@ from util.log import log_debug
 from model.special import ERROR_NOT_FOUND
 from routes.schemas.core import ListBranchesOutput, ListHistoryOutput, list_branches_output_schema, \
     list_history_output_schema, history_input_schema, HistoryInput, CommitInput, commit_input_schema, CommitOutput, \
-    commit_output_schema, existing_db_input_schema, ExistingDBInput
+    commit_output_schema, existing_db_input_schema, ExistingDBInput, list_metrics_output_schema, ListMetricsOutput
 from routes.schemas.error import ErrorResponse, OutCanError
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 from routes.types.core import RestBranchInfo
@@ -23,6 +23,27 @@ def add_core_bp(app: APIFlask):
     auth_if = get_auth_if(app)
     auth = auth_if.get_auth()
     core_bp = APIBlueprint('Core', __name__)
+
+
+    @core_bp.get('/api/metrics')
+    @core_bp.doc(summary='List Server Metrics', description='Fetch a Dict of various Metrics', tags=['Core'])
+    @core_bp.output(list_metrics_output_schema)
+    @core_bp.auth_required(auth, roles=[AuthRoles.RO])
+    def get_metrics() -> ListMetricsOutput:
+        metrics = {
+            "flask-title": app.title,
+            "flask-version": app.version,
+        }
+
+        # fetch db metrics and append to dict
+        db = get_db()
+        metrics.update(db.get_metrics())
+
+        return ListMetricsOutput(
+            status='success',
+            message='Metrics fetched successfully',
+            data=metrics,
+        )
 
 
     @core_bp.get('/api/branch')

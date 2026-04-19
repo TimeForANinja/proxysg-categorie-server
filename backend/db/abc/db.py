@@ -16,6 +16,15 @@ class DBInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_metrics(self) -> Dict[str, Any]:
+        """
+        Retrieve metrics from the database.
+
+        :return: A dictionary containing database metrics.
+        """
+        pass
+
 
     @abstractmethod
     def batch_fetch_kv(self, keys: List[str]) -> List[str | bytes]:

@@ -42,6 +42,15 @@ class CacheDB(DBInterface):
         # then forward call to parent
         self.parent.close()
 
+    def get_metrics(self) -> Dict[str, Any]:
+        return {
+            **self.parent.get_metrics(),
+            "cache-capacity": self.capacity,
+            "cache-size-obj": len(self.obj_cache),
+            "cache-size-id-list": len(self.id_list_cache),
+        }
+
+
     @staticmethod
     def _generic_cached_fetch(
             keys: List[str],

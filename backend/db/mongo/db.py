@@ -44,6 +44,12 @@ class MongoDB(DBInterface):
     def close(self):
         self.client.close()
 
+    def get_metrics(self) -> Dict[str, Any]:
+        return {
+            "db-type": "MongoDB",
+            "db-path": self.client.address,
+        }
+
 
     def _generic_batch_fetch(self, keys: List[str]) -> List[Any]:
         return self.batch_fetch_kv(keys)

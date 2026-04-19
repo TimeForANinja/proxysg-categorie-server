@@ -1,4 +1,5 @@
 import dbm
+import os
 from contextlib import contextmanager
 from typing import Generator, Dict, Any, List, cast, Optional
 
@@ -32,6 +33,13 @@ class DBMDB(DBInterface):
     def close(self):
         # dbm gets opened and closed for each connection, so no need to close
         pass
+
+    def get_metrics(self) -> Dict[str, Any]:
+        return {
+            "db-type": "DBM",
+            "db-path": self.filename,
+            "db-file-size": os.path.getsize(self.filename),
+        }
 
 
     @contextmanager
