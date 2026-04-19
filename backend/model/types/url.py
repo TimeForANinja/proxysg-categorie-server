@@ -12,14 +12,16 @@ from util.schema import desc, to_field
 
 @dataclass
 class URL:
-    id: str = to_field(String(required=True, metadata=desc('ID of the URL')))
-    url: str = to_field(String(required=True, metadata=desc('Value of the URL')))
+    id: str = to_field(String(required=True, metadata=desc("ID of the URL")))
+    url: str = to_field(String(required=True, metadata=desc("Value of the URL")))
+    description: str = to_field(String(required=False, metadata=desc("Description of the URL")))
 
     @staticmethod
-    def new(value: str) -> 'URL':
+    def new(value: str, description: str) -> 'URL':
         return URL(
             id=str(uuid.uuid4()),
-            url=value
+            url=value,
+            description=description,
         )
 
     @staticmethod
@@ -29,6 +31,7 @@ class URL:
                 TYPE_KEY: TypeIDs.TYPE_ID_URL,
                 "id": u.id,
                 "url": u.url,
+                "description": u.description,
             } for u in urls
         ])
 
@@ -39,6 +42,7 @@ class URL:
             URL(
                 id=u["id"],
                 url=u["url"],
+                description=u["description"],
             ) for u in raw_urls
         ]
 

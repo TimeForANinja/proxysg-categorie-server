@@ -6,7 +6,7 @@ from auth.auth_user import AuthUser
 
 
 # HTTP Header name for the Auth token
-AUTH_TOKEN_KEY = 'jwt-token'
+AUTH_TOKEN_KEY = "jwt-token"
 
 
 class AuthHandler:
@@ -66,7 +66,7 @@ def _build_flask_auth(auth_if: AuthHandler):
     This is a simple process, since the AuthHandler defines all methods required.
     """
     auth = HTTPTokenAuth(
-        scheme='Bearer',
+        scheme="Bearer",
         header=AUTH_TOKEN_KEY,
     )
 

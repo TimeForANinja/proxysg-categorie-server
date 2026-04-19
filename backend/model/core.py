@@ -84,7 +84,7 @@ class CoreModel:
         existing_url_name_lut = {url.url: url for url in commit.head.url_lut(self.backend).values()}
         required_urls = set([url for cat in data for url in cat.urls])
         missing_urls = required_urls - set(existing_url_name_lut.keys())
-        new_urls = [URL.new(url) for url in missing_urls]
+        new_urls = [URL.new(url, "") for url in missing_urls]
         new_url_hashes = URL.batch_write(self.backend, new_urls)
         for url in new_urls:
             existing_url_name_lut[url.url] = url
@@ -94,7 +94,7 @@ class CoreModel:
         existing_cat_name_lut = {cat.name: cat for cat in commit.head.category_lut(self.backend).values()}
         required_cats = set([cat.name for cat in data])
         missing_cats = required_cats - set(existing_cat_name_lut.keys())
-        new_cats = [Category.new(cat) for cat in missing_cats]
+        new_cats = [Category.new(cat, "") for cat in missing_cats]
         new_cat_hashes = Category.batch_write(self.backend, new_cats)
         for cat in new_cats:
             existing_cat_name_lut[cat.name] = cat

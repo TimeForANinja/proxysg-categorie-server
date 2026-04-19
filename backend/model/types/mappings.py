@@ -61,3 +61,29 @@ class URLCategoryMapping:
                 ),
             ) for m in raw_mappings
         ]
+
+
+@dataclass
+class ChildCategoryMapping:
+    category_id: str
+    child_category_id: str
+
+    @staticmethod
+    def batch_write(backend: DBInterface, mappings: List['ChildCategoryMapping']) -> List[str]:
+        return backend.batch_insert_obj([
+            {
+                TYPE_KEY: TypeIDs.TYPE_ID_URL_CAT_MAP,
+                "category_id": m.category_id,
+                "child_category_id": m.child_category_id,
+            } for m in mappings
+        ])
+
+    @staticmethod
+    def batch_read(backend: DBInterface, obj_hashes: List[str]) -> List['ChildCategoryMapping']:
+        raw_mappings = backend.batch_fetch_obj(obj_hashes)
+        return [
+            ChildCategoryMapping(
+                category_id=m["category_id"],
+                child_category_id=m["child_category_id"],
+            ) for m in raw_mappings
+        ]

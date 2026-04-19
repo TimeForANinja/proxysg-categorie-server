@@ -8,9 +8,9 @@ from util.schema import desc, to_field
 
 @dataclass
 class Constraint:
-    start: int = to_field(Integer(required=True, metadata=desc('Unix timestamp from, -1 for no limit')))
-    end: int = to_field(Integer(required=True, metadata=desc('Unix timestamp until, -1 for no limit')))
-    comment: str = to_field(String(required=True, metadata=desc('Comment for the constraint')))
+    start: int = to_field(Integer(required=True, metadata=desc("Unix timestamp from, -1 for no limit")))
+    end: int = to_field(Integer(required=True, metadata=desc("Unix timestamp until, -1 for no limit")))
+    comment: str = to_field(String(required=True, metadata=desc("Comment for the constraint")))
 
     def serialize(self) -> Dict[str, Any]:
         return {

@@ -3,7 +3,7 @@ from apiflask.fields import List, Nested, String
 from typing import List as tList
 from marshmallow_dataclass import class_schema
 
-from routes.types.url import RestURLDetail, rest_url_detail_schema
+from routes.types.url import RestURLDetail, rest_url_detail_schema, rest_test_result_schema
 from util.schema import desc, to_field
 from routes.schemas.generic_output import GenericOutput
 from model.types.url import URL, url_schema
@@ -13,7 +13,11 @@ from model.types.url import URL, url_schema
 class URLInput:
     url: str = to_field(String(
         required=True,
-        metadata=desc('Value of the URL')
+        metadata=desc("Value of the URL")
+    ))
+    description: str = to_field(String(
+        required=False,
+        metadata=desc("Description of the URL")
     ))
 
 
@@ -23,7 +27,7 @@ class URLOutput(GenericOutput):
     data: URL = to_field(Nested(
         url_schema,
         required=True,
-        metadata=desc('URL'),
+        metadata=desc("URL"),
     ))
 
 
@@ -33,10 +37,30 @@ class ListURLOutput(GenericOutput):
     data: tList[RestURLDetail] = to_field(List(
         Nested(rest_url_detail_schema),
         required=True,
-        metadata=desc('List of URL Mappings'),
+        metadata=desc("List of URL Mappings"),
+    ))
+
+
+@dataclass
+class URLTestInput:
+    url: str = to_field(String(
+        required=True,
+        metadata=desc("Value of the URL to test")
+    ))
+
+
+@dataclass
+class URLTestOutput(GenericOutput):
+    """Output schema for a list of URL mappings"""
+    data: tList[RestURLDetail] = to_field(Nested(
+        rest_test_result_schema,
+        required=True,
+        metadata=desc("List of URL Mappings"),
     ))
 
 
 list_url_output_schema = class_schema(ListURLOutput)()
 url_input_schema = class_schema(URLInput)()
 url_output_schema = class_schema(URLOutput)()
+url_test_input_schema = class_schema(URLTestInput)()
+url_test_output_schema = class_schema(URLTestOutput)()

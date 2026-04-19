@@ -7,7 +7,7 @@ from db.abc.db import DBInterface
 from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
 from db.util.simple_bson import bson_encode, bson_decode, BSON_SUPPORTED_TYPES
 from db.util.hash import sha256_hash
-from util.list_subset import strip_type, build_superset
+from db.util.list_subset import strip_type, build_superset
 from util.log import log_debug
 
 
@@ -83,7 +83,7 @@ class DBMDB(DBInterface):
     def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
         return cast(List[Dict[str, Any]], self._generic_fetch_decode(obj_hashes))
 
-    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+    def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
         return self._generic_insert_encode(entries)
 
 

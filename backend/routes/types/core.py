@@ -10,23 +10,23 @@ from util.schema import desc, to_field
 
 @dataclass
 class RestCommit:
-    uuid: str = to_field(String(required=True, metadata=desc('UUID of the commit')))
-    author: str = to_field(String(required=True, metadata=desc('Username of the author')))
-    description: str = to_field(String(required=True, metadata=desc('Description of the commit')))
-    created_at: int = to_field(Integer(required=True, metadata=desc('Creation timestamp')))
+    uuid: str = to_field(String(required=True, metadata=desc("UUID of the commit")))
+    author: str = to_field(String(required=True, metadata=desc("Username of the author")))
+    description: str = to_field(String(required=True, metadata=desc("Description of the commit")))
+    created_at: int = to_field(Integer(required=True, metadata=desc("Creation timestamp")))
     parent_commit: Optional[str] = to_field(String(
         required=False,
-        metadata=desc('UUID of the parent commit, or None if it is the root commit'),
+        metadata=desc("UUID of the parent commit, or None if it is the root commit"),
     ), default=None)
 
 
 @dataclass
 class RestBranchInfo:
-    name: str = to_field(String(required=True, metadata=desc('Name of the Branch')))
+    name: str = to_field(String(required=True, metadata=desc("Name of the Branch")))
     permission: str = to_field(String(
         required=True,
         validate=OneOf([BranchPermissionFlag.READ_ONLY, BranchPermissionFlag.READ_WRITE]),
-        metadata=desc('Permission for the Branch (ro/rw)')
+        metadata=desc("Permission for the Branch (ro/rw)")
     ))
 
 

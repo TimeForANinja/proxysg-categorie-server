@@ -161,20 +161,20 @@ def generate_local_db(num_urls: int, num_categories: int) -> str:
     for category_name, category_urls in categories:
         db_lines.append(f'define category "{category_name}"')
         if not category_urls:
-            db_lines.append('\t; no content for this category')
+            db_lines.append("\t; no content for this category")
         else:
             for url in category_urls:
-                db_lines.append(f'\t{url}')
-        db_lines.append('end')
-        db_lines.append('')
+                db_lines.append(f"\t{url}")
+        db_lines.append("end")
+        db_lines.append("")
 
-    return '\n'.join(db_lines)
+    return "\n".join(db_lines)
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate a local DB file with random URLs and categories.')
-    parser.add_argument('--urls', type=int, default=20, help='Number of URLs to generate (default: 20)')
-    parser.add_argument('--categories', type=int, default=5, help='Number of categories to generate (default: 5)')
-    parser.add_argument('--output', type=str, default='data/local_db.txt', help='Output file path (default: data/local_db.txt)')
+    parser = argparse.ArgumentParser(description="Generate a local DB file with random URLs and categories.")
+    parser.add_argument("--urls", type=int, default=20, help="Number of URLs to generate (default: 20)")
+    parser.add_argument("--categories", type=int, default=5, help="Number of categories to generate (default: 5)")
+    parser.add_argument("--output", type=str, default="data/local_db.txt", help="Output file path (default: data/local_db.txt)")
 
     args = parser.parse_args()
 
@@ -194,7 +194,7 @@ def main():
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     # Write to the output file
-    with open(args.output, 'w', encoding='utf-8') as f:
+    with open(args.output, "w", encoding="utf-8") as f:
         f.write(db_content)
 
     print(f"Generated local DB with {args.urls} URLs and {args.categories} categories")

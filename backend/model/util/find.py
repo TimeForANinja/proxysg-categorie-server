@@ -1,6 +1,6 @@
 from typing import TypeVar, Callable, List, Tuple, Union
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def find_in_lists(objects: List[T], hashes: List[str], predicate: Callable[[T], bool]) -> Union[Tuple[T, str], Tuple[None, None]]:

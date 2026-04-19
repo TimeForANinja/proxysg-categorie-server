@@ -5,7 +5,7 @@ from db.abc.db import DBInterface
 from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
 from db.util.simple_bson import bson_encode
 from db.util.hash import sha256_hash
-from util.list_subset import strip_type, build_superset
+from db.util.list_subset import strip_type, build_superset
 from util.log import log_debug
 
 
@@ -96,8 +96,8 @@ class MongoDB(DBInterface):
     def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
         return self._generic_batch_fetch(obj_hashes)
 
-    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
-        return self._batch_insert_kv(entries)
+    def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
+        return self._generic_batch_insert(entries)
 
 
     def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
@@ -112,7 +112,7 @@ class MongoDB(DBInterface):
         # Check if the list is stored in the new dictionary format (small or large)
         if doc.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_LARGE:
             return self._fetch_id_list_large(doc)
-        elif doc.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_SM:
+        elif doc.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_SMALL:
             return self._fetch_id_list_small(doc)
         else:
             raise ValueError("Invalid ID list format in MongoDB")

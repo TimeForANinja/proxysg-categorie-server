@@ -39,6 +39,8 @@ class MyModel:
             new_core = Core(
                 version=1,
                 branches={BRANCH_PROD: first_commit_hash},
+                bc_categories=[],
+                token_usages=[],
             )
             new_core.write(self.backend)
 

@@ -15,7 +15,7 @@ class JWTHeaderInput:
     jwt_token: str = to_field(String(
         required=True,
         data_key=AUTH_TOKEN_KEY,
-        metadata=desc('Value of the JWT Token')
+        metadata=desc("Value of the JWT Token")
     ))
 
 
@@ -23,21 +23,21 @@ class JWTHeaderInput:
 class LoginInput:
     username: str = to_field(String(
         required=True,
-        metadata=desc('Username')
+        metadata=desc("Username")
     ))
     password: str = to_field(String(
         required=True,
-        metadata=desc('Password or Token')
+        metadata=desc("Password or Token")
     ))
 
 
 @dataclass
 class LoginOutputData:
-    token: str = to_field(String(required=True, metadata=desc('Token for use with future requests')))
+    token: str = to_field(String(required=True, metadata=desc("Token for use with future requests")))
     user: AuthUser = to_field(Nested(
         auth_user_schema,
         required=True,
-        metadata=desc('User which logged in')
+        metadata=desc("User which logged in")
     ))
 
 login_output_data_schema = class_schema(LoginOutputData)()
@@ -48,7 +48,7 @@ class LoginOutput(GenericOutput):
     data: Optional[LoginOutputData] = to_field(Nested(
         login_output_data_schema,
         required=False,
-        metadata=desc('Login data, if login was successfully')
+        metadata=desc("Login data, if login was successfully")
     ), default=None)
 
 
@@ -57,7 +57,7 @@ class VerifyOutput(GenericOutput):
     data: Optional[AuthUser] = to_field(Nested(
         login_output_data_schema,
         required=False,
-        metadata=desc('User which logged in, if login was successfully')
+        metadata=desc("User which logged in, if login was successfully")
     ), default=None)
 
 

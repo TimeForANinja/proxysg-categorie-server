@@ -6,7 +6,7 @@ from db.util.simple_bson import bson_decode
 
 def dump_db(db_path, filter_type=None):
     try:
-        with dbm.open(db_path, 'r') as db:
+        with dbm.open(db_path, "r") as db:
             print(f"Dumping database: {db_path}" + (f" (filtered by: {filter_type})" if filter_type else ""))
             print("-" * 40)
 
@@ -29,7 +29,7 @@ def dump_db(db_path, filter_type=None):
                             continue
 
                     # Convert to string for better display (e.g. JSON)
-                    key_str = key.decode('utf-8') if isinstance(key, bytes) else str(key)
+                    key_str = key.decode("utf-8") if isinstance(key, bytes) else str(key)
                     print(f"Key: {key_str}")
                     print(f"Value: {json.dumps(data, indent=2)}")
                     print("-" * 20)

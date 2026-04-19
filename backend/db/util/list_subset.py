@@ -3,11 +3,11 @@ from typing import Dict, List, Any, TypeVar
 
 from db.abc.constants import KEY_LENGTH, TYPE_KEY, TypeIDs
 
-from util.hash import sha256_hash
-from util.simple_bson import bson_encode, BSON_SUPPORTED_TYPES
+from db.util.hash import sha256_hash
+from db.util.simple_bson import bson_encode, BSON_SUPPORTED_TYPES
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def _split_list_subset(entries: List[str]) -> Dict[str, List[str]]:

@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import traceback
 import orjson
 import sys
 from apiflask import APIFlask
@@ -24,7 +25,7 @@ def setup_logging(app: APIFlask):
     logger.remove()
 
     # determine desired log level
-    loglevel = str(app.config.get('LOGLEVEL', 'INFO')).upper()
+    loglevel = str(app.config.get("LOGLEVEL", "INFO")).upper()
 
     # use stdout as a default sink
     # - enqueue=True writes via a background thread (non-blocking)
@@ -35,12 +36,12 @@ def setup_logging(app: APIFlask):
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
     # for some reason having pymongo on DEBUG or ALL breaks the app...
-    logging.getLogger('pymongo').setLevel(logging.INFO)
+    logging.getLogger("pymongo").setLevel(logging.INFO)
 
     # if a syslog server is defined, also send it there
-    syslog_server = app.config.get('SYSLOG', {}).get('SYSLOG_SERVER', None)
+    syslog_server = app.config.get("SYSLOG", {}).get("SYSLOG_SERVER", None)
     if syslog_server is not None:
-        syslog_port = int(app.config.get('SYSLOG', {}).get('SYSLOG_PORT', 514))
+        syslog_port = int(app.config.get("SYSLOG", {}).get("SYSLOG_PORT", 514))
         handler = SysLogHandler(address=(syslog_server, syslog_port))
         logger.add(handler)
 
@@ -88,18 +89,27 @@ def log_debug(module: str, message: str, *attachment: Any, exclude_keys: tuple[s
     if exclude_keys:
         serialized = _remove_keys_from_json(serialized, *exclude_keys)
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).debug(f'{module} | {message} | {serialized}')
+    logger.opt(depth=1).debug(f"{module} | {message} | {serialized}")
 
 def log_error(module: str, message: str, *attachment: Any, exclude_keys: tuple[str, ...] = ()):
     serialized = _to_json(attachment)
     if exclude_keys:
         serialized = _remove_keys_from_json(serialized, *exclude_keys)
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).error(f'{module} | {message} | {serialized}')
+    logger.opt(depth=1).error(f"{module} | {message} | {serialized}")
+
+def log_error_obj(module: str, message: str, e: Exception):
+    log_error(module, message, {
+        "error": str(e),
+        "status_code": e.status_code if hasattr(e, "status_code") else "N/A",
+        "message": e.message if hasattr(e, "message") else "N/A",
+        "detail": e.detail if hasattr(e, "detail") else "N/A",
+        "traceback": traceback.format_exc(),
+    })
 
 def log_info(module: str, message: str, *attachment: Any, exclude_keys: tuple[str, ...] = ()):
     serialized = _to_json(attachment)
     if exclude_keys:
         serialized = _remove_keys_from_json(serialized, *exclude_keys)
     # depth=1 is set so that we log the position log_debug was called and not logger.debug
-    logger.opt(depth=1).info(f'{module} | {message} | {serialized}')
+    logger.opt(depth=1).info(f"{module} | {message} | {serialized}")

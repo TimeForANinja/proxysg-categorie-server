@@ -13,12 +13,12 @@ class URLModel:
         self.backend = backend
 
 
-    def create_url(self, branch: str, value: str) -> URL:
+    def create_url(self, branch: str, value: str, description: str) -> URL:
         """Create a new URL"""
         commit = Commit.read_branch(self.backend, branch)
 
         # create url
-        new_url = URL.new(value)
+        new_url = URL.new(value, description)
         new_url_hash = URL.batch_write(self.backend, [new_url])[0]
 
         # update commit with new url
@@ -33,6 +33,7 @@ class URLModel:
             self,
             branch: str, url_id: str,
             value: Optional[str],
+            description: Optional[str],
     ) -> CanError[URL]:
         """Update the value of an existing URL"""
         commit = Commit.read_branch(self.backend, branch)
@@ -48,6 +49,8 @@ class URLModel:
         # update url
         if value:
             url.url = value
+        if description:
+            url.description = description
         new_url_hash = url.write(self.backend)
 
         # update commit with new url

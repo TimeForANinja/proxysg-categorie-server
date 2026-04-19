@@ -7,7 +7,7 @@ def desc(description: str) -> Dict[str, Any]:
     """
     Utility function to simplify the nesting of descriptions in metadata.
     """
-    return {'description': description}
+    return {"description": description}
 
 def to_field(f: tField, **kwargs):
     """

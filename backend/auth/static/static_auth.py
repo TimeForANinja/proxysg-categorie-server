@@ -29,11 +29,11 @@ class StaticAuthRealm(AuthRealmInterface):
         token_data = self.jwt.verify_token(token)
         if not token_data:
             # Token is invalid or expired
-            log_error('AUTH', f'Authentication failed: Invalid or expired token from SRC_IP:{request.remote_addr}')
+            log_error("AUTH", f"Authentication failed: Invalid or expired token from SRC_IP:{request.remote_addr}")
             return None
 
         auth_user = token_data.to_auth_user()
-        log_info('AUTH', f'Authentication successful: User {token_data.user.username} from SRC_IP:{request.remote_addr}', auth_user)
+        log_info("AUTH", f"Authentication successful: User {token_data.user.username} from SRC_IP:{request.remote_addr}", auth_user)
         return auth_user
 
     def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
@@ -41,17 +41,17 @@ class StaticAuthRealm(AuthRealmInterface):
         Check credentials against the static configuration.
         """
         if self.auth_user != username or self.auth_password != password:
-            log_error('AUTH', f'Login failed: Invalid credentials for user {username} from SRC_IP:{request.remote_addr}')
+            log_error("AUTH", f"Login failed: Invalid credentials for user {username} from SRC_IP:{request.remote_addr}")
             return None
 
         auth_user = AuthUser(
             username=username,
             roles=[AuthRoles.RO, AuthRoles.RW]
         )
-        log_info('AUTH', f'Login successful: User {username} from SRC_IP:{request.remote_addr}', auth_user)
+        log_info("AUTH", f"Login successful: User {username} from SRC_IP:{request.remote_addr}", auth_user)
         token_data = TokenData(
             user=auth_user,
-            realm='static',
+            realm="static",
             date_of_creation=int(time.time())
         )
         token = self.jwt.generate_token(token_data)
@@ -68,14 +68,14 @@ class AuthProvider(AuthProviderInterface):
         """
         Return True if this module handles the provided auth_type entry from AUTH.ORDER.
         """
-        return auth_type == 'local'
+        return auth_type == "local"
 
     def build_auth_realm(self, app: APIFlask, jwt: JWTHandler) -> AuthRealmInterface:
         """
         Build and return the StaticAuthRealm using values from app.config.
         """
-        local_cfg = app.config.get('AUTH', {}).get('LOCAL', {})
-        static_user = local_cfg.get('USER', 'admin')
-        static_password = local_cfg.get('PASSWORD', 'nw_admin_2025')
-        log_info('AUTH', 'Adding Static Realm', {'user': static_user})
+        local_cfg = app.config.get("AUTH", {}).get("LOCAL", {})
+        static_user = local_cfg.get("USER", "admin")
+        static_password = local_cfg.get("PASSWORD", "nw_admin_2025")
+        log_info("AUTH", "Adding Static Realm", {"user": static_user})
         return StaticAuthRealm(jwt, static_user, static_password)

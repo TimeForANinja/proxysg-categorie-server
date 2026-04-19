@@ -7,7 +7,8 @@ from db.abc.db import DBInterface
 from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
 from db.util.hash import sha256_hash
 from db.util.simple_bson import bson_encode, bson_decode, BSON_SUPPORTED_TYPES
-from util.list_subset import strip_type, build_superset
+from db.util.list_subset import strip_type, build_superset
+from util.log import log_debug
 
 
 class SQLiteDB(DBInterface):
@@ -15,12 +16,12 @@ class SQLiteDB(DBInterface):
     Persistent Database implementation using SQLite.
     Provides a robust, single-file relational database backend.
     """
-    def __init__(self, db_path: str):
+    def __init__(self, filename: str):
         """
-        :param db_path: Path to the SQLite database file.
+        :param filename: Path to the SQLite database file.
         """
         super().__init__()
-        self.db_path = db_path
+        self.filename = filename
         self._initialize_db()
 
     def _initialize_db(self):
@@ -40,7 +41,7 @@ class SQLiteDB(DBInterface):
             yield existing_con
             return
 
-        con = sqlite3.connect(self.db_path)
+        con = sqlite3.connect(self.filename)
         try:
             yield con
         finally:
@@ -104,7 +105,7 @@ class SQLiteDB(DBInterface):
             self._generic_fetch_decode(obj_hashes)
         )
 
-    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+    def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
         return self._generic_insert_encode(entries)
 
 

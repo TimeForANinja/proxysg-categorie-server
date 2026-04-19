@@ -1,28 +1,27 @@
 import os
-import traceback
 from os.path import abspath
-from typing import Any
+from typing import Any, cast
 from apiflask import APIFlask
 from flask import send_from_directory
 from flask_compress import Compress
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from background.background_tasks import start_background_tasks
 from db.db_singleton import get_db, close_connection
 from routes.auth import add_auth_bp
 from routes.category import add_category_bp
 from routes.core import add_core_bp
 from routes.token import add_token_bp
 from routes.url import add_url_bp
-from util.log import setup_logging, log_info, log_error, log_debug
-
+from util.log import setup_logging, log_info, log_debug, log_error_obj
 
 # Initialize APIFlask instead of Flask
 app = APIFlask(
     __name__,
-    'ProxySG Category Server',
-    version='3.0.0',
-    docs_path='/docs',
-    static_folder='./dist',
+    "ProxySG Category Server",
+    version="3.0.0",
+    docs_path="/docs",
+    static_folder="./dist",
 )
 
 # add profiler to analyze requests
@@ -30,23 +29,23 @@ app = APIFlask(
 # pip install snakeviz
 # snakeviz ./profile/request.prof
 #from werkzeug.middleware.profiler import ProfilerMiddleware
-#app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=['^((?!venv).)*$', 0.1], profile_dir='./profile')
+#app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=["^((?!venv).)*$", 0.1], profile_dir="./profile")
 
 # add module to allow compression of replies
 Compress(app)
 
 # load env variables into app.config
 # overwrite the default loads, to keep properties as strings instead of doing a JSON parse
-app.config.from_prefixed_env(prefix='APP', loads=lambda x: x)
-# we can then use app.config.get('module', {}).get('property', 'default val') to access them
+app.config.from_prefixed_env(prefix="APP", loads=lambda x: x)
+# we can then use app.config.get("module", {}).get("property", "default val") to access them
 # for an example see the wsgi ProxyFix below
 
 # setup logging
 setup_logging(app)
 
 # Fix for src_ip if used behind a reverse Proxy
-if app.config.get('PROXY_FIX', 'false').lower() == 'true':
-    log_info('APP', 'applying reverse proxy fix')
+if app.config.get("PROXY_FIX", "false").lower() == "true":
+    log_info("APP", "applying reverse proxy fix")
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 
@@ -59,11 +58,11 @@ add_url_bp(app)
 
 
 # Serve index.html for the root route
-@app.get('/', defaults={'path': ''})
-@app.get('/<path:path>')
+@app.get("/", defaults={"path": ""})
+@app.get("/<path:path>")
 def catch_all(path: str):
     """Catch-all route for non-API routes."""
-    static_folder = abspath(app.static_folder)
+    static_folder = abspath(cast(str, app.static_folder))
     static_file = os.path.join(static_folder, path)
 
     # Check if the requested static file exists
@@ -71,23 +70,18 @@ def catch_all(path: str):
         return send_from_directory(static_folder, path)
 
     # Fallback to serving index.html
-    return send_from_directory(static_folder, 'index.html')
+    return send_from_directory(static_folder, "index.html")
 
 
-# add 'status' and 'status_code' fields to the default flask errors
+# add "status" and "status_code" fields to the default flask errors
 @app.error_processor
 def handle_error(error):
-    log_error('APP', 'FLASK Error', {
-        'status_code': error.status_code,
-        'message': error.message,
-        'detail': error.detail,
-        'traceback': traceback.format_exc(),
-    })
+    log_error_obj("APP", "FLASK Error", error)
     return {
-        'status': 'failed',
-        'status_code': error.status_code,
-        'message': error.message,
-        'detail': error.detail,
+        "status": "failed",
+        "status_code": error.status_code,
+        "message": error.message,
+        "detail": error.detail,
     }, error.status_code, error.headers
 
 
@@ -102,8 +96,7 @@ def teardown(_exception: Any):
 def init_background(a: APIFlask):
     log_debug("APP", "App init_background called")
     # start background tasks, make sure to trigger this only in one worker
-    # TODO: implement bg tasks
-    #start_background_tasks(a)
+    start_background_tasks(a)
 
 
 def migrate_db(a: APIFlask):
@@ -118,7 +111,7 @@ def migrate_db(a: APIFlask):
         close_connection()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # migrate db schema and init background tasks,
     # we keep this in the __main__ and manually trigger it for gunicorn with the on_starting / post_fork
     # to prevent the background tasks being run on multiple workers
@@ -126,6 +119,6 @@ if __name__ == '__main__':
     init_background(app)
 
     # start app
-    app_port = int(app.config.get('PORT', 8080))
+    app_port = int(app.config.get("PORT", 8080))
     log_info("APP", f"Done initializing - Starting app on port {app_port}")
-    app.run(port=app_port, host='0.0.0.0')
+    app.run(port=app_port, host="0.0.0.0")

@@ -5,7 +5,7 @@ from cachebox import LFUCache, BaseCacheImpl
 from db.abc.db import DBInterface
 from util.log import log_debug
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 DEFAULT_CACHE_CAPACITY = 1_000_000
@@ -114,7 +114,7 @@ class CacheDB(DBInterface):
         for key, val in zip(keys, values):
             self.obj_cache[key] = val
 
-    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+    def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
         keys = self.parent.batch_insert_obj(entries)
         # update cache
         for key, val in zip(keys, entries):

@@ -22,14 +22,14 @@ from routes.types.core import RestBranchInfo
 
 
 def add_core_bp(app: APIFlask):
-    log_debug('ROUTES', 'Adding Core Blueprint')
+    log_debug("ROUTES", "Adding Core Blueprint")
     auth_if = get_auth_if(app)
     auth = auth_if.get_auth()
-    core_bp = APIBlueprint('Core', __name__)
+    core_bp = APIBlueprint("Core", __name__)
 
 
-    @core_bp.get('/api/metrics')
-    @core_bp.doc(summary='List Server Metrics', description='Fetch a Dict of various Metrics', tags=['Core'])
+    @core_bp.get("/api/metrics")
+    @core_bp.doc(summary="List Server Metrics", description="Fetch a Dict of various Metrics", tags=["Core"])
     @core_bp.output(list_metrics_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RO])
     def get_metrics() -> ListMetricsOutput:
@@ -44,9 +44,9 @@ def add_core_bp(app: APIFlask):
             "os-cpu-load": psutil.cpu_percent(interval=1), # watch out - this is a blocking call
             "os-memory": psutil.virtual_memory().total,
             "os-memory-free": psutil.virtual_memory().free,
-            "os-disk-usage": psutil.disk_usage('/').percent,
-            "os-disk-total": psutil.disk_usage('/').total,
-            "os-disk-free": psutil.disk_usage('/').free,
+            "os-disk-usage": psutil.disk_usage("/").percent,
+            "os-disk-total": psutil.disk_usage("/").total,
+            "os-disk-free": psutil.disk_usage("/").free,
             "os-python-ver": platform.python_version(),
         }
 
@@ -55,14 +55,14 @@ def add_core_bp(app: APIFlask):
         metrics.update(db.get_metrics())
 
         return ListMetricsOutput(
-            status='success',
-            message='Metrics fetched successfully',
+            status="success",
+            message="Metrics fetched successfully",
             data=metrics,
         )
 
 
-    @core_bp.get('/api/branch')
-    @core_bp.doc(summary='List all Branches', description='Fetch a list of all available branches', tags=['Core'])
+    @core_bp.get("/api/branch")
+    @core_bp.doc(summary="List all Branches", description="Fetch a list of all available branches", tags=["Core"])
     @core_bp.output(list_branches_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RO])
     def get_branches() -> ListBranchesOutput:
@@ -76,14 +76,14 @@ def add_core_bp(app: APIFlask):
         ]
 
         return ListBranchesOutput(
-            status='success',
-            message='Branches fetched successfully',
+            status="success",
+            message="Branches fetched successfully",
             data=data,
         )
 
 
-    @core_bp.post('/api/branch/@me/reset')
-    @core_bp.doc(summary='Reset a Users Branch', description='Reset a branch to the latest production commit', tags=['Core'])
+    @core_bp.post("/api/branch/@me/reset")
+    @core_bp.doc(summary="Reset a Users Branch", description="Reset a branch to the latest production commit", tags=["Core"])
     @core_bp.output(generic_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RW])
     def reset_branch() -> GenericOutput:
@@ -93,40 +93,40 @@ def add_core_bp(app: APIFlask):
         db.core.reset_user_branch(user)
 
         return GenericOutput(
-            status='success',
-            message=f'Branch for {user.username} reset successfully',
+            status="success",
+            message=f"Branch for {user.username} reset successfully",
         )
 
-    @core_bp.get('/api/branch/<branch>/history')
-    @core_bp.doc(summary='List commit history', description='Fetch a list of recent commits for a given branch', tags=['Core'])
+    @core_bp.get("/api/branch/<branch>/history")
+    @core_bp.doc(summary="List commit history", description="Fetch a list of recent commits for a given branch", tags=["Core"])
     @core_bp.output(list_history_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RO])
     def get_history(branch: str) -> ListHistoryOutput:
         db = get_db()
         commits = db.specials.fetch_commits(branch, None)
         return ListHistoryOutput(
-            status='success',
-            message='History fetched successfully',
+            status="success",
+            message="History fetched successfully",
             data=commits,
         )
 
-    @core_bp.post('/api/branch/<branch>/history')
-    @core_bp.doc(summary='List commit history', description='Fetch a list of recent commits for a given branch, including filtering for specific uuid involvement', tags=['Core'])
-    @core_bp.input(history_input_schema, location='json', arg_name='history_filter_data')
+    @core_bp.post("/api/branch/<branch>/history")
+    @core_bp.doc(summary="List commit history", description="Fetch a list of recent commits for a given branch, including filtering for specific uuid involvement", tags=["Core"])
+    @core_bp.input(history_input_schema, location="json", arg_name="history_filter_data")
     @core_bp.output(list_history_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RO])
     def get_history_filter(branch: str, history_filter_data: HistoryInput) -> ListHistoryOutput:
         db = get_db()
         commits = db.specials.fetch_commits(branch, history_filter_data.filter_uuid)
         return ListHistoryOutput(
-            status='success',
-            message='History fetched successfully',
+            status="success",
+            message="History fetched successfully",
             data=commits,
         )
 
-    @core_bp.post('/api/branch/@me/commit')
-    @core_bp.doc(summary='Commit Branch', description='Commit current User-Branch to Prod', tags=['Core'])
-    @core_bp.input(commit_input_schema, location='json', arg_name='input_data')
+    @core_bp.post("/api/branch/@me/commit")
+    @core_bp.doc(summary="Commit Branch", description="Commit current User-Branch to Prod", tags=["Core"])
+    @core_bp.input(commit_input_schema, location="json", arg_name="input_data")
     @core_bp.output(commit_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RW])
     def do_commit(input_data: CommitInput) -> OutCanError[CommitOutput]:
@@ -138,14 +138,14 @@ def add_core_bp(app: APIFlask):
         if error:
             return ErrorResponse(error)
         return CommitOutput(
-            status='success',
-            message='Successfully committed to production',
+            status="success",
+            message="Successfully committed to production",
             data=commit,
         )
 
-    @core_bp.post('/api/branch/@me/import')
-    @core_bp.doc(summary='Import Local DB', description='Import local database into User-Branch', tags=['Core'])
-    @core_bp.input(existing_db_input_schema, location='json', arg_name='existing_db')
+    @core_bp.post("/api/branch/@me/import")
+    @core_bp.doc(summary="Import Local DB", description="Import local database into User-Branch", tags=["Core"])
+    @core_bp.input(existing_db_input_schema, location="json", arg_name="existing_db")
     @core_bp.output(generic_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RW])
     def do_import(existing_db: ExistingDBInput) -> GenericOutput:
@@ -165,35 +165,64 @@ def add_core_bp(app: APIFlask):
         db.core.batch_import(user.get_branch(), categories)
 
         return GenericOutput(
-            status='success',
-            message='Successfully imported local database',
+            status="success",
+            message="Successfully imported local database",
         )
 
 
-    @core_bp.get('/api/compile/<string:token_uuid>')
-    @core_bp.doc(summary='Compile Categories', description='Compile Categories for the provided Token')
+    @core_bp.get("/api/compile/<string:token_uuid>")
+    @core_bp.doc(summary="Compile Categories", description="Compile Categories for the provided Token")
     @core_bp.output(generic_output_schema)
     def handle_compile(token_uuid: str):
-        db_if = get_db()
-        content, error = db_if.specials.compile_categories(token_uuid)
+        db = get_db()
+        content, error = db.specials.compile_categories(token_uuid)
+
         if error == ERROR_NOT_FOUND:
             return (
-                'Token not found',
+                "Token not found",
                 404,
-                {'Content-Type': 'text/plain'},
+                {"Content-Type": "text/plain"},
             )
-
         if error:
             return (
-                'Error during compilation',
+                "Error during compilation",
                 500,
-                {'Content-Type': 'text/plain'},
+                {"Content-Type": "text/plain"},
             )
 
         return (
             content,
             200,
-            {'Content-Type': 'text/plain'},
+            {"Content-Type": "text/plain"},
+        )
+
+
+    @core_bp.post("/api/branch/@me/cleanup")
+    @core_bp.doc(summary="Cleanup User Branch", description="Cleanup Objects of a User's Branch", tags=["Core"])
+    @core_bp.output(generic_output_schema)
+    @core_bp.auth_required(auth, roles=[AuthRoles.RW])
+    def handle_compile() -> GenericOutput:
+        user: AuthUser = cast(AuthUser, auth.current_user)
+
+        db = get_db()
+        db.specials.cleanup_unused(user.get_branch())
+
+        return GenericOutput(
+            status="success",
+            message="Cleanup successful",
+        )
+
+    @core_bp.post("/api/cleanup-core")
+    @core_bp.doc(summary="Cleanup Core Object", description="Cleanup central Core Object", tags=["Core"])
+    @core_bp.output(generic_output_schema)
+    @core_bp.auth_required(auth, roles=[AuthRoles.RW])
+    def handle_compile() -> GenericOutput:
+        db = get_db()
+        db.specials.cleanup_core()
+
+        return GenericOutput(
+            status="success",
+            message="Cleanup successful",
         )
 
     app.register_blueprint(core_bp)

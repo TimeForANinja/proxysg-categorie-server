@@ -11,7 +11,9 @@ from model.types.token import Token
 from model.types.url import URL
 from model.util.diff import list_obj_diff
 from routes.types.core import RestCommit
-from util.simple_bson import bson_encode, bson_decode
+from model.types.mappings import ChildCategoryMapping
+from db.util.simple_bson import bson_encode, bson_decode
+
 
 # Pointer towards the current Core Object
 POINTER_CORE = "pointer_core"
@@ -22,13 +24,18 @@ class Core:
     """Core information for the application"""
     version: int
     branches: Dict[str, str] # map of branch name to commit hash
+    bc_categories: List[str] # hashes of bc categories
+    token_usages: List[str] # hashes of token usage
 
     def write(self, backend: DBInterface):
         # same as insert_obj, but with predefined key
+        list_hashes = backend.batch_insert_id_list([self.bc_categories, self.token_usages])
         entry_bson = bson_encode({
             TYPE_KEY: TypeIDs.TYPE_ID_CORE,
             "version": self.version,
             "branches": self.branches,
+            "bc_categories": list_hashes[0],
+            "token_usages": list_hashes[1],
         })
         backend.batch_insert_kv([POINTER_CORE], [entry_bson])
 
@@ -36,9 +43,12 @@ class Core:
     def read(backend: DBInterface) -> 'Core':
         raw_core_str = backend.batch_fetch_kv([POINTER_CORE])[0]
         raw_core = bson_decode(cast(bytes, raw_core_str))
+        id_lists = backend.batch_fetch_id_list([raw_core["bc_categories"], raw_core["token_usages"]])
         return Core(
             version=raw_core["version"],
             branches=raw_core["branches"],
+            bc_categories=id_lists[0],
+            token_usages=id_lists[1],
         )
 
 
@@ -95,6 +105,7 @@ class Commit:
                     urls=[],
                     url_category_mappings=[],
                     token_category_mappings=[],
+                     child_category_mappings=[],
                 ),
                 parent_commit_hash=parent,
                 ref_changed_uuid=[],
@@ -139,6 +150,7 @@ class StateTreeRootNode:
     urls: List[str]
     url_category_mappings: List[str]
     token_category_mappings: List[str]
+    child_category_mappings: List[str]
 
     def write(self, backend: DBInterface) -> str:
         id_list_hashes = backend.batch_insert_id_list([
@@ -146,7 +158,8 @@ class StateTreeRootNode:
             self.tokens,
             self.urls,
             self.url_category_mappings,
-            self.token_category_mappings
+            self.token_category_mappings,
+            self.child_category_mappings
         ])
         return backend.batch_insert_obj([{
             TYPE_KEY: TypeIDs.TYPE_ID_STATE_TREE,
@@ -155,6 +168,7 @@ class StateTreeRootNode:
             "urls": id_list_hashes[2],
             "url_category_mappings": id_list_hashes[3],
             "token_category_mappings": id_list_hashes[4],
+            "child_category_mappings": id_list_hashes[5],
         }])[0]
 
     @staticmethod
@@ -166,6 +180,7 @@ class StateTreeRootNode:
             raw_head["urls"],
             raw_head["url_category_mappings"],
             raw_head["token_category_mappings"],
+            raw_head["child_category_mappings"],
         ])
         return StateTreeRootNode(
             categories=id_lists[0],
@@ -173,6 +188,7 @@ class StateTreeRootNode:
             urls=id_lists[2],
             url_category_mappings=id_lists[3],
             token_category_mappings=id_lists[4],
+            child_category_mappings=id_lists[5],
         )
 
     def changed_compared_to(self, backend: DBInterface, other_hash: Optional[str]) -> List[str]:
@@ -206,6 +222,11 @@ class StateTreeRootNode:
             self.url_category_mappings, comp.head.url_category_mappings if comp else None,
             URLCategoryMapping, ["url_id", "category_id"]
         ))
+        changed_uuid.update(list_obj_diff(
+            backend,
+            self.child_category_mappings, comp.head.child_category_mappings if comp else None,
+            ChildCategoryMapping, ["category_id", "child_category_id"]
+        ))
 
         return list(changed_uuid)
 
@@ -216,7 +237,6 @@ class StateTreeRootNode:
         }
 
     def category_lut(self, backend: DBInterface) -> Dict[str, Category]:
-
         return {
             c.id: c
             for c in Category.batch_read(backend, self.categories)

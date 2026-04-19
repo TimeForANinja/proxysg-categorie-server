@@ -15,7 +15,7 @@ class ListMetricsOutput(GenericOutput):
     """Output schema for a list of branches"""
     data: tDict[str, Any] = to_field(Dict(
             required=True,
-            metadata=desc('Dictionary of Metrics'),
+            metadata=desc("Dictionary of Metrics"),
     ))
 
 
@@ -25,7 +25,7 @@ class ListBranchesOutput(GenericOutput):
     data: tList[RestBranchInfo] = to_field(List(
         Nested(rest_branch_info_schema),
         required=True,
-        metadata=desc('List of Branches'),
+        metadata=desc("List of Branches"),
     ))
 
 @dataclass
@@ -34,15 +34,15 @@ class ListHistoryOutput(GenericOutput):
     data: tList[RestCommit] = to_field(List(
         Nested(rest_commit_schema),
         required=True,
-        metadata=desc('List of Commits'),
+        metadata=desc("List of Commits"),
     ))
 
 @dataclass
 class HistoryInput:
     filter_uuid: Optional[List[str]] = to_field(List(
-        String(required=True, metadata=desc('ID')),
+        String(required=True, metadata=desc("ID")),
         required=False,
-        metadata=desc('List of all UUIDs to filter by relevance for'),
+        metadata=desc("List of all UUIDs to filter by relevance for"),
     ), default=None)
 
 @dataclass
@@ -50,11 +50,11 @@ class ExistingDBInput:
     """Class representing the DB Structure loaded from an existing DB File"""
     category_db: str = to_field(String(
         required=True,
-        metadata=desc('^Content of the existing category DB'),
+        metadata=desc("^Content of the existing category DB"),
     ))
     prefix: str = to_field(String(
         required=True,
-        metadata=desc('Prefix of the existing category DB'),
+        metadata=desc("Prefix of the existing category DB"),
     ))
 
 @dataclass
@@ -70,7 +70,7 @@ class CommitOutput(GenericOutput):
     data: RestCommit = to_field(Nested(
         rest_commit_schema,
         required=True,
-        metadata=desc('new Commit'),
+        metadata=desc("new Commit"),
     ))
 
 list_metrics_output_schema = class_schema(ListMetricsOutput)()

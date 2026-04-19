@@ -17,12 +17,12 @@ class AuthUser:
     """
     username: str = to_field(String(
         required=True,
-        metadata=desc('Username of the user')
+        metadata=desc("Username of the user")
     ))
     roles: tList[str] = to_field(List(
-        String(required=True, metadata=desc('Role name')),
+        String(required=True, metadata=desc("Role name")),
         required=True,
-        metadata=desc('List of roles assigned to the user'),
+        metadata=desc("List of roles assigned to the user"),
     ))
 
     def get_permission(self, branch: str) -> BranchPermissionFlag:
@@ -36,8 +36,8 @@ class AuthUser:
         Serialize the AuthUser object to a JSON string.
         """
         return json.dumps({
-            'username': self.username,
-            'roles': self.roles
+            "username": self.username,
+            "roles": self.roles
         })
 
     @staticmethod
@@ -48,8 +48,8 @@ class AuthUser:
         try:
             auth_data = json.loads(auth_str)
             return AuthUser(
-                username=auth_data['username'],
-                roles=auth_data.get('roles', [])
+                username=auth_data["username"],
+                roles=auth_data.get("roles", [])
             )
         except (json.JSONDecodeError, KeyError, TypeError):
             # Fallback for system or invalid data in legacy code
@@ -57,7 +57,7 @@ class AuthUser:
 
 
 AUTH_USER_SYSTEM = AuthUser(
-    username='system',
+    username="system",
     roles=[AuthRoles.RO, AuthRoles.RW],
 )
 

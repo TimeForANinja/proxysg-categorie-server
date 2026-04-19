@@ -29,7 +29,7 @@ def parse_db(db_str: str) -> List[ExistingCat]:
 
     for line in db_str.splitlines():
         # Remove comments and strip leading/trailing whitespace
-        clean_line = line.split(';', 1)[0].strip()
+        clean_line = line.split(";", 1)[0].strip()
 
         if not clean_line:
             # Ignore empty lines
@@ -44,10 +44,10 @@ def parse_db(db_str: str) -> List[ExistingCat]:
                 current_cat = ExistingCat(name=cat_name)
             else:
                 # Any other string outside a category is a syntax error
-                raise ValueError(f'Syntax error: Unexpected line outside category: \'{clean_line}\'')
+                raise ValueError(f'Syntax error: Unexpected line outside category: "{clean_line}"')
         else:
             # Inside a category
-            if clean_line.lower() == 'end':
+            if clean_line.lower() == "end":
                 # End the current category
                 categories.append(current_cat)
                 # clear the current category for the next iteration
@@ -57,6 +57,6 @@ def parse_db(db_str: str) -> List[ExistingCat]:
 
     if current_cat is not None:
         # If still inside a category when the file ends, it's an error
-        raise ValueError('Syntax error: Category not properly ended with \'end\'')
+        raise ValueError('Syntax error: Category not properly ended with "end"')
 
     return categories

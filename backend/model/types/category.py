@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from typing import List
-from marshmallow.fields import String
+from marshmallow.fields import String, Integer
 from marshmallow_dataclass import class_schema
 
 from db.abc.constants import TYPE_KEY, TypeIDs
@@ -11,14 +11,18 @@ from util.schema import desc, to_field
 
 @dataclass
 class Category:
-    id: str = to_field(String(required=True, metadata=desc('ID of the Category')))
-    name: str = to_field(String(required=True, metadata=desc('Name of the Category')))
+    id: str = to_field(String(required=True, metadata=desc("ID of the Category")))
+    name: str = to_field(String(required=True, metadata=desc("Name of the Category")))
+    description: str = to_field(String(required=False, metadata=desc("Description of the Category")))
+    color: int = to_field(Integer(required=False, metadata=desc("Color of the Category")))
 
     @staticmethod
-    def new(name: str) -> 'Category':
+    def new(name: str, description: str) -> 'Category':
         return Category(
             id=str(uuid.uuid4()),
-            name=name
+            name=name,
+            description=description,
+            color=0,
         )
 
     @staticmethod
@@ -28,6 +32,8 @@ class Category:
                 TYPE_KEY: TypeIDs.TYPE_ID_CATEGORY,
                 "id": c.id,
                 "name": c.name,
+                "description": c.description,
+                "color": c.color,
             } for c in categories
         ])
 
@@ -38,6 +44,8 @@ class Category:
             Category(
                 id=c["id"],
                 name=c["name"],
+                description=c["description"],
+                color=c["color"],
             ) for c in raw_categories
         ]
 

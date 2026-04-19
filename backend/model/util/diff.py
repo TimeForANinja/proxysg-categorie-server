@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 from db.abc.db import DBInterface
@@ -8,12 +7,15 @@ def list_obj_diff(backend: DBInterface, a: List[str], b: Optional[List[str]], cl
     """
     List the IDs of all objects that have been modified (added or removed) between two lists.
     """
-    new_obj, del_obj = list_diff(a, b)
 
+    # take diff of the hash lists
+    new_obj, del_obj = list_diff(a, b)
+    # then fetch all hashes that changed
     modified_objects = cls.batch_read(backend, new_obj + del_obj)
 
     # convert to set to deduplicate
     return list(set([
+        # fetch all properties of the object, that the user wants to track
         getattr(obj, p)
         for obj in modified_objects
         for p in props

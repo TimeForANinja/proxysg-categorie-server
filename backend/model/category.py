@@ -6,6 +6,7 @@ from model.types.core import Commit
 from model.util.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping
 from model.util.find import find_in_lists, find_all_in_lists
+from model.types.mappings import ChildCategoryMapping
 
 
 class CategoryModel:
@@ -13,12 +14,14 @@ class CategoryModel:
         self.backend = backend
 
 
-    def create_category(self, branch: str, name: str) -> Category:
+    def create_category(self, branch: str, name: str, description: str, color: Optional[int]) -> Category:
         """Add a new Category with the given name"""
         commit = Commit.read_branch(self.backend, branch)
 
         # create category
-        new_category = Category.new(name)
+        new_category = Category.new(name, description)
+        if color is not None:
+            new_category.color = color
         new_category_hash = Category.batch_write(self.backend, [new_category])[0]
 
         # update commit with new category
@@ -33,6 +36,8 @@ class CategoryModel:
             self,
             branch: str, category_id: str,
             name: Optional[str],
+            description: Optional[str],
+            color: Optional[int],
     ) -> CanError[Category]:
         """Update the name of an existing Category"""
         commit = Commit.read_branch(self.backend, branch)
@@ -48,6 +53,10 @@ class CategoryModel:
         # update category
         if name:
             cat.name = name
+        if description:
+            cat.description = description
+        if color is not None:
+            cat.color = color
         new_category_hash = cat.write(self.backend)
 
         # update commit with new category
@@ -82,6 +91,7 @@ class CategoryModel:
     def _remove_category_related(self, commit: Commit, category_id: str) -> None:
         url_mappings = URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings)
         token_mappings = TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings)
+        child_cat_mappings = ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings)
         # filter out all hashes that use this token
 
         _, keep_url_hashes = find_all_in_lists(
@@ -97,3 +107,10 @@ class CategoryModel:
             lambda m: m.category_id != category_id
         )
         commit.head.token_category_mappings = keep_token_hashes
+
+        _, keep_token_hashes = find_all_in_lists(
+            child_cat_mappings,
+            commit.head.child_category_mappings,
+            lambda m: m.category_id != category_id and m.child_category_id != category_id
+        )
+        commit.head.child_category_mappings = keep_token_hashes

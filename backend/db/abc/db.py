@@ -60,7 +60,7 @@ class DBInterface(ABC):
         pass
 
     @abstractmethod
-    def batch_insert_obj(self, entries: List[Dict[Any, Any]]) -> List[str]:
+    def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
         """
         Insert a list of dictionary objects and return their generated hashes.
 

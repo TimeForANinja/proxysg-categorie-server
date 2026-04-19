@@ -11,12 +11,12 @@ class GenericOutput:
     """Every Output Schema should inherit from this class."""
     status: str = to_field(String(
         required=True,
-        validate=OneOf(['success', 'failed']),
+        validate=OneOf(["success", "failed"]),
         metadata=desc("Status of the response, e.g., 'success'"),
     ))
     message: str = to_field(String(
         required=True,
-        metadata=desc('Message describing the operation result'),
+        metadata=desc("Message describing the operation result"),
     ))
 
 generic_output_schema = class_schema(GenericOutput)()

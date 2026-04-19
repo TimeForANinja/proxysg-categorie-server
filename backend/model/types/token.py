@@ -11,9 +11,9 @@ from util.schema import desc, to_field
 
 @dataclass
 class Token:
-    id: str = to_field(String(required=True, metadata=desc('ID of the token')))
-    token_value: str = to_field(String(required=True, metadata=desc('Value of the token')))
-    description: str = to_field(String(required=False, metadata=desc('Description of the token')))
+    id: str = to_field(String(required=True, metadata=desc("ID of the token")))
+    token_value: str = to_field(String(required=True, metadata=desc("Value of the token")))
+    description: str = to_field(String(required=False, metadata=desc("Description of the token")))
 
     @staticmethod
     def new(description: str) -> 'Token':

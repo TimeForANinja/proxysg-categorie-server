@@ -13,7 +13,7 @@ from routes.schemas.generic_output import GenericOutput
 class TokenInput:
     description: str = to_field(String(
         required=True,
-        metadata=desc('Description of the token'),
+        metadata=desc("Description of the token"),
     ))
 
 @dataclass
@@ -22,7 +22,7 @@ class TokenOutput(GenericOutput):
     data: Token = to_field(Nested(
         token_schema,
         required=True,
-        metadata=desc('Token'),
+        metadata=desc("Token"),
     ))
 
 @dataclass
@@ -31,14 +31,14 @@ class ListTokenOutput(GenericOutput):
     data: tList[RestTokenDetail] = to_field(List(
         Nested(rest_token_detail_schema),
         required=True,
-        metadata=desc('List of Tokens'),
+        metadata=desc("List of Tokens"),
     ))
 
 @dataclass
 class TokenCategoryMappingInput:
     category_id: str = to_field(String(
         required=True,
-        metadata=desc('ID of the Category')
+        metadata=desc("ID of the Category")
     ))
 
 

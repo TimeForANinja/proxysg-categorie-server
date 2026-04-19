@@ -18,9 +18,9 @@ class TokenData:
         Convert the TokenData object to a dictionary for JWT encoding.
         """
         return {
-            'user': self.user.serialize(),
-            'realm': self.realm,
-            'date_of_creation': self.date_of_creation
+            "user": self.user.serialize(),
+            "realm": self.realm,
+            "date_of_creation": self.date_of_creation
         }
 
     @staticmethod
@@ -31,9 +31,9 @@ class TokenData:
         """
         try:
             return TokenData(
-                user=AuthUser.unserialize(data['user']),
-                realm=data['realm'],
-                date_of_creation=data['date_of_creation'],
+                user=AuthUser.unserialize(data["user"]),
+                realm=data["realm"],
+                date_of_creation=data["date_of_creation"],
             )
         except (KeyError, TypeError):
             return None

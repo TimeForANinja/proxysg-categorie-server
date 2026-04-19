@@ -23,8 +23,8 @@ def _discover_auth_modules() -> List[AuthProviderInterface]:
             try:
                 mod = importlib.import_module(name)
                 # Ensure the module provides an AuthProvider class
-                if hasattr(mod, 'AuthProvider'):
-                    provider_cls = getattr(mod, 'AuthProvider')
+                if hasattr(mod, "AuthProvider"):
+                    provider_cls = getattr(mod, "AuthProvider")
                     # Instantiate the provider
                     provider = provider_cls()
                     # Make sure the provider implements AuthProviderInterface
@@ -56,7 +56,7 @@ def get_auth_if(app: APIFlask) -> AuthHandler:
     Initializes realms based on the application configuration (`AUTH: ORDER`).
     """
     with app.app_context():
-        auth_if = app.config.get('SINGLETONS', {}).get('AUTH', None)
+        auth_if = app.config.get("SINGLETONS", {}).get("AUTH", None)
 
         if auth_if is None:
             jwt = get_jwt_handler(app)
@@ -67,9 +67,9 @@ def get_auth_if(app: APIFlask) -> AuthHandler:
             log_debug("AUTH", f"Discovered {len(providers)} auth providers")
 
             # Configuration defines the priority and selection of realms
-            auth_order = app.config.get('AUTH', {}).get('ORDER', 'local')
+            auth_order = app.config.get("AUTH", {}).get("ORDER", "local")
 
-            for auth_type in auth_order.split(','):
+            for auth_type in auth_order.split(","):
                 auth_type = auth_type.strip().lower()
                 provider = _select_provider(providers, app, auth_type)
 
@@ -89,7 +89,7 @@ def get_auth_if(app: APIFlask) -> AuthHandler:
 
             # Initialize the handler with the successfully built realms
             auth_if = AuthHandler(realms)
-            app.config.setdefault('SINGLETONS', {})
-            app.config['SINGLETONS']['AUTH'] = auth_if
+            app.config.setdefault("SINGLETONS", {})
+            app.config["SINGLETONS"]["AUTH"] = auth_if
 
         return auth_if
