@@ -13,4 +13,4 @@ PyJWT~=2.12.1
 Werkzeug~=3.1.8
 loguru~=0.7.3
 orjson~=3.11.8
-cachetools~=7.0.5
+cachebox ~=5.2.3

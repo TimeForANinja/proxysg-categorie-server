@@ -47,6 +47,7 @@ class SQLiteDB(DBInterface):
             con.close()
 
     def close(self):
+        log_debug("DB", "Closing SQLiteDB")
         # context manager manages sqlite connection per operation, so no need to close
         pass
 
@@ -138,7 +139,8 @@ class SQLiteDB(DBInterface):
         # The subsets in large lists are expected to be just the suffixes
         return [
             key + s
-            for key, s in zip(subset_hashes.keys(), subsets)
+            for key, subset_item in zip(subset_hashes.keys(), subsets)
+            for s in subset_item
         ]
 
     def batch_insert_id_list(self, entries_list: List[List[str]]) -> List[str]:

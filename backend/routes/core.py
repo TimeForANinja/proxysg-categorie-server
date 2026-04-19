@@ -1,5 +1,8 @@
+import platform
+from datetime import datetime
 from typing import cast
 
+import psutil
 from apiflask import APIBlueprint, APIFlask
 
 from auth.auth_roles import AuthRoles
@@ -31,8 +34,20 @@ def add_core_bp(app: APIFlask):
     @core_bp.auth_required(auth, roles=[AuthRoles.RO])
     def get_metrics() -> ListMetricsOutput:
         metrics = {
+            # app data
             "flask-title": app.title,
             "flask-version": app.version,
+            # system data
+            "os-ver": platform.platform(),
+            "os-arch": platform.machine(),
+            "os-uptime": str(datetime.now() - datetime.fromtimestamp(psutil.boot_time())),
+            "os-cpu-load": psutil.cpu_percent(interval=1), # watch out - this is a blocking call
+            "os-memory": psutil.virtual_memory().total,
+            "os-memory-free": psutil.virtual_memory().free,
+            "os-disk-usage": psutil.disk_usage('/').percent,
+            "os-disk-total": psutil.disk_usage('/').total,
+            "os-disk-free": psutil.disk_usage('/').free,
+            "os-python-ver": platform.python_version(),
         }
 
         # fetch db metrics and append to dict

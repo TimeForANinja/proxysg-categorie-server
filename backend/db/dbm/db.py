@@ -8,6 +8,7 @@ from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
 from db.util.simple_bson import bson_encode, bson_decode, BSON_SUPPORTED_TYPES
 from db.util.hash import sha256_hash
 from util.list_subset import strip_type, build_superset
+from util.log import log_debug
 
 
 class DBMDB(DBInterface):
@@ -31,6 +32,7 @@ class DBMDB(DBInterface):
             yield db
 
     def close(self):
+        log_debug("DB", "Closing DBMDB")
         # dbm gets opened and closed for each connection, so no need to close
         pass
 
@@ -106,13 +108,14 @@ class DBMDB(DBInterface):
 
     def _fetch_id_list_large(self, data: Dict[str, Any], con: dbm._Database) -> List[str]:
         # extract subsets from the database
-        subset_hashes = strip_type(data)
+        subset_hashes: Dict[str, str] = strip_type(data)
         # fetch subsets from db using existing connection
         subsets = cast(List[str], cast(object, self._generic_fetch_decode(list(subset_hashes.values()), con)))
         # The subsets in large lists are expected to be just the suffixes
         return [
             key + s
-            for key, s in zip(subset_hashes.keys(), subsets)
+            for key, subset_item in zip(subset_hashes.keys(), subsets)
+            for s in subset_item
         ]
 
     def batch_insert_id_list(self, entries_list: List[List[str]]) -> List[str]:

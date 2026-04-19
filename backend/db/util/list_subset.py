@@ -1,10 +1,13 @@
 from collections import defaultdict
-from typing import Dict, List, Any
+from typing import Dict, List, Any, TypeVar
 
 from db.abc.constants import KEY_LENGTH, TYPE_KEY, TypeIDs
 
 from util.hash import sha256_hash
 from util.simple_bson import bson_encode, BSON_SUPPORTED_TYPES
+
+
+T = TypeVar('T')
 
 
 def _split_list_subset(entries: List[str]) -> Dict[str, List[str]]:
@@ -34,5 +37,5 @@ def build_superset(entries: List[str]) -> List[BSON_SUPPORTED_TYPES]:
     return raw_data
 
 
-def strip_type(data: Dict[str, Any]) -> Dict[str, Any]:
+def strip_type(data: Dict[str, T]) -> Dict[str, T]:
     return {k: v for k, v in data.items() if k != TYPE_KEY}

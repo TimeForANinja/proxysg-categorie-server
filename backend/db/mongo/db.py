@@ -6,6 +6,7 @@ from db.abc.constants import MAX_COMPACT_LIST_SIZE, TYPE_KEY, TypeIDs
 from db.util.simple_bson import bson_encode
 from db.util.hash import sha256_hash
 from util.list_subset import strip_type, build_superset
+from util.log import log_debug
 
 
 class MongoDB(DBInterface):
@@ -42,6 +43,7 @@ class MongoDB(DBInterface):
         self.collection.create_index("_key", unique=True)
 
     def close(self):
+        log_debug("DB", "Closing MongoDB")
         self.client.close()
 
     def get_metrics(self) -> Dict[str, Any]:
@@ -126,7 +128,8 @@ class MongoDB(DBInterface):
         # The subsets in large lists are expected to be just the suffixes
         return [
             key + s
-            for key, s in zip(subset_hashes.keys(), subsets)
+            for key, subset_item in zip(subset_hashes.keys(), subsets)
+            for s in subset_item
         ]
 
     def batch_insert_id_list(self, entries_list: List[List[str]]) -> List[str]:

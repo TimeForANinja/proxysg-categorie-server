@@ -1,8 +1,9 @@
 from typing import Any, Dict, List, Optional, TypeVar, Callable
-from cachetools import LFUCache, Cache
+# use cachebox instead of cachetools since it's thread-safe
+from cachebox import LFUCache, BaseCacheImpl
 
 from db.abc.db import DBInterface
-
+from util.log import log_debug
 
 T = TypeVar('T')
 
@@ -36,6 +37,7 @@ class CacheDB(DBInterface):
         """
         Clear all local caches and forward the close command to the parent backend.
         """
+        log_debug("DB", "Closing CacheDB")
         # clear cache by reinitializing
         self.obj_cache = LFUCache(maxsize=self.capacity)
         self.id_list_cache = LFUCache(maxsize=self.capacity)
@@ -48,13 +50,15 @@ class CacheDB(DBInterface):
             "cache-capacity": self.capacity,
             "cache-size-obj": len(self.obj_cache),
             "cache-size-id-list": len(self.id_list_cache),
+            "cache-size-obj-perc": f"{len(self.obj_cache) / self.capacity * 100:2.2f} %",
+            "cache-size-id-list-perc": f"{len(self.id_list_cache) / self.capacity * 100:2.2f} %",
         }
 
 
     @staticmethod
     def _generic_cached_fetch(
             keys: List[str],
-            cache: Cache[str, T],
+            cache: BaseCacheImpl[str, T],
             fetch_upstream: Callable[[List[str]], List[T]]
     ) -> List[T]:
         """
