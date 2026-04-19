@@ -1,4 +1,5 @@
-from typing import Optional, cast, List, Dict
+from hmac import new
+from typing import Optional, cast, List, Dict, Set
 from apiflask import APIFlask
 
 from db.abc.db import DBInterface
@@ -85,7 +86,7 @@ class URLModel:
             url.url = value
         if description:
             url.description = description
-        new_url_hash = url.write(self.backend)
+        new_url_hash = URL.batch_write(self.backend, [url])[0]
 
         # update commit with new url
         commit.head.urls.remove(url_hash)
@@ -127,7 +128,11 @@ class URLModel:
         commit.head.url_category_mappings = keep_hashes
 
 
-    def test_url(self, app: APIFlask, url: str) -> RestTestResult:
+    def test_urls(self, app: APIFlask, urls: List[str]) -> List[RestTestResult]:
+        # TODO: properly parallelize this to reduce DB load
+        return [self._test_url(app, url) for url in urls]
+
+    def _test_url(self, app: APIFlask, url: str) -> RestTestResult:
         # 1) Normalize input to a hostname
         hostname = url.strip().lower()
 
@@ -138,21 +143,22 @@ class URLModel:
 
         # 3) Fetch all categories that match the best match
         cat_lut = head_commit.head.category_lut(self.backend)
-        matching_cats = []
+        matching_cat_ids: Set[str] = set()
         if best_match:
-            direct_matching_cats, _ = find_in_lists(
+            direct_matching_mappings, _ = find_all_in_lists(
                 URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings),
                 head_commit.head.url_category_mappings,
                 lambda m: m.url_id == cast(URL, best_match).id
             )
-            matching_cats.extend([c.name for c in direct_matching_cats])
+            direct_matching_cats = set(m.category_id for m in direct_matching_mappings)
+            matching_cat_ids.update(direct_matching_cats)
             # unnest to also get all Partents of the matched categories
             child_cat_map = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
-            matching_cats.extend([
-                parent_cat.name
-                for c in direct_matching_cats
+            matching_cat_ids.update([
+                parent_cat.id
+                for c_id in direct_matching_cats
                 for parent_cat in unnest_categories(
-                    cat_lut[c.category_id],
+                    cat_lut[c_id],
                     cat_lut,
                     child_cat_map,
                     True,
@@ -170,6 +176,6 @@ class URLModel:
             input=url,
             normalized_input=hostname,
             matched_url=best_match.url if best_match else "N/A",
-            local_categories=[cat.name for cat in matching_cats],
+            local_categories=[cat_lut[cat_id] for cat_id in matching_cat_ids],
             bc_categories=bc_categories,
         )

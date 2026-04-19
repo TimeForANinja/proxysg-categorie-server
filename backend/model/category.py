@@ -62,7 +62,7 @@ class CategoryModel:
             cat.description = description
         if color is not None:
             cat.color = color
-        new_category_hash = cat.write(self.backend)
+        new_category_hash = Category.batch_write(self.backend, [cat])[0]
 
         # update commit with new category
         commit.head.categories.remove(cat_hash)

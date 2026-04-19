@@ -76,7 +76,7 @@ class TokenModel:
         # update token
         if description is not None:
             token.description = description
-        new_token_hash = token.write(self.backend)
+        new_token_hash = Token.batch_write(self.backend, [token])[0]
 
         # update commit with new token
         commit.head.tokens.remove(token_hash)
@@ -101,7 +101,7 @@ class TokenModel:
 
         # update token
         token.token_value = str(uuid4())
-        new_token_hash = token.write(self.backend)
+        new_token_hash = Token.batch_write(self.backend, [token])[0]
 
         # update commit with new token
         commit.head.tokens.remove(token_hash)

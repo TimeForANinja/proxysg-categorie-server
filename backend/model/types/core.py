@@ -26,6 +26,13 @@ class Core:
     bc_categories: List[str] # hashes of bc categories
     token_usages: List[str] # hashes of token usage
 
+    # TODO: switch to something like this instead of read/write to prevent race conditions
+    #@staticmethod
+    #def update(backend: DBInterface, ca: Callable[[Core], None]):
+    #    c = Core.read(backend)
+    #    ca(c)
+    #    c._write(backend)
+
     def write(self, backend: DBInterface):
         # same as insert_obj, but with predefined key
         list_hashes = backend.batch_insert_id_list([self.bc_categories, self.token_usages])

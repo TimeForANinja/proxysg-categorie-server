@@ -55,19 +55,18 @@ class ListURLOutput(GenericOutput):
 
 @dataclass
 class URLTestInput:
-    url: str = to_field(String(
+    urls: List[str] = to_field(List(
+        String(required=True, metadata=desc("Value of the URL to test")),
         required=True,
-        metadata=desc("Value of the URL to test")
     ))
-
 
 @dataclass
 class URLTestOutput(GenericOutput):
     """Output schema for a list of URL mappings"""
-    data: tList[RestURLDetail] = to_field(Nested(
-        rest_test_result_schema,
+    data: tList[RestURLDetail] = to_field(List(
+        Nested(rest_test_result_schema),
         required=True,
-        metadata=desc("List of URL Mappings"),
+        metadata=desc("List of Test Results"),
     ))
 
 

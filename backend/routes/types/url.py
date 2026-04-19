@@ -60,14 +60,14 @@ class RestTestResult:
         required=True,
         metadata=desc("The best-fit URL found in the DB")
     ))
-    local_categories: tList[str] = to_field(List(
-        String(required=True, metadata=desc("Category Name")),
-        required=False,
+    local_categories: tList[Category] = to_field(List(
+        Nested(category_schema),
+        required=True,
         metadata=desc("List of all Categories matched for the URL"),
     ))
     bc_categories: tList[str] = to_field(List(
         String(required=True, metadata=desc("Bluecoat Category")),
-        required=False,
+        required=True,
         metadata=desc("List of all Bluecoat Categories matched for the URL"),
     ))
 

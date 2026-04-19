@@ -93,12 +93,12 @@ def add_url_bp(app: APIFlask):
     @url_bp.auth_required(auth, roles=[AuthRoles.RO])
     def do_test_url(test_data: URLTestInput) -> URLTestOutput:
         db = get_db()
-        result = db.urls.test_url(test_data.url)
+        results = db.urls.test_urls(app, test_data.urls)
 
         return URLTestOutput(
             status="success",
-            message="Test URL",
-            data=result,
+            message="Tested URLs",
+            data=results,
         )
 
     app.register_blueprint(url_bp)

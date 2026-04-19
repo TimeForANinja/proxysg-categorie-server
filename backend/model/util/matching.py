@@ -48,7 +48,7 @@ def unnest_categories(
     """
     visited: Set[str] = set()
     # init with the root category, this will, however, include the root in the "visited" set
-    to_visit: Set[str] = set(root_cat.id)
+    to_visit: Set[str] = {root_cat.id}
 
     # convert mappings to LUT for faster access
     mapping_lut = defaultdict(list)
@@ -64,7 +64,7 @@ def unnest_categories(
             visited.add(uut)
             for m in mapping_lut[uut]:
                 to_visit.add(m)
-        uut = to_visit.pop()
+        uut = to_visit.pop() if len(to_visit) else None
 
     return [cat_lut[c] for c in visited]
 
