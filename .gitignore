@@ -2,6 +2,9 @@
 /data
 /mongo-data
 
+# intellij
+.idea
+
 # Configuration / Example Conf
 .env
 !.env.example

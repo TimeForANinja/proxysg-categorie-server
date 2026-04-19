@@ -1,6 +1,7 @@
 # custom
 *.db
 data/
+.idea
 
 # predefined (by github)
 
