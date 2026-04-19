@@ -43,15 +43,17 @@ import {IRestCommit} from "../types/history";
 import {TriState} from "../types/EditDialogState";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {getCategories} from "../api/category";
-import {buildLUTFromID, getLUTValues, LUT} from "../types/LookUpTable";
+import {UrlCategoryMappings} from "./shared/UrlCategoryMappings";
 import {ICategory} from "../types/category";
 import {formatConstraint} from "../util/DateString";
 import {simpleStringCheck} from "../util/InputValidators";
 import {useAuth} from "../hooks/useLogin";
+import {buildLUTFromID, LUT} from "../types/LookUpTable";
 
 interface BuildRowProps {
     urlDetail: IRestURLDetail,
     branch: string,
+    isLocked: boolean,
     onEdit: (url: IRestURLDetail) => void,
     onDelete: (url: IRestURLDetail) => void,
     categories: LUT<ICategory>,
@@ -66,61 +68,17 @@ interface BuildRowProps {
  * The caching also requires us to ensure that all callbacks passed are constants (e.g., wrapped in useCallable)
  */
 const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
-    const { urlDetail, branch, onEdit, onDelete, categories, onRefresh } = props;
+    const { urlDetail, branch, isLocked, onEdit, onDelete, categories, onRefresh } = props;
     const authMgmt = useAuth();
 
     const [open, setOpen] = React.useState(false);
     const [history, setHistory] = React.useState<IRestCommit[]>([]);
-    const [categorySearch, setCategorySearch] = React.useState('');
-
-    // State for the "Add Mapping" row
-    const [newCategoryId, setNewCategoryId] = React.useState<string | null>(null);
-    const [newStartDate, setNewStartDate] = React.useState<string>('');
-    const [newEndDate, setNewEndDate] = React.useState<string>('');
 
     const toggleOpen = () => {
         if (!open && history.length === 0) {
             getHistory(authMgmt.token, branch, [urlDetail.url.id]).then(setHistory).catch(console.error);
         }
         setOpen(!open);
-    };
-
-    const filteredMappings = urlDetail.categories.filter(m =>
-        m.category.name.toLowerCase().includes(categorySearch.toLowerCase())
-    );
-
-    const availableCategories = React.useMemo(() => {
-        const usedCategoryIds = new Set(urlDetail.categories.map(m => m.category.id));
-        return getLUTValues(categories).filter(c => !usedCategoryIds.has(c.id));
-    }, [categories, urlDetail.categories]);
-
-    const handleAddMapping = async () => {
-        if (!newCategoryId) return;
-
-        const start = newStartDate ? Math.floor(new Date(newStartDate).getTime() / 1000) : 0;
-        const end = newEndDate ? Math.floor(new Date(newEndDate).getTime() / 1000) : 0;
-
-        try {
-            await addURLCategory(authMgmt.token, branch, newCategoryId, {
-                url: urlDetail.url.id,
-                constraint: (start || end) ? { comment: '', start, end } : undefined
-            });
-            setNewCategoryId(null);
-            setNewStartDate('');
-            setNewEndDate('');
-            onRefresh();
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const handleDeleteMapping = async (categoryId: string) => {
-        try {
-            await deleteURLCategory(authMgmt.token, branch, categoryId, urlDetail.url.id);
-            onRefresh();
-        } catch (e) {
-            console.error(e);
-        }
     };
 
     const renderCategories = () => {
@@ -178,12 +136,16 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                     {renderCategories()}
                 </TableCell>
                 <TableCell align="right">
-                    <IconButton aria-label="edit url" onClick={() => onEdit(urlDetail)} size="small">
-                        <EditIcon />
-                    </IconButton>
-                    <IconButton aria-label="delete url" onClick={() => onDelete(urlDetail)} size="small">
-                        <DeleteIcon />
-                    </IconButton>
+                    {!isLocked && (
+                        <>
+                            <IconButton aria-label="edit url" onClick={() => onEdit(urlDetail)} size="small">
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton aria-label="delete url" onClick={() => onDelete(urlDetail)} size="small">
+                                <DeleteIcon />
+                            </IconButton>
+                        </>
+                    )}
                 </TableCell>
             </TableRow>
             <TableRow>
@@ -192,91 +154,12 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                         <Box sx={{ margin: 1 }}>
                             <Grid container spacing={2}>
                                 <Grid size={7.2}> {/* 60% */}
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                        <Typography variant="h6" gutterBottom component="div">
-                                            URL Category Mappings
-                                        </Typography>
-                                    </Box>
-                                    <TextField
-                                        size="small"
-                                        placeholder="Search mappings..."
-                                        value={categorySearch}
-                                        onChange={(e) => setCategorySearch(e.target.value)}
-                                        sx={{ mb: 1, width: '100%' }}
+                                    <UrlCategoryMappings
+                                        urlDetail={urlDetail}
+                                        isLocked={isLocked}
+                                        categories={categories}
+                                        onRefresh={onRefresh}
                                     />
-                                    <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 300 }}>
-                                        <Table size="small" stickyHeader>
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell>Category</TableCell>
-                                                    <TableCell>Constraint</TableCell>
-                                                    <TableCell align="right" style={{ width: 50 }}>Actions</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                                                    <TableCell>
-                                                        <Autocomplete
-                                                            size="small"
-                                                            options={availableCategories}
-                                                            getOptionLabel={(option) => option.name}
-                                                            renderInput={(params) => <TextField {...params} label="Select Category" />}
-                                                            value={newCategoryId ? categories[newCategoryId] : null}
-                                                            onChange={(_, newValue) => setNewCategoryId(newValue?.id ?? null)}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                                            <TextField
-                                                                type="date"
-                                                                size="small"
-                                                                value={newStartDate}
-                                                                onChange={(e) => setNewStartDate(e.target.value)}
-                                                            />
-                                                            <Typography sx={{ alignSelf: 'center' }}>-</Typography>
-                                                            <TextField
-                                                                type="date"
-                                                                size="small"
-                                                                value={newEndDate}
-                                                                onChange={(e) => setNewEndDate(e.target.value)}
-                                                            />
-                                                        </Box>
-                                                    </TableCell>
-                                                    <TableCell align="right">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="primary"
-                                                            onClick={handleAddMapping}
-                                                            disabled={!newCategoryId}
-                                                        >
-                                                            <AddIcon />
-                                                        </IconButton>
-                                                    </TableCell>
-                                                </TableRow>
-                                                {filteredMappings.map((m) => {
-                                                    return (
-                                                        <TableRow key={m.category.id}>
-                                                            <TableCell>{m.category.name}</TableCell>
-                                                            <TableCell>
-                                                                {m.constraint ? (
-                                                                    <span>{formatConstraint(m.constraint)}</span>
-                                                                ) : '-'}
-                                                            </TableCell>
-                                                            <TableCell align="right">
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() => handleDeleteMapping(m.category.id)}
-                                                                    color="error"
-                                                                >
-                                                                    <DeleteIcon fontSize="inherit" />
-                                                                </IconButton>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    );
-                                                })}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
                                 </Grid>
                                 <Grid size={4.8}> {/* 40% */}
                                     <Typography variant="h6" gutterBottom component="div">
@@ -295,7 +178,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
 function MatchingListPage() {
     const authMgmt = useAuth();
-    const {currentBranch} = useBranch();
+    const {currentBranch, isLocked} = useBranch();
 
     // State info for the Page
     const [urls, setURLs] = React.useState<IRestURLDetail[]>([]);
@@ -348,7 +231,7 @@ function MatchingListPage() {
     }, []);
     const handleDeleteConfirmation = (del: boolean) => {
         if (del && isDeleteDialogOpen != null) {
-            deleteURL(authMgmt.token, currentBranch, isDeleteDialogOpen.url.id).then(() => {
+            deleteURL(authMgmt.token, isDeleteDialogOpen.url.id).then(() => {
                 fetchData();
             });
         }
@@ -358,10 +241,10 @@ function MatchingListPage() {
     const handleSave = async (id: string | null, urlValue: string) => {
         if (id == null) {
             // create new URL
-            await createURL(authMgmt.token, currentBranch, urlValue);
+            await createURL(authMgmt.token, urlValue);
         } else {
             // update existing URL
-            await updateURL(authMgmt.token, currentBranch, id, urlValue);
+            await updateURL(authMgmt.token, id, urlValue);
         }
         fetchData();
         handleEditDialogClose();
@@ -380,6 +263,7 @@ function MatchingListPage() {
                     addElement={"URL"}
                     downloadRows={downloadRows}
                     availableFields={UrlMappingFieldsRaw}
+                    isLocked={isLocked}
                 />
                 <Grid size={12}>
                     <Paper>
@@ -400,6 +284,7 @@ function MatchingListPage() {
                                             key={urlMap.url.id}
                                             urlDetail={urlMap}
                                             branch={currentBranch}
+                                            isLocked={isLocked}
                                             onEdit={handleEditOpen}
                                             onDelete={handleDelete}
                                             categories={categories}

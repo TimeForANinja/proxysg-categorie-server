@@ -3,6 +3,7 @@ import {
     Alert,
     Box,
     Button,
+    Collapse,
     Dialog,
     DialogActions,
     DialogContent,
@@ -16,6 +17,7 @@ import {
     TableHead,
     TableRow,
     TextField,
+    Typography,
 } from '@mui/material';
 import Grid from '@mui/material/Grid'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -24,11 +26,14 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from "@mui/icons-material/Edit"
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import RefreshIcon from "@mui/icons-material/Refresh"
 
 import {addTokenCategory, createToken, deleteToken, deleteTokenCategory, getTokens, rollToken, updateToken} from "../api/token";
 import {getCategories} from "../api/category";
+import {getHistory} from "../api/history";
 import {ListHeader} from "./shared/ListHeader";
 import {ConfirmDeletionDialog} from "./shared/ConfirmDeletionDialog";
 import {TriState} from "../types/EditDialogState";
@@ -45,8 +50,10 @@ import {
     IRestTokenDetail
 } from '../types/apiToken';
 import {ICategory} from "../types/category";
+import {IRestCommit} from "../types/history";
 import {KVaddRAW} from "../types/stringKV";
 import {useBranch} from "../hooks/useBranch";
+import HistoryTable from "./shared/HistoryTable";
 import {useAuth} from "../hooks/useLogin";
 
 const TIME_SECONDS = 1000;
@@ -58,6 +65,7 @@ interface BuildRowProps {
     onDelete: (token: IApiToken) => void,
     onRoll: (token: IApiToken) => void,
     onRefresh: () => void,
+    isLocked: boolean,
     branch: string,
 }
 /**
@@ -76,11 +84,15 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         onDelete,
         onRoll,
         onRefresh,
+        isLocked,
         branch,
     } = props;
     const authMgmt = useAuth();
 
     const token = tokenDetail.token;
+
+    const [open, setOpen] = React.useState(false);
+    const [history, setHistory] = React.useState<IRestCommit[]>([]);
 
     // toggle the visibility of the token
     const [hideToken, setHideToken] = React.useState(false);
@@ -100,59 +112,96 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
     const handleChange = (newCats: string[], added: string[], removed: string[]) => {
         const tasks = []
         for (const a of added) {
-            tasks.push(addTokenCategory(authMgmt.token, branch, token.id, a))
+            tasks.push(addTokenCategory(authMgmt.token, token.id, a))
         }
         for (const r of removed) {
-            tasks.push(deleteTokenCategory(authMgmt.token, branch, token.id, r))
+            tasks.push(deleteTokenCategory(authMgmt.token, token.id, r))
         }
         Promise.all(tasks).then(() => {
             onRefresh();
         });
     }
 
+    const toggleOpen = () => {
+        if (!open && history.length === 0) {
+            getHistory(authMgmt.token, branch, [token.id]).then(setHistory).catch(console.error);
+        }
+        setOpen(!open);
+    };
+
     return (
-        <TableRow
-            key={token.id}
-            sx={{
-                '&:last-child td, &:last-child th': { border: 0 },
-            }}
-        >
-            <TableCell component="th" scope="row">{token.id}</TableCell>
-            <TableCell>{token.description}</TableCell>
-            <TableCell align="right">
-                {hideToken ? token.token_value : token.token_value.replace(/[a-zA-Z0-9]/g, '*')}
-                <IconButton onClick={() => setHideToken(!hideToken)} size="small">
-                    { hideToken ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" /> }
-                </IconButton>
-                <IconButton onClick={handleCopy} size="small">
-                    {isCopied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
-                </IconButton>
-                <IconButton onClick={() => onRoll(token)} size="small" title="Roll Token">
-                    <RefreshIcon fontSize="small" />
-                </IconButton>
-            </TableCell>
-            <TableCell align="right">
-                <CategoryPicker
-                    onChange={handleChange}
-                    categories={categories}
-                    isCategories={tokenDetail.categories}
-                />
-            </TableCell>
-            <TableCell>
-                <IconButton aria-label="edit token" onClick={() => onEdit(token)} size="small">
-                    <EditIcon />
-                </IconButton>
-                <IconButton aria-label="delete token" onClick={() => onDelete(token)} size="small">
-                    <DeleteIcon />
-                </IconButton>
-            </TableCell>
-        </TableRow>
+        <React.Fragment>
+            <TableRow
+                key={token.id}
+                sx={{
+                    '& > *': { borderBottom: 'unset' },
+                }}
+            >
+                <TableCell>
+                    <IconButton
+                        aria-label="expand row"
+                        size="small"
+                        onClick={toggleOpen}
+                    >
+                        {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                    </IconButton>
+                </TableCell>
+                <TableCell component="th" scope="row">{token.id}</TableCell>
+                <TableCell>{token.description}</TableCell>
+                <TableCell align="right">
+                    {hideToken ? token.token_value : token.token_value.replace(/[a-zA-Z0-9]/g, '*')}
+                    <IconButton onClick={() => setHideToken(!hideToken)} size="small">
+                        { hideToken ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" /> }
+                    </IconButton>
+                    <IconButton onClick={handleCopy} size="small">
+                        {isCopied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
+                    </IconButton>
+                    {!isLocked && (
+                        <IconButton onClick={() => onRoll(token)} size="small" title="Roll Token">
+                            <RefreshIcon fontSize="small" />
+                        </IconButton>
+                    )}
+                </TableCell>
+                <TableCell align="right">
+                    <CategoryPicker
+                        onChange={handleChange}
+                        categories={categories}
+                        isCategories={tokenDetail.categories}
+                        disabled={isLocked}
+                    />
+                </TableCell>
+                <TableCell>
+                    {!isLocked && (
+                        <>
+                            <IconButton aria-label="edit token" onClick={() => onEdit(token)} size="small">
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton aria-label="delete token" onClick={() => onDelete(token)} size="small">
+                                <DeleteIcon />
+                            </IconButton>
+                        </>
+                    )}
+                </TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 1 }}>
+                            <Typography variant="h6" gutterBottom component="div">
+                                History
+                            </Typography>
+                            <HistoryTable commits={history} small />
+                        </Box>
+                    </Collapse>
+                </TableCell>
+            </TableRow>
+        </React.Fragment>
     )
 });
 
 function ApiTokenPage() {
     const authMgmt = useAuth();
-    const { currentBranch } = useBranch();
+    const { currentBranch, isLocked } = useBranch();
     // State info for the Page
     const [tokens, setTokens] = React.useState<IRestTokenDetail[]>([]);
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
@@ -205,11 +254,11 @@ function ApiTokenPage() {
     const handleSave = async (tokenID: string|null, token: IMutableApiToken) => {
         if (tokenID == null) {
             // add new token
-            await createToken(authMgmt.token, currentBranch, token)
+            await createToken(authMgmt.token, token)
             fetchData();
         } else {
             // update existing token
-            await updateToken(authMgmt.token, currentBranch, tokenID, token)
+            await updateToken(authMgmt.token, tokenID, token)
             fetchData();
         }
         handleEditDialogClose();
@@ -222,7 +271,7 @@ function ApiTokenPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteToken(authMgmt.token, currentBranch, isDeleteDialogOpen.id).then(() => {
+            deleteToken(authMgmt.token, isDeleteDialogOpen.id).then(() => {
                 // refresh the list
                 fetchData();
             });
@@ -231,10 +280,10 @@ function ApiTokenPage() {
     }
 
     const handleRoll = React.useCallback((token: IApiToken) => {
-        rollToken(authMgmt.token, currentBranch, token.id).then(() => {
+        rollToken(authMgmt.token, token.id).then(() => {
             fetchData();
         }).catch((error) => console.error("Error rolling token:", error));
-    }, [currentBranch, fetchData]);
+    }, [fetchData]);
 
     return (
         <>
@@ -249,6 +298,7 @@ function ApiTokenPage() {
                     addElement={"Token"}
                     downloadRows={downloadRows}
                     availableFields={ApiTokenFieldsRaw}
+                    isLocked={isLocked}
                 />
                 <Grid size={12}>
                     <Alert severity="info">You can use Tokens by sending a request to "/api/compile/&lt;token&gt;"</Alert>
@@ -259,6 +309,7 @@ function ApiTokenPage() {
                             <Table sx={{ minWidth: 650 }} size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
+                                        <TableCell style={{ width: 40 }} />
                                         <TableCell component="th" scope="row">ID</TableCell>
                                         <TableCell>Description</TableCell>
                                         <TableCell align="right">Token</TableCell>
@@ -276,6 +327,7 @@ function ApiTokenPage() {
                                             onDelete={() => handleDelete(detail.token)}
                                             onRoll={handleRoll}
                                             onRefresh={fetchData}
+                                            isLocked={isLocked}
                                             branch={currentBranch}
                                         />
                                     )}

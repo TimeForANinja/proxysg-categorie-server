@@ -11,7 +11,7 @@ import {doCommit} from "../api/branch";
 
 function HistoryPage() {
     const authMgmt = useAuth();
-    const { currentBranch } = useBranch();
+    const { currentBranch, isLocked } = useBranch();
 
     const [commits, setCommits] = React.useState<IRestCommit[]>([]);
 
@@ -48,29 +48,32 @@ function HistoryPage() {
                 spacing={1}
                 sx={{ justifyContent: "center", alignItems: "center" }}
             >
-                { /* Commit Message Input */ }
-                <Grid size={8}>
-                    <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-                        <TextField
-                            margin="dense"
-                            label="Commit Message"
-                            size="small"
-                            variant="filled"
-                            value={commitMessage}
-                            onChange={(e) => setCommitMessage(e.target.value)}
-                        />
-                    </Box>
-                </Grid>
+                { /* Commit Message Input and Button - only show if branch is not locked */ }
+                {!isLocked && (
+                    <>
+                        <Grid size={8}>
+                            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+                                <TextField
+                                    margin="dense"
+                                    label="Commit Message"
+                                    size="small"
+                                    variant="filled"
+                                    value={commitMessage}
+                                    onChange={(e) => setCommitMessage(e.target.value)}
+                                />
+                            </Box>
+                        </Grid>
 
-                { /* Commit Button */ }
-                <Grid size={3}>
-                    <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            onClick={() => onCommit()}
-                        >Commit</Button>
-                    </Box>
-                </Grid>
+                        <Grid size={3}>
+                            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => onCommit()}
+                                >Commit</Button>
+                            </Box>
+                        </Grid>
+                    </>
+                )}
 
                 { /* Table of recent commits */ }
                 <Grid size={12}>

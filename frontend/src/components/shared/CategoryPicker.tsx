@@ -9,12 +9,14 @@ interface CategoryPickerProps {
     isCategories: ICategory[],
     onChange: (newCats: string[], added: string[], removed: string[]) => void,
     categories: LUT<ICategory>,
+    disabled?: boolean,
 }
 export function CategoryPicker(props: CategoryPickerProps) {
     const {
         isCategories,
         onChange,
         categories,
+        disabled = false,
     } = props;
 
     // helper function, triggered when the category selector changes
@@ -36,6 +38,7 @@ export function CategoryPicker(props: CategoryPickerProps) {
             getOptionLabel={(cat) => cat.name}
             value={isCategories}
             onChange={handleChange}
+            disabled={disabled}
             renderValue={(values, getItemProps) =>
                 values.map((val, index: number) => {
                     const { key, ...tagProps } = getItemProps({ index });

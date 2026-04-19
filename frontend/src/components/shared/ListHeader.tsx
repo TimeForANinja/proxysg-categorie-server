@@ -34,6 +34,7 @@ interface ListHeaderProps {
     addElement: string,
     downloadRows:  StringKV[],
     availableFields: FieldDefinition[],
+    isLocked?: boolean,
 }
 export const ListHeader = (props: ListHeaderProps) => {
     const {
@@ -42,9 +43,10 @@ export const ListHeader = (props: ListHeaderProps) => {
         addElement,
         downloadRows,
         availableFields,
+        isLocked = false,
     } = props;
 
-    const support_create = true;
+    const support_create = !isLocked;
 
     const [myTree, setMyTree] = React.useState<SearchParser | null>(null);
     const [treeError, setTreeError] = React.useState<string | null>(null);

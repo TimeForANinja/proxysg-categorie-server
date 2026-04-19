@@ -51,6 +51,7 @@ interface BuildRowProps {
     category: ICategory,
     onEdit: (cat: ICategory) => void,
     onDelete: (cat: ICategory) => void,
+    isLocked: boolean,
     branch: string,
 }
 /**
@@ -66,6 +67,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
         category,
         onEdit,
         onDelete,
+        isLocked,
         branch,
     } = props;
     const authMgmt = useAuth();
@@ -108,12 +110,16 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
                     <IconButton aria-label="search URLs with this category" onClick={handleSearchInUrls} size="small">
                         <SearchIcon />
                     </IconButton>
-                    <IconButton aria-label="edit category" onClick={() => onEdit(category)} size="small">
-                        <EditIcon />
-                    </IconButton>
-                    <IconButton aria-label="delete category" onClick={() => onDelete(category)} size="small">
-                        <DeleteIcon />
-                    </IconButton>
+                    {!isLocked && (
+                        <>
+                            <IconButton aria-label="edit category" onClick={() => onEdit(category)} size="small">
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton aria-label="delete category" onClick={() => onDelete(category)} size="small">
+                                <DeleteIcon />
+                            </IconButton>
+                        </>
+                    )}
                 </TableCell>
             </TableRow>
             <TableRow>
@@ -131,7 +137,7 @@ const BuildRow = React.memo(function BuildRow(props: BuildRowProps) {
 
 function CategoriesPage() {
     const authMgmt = useAuth();
-    const { currentBranch } = useBranch();
+    const { currentBranch, isLocked } = useBranch();
     // State info for the Page
     const [categories, setCategory] = React.useState<LUT<ICategory>>({});
 
@@ -178,11 +184,11 @@ function CategoriesPage() {
     const handleSave = async (catID: string | null, category: IMutableCategory) => {
         if (catID == null) {
             // add the new category
-            const newCat = await createCategory(authMgmt.token, currentBranch, category)
+            const newCat = await createCategory(authMgmt.token, category)
             setCategory(pushLUT(categories, newCat));
         } else {
             // update existing category
-            const updatedCat = await updateCategory(authMgmt.token, currentBranch, catID, category);
+            const updatedCat = await updateCategory(authMgmt.token, catID, category);
             setCategory(pushLUT(categories, updatedCat));
         }
         handleEditDialogClose();
@@ -195,7 +201,7 @@ function CategoriesPage() {
     const handleDeleteConfirmation = (del: boolean) => {
         // del == true means the user confirmed the popup
         if (del && isDeleteDialogOpen != null) {
-            deleteCategory(authMgmt.token, currentBranch, isDeleteDialogOpen.id).then(() => {
+            deleteCategory(authMgmt.token, isDeleteDialogOpen.id).then(() => {
                 // remove category with ID from the store
                 setCategory(filterLUT(categories, (cat => cat.id !== isDeleteDialogOpen.id)));
             });
@@ -216,6 +222,7 @@ function CategoriesPage() {
                     addElement={"Category"}
                     downloadRows={downloadRows}
                     availableFields={CategoryFieldsRaw}
+                    isLocked={isLocked}
                 />
                 <Grid size={12}>
                     <Paper>
@@ -236,6 +243,7 @@ function CategoriesPage() {
                                             category={cat}
                                             onEdit={handleEditOpen}
                                             onDelete={handleDelete}
+                                            isLocked={isLocked}
                                             branch={currentBranch}
                                         />
                                     )}

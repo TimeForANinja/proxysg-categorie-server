@@ -22,11 +22,13 @@ import CloseIcon from '@mui/icons-material/Close';
 import {formatDateString} from "../../util/DateString";
 import {loadExisting} from "../../api/branch";
 import {useAuth} from "../../hooks/useLogin";
+import {useBranch} from "../../hooks/useBranch";
 
 
 const UploadPage = () => {
     const navigate = useNavigate();
     const { token } = useAuth();
+    const { isLocked } = useBranch();
 
     const [files, setFiles] = React.useState<File[]>([]);
     const [text, setText] = React.useState<string>('');
@@ -144,7 +146,7 @@ const UploadPage = () => {
                                         variant="contained"
                                         component="label"
                                         startIcon={<UploadFileIcon />}
-                                        disabled={isLoading}
+                                        disabled={isLoading || isLocked}
                                         fullWidth
                                         sx={{ py: 1.5 }}
                                     >
@@ -193,7 +195,7 @@ const UploadPage = () => {
                                     rows={15}
                                     value={text}
                                     onChange={handleTextChange}
-                                    disabled={isLoading}
+                                    disabled={isLoading || isLocked}
                                     placeholder="Enter URLs here, one per line"
                                     variant="outlined"
                                     sx={{ '& .MuiInputBase-root': { minHeight: '300px' } }}
@@ -206,7 +208,7 @@ const UploadPage = () => {
                                 variant="contained"
                                 color="primary"
                                 type="submit"
-                                disabled={isLoading || (uploadType === 'file' && files.length === 0) || (uploadType === 'text' && !text.trim())}
+                                disabled={isLoading || isLocked || (uploadType === 'file' && files.length === 0) || (uploadType === 'text' && !text.trim())}
                                 startIcon={isLoading ? <CircularProgress size={20} /> : null}
                                 sx={{ minWidth: '120px' }}
                             >
