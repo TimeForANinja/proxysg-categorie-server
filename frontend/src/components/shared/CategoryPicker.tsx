@@ -4,7 +4,8 @@ import {Autocomplete, Box, TextField} from "@mui/material";
 import {getLUTValues, LUT} from "../../types/LookUpTable";
 import {ICategory} from "../../types/category";
 import {CompareLists} from "../../util/ArrayDiff";
-import {CategoryChip} from "./CategoryChip";
+import {CategoryChipList} from "./CategoryChip";
+import {colorToHex} from "../../util/colormixer";
 
 interface CategoryPickerProps {
     isCategories: ICategory[],
@@ -41,21 +42,13 @@ export function CategoryPicker(props: CategoryPickerProps) {
             onChange={handleChange}
             disabled={disabled}
             isOptionEqualToValue={(a, b) => a.id === b.id}
-            renderValue={(values, getItemProps) =>
-                values.map((val, index: number) => {
-                    const { key, ...tagProps } = getItemProps({ index });
-                    return (
-                        <CategoryChip
-                            key={key}
-                            category={val}
-                            {...tagProps}
-                        />
-                    );
-                })
-            }
+            renderValue={(values, getItemProps) => (
+                <CategoryChipList categories={values} getItemProps={getItemProps}/>
+            )}
             renderOption={(props, option) => {
+                // renderOption renders the items shown in the dropdown menu
                 const { key, ...optionProps } = props;
-                const colorHex = `#${option.color.toString(16).padStart(6, '0')}`;
+                const colorHex = colorToHex(option.color);
                 return (
                     <li key={key} {...optionProps}>
                         <Box

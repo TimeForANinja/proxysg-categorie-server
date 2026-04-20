@@ -71,6 +71,9 @@ export interface IConstraint {
 }
 
 export const formatConstraint = (constraint: IConstraint): string => {
+    if (!constraint.start && !constraint.end) {
+        return constraint.comment;
+    }
     const startDate = constraint.start ? new Date(constraint.start * 1000).toISOString().split('T')[0] : '...';
     const endDate = constraint.end ? new Date(constraint.end * 1000).toISOString().split('T')[0] : '...';
     const comment = constraint.comment ? ` (${constraint.comment})` : '';

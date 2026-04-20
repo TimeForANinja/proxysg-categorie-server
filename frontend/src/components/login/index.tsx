@@ -1,8 +1,8 @@
 import React from 'react';
 import './login.css';
 import {useNavigate} from 'react-router-dom'
-import {OptBoolean} from "../types/OptionalBool";
-import {useAuth} from "../hooks/useLogin";
+import {OptBoolean} from "../../types/OptionalBool";
+import {useAuth} from "../../hooks/useLogin";
 
 
 function LoginPage() {

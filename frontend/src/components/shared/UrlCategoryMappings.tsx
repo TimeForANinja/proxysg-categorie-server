@@ -167,6 +167,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
                             </Box>
                         </Grid>
                         <Grid size={{ xs: 12, md: 3 }}>
+                            { /* TODO: move Comment from Constraint to Mapping */ }
                             <TextField
                                 size="small"
                                 label="Comment"
@@ -221,7 +222,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
                                 return (
                                     <TableRow key={m.category.id} hover>
                                         <TableCell>
-                                            <CategoryChip category={m.category} />
+                                            <CategoryChip category={m.category} variant="outlined" />
                                         </TableCell>
                                         <TableCell sx={{ fontSize: '0.85rem' }}>
                                             {timeRange}

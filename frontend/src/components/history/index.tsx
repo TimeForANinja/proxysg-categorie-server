@@ -1,12 +1,12 @@
 import React from 'react';
-import {getHistory} from "../api/history";
-import HistoryTable from "./shared/HistoryTable";
-import {useBranch} from "../hooks/useBranch";
-import {IRestCommit} from "../types/history";
-import {useAuth} from "../hooks/useLogin";
+import {getHistory} from "../../api/history";
+import HistoryTable from "../shared/HistoryTable";
+import {useBranch} from "../../hooks/useBranch";
+import {IRestCommit} from "../../types/history";
+import {useAuth} from "../../hooks/useLogin";
 import {Box, Button, TextField, Card, CardContent, Typography, Divider, Stack} from "@mui/material";
-import {doCommit} from "../api/branch";
-import {useNotification} from "../hooks/useNotification";
+import {doCommit} from "../../api/branch";
+import {useNotification} from "../../hooks/useNotification";
 
 function HistoryPage() {
     const authMgmt = useAuth();

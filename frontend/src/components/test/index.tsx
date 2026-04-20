@@ -8,7 +8,6 @@ import {
     Card,
     CardContent,
     CardHeader,
-    Chip,
     Stack,
     Box,
     Alert,
@@ -33,11 +32,12 @@ import {
     Download as DownloadIcon
 } from "@mui/icons-material";
 import { CSVLink } from "react-csv";
-import {useAuth} from "../hooks/useLogin";
-import {testApi} from "../api/core";
-import {RestTestResult} from "../types/core";
-import {ICategory} from "../types/category";
-import {CategoryChip} from "./shared/CategoryChip";
+import {useAuth} from "../../hooks/useLogin";
+import {testApi} from "../../api/core";
+import {RestTestResult} from "../../types/core";
+import {ICategory} from "../../types/category";
+import {CategoryChip} from "../shared/CategoryChip";
+import {colorLUT, hexToColor} from "../../util/colormixer";
 
 function TestPage() {
     const authMgmt = useAuth();
@@ -82,16 +82,6 @@ function TestPage() {
             "Bluecoat (Live)": res.bc_categories.join(", ")
         }));
     }, [results]);
-
-    const getCategoryChip = (cat: ICategory | string, isBluecoat: boolean) => {
-        return (
-            <CategoryChip
-                key={typeof cat === 'string' ? cat : cat.id}
-                category={cat}
-                isBluecoat={isBluecoat}
-            />
-        );
-    };
 
     return (
         <Container maxWidth={false} sx={{ mt: 4, mb: 4 }}>
@@ -266,7 +256,10 @@ function TestPage() {
                                                 <TableCell sx={{ verticalAlign: 'top' }}>
                                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxWidth: 300 }}>
                                                         {res.local_categories && res.local_categories.length > 0 ? (
-                                                            res.local_categories.map(cat => getCategoryChip(cat, false))
+                                                            res.local_categories.map(cat => (<CategoryChip
+                                                                key={cat.id}
+                                                                category={cat}
+                                                            />))
                                                         ) : (
                                                             <Typography variant="body2" color="text.disabled">None</Typography>
                                                         )}
@@ -275,7 +268,10 @@ function TestPage() {
                                                 <TableCell sx={{ verticalAlign: 'top' }}>
                                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxWidth: 300 }}>
                                                         {res.bc_categories && res.bc_categories.length > 0 ? (
-                                                            res.bc_categories.map(cat => getCategoryChip(cat, true))
+                                                            res.bc_categories.map(cat => (<CategoryChip
+                                                                key={cat}
+                                                                category={{name: cat}}
+                                                            />))
                                                         ) : (
                                                             <Typography variant="body2" color="text.disabled">None</Typography>
                                                         )}

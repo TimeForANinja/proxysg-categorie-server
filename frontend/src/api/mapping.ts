@@ -71,8 +71,8 @@ export const deleteTokenCategory = async (userToken: string, id: string, categor
     return data;
 }
 
-export const addCategoryParent = async (userToken: string, categoryId: string, childCategoryId: string): Promise<GenericOutput> => {
-    const response = await fetch(`/api/branch/@me/category/${categoryId}/parent`, {
+export const addCategoryChild = async (userToken: string, categoryId: string, childCategoryId: string): Promise<GenericOutput> => {
+    const response = await fetch(`/api/branch/@me/category/${categoryId}/child`, {
         method: 'POST',
         headers: {
             'jwt-token': userToken,
@@ -92,8 +92,8 @@ export const addCategoryParent = async (userToken: string, categoryId: string, c
     return data;
 }
 
-export const deleteCategoryParent = async (userToken: string, categoryId: string, childCategoryId: string): Promise<GenericOutput> => {
-    const response = await fetch(`/api/branch/@me/category/${categoryId}/parent/${childCategoryId}`, {
+export const deleteCategoryChild = async (userToken: string, categoryId: string, childCategoryId: string): Promise<GenericOutput> => {
+    const response = await fetch(`/api/branch/@me/category/${categoryId}/child/${childCategoryId}`, {
         method: 'DELETE',
         headers: { 'jwt-token': userToken },
     });

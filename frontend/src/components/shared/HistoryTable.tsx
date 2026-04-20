@@ -8,6 +8,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import {IRestCommit} from "../../types/history";
 import {formatUnixTimestamp, formatUnixDateOnly} from "../../util/DateString";
+import {short_uuid} from "../../util/uuid";
 
 interface HistoryTableProps {
     commits: IRestCommit[],
@@ -35,7 +36,7 @@ function HistoryTable({ commits, small }: HistoryTableProps) {
                         <TableRow key={commit.uuid} hover>
                             {!small && (
                                 <TableCell sx={{ fontFamily: 'monospace' }}>
-                                    {commit.uuid.substring(0, 8)}
+                                    {short_uuid(commit.uuid)}
                                 </TableCell>
                             )}
                             <TableCell>

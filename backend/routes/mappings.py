@@ -76,7 +76,7 @@ def add_mapping_bp(app: APIFlask):
         )
 
 
-    @mapping_bp.get("/api/branch/<branch>/category/<category_id>/parent")
+    @mapping_bp.get("/api/branch/<branch>/category/<category_id>/child")
     @mapping_bp.doc(summary="Get Super Categories", description="Get the child categories for a given category", tags=["Categories", "Mapping"])
     @mapping_bp.output(child_category_list_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RO])
@@ -89,7 +89,7 @@ def add_mapping_bp(app: APIFlask):
             data=child_categories,
         )
 
-    @mapping_bp.post("/api/branch/@me/category/<category_id>/parent")
+    @mapping_bp.post("/api/branch/@me/category/<category_id>/child")
     @mapping_bp.doc(summary="Add Super Category", description="Add a child category to a category", tags=["Categories", "Mapping"])
     @mapping_bp.input(child_category_mapping_input_schema, location="json", arg_name="mapping_data")
     @mapping_bp.output(generic_output_schema)
@@ -111,8 +111,8 @@ def add_mapping_bp(app: APIFlask):
             message="Super-Category added successfully",
         )
 
-    @mapping_bp.delete("/api/branch/@me/category/<category_id>/parent/<child_category_id>")
-    @mapping_bp.doc(summary="Remove Super Category", description="Remove a parent category from a category", tags=["Categories", "Mapping"])
+    @mapping_bp.delete("/api/branch/@me/category/<category_id>/child/<child_category_id>")
+    @mapping_bp.doc(summary="Remove Super Category", description="Remove a child category from a category", tags=["Categories", "Mapping"])
     @mapping_bp.output(generic_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RW])
     def delete_child_category(category_id: str, child_category_id: str) -> GenericOutput:

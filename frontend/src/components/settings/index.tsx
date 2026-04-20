@@ -19,12 +19,12 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import {cleanupBranch, resetBranches} from "../api/branch";
-import {useAuth} from "../hooks/useLogin";
-import {useBranch} from "../hooks/useBranch";
-import UploadPage from "./shared/upload";
-import {cleanupCore, getMetrics, IMetricsData} from "../api/core";
-import {useNotification} from "../hooks/useNotification";
+import {cleanupBranch, resetBranches} from "../../api/branch";
+import {useAuth} from "../../hooks/useLogin";
+import {useBranch} from "../../hooks/useBranch";
+import UploadPage from "../shared/upload";
+import {cleanupCore, getMetrics, IMetricsData} from "../../api/core";
+import {useNotification} from "../../hooks/useNotification";
 
 
 const SettingsPage: React.FC = () => {

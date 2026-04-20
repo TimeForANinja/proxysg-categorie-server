@@ -31,6 +31,10 @@ export class TriState<T> {
         return this.value as T;
     }
 
+    isClosed(): boolean {
+        return this.value === TriState.CLOSED.value;
+    }
+
     isNew(): boolean {
         return this.value === TriState.NEW.value;
     }
