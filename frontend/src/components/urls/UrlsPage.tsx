@@ -59,7 +59,7 @@ export default function MatchingListPage() {
         Promise.all([getURLs(authMgmt.token, currentBranch), getCategories(authMgmt.token, currentBranch)])
             .then(([urlsData, categoriesData]) => {
                 setURLs(urlsData);
-                setCategories(buildLUTFromID(categoriesData));
+                setCategories(buildLUTFromID(categoriesData.map(x => x.category)));
             })
             .catch((error) => console.error("Error:", error));
     }, [authMgmt.token, currentBranch]);

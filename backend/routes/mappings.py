@@ -5,12 +5,11 @@ from auth.auth_roles import AuthRoles
 from auth.auth_singleton import get_auth_if
 from auth.auth_user import AuthUser
 from db.db_singleton import get_db
-from routes.schemas.mappings import token_category_mapping_input_schema, TokenCategoryMappingInput
 from util.log import log_debug
 from routes.schemas.mappings import url_category_mapping_input_schema, URLCategoryMappingInput, \
     ConstrainedURLListOutput, constrained_url_list_output_schema, ChildCategoryMappingInput, ChildCategoryListOutput, \
     child_category_mapping_input_schema, child_category_list_output_schema, list_category_output_schema, \
-    ListCategoryOutput
+    ListCategoryOutput, token_category_mapping_input_schema, TokenCategoryMappingInput
 from routes.schemas.error import ErrorResponse
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 

@@ -5,10 +5,10 @@ from auth.auth_roles import AuthRoles
 from auth.auth_singleton import get_auth_if
 from auth.auth_user import AuthUser
 from db.db_singleton import get_db
-from routes.schemas.mappings import list_category_output_schema, ListCategoryOutput
 from util.log import log_debug
 from routes.schemas.category import category_output_schema, category_create_input_schema, category_update_input_schema, \
-    CategoryCreateInput, CategoryUpdateInput, CategoryOutput
+    CategoryCreateInput, CategoryUpdateInput, CategoryOutput, ListCategoryDetailsOutput, \
+    list_category_detail_output_schema
 from routes.schemas.error import ErrorResponse, OutCanError
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 
@@ -22,12 +22,12 @@ def add_category_bp(app: APIFlask):
 
     @category_bp.get("/api/branch/<branch>/category")
     @category_bp.doc(summary="List all Categories", description="List all Categories for a given branch", tags=["Categories"])
-    @category_bp.output(list_category_output_schema)
+    @category_bp.output(list_category_detail_output_schema)
     @category_bp.auth_required(auth, roles=[AuthRoles.RO])
-    def get_categories(branch: str) -> ListCategoryOutput:
+    def get_categories(branch: str) -> ListCategoryDetailsOutput:
         db = get_db()
         categories = db.categories.fetch_categories(branch)
-        return ListCategoryOutput(
+        return ListCategoryDetailsOutput(
             status="success",
             message="Categories fetched successfully",
             data=categories,

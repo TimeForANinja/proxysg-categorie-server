@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-from apiflask.fields import Nested, String, Integer
+from apiflask.fields import Nested, String, Integer, List
 from marshmallow_dataclass import class_schema
+from typing import List as tList, Optional
 
+from routes.types.category import rest_category_detail_schema
 from util.schema import desc, to_field
 from model.types.category import Category, category_schema
 from routes.schemas.generic_output import GenericOutput
@@ -46,7 +48,17 @@ class CategoryOutput(GenericOutput):
         metadata=desc("Category"),
     ))
 
+@dataclass
+class ListCategoryDetailsOutput(GenericOutput):
+    """Output schema for a list of categories"""
+    data: tList[Category] = to_field(List(
+        Nested(rest_category_detail_schema),
+        required=True,
+        metadata=desc("List of Categories incl child categories"),
+    ))
+
 
 category_create_input_schema = class_schema(CategoryCreateInput)()
 category_update_input_schema = class_schema(CategoryUpdateInput)()
 category_output_schema = class_schema(CategoryOutput)()
+list_category_detail_output_schema = class_schema(ListCategoryDetailsOutput)()

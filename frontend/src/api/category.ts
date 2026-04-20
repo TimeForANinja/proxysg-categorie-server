@@ -1,12 +1,15 @@
-import {ICategory, ICategoryCreateInput, ICategoryUpdateInput, ICategoryOutput, IListCategoryOutput} from "../types/category";
+import {
+    ICategory, ICategoryCreateInput, ICategoryUpdateInput, ICategoryOutput, IListCategoryOutput,
+    IListCategoryDetailsOutput, IRestCategoryDetail
+} from "../types/category";
 import {GenericOutput} from "../types/api";
 
 
-export const getCategories = async (userToken: string, branch: string): Promise<ICategory[]> => {
+export const getCategories = async (userToken: string, branch: string): Promise<IRestCategoryDetail[]> => {
     const response = await fetch(`/api/branch/${branch}/category`, {
         headers: { 'jwt-token': userToken },
     });
-    const data: IListCategoryOutput = await response.json();
+    const data: IListCategoryDetailsOutput = await response.json();
 
     if (!response.ok || data.status === "failed") {
         throw new Error(data.message || `Failed to get category list`);

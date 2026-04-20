@@ -167,7 +167,6 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
                             </Box>
                         </Grid>
                         <Grid size={{ xs: 12, md: 3 }}>
-                            { /* TODO: move Comment from Constraint to Mapping */ }
                             <TextField
                                 size="small"
                                 label="Comment"

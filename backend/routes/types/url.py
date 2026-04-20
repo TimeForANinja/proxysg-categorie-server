@@ -68,7 +68,7 @@ class RestTestResult:
     bc_categories: tList[str] = to_field(List(
         String(required=True, metadata=desc("Bluecoat Category")),
         required=True,
-        metadata=desc("List of all Bluecoat Categories matched for the URL"),
+        metadata=desc("List of all Bluecoat Categories matched for the URL (matched against the raw input, not the best-fit URL)"),
     ))
 
 rest_test_result_schema = class_schema(RestTestResult)()

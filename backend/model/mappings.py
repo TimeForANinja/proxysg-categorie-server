@@ -48,7 +48,7 @@ class MappingModel:
         # check if mapping already exists
         mapping, _ = find_in_lists(
             URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings),
-            commit.head.url_category_mappings,
+            None,
             lambda m: m.url_id == url_id and m.category_id == category_id
         )
         if mapping:
@@ -121,7 +121,7 @@ class MappingModel:
         # check if mapping already exists
         mapping, _ = find_in_lists(
             TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings),
-            commit.head.token_category_mappings,
+            None,
             lambda m: m.token_id == token_id and m.category_id == category_id
         )
         if mapping:
@@ -189,7 +189,7 @@ class MappingModel:
         # check if mapping already exists
         mapping, _ = find_in_lists(
             ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings),
-            commit.head.child_category_mappings,
+            None,
             lambda m: m.category_id == category_id and m.child_category_id == child_category_id
         )
         if mapping:

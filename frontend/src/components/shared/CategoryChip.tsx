@@ -74,11 +74,13 @@ export const CategoryChipList: React.FC<{
                     if (tooltips && tooltips[index]) {
                         return (
                             <Tooltip title={tooltips[index]} key={category.id}>
-                                <CategoryChip category={category}/>
+                                <CategoryChip category={category} key={category.id} {...props}/>
                             </Tooltip>
                         );
                     }
-                    return <CategoryChip category={category} key={category.id} {...props}/>;
+                    // remove key from props
+                    const { key, ...rest } = props;
+                    return <CategoryChip category={category} key={category.id} {...rest}/>;
                 })
             }
             { remaining > 0 && (

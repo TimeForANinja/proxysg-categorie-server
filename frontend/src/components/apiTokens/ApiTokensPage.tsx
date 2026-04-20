@@ -59,7 +59,7 @@ export default function ApiTokensPage() {
         Promise.all([getTokens(authMgmt.token, currentBranch), getCategories(authMgmt.token, currentBranch)])
             .then(([tokensData, categoriesData]) => {
                 setTokens(tokensData);
-                setCategories(buildLUTFromID(categoriesData));
+                setCategories(buildLUTFromID(categoriesData.map(x => x.category)));
             })
             .catch((error) => console.error("Error:", error));
     }, [authMgmt.token, currentBranch]);

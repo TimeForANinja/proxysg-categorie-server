@@ -20,9 +20,9 @@ import { ListHeader } from "../shared/ListHeader";
 import { ConfirmDeletionDialog } from "../shared/ConfirmDeletionDialog";
 import { TriState } from "../../types/EditDialogState";
 import { MyPaginator } from "../shared/MyPaginator";
-import { buildLUTFromID, LUT } from "../../types/LookUpTable";
+import {buildLUTFromGetter, LUT} from "../../types/LookUpTable";
 import { SearchParser } from "../../searchParser";
-import { CategoryFieldsRaw, CategoryToKV, ICategory } from "../../types/category";
+import {CategoryFieldsRaw, CategoryToKV, ICategory, IRestCategoryDetail} from "../../types/category";
 import { KVaddRAW } from "../../types/stringKV";
 import { useBranch } from "../../hooks/useBranch";
 import { useAuth } from "../../hooks/useLogin";
@@ -35,24 +35,24 @@ export default function CategoryListPage() {
     const { currentBranch, isLocked } = useBranch();
 
     // State info for the Page
-    const [categories, setCategories] = React.useState<LUT<ICategory>>({});
+    const [categories, setCategories] = React.useState<LUT<IRestCategoryDetail>>({});
 
     // search and pagination
-    const [visibleRows, setVisibleRows] = React.useState<ICategory[]>([]);
-    const comparator = React.useCallback((a: ICategory, b: ICategory): number => a.name.localeCompare(b.name), []);
+    const [visibleRows, setVisibleRows] = React.useState<IRestCategoryDetail[]>([]);
+    const comparator = React.useCallback((a: IRestCategoryDetail, b: IRestCategoryDetail): number => a.category.name.localeCompare(b.category.name), []);
     const [quickSearch, setQuickSearch] = React.useState<SearchParser | null>(null);
 
     // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => Object.values(categories).filter(x => {
-            return quickSearch?.test(KVaddRAW(CategoryToKV(x))) ?? true;
+            return quickSearch?.test(KVaddRAW(CategoryToKV(x.category))) ?? true;
         }),
         [quickSearch, categories],
     );
 
     // Memoize the download rows to avoid unnecessary transformations
     const downloadRows = React.useMemo(
-        () => filteredRows.map(row => CategoryToKV(row)),
+        () => filteredRows.map(row => CategoryToKV(row.category)),
         [filteredRows],
     );
 
@@ -60,7 +60,7 @@ export default function CategoryListPage() {
     const fetchData = React.useCallback(() => {
         getCategories(authMgmt.token, currentBranch)
             .then((categoriesData) => {
-                setCategories(buildLUTFromID(categoriesData));
+                setCategories(buildLUTFromGetter(categoriesData, (c) => c.category.id));
             })
             .catch((error) => console.error("Error:", error));
     }, [authMgmt.token, currentBranch]);
@@ -129,10 +129,10 @@ export default function CategoryListPage() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {visibleRows.map((cat) =>
+                                    {visibleRows.map((row) =>
                                         <CategoryRow
-                                            key={cat.id}
-                                            category={cat}
+                                            key={row.category.id}
+                                            category={row}
                                             categories={categories}
                                             branch={currentBranch}
                                             isLocked={isLocked}

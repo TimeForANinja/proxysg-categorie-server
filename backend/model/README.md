@@ -59,3 +59,17 @@ categories = model.specials.fetch_categories("b_prod")
 # Example: Committing user changes to production
 model.core.commit(user, "Updated blocked URLs")
 ```
+
+## Configuration
+
+The following configuration settings are used by the `model` module, particularly for BlueCoat (BC) category queries:
+
+### BC Configuration Group
+
+- `BC.HOST` (Required): The hostname or IP address of the BlueCoat Proxy.
+- `BC.PASSWORD` (Required): The password for the BlueCoat Proxy management API.
+- `BC.USER` (Default: `ro_admin`): The username for the BlueCoat Proxy management API.
+- `BC.TIMEOUT` (Default: `10`): The HTTP timeout in seconds for requests to the BlueCoat Proxy.
+- `BC.VERIFY_SSL` (Default: `true`): Whether to verify the SSL certificate of the BlueCoat Proxy.
+
+These settings are typically loaded from environment variables during application initialization.

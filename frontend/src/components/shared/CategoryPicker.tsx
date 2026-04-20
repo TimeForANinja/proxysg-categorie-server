@@ -50,7 +50,7 @@ export function CategoryPicker(props: CategoryPickerProps) {
                 const { key, ...optionProps } = props;
                 const colorHex = colorToHex(option.color);
                 return (
-                    <li key={key} {...optionProps}>
+                    <li key={option.id} {...optionProps}>
                         <Box
                             sx={{
                                 width: 16,

@@ -38,4 +38,15 @@ export const buildLUTFromID = <T extends { id: string }>(objects: Array<T>): LUT
     return lut;
 };
 
+export const buildLUTFromGetter = <T>(
+    objects: Array<T>,
+    getter: (obj: T) => string
+): LUT<T> => {
+    const lut: LUT<T> = {};
+    for (const obj of objects) {
+        lut[getter(obj)] = obj;
+    }
+    return lut;
+};
+
 export const getLUTValues = <T>(lut: LUT<T>): Array<T> => Array.from(Object.values(lut));

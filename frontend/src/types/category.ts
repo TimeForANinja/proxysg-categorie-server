@@ -21,8 +21,14 @@ export interface ICategoryUpdateInput {
     color?: number;
 }
 
+export interface IRestCategoryDetail {
+    category: ICategory;
+    children: ICategory[];
+}
+
 export type ICategoryOutput = DataOutput<ICategory>;
 export type IListCategoryOutput = DataOutput<ICategory[]>;
+export type IListCategoryDetailsOutput = DataOutput<IRestCategoryDetail[]>;
 
 export const CategoryToKV = (x: ICategory): StringKV => {
     return {

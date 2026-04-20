@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from db.abc.db import DBInterface
 from model.types.category import Category
@@ -6,6 +6,7 @@ from model.types.core import Commit
 from model.util.error import CanError, ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping, ChildCategoryMapping
 from model.util.find import find_in_lists, find_all_in_lists
+from routes.types.category import RestCategoryDetail
 
 
 class CategoryModel:
@@ -13,11 +14,30 @@ class CategoryModel:
         self.backend = backend
 
 
-    def fetch_categories(self, branch: str) -> List[Category]:
+    def fetch_categories(self, branch: str) -> List[RestCategoryDetail]:
         """Fetch a list of all Categories"""
         head_commit = Commit.read_branch(self.backend, branch)
+
+        # fetch LUTs
         category_lut = head_commit.head.category_lut(self.backend)
-        return list(category_lut.values())
+
+        # create base-objects for every Category
+        data: Dict[str, RestCategoryDetail] = {
+            cat_id: RestCategoryDetail(
+                category=category_lut[cat_id],
+                children=[],
+            )
+            for cat_id in category_lut
+        }
+
+        # fill our children based on our mappings
+        mappings = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
+        for mapping in mappings:
+            data[mapping.category_id].children.append(
+                category_lut[mapping.child_category_id]
+            )
+
+        return list(data.values())
 
     def create_category(self, branch: str, name: str, description: str, color: Optional[int]) -> Category:
         """Add a new Category with the given name"""

@@ -3,6 +3,7 @@ from typing import Optional, cast, List, Dict, Set
 from apiflask import APIFlask
 
 from db.abc.db import DBInterface
+from model.types.category import Category
 from model.types.core import Commit
 from model.types.mappings import URLCategoryMapping, ChildCategoryMapping
 from model.util.error import ModelError, CanError
@@ -129,38 +130,51 @@ class URLModel:
 
 
     def test_urls(self, app: APIFlask, urls: List[str]) -> List[RestTestResult]:
-        # TODO: properly parallelize this to reduce DB load
-        return [self._test_url(app, url) for url in urls]
+        # fetch required LUT once, then iterate over the data using subfunction
+        head_commit = Commit.read_branch(self.backend, BRANCH_PROD)
+        url_lut = head_commit.head.url_lut(self.backend)
+        cat_lut = head_commit.head.category_lut(self.backend)
+        url_cat_maps = URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings)
+        child_cat_maps = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
 
-    def _test_url(self, app: APIFlask, url: str) -> RestTestResult:
+        # next iterate over the data - making it way easier to implement the eval logic
+        return [
+            self._test_url(app, url, url_lut, cat_lut, url_cat_maps, child_cat_maps)
+            for url in urls
+        ]
+
+    def _test_url(
+            self,
+            app: APIFlask,
+            url: str,
+            url_lut: Dict[str, URL],
+            cat_lut: Dict[str, Category],
+            url_cat_maps: List[URLCategoryMapping],
+            child_cat_maps: List[ChildCategoryMapping],
+    ) -> RestTestResult:
         # 1) Normalize input to a hostname
         hostname = url.strip().lower()
 
-        # 2) Fetch all URLs and select the best match by comparing the longest suffix that matched
-        head_commit = Commit.read_branch(self.backend, BRANCH_PROD)
-        url_lut = head_commit.head.url_lut(self.backend)
+        # 2) select the best match by comparing the longest suffix that matched
         best_match = best_match_url(hostname, url_lut.values())
 
         # 3) Fetch all categories that match the best match
-        cat_lut = head_commit.head.category_lut(self.backend)
         matching_cat_ids: Set[str] = set()
         if best_match:
             direct_matching_mappings, _ = find_all_in_lists(
-                URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings),
-                head_commit.head.url_category_mappings,
+                url_cat_maps,None,
                 lambda m: m.url_id == cast(URL, best_match).id
             )
             direct_matching_cats = set(m.category_id for m in direct_matching_mappings)
             matching_cat_ids.update(direct_matching_cats)
             # unnest to also get all Partents of the matched categories
-            child_cat_map = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
             matching_cat_ids.update([
                 parent_cat.id
                 for c_id in direct_matching_cats
                 for parent_cat in unnest_categories(
                     cat_lut[c_id],
                     cat_lut,
-                    child_cat_map,
+                    child_cat_maps,
                     True,
                 )
             ])
