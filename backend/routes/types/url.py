@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested, String
+from apiflask.fields import List, Nested, String, Dict
 from typing import List as tList, Optional
 from marshmallow_dataclass import class_schema
 
 from model.types.category import category_schema, Category
+from model.types.metrics import BCCategory, bc_category_schema
 from model.types.shared import Constraint, constraint_schema
 from model.types.url import URL, url_schema
 from util.schema import desc, to_field
@@ -42,6 +43,11 @@ class RestURLDetail:
         required=True,
         metadata=desc("Categories & Constraint associated with the URL"),
     ))
+    bc_category: Optional[BCCategory] = to_field(Nested(
+        bc_category_schema,
+        required=False,
+        metadata=desc("Bluecoat Category associated with the URL"),
+    ), default=None)
 
 rest_url_detail_schema = class_schema(RestURLDetail)()
 

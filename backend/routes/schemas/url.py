@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested, String
+from apiflask.fields import List, Nested, String, Boolean
 from typing import List as tList
 from marshmallow_dataclass import class_schema
 
@@ -7,6 +7,18 @@ from routes.types.url import RestURLDetail, rest_url_detail_schema, rest_test_re
 from util.schema import desc, to_field
 from routes.schemas.generic_output import GenericOutput
 from model.types.url import URL, url_schema
+
+
+@dataclass
+class ListUrlsQuery:
+    add_mappings: bool = to_field(Boolean(
+        load_default=False,
+        metadata=desc("pad with Category mappings"),
+    ), default=False)
+    add_bc_cat: bool = to_field(Boolean(
+        load_default=False,
+        metadata=desc("pad with BC Categories"),
+    ), default=False)
 
 
 @dataclass
@@ -70,6 +82,7 @@ class URLTestOutput(GenericOutput):
     ))
 
 
+list_urls_query_schema = class_schema(ListUrlsQuery)()
 list_url_output_schema = class_schema(ListURLOutput)()
 url_create_input_schema = class_schema(URLCreateInput)()
 url_update_input_schema = class_schema(URLUpdateInput)()

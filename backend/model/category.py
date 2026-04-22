@@ -14,7 +14,7 @@ class CategoryModel:
         self.backend = backend
 
 
-    def fetch_categories(self, branch: str) -> List[RestCategoryDetail]:
+    def fetch_categories(self, branch: str, add_mappings: bool = False) -> List[RestCategoryDetail]:
         """Fetch a list of all Categories"""
         head_commit = Commit.read_branch(self.backend, branch)
 
@@ -31,11 +31,12 @@ class CategoryModel:
         }
 
         # fill our children based on our mappings
-        mappings = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
-        for mapping in mappings:
-            data[mapping.category_id].children.append(
-                category_lut[mapping.child_category_id]
-            )
+        if add_mappings:
+            mappings = ChildCategoryMapping.batch_read(self.backend, head_commit.head.child_category_mappings)
+            for mapping in mappings:
+                data[mapping.category_id].children.append(
+                    category_lut[mapping.child_category_id]
+                )
 
         return list(data.values())
 

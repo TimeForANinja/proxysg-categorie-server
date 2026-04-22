@@ -1,4 +1,3 @@
-from hmac import new
 from typing import Optional, cast, List, Dict, Set
 from apiflask import APIFlask
 
@@ -6,6 +5,7 @@ from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Commit
 from model.types.mappings import URLCategoryMapping, ChildCategoryMapping
+from model.types.metrics import BCCategory
 from model.util.error import ModelError, CanError
 from model.types.url import URL
 from model.util.find import find_in_lists, find_all_in_lists
@@ -20,7 +20,7 @@ class URLModel:
         self.backend = backend
 
 
-    def fetch_urls(self, branch: str) -> List[RestURLDetail]:
+    def fetch_urls(self, branch: str, add_mappings: bool = False, add_bc_cat: bool = False) -> List[RestURLDetail]:
         """Fetch a list of all URLs"""
         head_commit = Commit.read_branch(self.backend, branch)
 
@@ -33,19 +33,27 @@ class URLModel:
             url_id: RestURLDetail(
                 url=url_lut[url_id],
                 categories=[],
+                bc_category=None,
             )
             for url_id in url_lut
         }
 
         # fill our category properties based on our mappings
-        mappings = URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings)
-        for mapping in mappings:
-            data[mapping.url_id].categories.append(
-                RestConstrainedCategory(
-                    category=category_lut[mapping.category_id],
-                    constraint=mapping.constraint,
+        if add_mappings:
+            mappings = URLCategoryMapping.batch_read(self.backend, head_commit.head.url_category_mappings)
+            for mapping in mappings:
+                data[mapping.url_id].categories.append(
+                    RestConstrainedCategory(
+                        category=category_lut[mapping.category_id],
+                        constraint=mapping.constraint,
+                    )
                 )
-            )
+
+        if add_bc_cat:
+            bcc = BCCategory.batch_read_lut(self.backend)
+            for url_detail in data.values():
+                if url_detail.url.url in bcc:
+                    url_detail.bc_category = bcc[url_detail.url.url]
 
         return list(data.values())
 

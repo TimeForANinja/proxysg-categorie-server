@@ -56,38 +56,45 @@ class DBMDB(DBInterface):
             yield c
 
 
-    def _generic_fetch_decode(self, keys: List[str], con: Optional[dbm._Database] = None) -> List[BSON_SUPPORTED_TYPES]:
+    def _generic_fetch_decode(self, keys: List[str], existing_con: Optional[dbm._Database] = None) -> List[BSON_SUPPORTED_TYPES]:
+        if not keys:
+            return []
+        with self._get_con(existing_con) as con:
+            raw_data = [con[key] for key in keys]
         return [
-            bson_decode(cast(bytes, data))
-            for data in self.batch_fetch_kv(keys, con)
+            bson_decode(d)
+            for d in raw_data
         ]
 
     def _generic_insert_encode(self, entries: List[BSON_SUPPORTED_TYPES], con: Optional[dbm._Database] = None) -> List[str]:
-        # reuse the same hash function as DBM for consistency
         bsons = [bson_encode(e) for e in entries]
         hashes = [sha256_hash(b) for b in bsons]
-        self.batch_insert_kv(hashes, bsons, con)
+        self._generic_insert(hashes, bsons, con)
         return hashes
 
-
-    def batch_fetch_kv(self, keys: List[str], existing_con: Optional[dbm._Database] = None) -> List[str | bytes]:
-        with self._get_con(existing_con) as con:
-            return [con[key] for key in keys]
-
-    def batch_insert_kv(self, keys: List[str], values: List[str | bytes], existing_con: Optional[dbm._Database] = None) -> None:
+    def _generic_insert(self, keys: List[str], values: List[str | bytes], existing_con: Optional[dbm._Database] = None) -> None:
+        if not keys:
+            return
         with self._get_con(existing_con) as con:
             for key, value in zip(keys, values):
                 con[key] = value
 
 
-    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
-        return cast(List[Dict[str, Any]], self._generic_fetch_decode(obj_hashes))
+    def batch_fetch_obj(self, obj_hashes: List[str], **kwargs) -> List[Dict[str, Any]]:
+        return cast(
+            List[Dict[str, Any]],
+            self._generic_fetch_decode(obj_hashes)
+        )
+
+    def batch_set_obj(self, key: List[str], val: List[Dict[str, Any]]) -> None:
+        bsons = [bson_encode(e) for e in val]
+        self._generic_insert(key, bsons)
 
     def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
         return self._generic_insert_encode(entries)
 
 
-    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+    def batch_fetch_id_list(self, obj_hashes: List[str], **kwargs) -> List[List[str]]:
         results = []
         with self.get_connection() as con:
             # get "root" for all lists

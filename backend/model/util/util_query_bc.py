@@ -36,10 +36,11 @@ class ServerCredentials:
         """Build a ServerCredentials object from a config dict"""
         query_bc_conf: dict = app.config.get("BC", {})
 
-        bc_host = query_bc_conf.get("HOST")
-        bc_password = query_bc_conf.get("PASSWORD")
-        if not host or not bc_password:
-            raise ValueError("BC Host or Password not set")
+        bc_host = query_bc_conf.get("HOST", None)
+        bc_user = query_bc_conf.get("USER", None)
+        bc_password = query_bc_conf.get("PASSWORD", None)
+        if not bc_host or not bc_user or not bc_password:
+            raise ValueError("BC Host, User or Password not set")
 
         if not query_bc_conf.get("VERIFY_SSL", "true").lower() != "false":
             # hide warnings telling us to enable ssl verification
@@ -47,7 +48,7 @@ class ServerCredentials:
 
         return ServerCredentials(
             server=cast(str, bc_host),
-            user=query_bc_conf.get("USER", "ro_admin"),
+            user=cast(str, bc_user),
             password=cast(str, bc_password),
             # timeout for the query against the bc proxy. should be below 30 seconds or else the /test api route will timeout
             http_timeout=int(query_bc_conf.get("TIMEOUT", "10")),

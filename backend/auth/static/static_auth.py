@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 from typing import Optional, Tuple
 from flask import request
 from apiflask import APIFlask
@@ -52,7 +52,7 @@ class StaticAuthRealm(AuthRealmInterface):
         token_data = TokenData(
             user=auth_user,
             realm="static",
-            date_of_creation=int(time.time())
+            date_of_creation=int(datetime.now().timestamp()),
         )
         token = self.jwt.generate_token(token_data)
         return token, auth_user

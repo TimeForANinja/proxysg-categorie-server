@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested, String
+from apiflask.fields import List, Nested, String, Boolean
 from typing import List as tList
 from marshmallow_dataclass import class_schema
 
@@ -7,6 +7,18 @@ from routes.types.token import RestTokenDetail, rest_token_detail_schema
 from util.schema import desc, to_field
 from model.types.token import Token, token_schema
 from routes.schemas.generic_output import GenericOutput
+
+
+@dataclass
+class ListTokensQuery:
+    add_mappings: bool = to_field(Boolean(
+        load_default=False,
+        metadata=desc("pad with Category mappings"),
+    ), default=False)
+    add_last_used: bool = to_field(Boolean(
+        load_default=False,
+        metadata=desc("pad with BC Categories"),
+    ), default=False)
 
 
 @dataclass
@@ -42,6 +54,7 @@ class ListTokenOutput(GenericOutput):
     ))
 
 
+list_tokens_query_schema = class_schema(ListTokensQuery)()
 token_output_schema = class_schema(TokenOutput)()
 list_token_output_schema = class_schema(ListTokenOutput)()
 token_create_input_schema = class_schema(TokenCreateInput)()

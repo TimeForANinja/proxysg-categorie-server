@@ -27,37 +27,25 @@ class DBInterface(ABC):
 
 
     @abstractmethod
-    def batch_fetch_kv(self, keys: List[str]) -> List[str | bytes]:
-        """
-        Retrieve a list of raw values associated with a list of keys.
-
-        :param keys: The unique identifiers.
-        :return: A list of stored values.
-        :raises KeyError: If any key is not found.
-        """
-        pass
-
-    @abstractmethod
-    def batch_insert_kv(self, keys: List[str], values: List[str | bytes]) -> None:
-        """
-        Insert or update a list of raw values associated with a list of keys.
-
-        :param keys: The unique identifiers.
-        :param values: The values to store.
-        """
-        pass
-
-
-    @abstractmethod
-    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
+    def batch_fetch_obj(self, obj_hashes: List[str], **kwargs) -> List[Dict[str, Any]]:
         """
         Retrieve a list of dictionary objects by their hashes.
 
         :param obj_hashes: The SHA256 hashes of the objects.
+        :param kwargs: Additional keyword arguments for customization.
         :return: A list of decoded dictionaries.
         :raises KeyError: If any hash is not found.
         """
         pass
+
+    @abstractmethod
+    def batch_set_obj(self, key: List[str], val: List[Dict[str, Any]]) -> None:
+        """
+        Insert or update a list of dictionary objects with specified keys.
+
+        :param key: The unique identifiers for the objects.
+        :param val: The values to store.
+        """
 
     @abstractmethod
     def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
@@ -71,11 +59,12 @@ class DBInterface(ABC):
 
 
     @abstractmethod
-    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+    def batch_fetch_id_list(self, obj_hashes: List[str], **kwargs) -> List[List[str]]:
         """
         Retrieve a list of ID lists by their hashes.
 
         :param obj_hashes: The SHA256 hashes of the lists.
+        :param kwargs: Additional keyword arguments for customization.
         :return: A list of lists of strings.
         :raises KeyError: If any hash is not found.
         """

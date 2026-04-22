@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional
 
 from db.abc.constants import TYPE_KEY, TypeIDs
 from db.abc.db import DBInterface
@@ -11,7 +11,6 @@ from model.types.token import Token
 from model.types.url import URL
 from model.util.diff import list_obj_diff
 from routes.types.core import RestCommit
-from db.util.simple_bson import bson_encode, bson_decode
 
 
 # Pointer towards the current Core Object
@@ -36,19 +35,21 @@ class Core:
     def write(self, backend: DBInterface):
         # same as insert_obj, but with predefined key
         list_hashes = backend.batch_insert_id_list([self.bc_categories, self.token_usages])
-        entry_bson = bson_encode({
+        backend.batch_set_obj([POINTER_CORE], [{
             TYPE_KEY: TypeIDs.TYPE_ID_CORE,
             "version": self.version,
             "branches": self.branches,
             "bc_categories": list_hashes[0],
             "token_usages": list_hashes[1],
-        })
-        backend.batch_insert_kv([POINTER_CORE], [entry_bson])
+        }])
 
     @staticmethod
     def read(backend: DBInterface) -> 'Core':
-        raw_core_str = backend.batch_fetch_kv([POINTER_CORE])[0]
-        raw_core = bson_decode(cast(bytes, raw_core_str))
+        raw_core = backend.batch_fetch_obj(
+            [POINTER_CORE],
+            # required when run multithreaded since the key is non-unique
+            bypass_cache=True,
+        )[0]
         id_lists = backend.batch_fetch_id_list([raw_core["bc_categories"], raw_core["token_usages"]])
         return Core(
             version=raw_core["version"],

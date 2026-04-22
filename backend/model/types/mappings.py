@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional, List
 
 from db.abc.constants import TYPE_KEY, TypeIDs
@@ -61,6 +62,18 @@ class URLCategoryMapping:
                 ),
             ) for m in raw_mappings
         ]
+
+    def deactivated_by_constraint(self) -> bool:
+        """Check if the URL is deactivated by the constraint."""
+        now_ts = int(datetime.now().timestamp())
+        if not self.constraint:
+            return False
+
+        if self.constraint.start != -1 and self.constraint.start > now_ts:
+            return True
+        if self.constraint.end != -1 and self.constraint.end < now_ts:
+            return True
+        return False
 
 
 @dataclass

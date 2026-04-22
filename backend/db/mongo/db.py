@@ -53,17 +53,9 @@ class MongoDB(DBInterface):
         }
 
 
-    def _generic_batch_fetch(self, keys: List[str]) -> List[Any]:
-        return self.batch_fetch_kv(keys)
-
-    def _generic_batch_insert(self, values: List[Any]) -> List[str]:
-        # reuse the same hash function as DBM for consistency
-        hashes = [sha256_hash(bson_encode(v)) for v in values]
-        self.batch_insert_kv(hashes, values)
-        return hashes
-
-
-    def batch_fetch_kv(self, keys: List[str]) -> List[str | bytes]:
+    def _generic_fetch(self, keys: List[str]) -> List[Any]:
+        if not keys:
+            return []
         docs = {
             # mongodb already stores data as dict, so no conversion required
             doc["_key"]: doc["data"]
@@ -77,8 +69,15 @@ class MongoDB(DBInterface):
             results.append(docs[key])
         return results
 
-    def batch_insert_kv(self, keys: List[str], values: List[str | bytes]) -> None:
+    def _generic_insert_hash(self, values: List[Any]) -> List[str]:
         # reuse the same hash function as DBM for consistency
+        hashes = [sha256_hash(bson_encode(v)) for v in values]
+        self._generic_insert(hashes, values)
+        return hashes
+
+    def _generic_insert(self, keys: List[str], values: List[Any]) -> None:
+        if not keys:
+            return
         operations = [
             UpdateOne(
                 {"_key": key},
@@ -93,21 +92,24 @@ class MongoDB(DBInterface):
             self.collection.bulk_write(operations)
 
 
-    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
-        return self._generic_batch_fetch(obj_hashes)
+    def batch_fetch_obj(self, obj_hashes: List[str], **kwargs) -> List[Dict[str, Any]]:
+        return self._generic_fetch(obj_hashes)
+
+    def batch_set_obj(self, key: List[str], val: List[Dict[str, Any]]) -> None:
+        self._generic_insert(key, val)
 
     def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
-        return self._generic_batch_insert(entries)
+        return self._generic_insert_hash(entries)
 
 
-    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+    def batch_fetch_id_list(self, obj_hashes: List[str], **kwargs) -> List[List[str]]:
         # TODO: batch-operations not yet implemented, so simply loop the non-batch fetch
         return [
             self._fetch_id_list(x) for x in obj_hashes
         ]
 
     def _fetch_id_list(self, obj_hash: str) -> List[str]:
-        doc: Dict[str, Any] = self._generic_batch_fetch([obj_hash])[0]
+        doc: Dict[str, Any] = self._generic_fetch([obj_hash])[0]
 
         # Check if the list is stored in the new dictionary format (small or large)
         if doc.get(TYPE_KEY) == TypeIDs.TYPE_ID_LIST_LARGE:
@@ -124,7 +126,7 @@ class MongoDB(DBInterface):
         # extract subsets from the database
         subset_hashes = strip_type(dict(data))
         # fetch subsets from db using existing connection
-        subsets = self._generic_batch_fetch(list(subset_hashes.values()))
+        subsets = self._generic_fetch(list(subset_hashes.values()))
         # The subsets in large lists are expected to be just the suffixes
         return [
             key + s
@@ -149,10 +151,10 @@ class MongoDB(DBInterface):
             TYPE_KEY: TypeIDs.TYPE_ID_LIST_SMALL,
             "list": entries
         }
-        return self._generic_batch_insert([data])[0]
+        return self._generic_insert_hash([data])[0]
 
     def _insert_id_list_large(self, entries: List[str]) -> str:
         raw_data = build_superset(entries)
-        hashes = self._generic_batch_insert(raw_data)
+        hashes = self._generic_insert_hash(raw_data)
         # last item and therefor also hash is the superset hash
         return hashes[-1]

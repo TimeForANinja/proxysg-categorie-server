@@ -1,12 +1,20 @@
 from dataclasses import dataclass
-from apiflask.fields import Nested, String, Integer, List
+from apiflask.fields import Nested, String, Integer, List, Boolean
 from marshmallow_dataclass import class_schema
-from typing import List as tList, Optional
+from typing import List as tList
 
 from routes.types.category import rest_category_detail_schema
 from util.schema import desc, to_field
 from model.types.category import Category, category_schema
 from routes.schemas.generic_output import GenericOutput
+
+
+@dataclass
+class ListCategoriesQuery:
+    add_mappings: bool = to_field(Boolean(
+        load_default=False,
+        metadata=desc("pad with (Child)Category mappings"),
+    ), default=False)
 
 
 @dataclass
@@ -58,6 +66,7 @@ class ListCategoryDetailsOutput(GenericOutput):
     ))
 
 
+list_category_query_schema = class_schema(ListCategoriesQuery)()
 category_create_input_schema = class_schema(CategoryCreateInput)()
 category_update_input_schema = class_schema(CategoryUpdateInput)()
 category_output_schema = class_schema(CategoryOutput)()

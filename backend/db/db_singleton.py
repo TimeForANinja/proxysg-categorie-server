@@ -35,22 +35,22 @@ def get_db() -> MyModel:
             database_name = dbm_cfg.get("FILENAME", "./data/mydatabase.dbm")
             log_info("DB", "Creating DBM DB", {"db": database_name})
             backend = DBMDB(database_name)
-        elif db_type == "mongo":
+        elif db_type == "mongodb":
             mongo_cfg = db_cfg.get("MONGO", {})
-            host = mongo_cfg.get("HOST", "localhost")
-            port = int(mongo_cfg.get("PORT", 27017))
+            host = mongo_cfg.get("CON_HOST", "localhost")
+            port = int(mongo_cfg.get("CON_PORT", 27017))
+            username = mongo_cfg.get("CON_USER")
+            password = mongo_cfg.get("CON_PASSWORD")
             database_name = mongo_cfg.get("DATABASE", "proxysg")
-            username = mongo_cfg.get("USERNAME")
-            password = mongo_cfg.get("PASSWORD")
-            auth_source = mongo_cfg.get("AUTHSOURCE", mongo_cfg.get("AUTHREALM", database_name))
+            auth_source = mongo_cfg.get("AUTHSOURCE", database_name)
             connect_direct = mongo_cfg.get("CONNECT_DIRECT", "false").lower() == "true"
-            collection_name = mongo_cfg.get("COLLECTION", "data")
+            collection_name = mongo_cfg.get("COLLECTION", "kv-data")
 
             log_info("DB", "Creating MongoDB DB", {
                 "host": host,
                 "port": port,
-                "db": database_name,
                 "user": username,
+                "db": database_name,
                 "authSource": auth_source,
                 "direct": connect_direct
             })

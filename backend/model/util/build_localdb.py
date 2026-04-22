@@ -20,6 +20,13 @@ def build_localdb(
         url_mappings: List[URLCategoryMapping],
         child_cat_mappings: List[ChildCategoryMapping],
 ) -> str:
+    # pre-filter mappings
+    url_mappings = [
+        m for m in url_mappings
+        if not m.deactivated_by_constraint()
+    ]
+
+    # get cats for this token
     token_cats = [
         cat_lut[cmap.category_id]
         for cmap in cat_mappings
@@ -34,10 +41,10 @@ def build_localdb(
 
     for cat in token_cats:
         sub_cats = unnest_categories(cat, cat_lut, child_cat_mappings)
-        sub_cat_names = [c.name for c in sub_cats]
 
         # header for the category
         response += f"; Category: {cat.name}\n"
+        sub_cat_names = [c.name for c in sub_cats if c.id != cat.id]
         response += f"; Nested Categories: {','.join(sub_cat_names)}\n"
         response += f"define category \"{cat.name}\"\n"
 

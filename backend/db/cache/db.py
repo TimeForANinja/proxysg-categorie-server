@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, TypeVar, Callable
+from typing import Any, Dict, List, Optional, TypeVar, Protocol
 # use cachebox instead of cachetools since it's thread-safe
 from cachebox import LFUCache, BaseCacheImpl
 
@@ -6,6 +6,12 @@ from db.abc.db import DBInterface
 from util.log import log_debug
 
 T = TypeVar("T")
+
+
+class FetchUpstreamCallback(Protocol):
+    # custom object so we can support kwargs
+    def __call__(self, obj_hashes: List[str], **kwargs: Any) -> List[T]:
+        ...
 
 
 DEFAULT_CACHE_CAPACITY = 1_000_000
@@ -59,7 +65,8 @@ class CacheDB(DBInterface):
     def _generic_cached_fetch(
             keys: List[str],
             cache: BaseCacheImpl[str, T],
-            fetch_upstream: Callable[[List[str]], List[T]]
+            fetch_upstream: FetchUpstreamCallback,
+            **kwargs
     ) -> List[T]:
         """
         Generic method to fetch data from the cache, or if not found, fetch from the upstream DB.
@@ -67,29 +74,34 @@ class CacheDB(DBInterface):
         :param keys: The keys to fetch from the cache or upstream.
         :param cache: The cache to check for existing values.
         :param fetch_upstream: The function to fetch (missing) values from the upstream DB.
+        :param kwargs: Additional arguments (to pass to the fetch_upstream function).
         :return: List of fetched values corresponding to the input keys.
         """
         results: List[Optional[T]] = [None] * len(keys)
         missing_indices: List[int] = []
 
-        # check cache first
-        for i, key in enumerate(keys):
-            if key in cache:
-                cached = cache[key]
-                if hasattr(cached, "copy"):
-                    # create a copy before returning, to avoid modifying cached data
-                    # (e.g., fetching an array and pushing a new element to it)
-                    results[i] = cached.copy()
+        if kwargs.get("bypass_cache", False):
+            # cache disabled -> fetch all from upstream
+            missing_indices = list(range(len(keys)))
+        else:
+            # check cache before forwarding to backend
+            for i, key in enumerate(keys):
+                if key in cache:
+                    cached = cache[key]
+                    if hasattr(cached, "copy"):
+                        # create a copy before returning, to avoid modifying cached data
+                        # (e.g., fetching an array and pushing a new element to it)
+                        results[i] = cached.copy()
+                    else:
+                        results[i] = cached
                 else:
-                    results[i] = cached
-            else:
-                missing_indices.append(i)
+                    missing_indices.append(i)
 
         if missing_indices:
             # fetch missing values from upstream
             fetched_values = fetch_upstream([
                 keys[i] for i in missing_indices
-            ])
+            ], **kwargs)
             for i, val in zip(missing_indices, fetched_values):
                 results[i] = val
                 # add to cache for future use
@@ -98,20 +110,17 @@ class CacheDB(DBInterface):
         return results
 
 
-    def batch_fetch_kv(self, keys: List[str]) -> List[str | bytes]:
-        return CacheDB._generic_cached_fetch(keys, self.obj_cache, self.parent.batch_fetch_kv)
+    def batch_fetch_obj(self, obj_hashes: List[str], **kwargs) -> List[Dict[str, Any]]:
+        return CacheDB._generic_cached_fetch(obj_hashes, self.obj_cache, self.parent.batch_fetch_obj, **kwargs)
 
-    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
-        return CacheDB._generic_cached_fetch(obj_hashes, self.obj_cache, self.parent.batch_fetch_obj)
-
-    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+    def batch_fetch_id_list(self, obj_hashes: List[str], **kwargs) -> List[List[str]]:
         return CacheDB._generic_cached_fetch(obj_hashes, self.id_list_cache, self.parent.batch_fetch_id_list)
 
 
-    def batch_insert_kv(self, keys: List[str], values: List[str | bytes]) -> None:
-        self.parent.batch_insert_kv(keys, values)
+    def batch_set_obj(self, key: List[str], val: List[Dict[str, Any]]) -> None:
+        self.parent.batch_set_obj(key, val)
         # update cache
-        for key, val in zip(keys, values):
+        for key, val in zip(key, val):
             self.obj_cache[key] = val
 
     def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:

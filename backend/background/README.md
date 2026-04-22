@@ -18,13 +18,13 @@ The background tasks are configured via environment variables and the Flask appl
 
 The following settings are used under the `BC` configuration group:
 
-- `BC.HOST` (Required): The hostname or IP address of the BlueCoat Proxy.
-- `BC.PASSWORD` (Required): The password for the BlueCoat Proxy management API.
-- `BC.USER` (Default: `ro_admin`): The username for the BlueCoat Proxy management API.
-- `BC.INTERVAL` (Default: `0 3 * * *`): A cron expression defining when the full background refresh should run.
-- `BC.TTL` (Default: `10080`): The Time-To-Live in minutes for cached categories. If a rating is older than this, it will be refreshed during the next cycle. Default is 7 days.
-- `BC.TIMEOUT` (Default: `10`): The HTTP timeout in seconds for requests to the BlueCoat Proxy.
-- `BC.VERIFY_SSL` (Default: `true`): Whether to verify the SSL certificate of the BlueCoat Proxy.
+- `APP_BC__HOST` (Required): The hostname or IP address of the BlueCoat Proxy.
+- `APP_BC__USER` (Default: `ro_admin`): The username for the BlueCoat Proxy management API.
+- `APP_BC__PASSWORD` (Required): The password for the BlueCoat Proxy management API.
+- `APP_BC__INTERVAL` (Default: `0 3 * * *`): A cron expression defining when the full background refresh should run.
+- `APP_BC__TTL` (Default: `10080`): The Time-To-Live in minutes for cached categories. If a rating is older than this, it will be refreshed during the next cycle. Default is 7 days.
+- `APP_BC__TIMEOUT` (Default: `10`): The HTTP timeout in seconds for requests to the BlueCoat Proxy.
+- `APP_BC__VERIFY_SSL` (Default: `true`): Whether to verify the SSL certificate of the BlueCoat Proxy.
 
 Global settings:
 

@@ -60,35 +60,31 @@ class SQLiteDB(DBInterface):
         }
 
 
-    def _generic_fetch_decode(self, obj_hashes: List[str], con: Optional[sqlite3.Connection] = None) -> List[BSON_SUPPORTED_TYPES]:
+    def _generic_fetch_decode(self, obj_hashes: List[str], ex_con: Optional[sqlite3.Connection] = None) -> List[BSON_SUPPORTED_TYPES]:
+        if not obj_hashes:
+            return []
+        with self.get_connection(ex_con) as con:
+            placeholders = ",".join(["?"] * len(obj_hashes))
+            cur = con.execute(f"SELECT key, value FROM kv WHERE key IN ({placeholders})", obj_hashes)
+            docs = {row[0]: row[1] for row in cur.fetchall()}
+            raw_data = []
+            for key in obj_hashes:
+                if key not in docs:
+                    raise KeyError(key)
+                raw_data.append(docs[key])
         return [
-            bson_decode(cast(bytes, v))
-            for v in self.batch_fetch_kv(obj_hashes, con)
+            bson_decode(cast(bytes, d))
+            for d in raw_data
         ]
 
     def _generic_insert_encode(self, entries: List[BSON_SUPPORTED_TYPES], con: Optional[sqlite3.Connection] = None) -> List[str]:
         # reuse the same hash function as DBM for consistency
         bsons = [bson_encode(e) for e in entries]
         hashes = [sha256_hash(b) for b in bsons]
-        self.batch_insert_kv(hashes, bsons, con)
+        self._generic_insert(hashes, bsons, con)
         return hashes
 
-
-    def batch_fetch_kv(self, keys: List[str], ex_con: Optional[sqlite3.Connection] = None) -> List[str | bytes]:
-        if not keys:
-            return []
-        with self.get_connection(ex_con) as con:
-            placeholders = ",".join(["?"] * len(keys))
-            cur = con.execute(f"SELECT key, value FROM kv WHERE key IN ({placeholders})", keys)
-            docs = {row[0]: row[1] for row in cur.fetchall()}
-            results = []
-            for key in keys:
-                if key not in docs:
-                    raise KeyError(key)
-                results.append(docs[key])
-            return results
-
-    def batch_insert_kv(self, keys: List[str], values: List[str | bytes], ex_con: Optional[sqlite3.Connection] = None) -> None:
+    def _generic_insert(self, keys: List[str], values: List[str | bytes], ex_con: Optional[sqlite3.Connection] = None) -> None:
         if not keys:
             return
         with self.get_connection(ex_con) as con:
@@ -99,17 +95,22 @@ class SQLiteDB(DBInterface):
             con.commit()
 
 
-    def batch_fetch_obj(self, obj_hashes: List[str]) -> List[Dict[str, Any]]:
+    def batch_fetch_obj(self, obj_hashes: List[str], **kwargs) -> List[Dict[str, Any]]:
         return cast(
             List[Dict[str, Any]],
             self._generic_fetch_decode(obj_hashes)
         )
 
+    def batch_set_obj(self, key: List[str], val: List[Dict[str, Any]]) -> None:
+        # reuse the same hash function as DBM for consistency
+        bsons = [bson_encode(e) for e in val]
+        self._generic_insert(key, bsons)
+
     def batch_insert_obj(self, entries: List[Dict[str, Any]]) -> List[str]:
         return self._generic_insert_encode(entries)
 
 
-    def batch_fetch_id_list(self, obj_hashes: List[str]) -> List[List[str]]:
+    def batch_fetch_id_list(self, obj_hashes: List[str], **kwargs) -> List[List[str]]:
         # TODO: batch-operations not yet implemented, so simply loop the non-batch fetch
         with self.get_connection() as con:
             return [

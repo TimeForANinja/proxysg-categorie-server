@@ -85,7 +85,6 @@ def add_special_bp(app: APIFlask):
 
     @special_bp.get("/api/compile/<string:token_uuid>")
     @special_bp.doc(summary="Compile Local DB", description="Compile LocalDB for the provided Token", tags=["Special"])
-    @special_bp.output(generic_output_schema)
     def handle_compile(token_uuid: str):
         db = get_db()
         content, error = db.specials.compile_localdb(token_uuid)

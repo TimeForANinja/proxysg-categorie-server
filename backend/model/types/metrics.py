@@ -1,19 +1,35 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from apiflask.fields import List, Integer, String
+from typing import List as tList
 from apiflask import APIFlask
+from marshmallow_dataclass import class_schema
 
 from db.abc.db import DBInterface
 from model.types.core import Core
 from model.util.util_query_bc import query_url, ServerCredentials, is_unknown_category
+from util.schema import to_field, desc
 
 
 @dataclass
 class BCCategory:
-    url_value: str
-    categories: List[str]
-    last_changed: int
-    last_checked: int
+    url_value: str = to_field(String(
+        required=True,
+        metadata=desc("URL value")
+    ))
+    categories: tList[str] = to_field(List(
+        String(required=True, metadata=desc("Bluecoat Category")),
+        required=True,
+        metadata=desc("List of all Bluecoat Categories matched for the URL"),
+    ))
+    last_changed: int = to_field(Integer(
+        required=True,
+        metadata=desc("timestamp when bc categories where last updated")
+    ))
+    last_checked: int = to_field(Integer(
+        required=True,
+        metadata=desc("timestamp when BC categories where last fetched")
+    ))
 
     def needs_refresh(self, ttl: int) -> bool:
         """
@@ -26,7 +42,7 @@ class BCCategory:
         return self.last_changed < max_age
 
     @staticmethod
-    def batch_read(backend: DBInterface) -> List['BCCategory']:
+    def batch_read(backend: DBInterface) -> tList['BCCategory']:
         raw_categories = backend.batch_fetch_obj(Core.read(backend).bc_categories)
         return [
             BCCategory(
@@ -46,7 +62,7 @@ class BCCategory:
         }
 
     @staticmethod
-    def batch_write(backend: DBInterface, categories: List['BCCategory']) -> List[str]:
+    def batch_write(backend: DBInterface, categories: tList['BCCategory']) -> tList[str]:
         return backend.batch_insert_obj([
             {
                 "url_value": category.url_value,
@@ -58,7 +74,7 @@ class BCCategory:
         ])
 
     @staticmethod
-    def batch_update(backend: DBInterface, app: APIFlask, urls: List[str]) -> None:
+    def batch_update(backend: DBInterface, app: APIFlask, urls: tList[str]) -> None:
         crds = ServerCredentials.from_env(app)
 
         # fetch all required data
@@ -90,6 +106,8 @@ class BCCategory:
         core.bc_categories = hashes
         core.write(backend)
 
+bc_category_schema = class_schema(BCCategory)()
+
 
 @dataclass
 class TokenUsage:
@@ -104,7 +122,7 @@ class TokenUsage:
         )
 
     @staticmethod
-    def batch_read(backend: DBInterface) -> List['TokenUsage']:
+    def batch_read(backend: DBInterface) -> tList['TokenUsage']:
         raw_usages = backend.batch_fetch_obj(Core.read(backend).token_usages)
         return [
             TokenUsage(
@@ -122,7 +140,7 @@ class TokenUsage:
         }
 
     @staticmethod
-    def batch_write(backend: DBInterface, usages: List['TokenUsage']) -> List[str]:
+    def batch_write(backend: DBInterface, usages: tList['TokenUsage']) -> tList[str]:
         return backend.batch_insert_obj([
             {
                 "token_id": u.token_id,
@@ -133,6 +151,11 @@ class TokenUsage:
 
     @staticmethod
     def track_access(backend: DBInterface, token_id: str):
+        # fetch and update token usages
         token_metric_lut = TokenUsage.batch_read_lut(backend)
         token_metric_lut[token_id] = TokenUsage.new(token_id)
-        TokenUsage.batch_write(backend, list(token_metric_lut.values()))
+        hashes = TokenUsage.batch_write(backend, list(token_metric_lut.values()))
+        # update core with new list
+        core = Core.read(backend)
+        core.token_usages = hashes
+        core.write(backend)

@@ -2,6 +2,7 @@ from typing import Optional, Dict, List
 from uuid import uuid4
 
 from db.abc.db import DBInterface
+from model.types.metrics import TokenUsage
 from model.util.error import CanError, ModelError
 from model.types.mappings import TokenCategoryMapping
 from model.types.token import Token
@@ -15,7 +16,7 @@ class TokenModel:
         self.backend = backend
 
 
-    def fetch_tokens(self, branch: str) -> List[RestTokenDetail]:
+    def fetch_tokens(self, branch: str, add_mappings: bool = False, add_last_used: bool = False) -> List[RestTokenDetail]:
         """Fetch a list of all Tokens"""
         head_commit = Commit.read_branch(self.backend, branch)
 
@@ -28,16 +29,25 @@ class TokenModel:
             token_id: RestTokenDetail(
                 token=token_lut[token_id],
                 categories=[],
+                last_used=-1,
             )
             for token_id in token_lut
         }
 
         # fill our category properties based on our mappings
-        mappings = TokenCategoryMapping.batch_read(self.backend, head_commit.head.token_category_mappings)
-        for mapping in mappings:
-            data[mapping.token_id].categories.append(
-                category_lut[mapping.category_id]
-            )
+        if add_mappings:
+            mappings = TokenCategoryMapping.batch_read(self.backend, head_commit.head.token_category_mappings)
+            for mapping in mappings:
+                data[mapping.token_id].categories.append(
+                    category_lut[mapping.category_id]
+                )
+
+        # fill our last_used property based on our usage data
+        if add_last_used:
+            last_used_lut = TokenUsage.batch_read_lut(self.backend)
+            for token_id in data:
+                if token_id in last_used_lut:
+                    data[token_id].last_used = last_used_lut[token_id].last_used
 
         return list(data.values())
 

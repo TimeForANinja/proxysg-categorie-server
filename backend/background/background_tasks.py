@@ -1,4 +1,6 @@
 from datetime import timedelta, datetime, timezone
+from typing import List
+
 from apiflask import APIFlask
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -99,12 +101,15 @@ def bc_query_all(db_if: MyModel, app: APIFlask, ttl: int):
     urls = URL.batch_read(db_if.backend, c.head.urls)
     current_cats = BCCategory.batch_read_lut(db_if.backend)
 
-    to_update = []
+    to_update: List[str] = []
     for u in urls:
+        # Two conditions two update
+        # 1. The category is not in the DB or the TTL is expired
+        # 2. The category is in the DB but needs to be refreshed
         if u.id in current_cats and current_cats[u.id].needs_refresh(ttl):
-            to_update.append(u)
-        elif u not in current_cats:
-            to_update.append(u)
+            to_update.append(u.url)
+        elif u.id not in current_cats:
+            to_update.append(u.url)
 
     log_debug("background","planning update of BlueCoat categories", {
         "total-urls": len(urls),

@@ -8,8 +8,10 @@ from db.db_singleton import get_db
 from util.log import log_debug
 from routes.schemas.error import OutCanError, ErrorResponse
 from routes.schemas.generic_output import generic_output_schema, GenericOutput
-from routes.schemas.url import ListURLOutput, list_url_output_schema, url_create_input_schema, url_update_input_schema, url_output_schema, URLCreateInput, \
-    URLUpdateInput, URLOutput, url_test_input_schema, URLTestInput, URLTestOutput, url_test_output_schema
+from routes.schemas.url import ListURLOutput, list_url_output_schema, url_create_input_schema, url_update_input_schema, \
+    url_output_schema, URLCreateInput, \
+    URLUpdateInput, URLOutput, url_test_input_schema, URLTestInput, URLTestOutput, url_test_output_schema, \
+    ListUrlsQuery, list_urls_query_schema
 
 
 def add_url_bp(app: APIFlask):
@@ -21,11 +23,12 @@ def add_url_bp(app: APIFlask):
 
     @url_bp.get("/api/branch/<branch>/url")
     @url_bp.doc(summary="List all URLs", description="List all URLs and their categories for a given branch", tags=["URLs"])
+    @url_bp.input(list_urls_query_schema, location="query", arg_name="flags")
     @url_bp.output(list_url_output_schema)
     @url_bp.auth_required(auth, roles=[AuthRoles.RO])
-    def get_urls(branch: str) -> ListURLOutput:
+    def get_urls(branch: str, flags: ListUrlsQuery) -> ListURLOutput:
         db = get_db()
-        urls = db.urls.fetch_urls(branch)
+        urls = db.urls.fetch_urls(branch, flags.add_mappings, flags.add_bc_cat)
         return ListURLOutput(
             status="success",
             message="URLs fetched successfully",

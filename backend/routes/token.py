@@ -9,7 +9,8 @@ from util.log import log_debug
 from routes.schemas.error import OutCanError, ErrorResponse
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 from routes.schemas.token import ListTokenOutput, TokenOutput, token_create_input_schema, token_update_input_schema, \
-    TokenCreateInput, TokenUpdateInput, list_token_output_schema, token_output_schema
+    TokenCreateInput, TokenUpdateInput, list_token_output_schema, token_output_schema, list_tokens_query_schema, \
+    ListTokensQuery
 
 
 def add_token_bp(app: APIFlask):
@@ -21,11 +22,12 @@ def add_token_bp(app: APIFlask):
 
     @token_bp.get("/api/branch/<branch>/token")
     @token_bp.doc(summary="List all Tokens", description="List all Tokens for a given branch", tags=["Tokens"])
+    @token_bp.input(list_tokens_query_schema, location="query", arg_name="flags")
     @token_bp.output(list_token_output_schema)
     @token_bp.auth_required(auth, roles=[AuthRoles.RO])
-    def get_tokens(branch: str) -> ListTokenOutput:
+    def get_tokens(branch: str, flags: ListTokensQuery) -> ListTokenOutput:
         db = get_db()
-        tokens = db.tokens.fetch_tokens(branch)
+        tokens = db.tokens.fetch_tokens(branch, flags.add_mappings, flags.add_last_used)
         return ListTokenOutput(
             status="success",
             message="Tokens fetched successfully",
