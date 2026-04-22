@@ -45,20 +45,20 @@ export default function CategoryListPage() {
     // Memoize the filtered rows to avoid unnecessary recalculations
     const filteredRows = React.useMemo(
         () => Object.values(categories).filter(x => {
-            return quickSearch?.test(KVaddRAW(CategoryToKV(x.category))) ?? true;
+            return quickSearch?.test(KVaddRAW(CategoryToKV(x))) ?? true;
         }),
         [quickSearch, categories],
     );
 
     // Memoize the download rows to avoid unnecessary transformations
     const downloadRows = React.useMemo(
-        () => filteredRows.map(row => CategoryToKV(row.category)),
+        () => filteredRows.map(row => CategoryToKV(row)),
         [filteredRows],
     );
 
     // Load categories From backend
     const fetchData = React.useCallback(() => {
-        getCategories(authMgmt.token, currentBranch)
+        getCategories(authMgmt.token, currentBranch, true)
             .then((categoriesData) => {
                 setCategories(buildLUTFromGetter(categoriesData, (c) => c.category.id));
             })

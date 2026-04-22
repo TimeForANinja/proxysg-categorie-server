@@ -10,6 +10,7 @@ import {
     Typography,
     Tabs,
     Tab,
+    Tooltip,
 } from "@mui/material";
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
@@ -27,13 +28,13 @@ import CategoryIcon from '@mui/icons-material/Category';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 import { getHistory } from "../../api/history";
-import { IRestURLDetail } from "../../types/url";
+import {IBCCategory, IRestURLDetail} from "../../types/url";
 import { IRestCommit } from "../../types/history";
 import { ICategory } from "../../types/category";
 import { LUT } from "../../types/LookUpTable";
-import {CategoryChipList} from "../shared/CategoryChip";
+import {CategoryChipList, CategoryChip} from "../shared/CategoryChip";
 import { UrlCategoryMappings } from "../shared/UrlCategoryMappings";
-import {formatUnixTimestamp } from "../../util/DateString";
+import {formatUnixTimestamp} from "../../util/DateString";
 import { useAuth } from "../../hooks/useLogin";
 import {short_uuid} from "../../util/uuid";
 
@@ -126,6 +127,16 @@ export const UrlRow = React.memo(function UrlRow(props: UrlRowProps) {
         );
     };
 
+    const build_bc_cats_tooltip = (cat: IBCCategory) => {
+        return (
+            <div>
+                Last Checked: {formatUnixTimestamp(cat.last_checked)}
+                <br />
+                Last Changed: {formatUnixTimestamp(cat.last_changed)}
+            </div>
+        )
+    }
+
     return (
         <React.Fragment>
             <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
@@ -143,8 +154,22 @@ export const UrlRow = React.memo(function UrlRow(props: UrlRowProps) {
                 <TableCell>{urlDetail.url.description}</TableCell>
                 <TableCell>
                     <Stack component="div" direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
-                        <CategoryChipList categories={urlDetail.categories.map(c => c.category)} />
+                        <CategoryChipList
+                            categories={urlDetail.categories.map(c => c.category)}
+                            constraints={urlDetail.categories.map(c => c.constraint)}
+                        />
                     </Stack>
+                </TableCell>
+                <TableCell>
+                    {urlDetail.bc_category && (
+                        <Tooltip title={build_bc_cats_tooltip(urlDetail.bc_category!)} placement="left">
+                            <Stack component="div" direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+                                {urlDetail.bc_category.categories.map((catName, idx) => (
+                                    <CategoryChip key={idx} category={{ name: catName }} />
+                                ))}
+                            </Stack>
+                        </Tooltip>
+                    )}
                 </TableCell>
                 <TableCell align="right">
                     {!isLocked && (
@@ -160,7 +185,7 @@ export const UrlRow = React.memo(function UrlRow(props: UrlRowProps) {
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingRight: 0 }} colSpan={6}>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0, paddingRight: 0 }} colSpan={7}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
                         <Box sx={{ 
                             ml: 2, 

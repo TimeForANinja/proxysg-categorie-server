@@ -21,14 +21,11 @@ export interface IApiTokenUpdateInput {
 export interface IRestTokenDetail {
     token: IApiToken;
     categories: ICategory[];
+    last_used: number;
 }
 
 export type IApiTokenOutput = DataOutput<IApiToken>;
 export type IListTokenOutput = DataOutput<IRestTokenDetail[]>;
-
-export const parseLastUsed = (last_use: number): string => {
-    return formatUnixTimestamp(last_use);
-}
 
 export const ApiTokenToKV = (x: IRestTokenDetail): StringKV => {
     return {
@@ -37,6 +34,7 @@ export const ApiTokenToKV = (x: IRestTokenDetail): StringKV => {
         description: x.token.description,
         cats: x.categories.map(c => c.name).join(', '),
         categories: x.categories.map(c => c.name).join(', '),
+        last_used: formatUnixTimestamp(x.last_used),
     };
 }
 
@@ -46,6 +44,7 @@ export const ApiTokenFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.description,
     SHARED_DEFINITIONS.cats,
     SHARED_DEFINITIONS.categories,
+    { field: "last_used", description: "Last Used" },
 ]
 
 export const ApiTokenFieldsRaw: FieldDefinition[] = [

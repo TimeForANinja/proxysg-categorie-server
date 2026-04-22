@@ -6,7 +6,7 @@ const TIME_SECONDS = 1000;
  * @param timestamp - Unix timestamp in seconds
  */
 export const formatUnixTimestamp = (timestamp: number): string => {
-    if (timestamp === 0) {
+    if (timestamp <= 0) {
         return 'never';
     }
     const date = new Date(timestamp * TIME_SECONDS);
@@ -21,7 +21,7 @@ export const formatUnixTimestamp = (timestamp: number): string => {
 };
 
 export const formatUnixDateOnly = (timestamp: number): string => {
-    if (timestamp === 0) {
+    if (timestamp <= 0) {
         return 'never';
     }
     const date = new Date(timestamp * TIME_SECONDS);
@@ -70,7 +70,10 @@ export interface IConstraint {
     end: number;
 }
 
-export const formatConstraint = (constraint: IConstraint): string => {
+export const formatConstraint = (constraint?: IConstraint): string => {
+    if (!constraint) {
+        return '';
+    }
     if (!constraint.start && !constraint.end) {
         return constraint.comment;
     }

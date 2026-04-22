@@ -5,8 +5,8 @@ import {
 import {GenericOutput} from "../types/api";
 
 
-export const getCategories = async (userToken: string, branch: string): Promise<IRestCategoryDetail[]> => {
-    const response = await fetch(`/api/branch/${branch}/category`, {
+export const getCategories = async (userToken: string, branch: string, addMappings: boolean = false): Promise<IRestCategoryDetail[]> => {
+    const response = await fetch(`/api/branch/${branch}/category?add_mappings=${addMappings}`, {
         headers: { 'jwt-token': userToken },
     });
     const data: IListCategoryDetailsOutput = await response.json();

@@ -56,7 +56,7 @@ export default function ApiTokensPage() {
     );
 
     const fetchData = React.useCallback(() => {
-        Promise.all([getTokens(authMgmt.token, currentBranch), getCategories(authMgmt.token, currentBranch)])
+        Promise.all([getTokens(authMgmt.token, currentBranch, true, true), getCategories(authMgmt.token, currentBranch, true)])
             .then(([tokensData, categoriesData]) => {
                 setTokens(tokensData);
                 setCategories(buildLUTFromID(categoriesData.map(x => x.category)));
@@ -127,6 +127,7 @@ export default function ApiTokensPage() {
                                         <TableCell>ID</TableCell>
                                         <TableCell>Description</TableCell>
                                         <TableCell>Token Value</TableCell>
+                                        <TableCell>Last Used</TableCell>
                                         <TableCell>Categories</TableCell>
                                         <TableCell align="right"></TableCell>
                                     </TableRow>

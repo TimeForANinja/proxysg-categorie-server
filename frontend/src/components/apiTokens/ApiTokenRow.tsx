@@ -28,6 +28,7 @@ import { LUT } from "../../types/LookUpTable";
 import { useAuth } from "../../hooks/useLogin";
 import HistoryTable from "../shared/HistoryTable";
 import {short_uuid} from "../../util/uuid";
+import {formatUnixTimestamp} from "../../util/DateString";
 
 const TIME_SECONDS = 1000;
 
@@ -125,6 +126,9 @@ export const ApiTokenRow = React.memo(function ApiTokenRow(props: ApiTokenRowPro
                     )}
                 </TableCell>
                 <TableCell>
+                    {formatUnixTimestamp(tokenDetail.last_used)}
+                </TableCell>
+                <TableCell>
                     <CategoryPicker
                         categories={categories}
                         isCategories={tokenDetail.categories}
@@ -149,7 +153,7 @@ export const ApiTokenRow = React.memo(function ApiTokenRow(props: ApiTokenRowPro
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 1 }}>
                             <Stack spacing={2}>

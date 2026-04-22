@@ -2,8 +2,8 @@ import {IApiToken, IApiTokenCreateInput, IApiTokenUpdateInput, IApiTokenOutput, 
 import {GenericOutput} from "../types/api";
 
 
-export const getTokens = async (userToken: string, branch: string): Promise<IRestTokenDetail[]> => {
-    const response = await fetch(`/api/branch/${branch}/token`, {
+export const getTokens = async (userToken: string, branch: string, addMappings: boolean = false, addLastUsed: boolean = false): Promise<IRestTokenDetail[]> => {
+    const response = await fetch(`/api/branch/${branch}/token?add_mappings=${addMappings}&add_last_used=${addLastUsed}`, {
         headers: { 'jwt-token': userToken },
     });
     const data: IListTokenOutput = await response.json();

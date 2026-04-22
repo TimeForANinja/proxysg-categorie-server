@@ -2,8 +2,8 @@ import {IListURLOutput, IRestURLDetail, IURLOutput, IURL, IURLCreateInput, IURLU
 import {GenericOutput} from "../types/api";
 
 
-export const getURLs = async (userToken: string, branch: string): Promise<IRestURLDetail[]> => {
-    const response = await fetch(`/api/branch/${branch}/url`, {
+export const getURLs = async (userToken: string, branch: string, addMappings: boolean = false, addBCCat: boolean = false): Promise<IRestURLDetail[]> => {
+    const response = await fetch(`/api/branch/${branch}/url?add_mappings=${addMappings}&add_bc_cat=${addBCCat}`, {
         headers: { 'jwt-token': userToken },
     });
     const data: IListURLOutput = await response.json();

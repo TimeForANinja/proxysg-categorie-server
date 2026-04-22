@@ -56,7 +56,7 @@ export default function MatchingListPage() {
 
     // Load urls From backend
     const fetchData = React.useCallback(() => {
-        Promise.all([getURLs(authMgmt.token, currentBranch), getCategories(authMgmt.token, currentBranch)])
+        Promise.all([getURLs(authMgmt.token, currentBranch, true, true), getCategories(authMgmt.token, currentBranch, false)])
             .then(([urlsData, categoriesData]) => {
                 setURLs(urlsData);
                 setCategories(buildLUTFromID(categoriesData.map(x => x.category)));
@@ -123,6 +123,7 @@ export default function MatchingListPage() {
                                         <TableCell>URL</TableCell>
                                         <TableCell>Description</TableCell>
                                         <TableCell>Categories</TableCell>
+                                        <TableCell>BC Categories</TableCell>
                                         <TableCell align="right"></TableCell>
                                     </TableRow>
                                 </TableHead>

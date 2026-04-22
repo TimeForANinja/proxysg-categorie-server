@@ -281,15 +281,15 @@ export const ListHeader = (props: ListHeaderProps) => {
                                             <TableBody>
                                                 <TableRow>
                                                     <TableCell><code>host=example.com</code></TableCell>
-                                                    <TableCell>Find URLs with hostname "example.com"</TableCell>
+                                                    <TableCell>Find URLs with hostname exact "example.com"</TableCell>
                                                 </TableRow>
                                                 <TableRow>
-                                                    <TableCell><code>cats=news</code></TableCell>
+                                                    <TableCell><code>cats=*news*</code></TableCell>
                                                     <TableCell>Find URLs in the "news" category</TableCell>
                                                 </TableRow>
                                                 <TableRow>
                                                     <TableCell><code>host=example.com AND cats=news</code></TableCell>
-                                                    <TableCell>Find "example.com" URLs in the "news" category</TableCell>
+                                                    <TableCell>Find "example.com" URLs in (only) the "news" category</TableCell>
                                                 </TableRow>
                                                 <TableRow>
                                                     <TableCell><code>"social media"</code></TableCell>

@@ -1,6 +1,9 @@
 import React from 'react';
 import {Chip, ChipProps, Tooltip} from '@mui/material';
 import {colorToHex, getBackgroundColor} from '../../util/colormixer';
+import {IConstraint} from "../../types/url";
+import {formatConstraint} from "../../util/DateString";
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 interface SimpleCategory {
     name: string;
@@ -58,10 +61,10 @@ export const CategoryChipList: React.FC<{
         name: string,
         color: number,
     }[]
-    tooltips?: string[]
+    constraints?: (IConstraint | undefined)[]
     limit?: number
     getItemProps?: (args: {index: number}) => any
-}> = ({ categories, tooltips, limit, getItemProps }) => {
+}> = ({ categories, constraints, limit, getItemProps }) => {
     limit = limit ?? 4;
     const displayed = categories.slice(0, limit);
     const remaining = categories.length - limit;
@@ -70,16 +73,19 @@ export const CategoryChipList: React.FC<{
         <>
             {
                 displayed.map((category, index) => {
+                    // fetch props and remove "key" from props
                     const props = getItemProps ? getItemProps({index}) : {};
-                    if (tooltips && tooltips[index]) {
+                    const { key, ...rest } = props;
+
+                    if (constraints && constraints[index] && (constraints[index].start || constraints[index]?.end)) {
+                        const tt_title = formatConstraint(constraints[index])
+                        rest.icon = (<AccessTimeIcon sx={{ fontSize: '14px !important' }} />);
                         return (
-                            <Tooltip title={tooltips[index]} key={category.id}>
-                                <CategoryChip category={category} key={category.id} {...props}/>
+                            <Tooltip title={tt_title} key={category.id} placement="left">
+                                <CategoryChip category={category} key={category.id} {...rest}/>
                             </Tooltip>
                         );
                     }
-                    // remove key from props
-                    const { key, ...rest } = props;
                     return <CategoryChip category={category} key={category.id} {...rest}/>;
                 })
             }
