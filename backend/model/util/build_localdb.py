@@ -19,6 +19,7 @@ def build_localdb(
         cat_mappings: List[TokenCategoryMapping],
         url_mappings: List[URLCategoryMapping],
         child_cat_mappings: List[ChildCategoryMapping],
+        last_modified: int,
 ) -> str:
     # pre-filter mappings
     url_mappings = [
@@ -37,7 +38,8 @@ def build_localdb(
     response = ""
     # write a header with some generic info
     response += "; Generated Categorisation File\n"
-    response += f"; Generated on {datetime.now()}\n\n"
+    response += f"; Generated on {datetime.now()}\n"
+    response += f"; Last Modified: {datetime.fromtimestamp(last_modified)}\n\n"
 
     for cat in token_cats:
         sub_cats = unnest_categories(cat, cat_lut, child_cat_mappings)

@@ -1,5 +1,5 @@
 import platform
-from datetime import datetime
+import datetime as dt
 from typing import cast
 import psutil
 from apiflask import APIBlueprint, APIFlask
@@ -12,8 +12,9 @@ from model.util.error import ModelError
 from model.util.parse_localdb import parse_db
 from routes.schemas.error import ErrorResponse
 from util.log import log_debug
-from model.special import ERROR_NOT_FOUND
-from routes.schemas.special import list_metrics_output_schema, ListMetricsOutput, existing_db_input_schema, ExistingDBInput
+from model.special import ERROR_NOT_FOUND, ERROR_UNCHANGED
+from routes.schemas.special import list_metrics_output_schema, ListMetricsOutput, existing_db_input_schema, \
+    ExistingDBInput, Status304Header, status304_header_schema
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 
 
@@ -36,7 +37,7 @@ def add_special_bp(app: APIFlask):
             # system data
             "os-ver": platform.platform(),
             "os-arch": platform.machine(),
-            "os-uptime": str(datetime.now() - datetime.fromtimestamp(psutil.boot_time())),
+            "os-uptime": str(dt.datetime.now() - dt.datetime.fromtimestamp(psutil.boot_time())),
             "os-cpu-load": psutil.cpu_percent(interval=1), # watch out - this is a blocking call
             "os-memory": psutil.virtual_memory().total,
             "os-memory-free": psutil.virtual_memory().free,
@@ -85,17 +86,48 @@ def add_special_bp(app: APIFlask):
 
     @special_bp.get("/api/compile/<string:token_uuid>")
     @special_bp.doc(summary="Compile Local DB", description="Compile LocalDB for the provided Token", tags=["Special"])
-    def handle_compile(token_uuid: str):
-        db = get_db()
-        content, error = db.specials.compile_localdb(token_uuid)
+    @special_bp.input(status304_header_schema, location='headers', arg_name="head")
+    def handle_compile(token_uuid: str, head: Status304Header):
+        # try to parse the "If-Modified-Since" header
+        last_access_ts = None
+        if head.if_modified_since is not None:
+            try:
+                # per spec this header is always utc. we unfortunately have to enforce this manually in python
+                last_access = dt.datetime.strptime(head.if_modified_since, "%a, %d %b %Y %H:%M:%S GMT")
+                last_access = last_access.replace(tzinfo=dt.timezone.utc)
+                last_access_ts = last_access.timestamp()
+            except ValueError:
+                return (
+                    "Invalid If-Modified-Since header",
+                    400,
+                    {"Content-Type": "text/plain"},
+                )
 
+        # ask model to parse localdb
+        db = get_db()
+        content, last_modified, error = db.specials.compile_localdb(token_uuid, last_access_ts)
+
+        # convert last_modified to required UTC string (would default to local-timezone and not UTC)
+        last_modified_dt = dt.datetime.fromtimestamp(last_modified, dt.timezone.utc)
+        last_modified = last_modified_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+        # catch various "error" states
         if error == ERROR_NOT_FOUND:
             return (
                 "Token not found",
                 404,
                 {"Content-Type": "text/plain"},
             )
-        if error:
+        elif error == ERROR_UNCHANGED:
+            return (
+                "Not Modified",
+                304,
+                {
+                    "Last-Modified": last_modified,
+                    "Content-Type": "text/plain"
+                }
+            )
+        elif error:
             return (
                 "Error during compilation",
                 500,
@@ -105,7 +137,10 @@ def add_special_bp(app: APIFlask):
         return (
             content,
             200,
-            {"Content-Type": "text/plain"},
+            {
+                "Last-Modified": last_modified,
+                "Content-Type": "text/plain"
+            },
         )
 
 

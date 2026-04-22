@@ -1,12 +1,13 @@
 from collections import defaultdict
-from typing import List
+from datetime import datetime
+from typing import List, Optional, Union, Tuple
 
 from db.abc.db import DBInterface
 from model.types.category import Category
 from model.types.core import Core
 from model.types.url import URL
 from model.util.build_localdb import build_localdb
-from model.util.error import CanError, ModelError
+from model.util.error import ModelError
 from model.types.mappings import URLCategoryMapping, TokenCategoryMapping, ChildCategoryMapping
 from model.util.parse_localdb import ExistingCat
 from model.types.core import Commit
@@ -16,6 +17,7 @@ from model.util.matching import unnest_categories
 
 
 ERROR_NOT_FOUND = ModelError("Not Found")
+ERROR_UNCHANGED = ModelError("Not Changed")
 
 
 class SpecialModel:
@@ -24,14 +26,17 @@ class SpecialModel:
         self.backend = backend
 
 
-    def compile_localdb(self, token_val: str) -> CanError[str]:
+    def compile_localdb(self, token_val: str, last_access: Optional[int]) -> Union[
+        Tuple[None, Optional[int], ModelError],
+        Tuple[str, int, None]
+    ]:
         commit = Commit.read_branch(self.backend, BRANCH_PROD)
 
         # fetch all tokens and search for our token by value
         token_lut = commit.head.token_lut(self.backend)
         token = next((t for t in token_lut.values() if t.token_value == token_val), None)
         if not token:
-            return None, ERROR_NOT_FOUND
+            return None, None, ERROR_NOT_FOUND
 
         # update token usage
         TokenUsage.track_access(self.backend, token.id)
@@ -43,10 +48,28 @@ class SpecialModel:
         url_mappings = URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings)
         child_cat_mappings = ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings)
 
+        # calculate when our state has last changed
+        # required to support http status 304 with "Last-Modified" and "If-Modified-Since" Headers
+        ## start with the creation date of the last commit
+        last_modified = commit.created_at
+        time_now = int(datetime.now().timestamp())
+        ## then offset if we find a constraint that has triggered since last access
+        for m in url_mappings:
+            if m.constraint is not None:
+                if m.constraint.start > 0 and last_modified < m.constraint.start < time_now:
+                    last_modified = m.constraint.start
+                if m.constraint.end > 0 and last_modified < m.constraint.end < time_now:
+                    last_modified = m.constraint.end
+
+        if last_access is not None and last_modified <= last_access:
+            # no changes in our model since last access
+            return None, last_modified, ERROR_UNCHANGED
+
         return build_localdb(
             token, urls, categories,
-            cat_mappings, url_mappings, child_cat_mappings
-        ), None
+            cat_mappings, url_mappings, child_cat_mappings,
+            last_modified,
+        ), last_modified, None
 
 
     def batch_import(self, branch: str, data: List[ExistingCat]) -> None:

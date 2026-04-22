@@ -27,6 +27,16 @@ class ListMetricsOutput(GenericOutput):
             metadata=desc("Dictionary of Metrics"),
     ))
 
+@dataclass
+class Status304Header:
+    """Header for a 304 Not Modified response"""
+    if_modified_since: str = to_field(String(
+        required=False,
+        data_key="If-Modified-Since",
+        metadata=desc("Value of the If-Modified-Since Header"),
+    ), default=None)
+
 
 existing_db_input_schema = class_schema(ExistingDBInput)()
 list_metrics_output_schema = class_schema(ListMetricsOutput)()
+status304_header_schema = class_schema(Status304Header)()
