@@ -1,5 +1,5 @@
 # Stage 1: Build the React frontend
-FROM node:20 AS frontend-builder
+FROM node:24 AS frontend-builder
 
 # Set working directory
 WORKDIR /frontend

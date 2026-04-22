@@ -18,7 +18,7 @@ services:
       - "3000:8080"
     volumes:
       # Mounts the folder with persistent files
-      - ./data/:/backend/data/
+      - ./data/backend/:/backend/data/
     # Ensures the container automatically restarts on failure
     restart: unless-stopped
     env_file:
@@ -29,10 +29,8 @@ services:
       APP_DB__TYPE: mongodb
       APP_DB__MONGO__CON_USER: ${MONGO_USER}
       APP_DB__MONGO__CON_PASSWORD: ${MONGO_PASSWORD}
-      APP_DB__MONGO__DBAUTH: admin
       APP_DB__MONGO__CON_HOST: mongodb
-      APP_DB__MONGO__CON_PORT: 27017
-      APP_DB__MONGO__CON_DIRECT: True
+      APP_DB__MONGO__AUTHSOURCE: admin
       APP_PORT: 8080
     depends_on:
       mongodb:
@@ -51,18 +49,19 @@ services:
     # use atlas instead of regular mongo
     # since it comes preconfigured as a standalone replica set
     # and therefore allows for transactions to be used
-    image: mongodb/mongodb-atlas-local
+    image: mongo
     container_name: mongodb
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
     ports:
       # Exposes MongoDB on the default port 27017
       - "27017:27017"
     volumes:
       # Mounts a volume for (persistent) MongoDB data
-      - ./mongo-data/db:/data/db
-      - ./mongo-data/configdb:/data/configdb
-      - ./mongo-data/mongot:/data/mongot
+      - ./data/mongodb/data/db:/data/db
+      - ./data/mongodb/log:/var/log/mongodb
     restart: unless-stopped
     environment:
       # Sets a MongoDB root user and password
-      MONGODB_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGODB_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
