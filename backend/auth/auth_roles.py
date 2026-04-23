@@ -8,3 +8,4 @@ class AuthRoles(str, enum.Enum):
     """
     RO = "app_admin_ro"
     RW = "app_admin_rw"
+    NONE = "app_unauthenticated"

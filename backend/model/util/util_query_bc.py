@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from typing import List, cast
 import urllib3
 from apiflask import APIFlask
-from pyrad import host
 
+from model.util.list_tld import get_tld_list, is_public_ip
 from util.log import log_error
 
 
@@ -12,6 +12,17 @@ from util.log import log_error
 FAILED_BC_CATEGORY_LOOKUP = "unavailable"
 # Value used when a Lookup Failed
 FAILED_LOOKUP = "query failed"
+# Private / Unknown Domain so don't look up
+NON_PUBLIC = "non-public"
+
+
+def should_query_bc(host: str) -> bool:
+    """Check if the BC Proxy is available"""
+    # check if it's a public tld
+    if any(host.lower().endswith("." + x.lower()) for x in get_tld_list()[0]):
+        return True
+    # check if it's a public / reserved ip
+    return is_public_ip(host)
 
 
 @dataclass
@@ -50,7 +61,7 @@ class ServerCredentials:
             server=cast(str, bc_host),
             user=cast(str, bc_user),
             password=cast(str, bc_password),
-            # timeout for the query against the bc proxy. should be below 30 seconds or else the /test api route will timeout
+            # timeout for the query against the bc proxy. should be below 30 seconds or else the /test api route will time out
             http_timeout=int(query_bc_conf.get("TIMEOUT", "10")),
             # check for false or not false, so that we default to "true" for all other values
             verifySSL=query_bc_conf.get("VERIFY_SSL", "true").lower() != "false"
@@ -63,8 +74,8 @@ def is_unknown_category(bc_cats: List[str]) -> bool:
 
     A Category is unknown if:
     * no cat is set
-    * only "unavailable" category is set
-    * only "query failed" category is set
+    * only the "unavailable" category is set
+    * only the "query failed" category is set
 
     :param bc_cats: The list of BlueCoat Categories to check
     :return: True if the list is unknown, False otherwise
@@ -89,6 +100,10 @@ def query_url(credentials: ServerCredentials, url: str) -> List[str]:
     :param url: The URL to query
     :return: A list of strings representing the categories of the URLs
     """
+
+    # try to not leak non-public domains
+    if not should_query_bc(url):
+        return [NON_PUBLIC]
 
     try:
         response = requests.get(

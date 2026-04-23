@@ -4,7 +4,7 @@ from typing import List, Optional, Union, Tuple
 import yaml
 
 from db.abc.db import DBInterface
-from model.types.category import Category
+from model.types.category import Category, PREDEFINED_CATEGORIES
 from model.types.core import Core
 from model.types.url import URL
 from model.util.build_localdb import build_localdb
@@ -49,6 +49,12 @@ class SpecialModel:
         cat_mappings = TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings)
         url_mappings = URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings)
         child_cat_mappings = ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings)
+
+        # pad items from predefined categories
+        for cat in PREDEFINED_CATEGORIES:
+            for url_id, url in cat.get_items().items():
+                urls[url_id] = url
+                url_mappings.append(URLCategoryMapping(url_id, cat.id, None))
 
         # calculate when our state has last changed
         # required to support http status 304 with "Last-Modified" and "If-Modified-Since" Headers
@@ -139,6 +145,9 @@ class SpecialModel:
                 cat_lut,
                 ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings),
             )
+        ] + [
+            # enforce predefined categories to always be "in use" and never get deleted
+            x.id for x in PREDEFINED_CATEGORIES
         ]
         unused_cat_ids = set(cat_lut.keys()) - set(cat_in_use)
         unused_cats = [cat_lut[cat_id] for cat_id in unused_cat_ids]

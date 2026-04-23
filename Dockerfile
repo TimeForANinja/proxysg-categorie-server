@@ -40,6 +40,12 @@ COPY ./backend/ ./
 # Copy built React code from the previous stage
 COPY --from=frontend-builder /frontend/build ./dist
 
+# Get TLD List straight from IANA
+# https://www.icann.org/en/contracted-parties/registry-operators/resources/list-of-top-level-domains
+RUN wget -qO dist/tlds-alpha-by-domain.txt https://data.iana.org/TLD/tlds-alpha-by-domain.txt
+# rfc special-use domains
+RUN wget -qO dist/special-use-domain.csv https://www.iana.org/assignments/special-use-domain-names/special-use-domain.csv
+
 # create start-script to start the server with Gunicorn
 RUN echo '#!/bin/sh' > /backend/start.sh && \
     echo 'set -e' >> /backend/start.sh && \

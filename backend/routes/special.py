@@ -116,7 +116,10 @@ def add_special_bp(app: APIFlask):
             return (
                 "Token not found",
                 404,
-                {"Content-Type": "text/plain"},
+                {
+                    "Content-Type": "text/plain",
+                    "Cache-Control": "no-cache, no-store",
+                },
             )
         elif error == ERROR_UNCHANGED:
             return (
@@ -124,14 +127,18 @@ def add_special_bp(app: APIFlask):
                 304,
                 {
                     "Last-Modified": last_modified,
-                    "Content-Type": "text/plain"
+                    "Content-Type": "text/plain",
+                    "Cache-Control": "no-cache, no-store",
                 }
             )
         elif error:
             return (
                 "Error during compilation",
                 500,
-                {"Content-Type": "text/plain"},
+                {
+                    "Content-Type": "text/plain",
+                    "Cache-Control": "no-cache, no-store",
+                },
             )
 
         return (
@@ -139,7 +146,8 @@ def add_special_bp(app: APIFlask):
             200,
             {
                 "Last-Modified": last_modified,
-                "Content-Type": "text/plain"
+                "Content-Type": "text/plain",
+                "Cache-Control": "no-cache, no-store",
             },
         )
 
