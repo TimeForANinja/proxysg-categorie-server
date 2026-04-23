@@ -20,7 +20,7 @@ def add_token_bp(app: APIFlask):
     token_bp = APIBlueprint("Tokens", __name__)
 
 
-    @token_bp.get("/api/branch/<branch>/token")
+    @token_bp.get("/api/branch/<string:branch>/token")
     @token_bp.doc(summary="List all Tokens", description="List all Tokens for a given branch", tags=["Tokens"])
     @token_bp.input(list_tokens_query_schema, location="query", arg_name="flags")
     @token_bp.output(list_token_output_schema)
@@ -51,7 +51,7 @@ def add_token_bp(app: APIFlask):
             data=token,
         )
 
-    @token_bp.patch("/api/branch/@me/token/<token_id>")
+    @token_bp.patch("/api/branch/@me/token/<string:token_id>")
     @token_bp.doc(summary="Update a Token", description="Update a Token by ID for a given branch", tags=["Tokens"])
     @token_bp.input(token_update_input_schema, location="json", arg_name="token_data")
     @token_bp.output(token_output_schema)
@@ -70,7 +70,7 @@ def add_token_bp(app: APIFlask):
             data=token,
         )
 
-    @token_bp.post("/api/branch/@me/token/<token_id>/roll")
+    @token_bp.post("/api/branch/@me/token/<string:token_id>/roll")
     @token_bp.doc(summary="Roll Token Value", description="Generate a new secret for a specific token", tags=["Tokens"])
     @token_bp.output(token_output_schema)
     @token_bp.auth_required(auth, roles=[AuthRoles.RW])
@@ -88,7 +88,7 @@ def add_token_bp(app: APIFlask):
             data=token,
         )
 
-    @token_bp.delete("/api/branch/@me/token/<token_id>")
+    @token_bp.delete("/api/branch/@me/token/<string:token_id>")
     @token_bp.doc(summary="Delete a Token", description="Delete a Token by ID for a given branch", tags=["Tokens"])
     @token_bp.output(generic_output_schema)
     @token_bp.auth_required(auth, roles=[AuthRoles.RW])

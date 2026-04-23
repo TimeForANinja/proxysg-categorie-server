@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -29,17 +28,36 @@ class CoreModel:
         core = Core.read(self.backend)
         prod_commit_hash = core.branches[BRANCH_PROD]
         # create a dummy commit for "pending changes" for the user
-        new_commit = Commit(
-            uuid=str(uuid.uuid4()),
-            author=user.username,
-            description=f"Pending changes for \"{user.username}\"",
-            created_at=int(datetime.now().timestamp()),
-            head=Commit.read(self.backend, prod_commit_hash).head,
-            parent_commit_hash=prod_commit_hash,
-            ref_changed_uuid=[],
+        new_commit = Commit.new(
+            user.username,
+            f"Pending changes for \"{user.username}\"",
+            prod_commit_hash,
+            Commit.read(self.backend, prod_commit_hash).head,
         )
         new_commit.write_branch(self.backend, user.get_branch())
         return new_commit.to_rest(self.backend)
+
+    def revert(self, user: AuthUser, commit_uuid: str) -> Optional[ModelError]:
+        """Revert a user-branch to a specific commit state"""
+
+        # find the commit we want to revert to
+        target_commit = Commit.read_from_uuid(self.backend, commit_uuid)
+        if not target_commit:
+            return ModelError(f"Commit with UUID {commit_uuid} not found")
+
+        # get data required for new commit
+        core = Core.read(self.backend)
+        prod_commit_hash = core.branches[BRANCH_PROD]
+
+        # create a new "pending changes" commit for the user, but with the head of the target commit
+        new_commit = Commit.new(
+            user.username,
+            f"Reverted to commit {commit_uuid}",
+            prod_commit_hash,
+            target_commit.head,
+        )
+        new_commit.write_branch(self.backend, user.get_branch())
+        return None
 
     def check_init(self, user: AuthUser) -> None:
         """Check if we need to initialize a new user"""
@@ -57,6 +75,9 @@ class CoreModel:
         user_commit = Commit.read(self.backend, core.branches[author.get_branch()])
         if user_commit.parent_commit_hash != prod_commit_hash:
             return None, ModelError("User Branch is not based on the latest production commit")
+
+        if len(user_commit.ref_changed_uuid) == 0:
+            return None, ModelError("No changes in commit")
 
         # update for publishing
         user_commit.description = description
@@ -93,13 +114,16 @@ class CoreModel:
         while uut_hash is not None:
             c = Commit.read(self.backend, uut_hash)
 
-            # check our filters (if provided) and add to our list if we match
-            if (
-                filter_uuid is None
-                or
-                any(x in c.ref_changed_uuid for x in filter_uuid)
-            ):
-                commits.append(c.to_rest(self.backend))
+            # require commit to include changes (should only skip pending changes)
+            if len(c.ref_changed_uuid) != 0:
+                # check our filters (if provided) and add to our list if we match
+                if (
+                    filter_uuid is None
+                    or
+                    any(x in c.ref_changed_uuid for x in filter_uuid)
+                ):
+                    # append commit to list
+                    commits.append(c.to_rest(self.backend))
 
             # update our pointer to the next commit
             uut_hash = c.parent_commit_hash

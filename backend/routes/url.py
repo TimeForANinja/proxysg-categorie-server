@@ -21,7 +21,7 @@ def add_url_bp(app: APIFlask):
     url_bp = APIBlueprint("URLs", __name__, tag="URLs")
 
 
-    @url_bp.get("/api/branch/<branch>/url")
+    @url_bp.get("/api/branch/<string:branch>/url")
     @url_bp.doc(summary="List all URLs", description="List all URLs and their categories for a given branch", tags=["URLs"])
     @url_bp.input(list_urls_query_schema, location="query", arg_name="flags")
     @url_bp.output(list_url_output_schema)
@@ -52,7 +52,7 @@ def add_url_bp(app: APIFlask):
             data=url,
         )
 
-    @url_bp.patch("/api/branch/@me/url/<url_id>")
+    @url_bp.patch("/api/branch/@me/url/<string:url_id>")
     @url_bp.doc(summary="Update a URL", description="Update a URL by ID for a given branch", tags=["URLs"])
     @url_bp.input(url_update_input_schema, location="json", arg_name="url_data")
     @url_bp.output(url_output_schema)
@@ -71,7 +71,7 @@ def add_url_bp(app: APIFlask):
             data=url,
         )
 
-    @url_bp.delete("/api/branch/@me/url/<url_id>")
+    @url_bp.delete("/api/branch/@me/url/<string:url_id>")
     @url_bp.doc(summary="Delete a URL", description="Delete a URL by ID for a given branch", tags=["URLs"])
     @url_bp.output(generic_output_schema)
     @url_bp.auth_required(auth, roles=[AuthRoles.RW])
@@ -90,7 +90,7 @@ def add_url_bp(app: APIFlask):
 
 
     @url_bp.post("/api/test")
-    @url_bp.doc(summary="Delete a URL", description="Delete a URL by ID for a given branch", tags=["URLs", "Special"])
+    @url_bp.doc(summary="Test-Match a URL", description="Match a URL against LocalDB and BC Categories", tags=["URLs", "Special"])
     @url_bp.input(url_test_input_schema, location="json", arg_name="test_data")
     @url_bp.output(url_test_output_schema)
     @url_bp.auth_required(auth, roles=[AuthRoles.RO])

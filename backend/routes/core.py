@@ -8,7 +8,7 @@ from db.db_singleton import get_db
 from util.log import log_debug
 from routes.schemas.core import ListBranchesOutput, ListHistoryOutput, list_branches_output_schema, \
     history_input_schema, list_history_output_schema, CommitOutput, HistoryInput, commit_output_schema, \
-    commit_input_schema, CommitInput
+    commit_input_schema, CommitInput, revert_input_schema, RevertInput
 from routes.schemas.error import ErrorResponse, OutCanError
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 from routes.types.core import RestBranchInfo
@@ -57,7 +57,26 @@ def add_core_bp(app: APIFlask):
         )
 
 
-    @core_bp.get("/api/branch/<branch>/history")
+    @core_bp.post("/api/branch/@me/revert")
+    @core_bp.doc(summary="Revert a Users Branch", description="Revert a user-branch to a specific commit state", tags=["Core"])
+    @core_bp.input(revert_input_schema, location="json", arg_name="input_data")
+    @core_bp.output(generic_output_schema)
+    @core_bp.auth_required(auth, roles=[AuthRoles.RW])
+    def revert_branch(input_data: RevertInput) -> OutCanError[GenericOutput]:
+        user: AuthUser = cast(AuthUser, auth.current_user)
+
+        db = get_db()
+        error = db.core.revert(user, input_data.commit_uuid)
+
+        if error:
+            return ErrorResponse(error)
+        return GenericOutput(
+            status="success",
+            message=f"Branch for {user.username} reverted successfully",
+        )
+
+
+    @core_bp.get("/api/branch/<string:branch>/history")
     @core_bp.doc(summary="List commit history", description="Fetch a list of recent commits starting with the given branch", tags=["Core"])
     @core_bp.output(list_history_output_schema)
     @core_bp.auth_required(auth, roles=[AuthRoles.RO])
@@ -70,7 +89,7 @@ def add_core_bp(app: APIFlask):
             data=commits,
         )
 
-    @core_bp.post("/api/branch/<branch>/history")
+    @core_bp.post("/api/branch/<string:branch>/history")
     @core_bp.doc(summary="List commit history", description="Fetch a list of recent commits starting with the given branch, including filtering for specific uuid involvement", tags=["Core"])
     @core_bp.input(history_input_schema, location="json", arg_name="history_filter_data")
     @core_bp.output(list_history_output_schema)

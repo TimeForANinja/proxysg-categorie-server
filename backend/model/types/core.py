@@ -100,13 +100,18 @@ class Commit:
         }])[0]
 
     @staticmethod
-    def new(author: str, description: str, parent: Optional[str]) -> 'Commit':
+    def new(
+            author: str,
+            description: str,
+            parent: Optional[str] = None,
+            head: Optional[StateTreeRootNode] = None
+    ) -> 'Commit':
         return Commit(
                 uuid=str(uuid.uuid4()),
                 author=author,
                 description=description,
                 created_at=int(datetime.now().timestamp()),
-                head=StateTreeRootNode(
+                head=head or StateTreeRootNode(
                     categories=[],
                     tokens=[],
                     urls=[],
@@ -117,6 +122,34 @@ class Commit:
                 parent_commit_hash=parent,
                 ref_changed_uuid=[],
             )
+
+    @staticmethod
+    def read_from_uuid(backend: DBInterface, commit_uuid: str) -> Optional['Commit']:
+        """search and read a commit by it's uuid"""
+        core = Core.read(backend)
+
+        # track hashes we've already visited
+        visited_hashes = set()
+
+        # Since we don't have a global index, we search through all branches one by one
+        for branch_name in core.branches:
+            # load first commit
+            uut = core.branches[branch_name]
+            # then iterate through all parent commits in the linked list
+            while uut:
+                if uut in visited_hashes:
+                    # early exit if we already visited this commit (e.g., from a different branch)
+                    break
+
+                # load commit and check if it's our target
+                c = Commit.read(backend, uut)
+                if c.uuid == commit_uuid:
+                    return c
+
+                # prepare for next iteration
+                uut = c.parent_commit_hash
+                visited_hashes.add(uut)
+        return None
 
     @staticmethod
     def read(backend: DBInterface, obj_hash: str) -> 'Commit':

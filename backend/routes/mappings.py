@@ -21,7 +21,7 @@ def add_mapping_bp(app: APIFlask):
     mapping_bp = APIBlueprint("Mapping", __name__)
 
 
-    @mapping_bp.get("/api/branch/<branch>/category/<category_id>/url")
+    @mapping_bp.get("/api/branch/<string:branch>/category/<string:category_id>/url")
     @mapping_bp.doc(summary="List all URLs in Category", description="List all URLs and their constraints for a given category", tags=["Categories", "URLs", "Mapping"])
     @mapping_bp.output(constrained_url_list_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RO])
@@ -34,7 +34,7 @@ def add_mapping_bp(app: APIFlask):
             data=constrained_urls,
         )
 
-    @mapping_bp.post("/api/branch/@me/category/<category_id>/url")
+    @mapping_bp.post("/api/branch/@me/category/<string:category_id>/url")
     @mapping_bp.doc(summary="Add URL to Category", description="Add a new URL mapping to a category", tags=["Categories", "URLs", "Mapping"])
     @mapping_bp.input(url_category_mapping_input_schema, location="json", arg_name="mapping_data")
     @mapping_bp.output(generic_output_schema)
@@ -57,7 +57,7 @@ def add_mapping_bp(app: APIFlask):
             message="URL added to category successfully",
         )
 
-    @mapping_bp.delete("/api/branch/@me/category/<category_id>/url/<url_id>")
+    @mapping_bp.delete("/api/branch/@me/category/<string:category_id>/url/<string:url_id>")
     @mapping_bp.doc(summary="Remove URL from Category", description="Remove a URL mapping from a category", tags=["Categories", "URLs", "Mapping"])
     @mapping_bp.output(generic_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RW])
@@ -75,7 +75,7 @@ def add_mapping_bp(app: APIFlask):
         )
 
 
-    @mapping_bp.get("/api/branch/<branch>/category/<category_id>/child")
+    @mapping_bp.get("/api/branch/<string:branch>/category/<string:category_id>/child")
     @mapping_bp.doc(summary="Get Super Categories", description="Get the child categories for a given category", tags=["Categories", "Mapping"])
     @mapping_bp.output(child_category_list_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RO])
@@ -88,7 +88,7 @@ def add_mapping_bp(app: APIFlask):
             data=child_categories,
         )
 
-    @mapping_bp.post("/api/branch/@me/category/<category_id>/child")
+    @mapping_bp.post("/api/branch/@me/category/<string:category_id>/child")
     @mapping_bp.doc(summary="Add Super Category", description="Add a child category to a category", tags=["Categories", "Mapping"])
     @mapping_bp.input(child_category_mapping_input_schema, location="json", arg_name="mapping_data")
     @mapping_bp.output(generic_output_schema)
@@ -110,7 +110,7 @@ def add_mapping_bp(app: APIFlask):
             message="Super-Category added successfully",
         )
 
-    @mapping_bp.delete("/api/branch/@me/category/<category_id>/child/<child_category_id>")
+    @mapping_bp.delete("/api/branch/@me/category/<string:category_id>/child/<string:child_category_id>")
     @mapping_bp.doc(summary="Remove Super Category", description="Remove a child category from a category", tags=["Categories", "Mapping"])
     @mapping_bp.output(generic_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RW])
@@ -128,7 +128,7 @@ def add_mapping_bp(app: APIFlask):
         )
 
 
-    @mapping_bp.get("/api/branch/<branch>/token/<token_id>/category")
+    @mapping_bp.get("/api/branch/<string:branch>/token/<string:token_id>/category")
     @mapping_bp.doc(summary="List all Category of Token", description="List all categories of a specific token for a given branch", tags=["Tokens", "Categories", "Mapping"])
     @mapping_bp.output(list_category_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RO])
@@ -141,7 +141,7 @@ def add_mapping_bp(app: APIFlask):
             data=categories,
         )
 
-    @mapping_bp.post("/api/branch/@me/token/<token_id>/category")
+    @mapping_bp.post("/api/branch/@me/token/<string:token_id>/category")
     @mapping_bp.doc(summary="Associate Token with Category", description="Add a category to a token", tags=["Tokens", "Categories", "Mapping"])
     @mapping_bp.input(token_category_mapping_input_schema, location="json", arg_name="mapping_data")
     @mapping_bp.output(generic_output_schema)
@@ -159,7 +159,7 @@ def add_mapping_bp(app: APIFlask):
             message="Category added to token successfully",
         )
 
-    @mapping_bp.delete("/api/branch/@me/token/<token_id>/category/<category_id>")
+    @mapping_bp.delete("/api/branch/@me/token/<string:token_id>/category/<string:category_id>")
     @mapping_bp.doc(summary="Disassociate Token from Category", description="Remove a category from a token", tags=["Tokens", "Categories", "Mapping"])
     @mapping_bp.output(generic_output_schema)
     @mapping_bp.auth_required(auth, roles=[AuthRoles.RW])

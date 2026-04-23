@@ -20,7 +20,7 @@ def add_category_bp(app: APIFlask):
     category_bp = APIBlueprint("Categories", __name__)
 
 
-    @category_bp.get("/api/branch/<branch>/category")
+    @category_bp.get("/api/branch/<string:branch>/category")
     @category_bp.doc(summary="List all Categories", description="List all Categories for a given branch", tags=["Categories"])
     @category_bp.input(list_category_query_schema, location="query", arg_name="flags")
     @category_bp.output(list_category_detail_output_schema)
@@ -56,7 +56,7 @@ def add_category_bp(app: APIFlask):
             data=category,
         )
 
-    @category_bp.patch("/api/branch/@me/category/<category_id>")
+    @category_bp.patch("/api/branch/@me/category/<string:category_id>")
     @category_bp.doc(summary="Update a Category", description="Update a Category by ID for a given branch", tags=["Categories"])
     @category_bp.input(category_update_input_schema, location="json", arg_name="category_data")
     @category_bp.output(category_output_schema)
@@ -81,7 +81,7 @@ def add_category_bp(app: APIFlask):
             data=category,
         )
 
-    @category_bp.delete("/api/branch/@me/category/<category_id>")
+    @category_bp.delete("/api/branch/@me/category/<string:category_id>")
     @category_bp.doc(summary="Delete a Category", description="Delete a Category by ID for a given branch", tags=["Categories"])
     @category_bp.output(generic_output_schema)
     @category_bp.auth_required(auth, roles=[AuthRoles.RW])

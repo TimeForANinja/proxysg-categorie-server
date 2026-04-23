@@ -34,7 +34,7 @@ class MyModel:
 
         if not core:
             # create first prod commit
-            first_commit = Commit.new("System", "Initial commit",None)
+            first_commit = Commit.new("System", "Initial commit")
             first_commit_hash = first_commit.write(self.backend)
             # create core object
             new_core = Core(

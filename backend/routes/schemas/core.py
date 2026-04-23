@@ -43,6 +43,13 @@ class CommitInput:
     ))
 
 @dataclass
+class RevertInput:
+    commit_uuid: str = to_field(String(
+        required=True,
+        metadata=desc("UUID of the commit to revert to"),
+    ))
+
+@dataclass
 class CommitOutput(GenericOutput):
     """Output schema for a list of recent commits"""
     data: RestCommit = to_field(Nested(
@@ -55,4 +62,5 @@ history_input_schema = class_schema(HistoryInput)()
 list_branches_output_schema = class_schema(ListBranchesOutput)()
 list_history_output_schema = class_schema(ListHistoryOutput)()
 commit_input_schema = class_schema(CommitInput)()
+revert_input_schema = class_schema(RevertInput)()
 commit_output_schema = class_schema(CommitOutput)()
