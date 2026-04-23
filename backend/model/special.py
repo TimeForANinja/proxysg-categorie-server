@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 from typing import List, Optional, Union, Tuple
+import yaml
 
 from db.abc.db import DBInterface
 from model.types.category import Category
@@ -14,6 +15,7 @@ from model.types.core import Commit
 from model.types.metrics import TokenUsage, BCCategory
 from util.branch_names import BRANCH_PROD
 from model.util.matching import unnest_categories
+from model.util.error import CanError
 
 
 ERROR_NOT_FOUND = ModelError("Not Found")
@@ -211,3 +213,55 @@ class SpecialModel:
             bc for bc in bc_cat_list
             if bc.url_value in known_urls
         ])
+
+    def get_yaml_representation(self, commit_uuid: str) -> CanError[str]:
+        """Convert the state of a commit to a YAML representation"""
+        commit = Commit.read_from_uuid(self.backend, commit_uuid)
+        if not commit:
+            return None, ModelError(f"Commit with UUID {commit_uuid} not found")
+
+        # Load all objects
+        categories = commit.head.category_lut(self.backend)
+        tokens = commit.head.token_lut(self.backend)
+        urls = commit.head.url_lut(self.backend)
+
+        token_cat_mappings = defaultdict(list)
+        for x in TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings):
+            token_cat_mappings[x.token_id].append(x.category_id)
+        url_cat_mappings = defaultdict(list)
+        for x in URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings):
+            url_cat_mappings[x.url_id].append(x.category_id)
+        child_cat_mappings = defaultdict(list)
+        for x in ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings):
+            child_cat_mappings[x.category_id].append(x.child_category_id)
+
+        # Build a serializable structure
+        state = {
+            "categories": [
+                {
+                    "uuid": c.id,
+                    "name": c.name,
+                    "description": c.description,
+                    "color": c.color,
+                    "children": child_cat_mappings[c.id],
+                } for c in sorted(categories.values(), key=lambda c: c.id)
+            ],
+            "tokens": [
+                {
+                    "id": t.id,
+                    "token_value": t.token_value,
+                    "description": t.description,
+                    "categories": token_cat_mappings[t.id],
+                } for t in sorted(tokens.values(), key=lambda t: t.id)
+            ],
+            "urls": [
+                {
+                    "id": u.id,
+                    "url": u.url,
+                    "description": u.description,
+                    "categories": url_cat_mappings[u.id],
+                } for u in sorted(urls.values(), key=lambda u: u.id)
+            ],
+        }
+
+        return yaml.dump(state, sort_keys=True), None

@@ -36,7 +36,16 @@ class Status304Header:
         metadata=desc("Value of the If-Modified-Since Header"),
     ), default=None)
 
+@dataclass
+class DiffOutput(GenericOutput):
+    """Output schema for the diff YAML representations"""
+    data: str = to_field(String(
+        required=True,
+        metadata=desc("YAML representation of the first commit"),
+    ))
+
 
 existing_db_input_schema = class_schema(ExistingDBInput)()
 list_metrics_output_schema = class_schema(ListMetricsOutput)()
 status304_header_schema = class_schema(Status304Header)()
+diff_output_schema = class_schema(DiffOutput)()

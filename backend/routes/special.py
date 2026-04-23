@@ -10,11 +10,11 @@ from auth.auth_user import AuthUser
 from db.db_singleton import get_db
 from model.util.error import ModelError
 from model.util.parse_localdb import parse_db
-from routes.schemas.error import ErrorResponse
+from routes.schemas.error import ErrorResponse, OutCanError
 from util.log import log_debug
 from model.special import ERROR_NOT_FOUND, ERROR_UNCHANGED
 from routes.schemas.special import list_metrics_output_schema, ListMetricsOutput, existing_db_input_schema, \
-    ExistingDBInput, Status304Header, status304_header_schema
+    ExistingDBInput, Status304Header, status304_header_schema, diff_output_schema, DiffOutput
 from routes.schemas.generic_output import GenericOutput, generic_output_schema
 
 
@@ -170,6 +170,23 @@ def add_special_bp(app: APIFlask):
         return GenericOutput(
             status="success",
             message="Cleanup successful",
+        )
+
+    @special_bp.get("/api/commit/<string:commit_uuid>/render")
+    @special_bp.doc(summary="render commit yaml", description="Fetch YAML representation for a commit", tags=["Special"])
+    @special_bp.output(diff_output_schema)
+    @special_bp.auth_required(auth, roles=[AuthRoles.RO])
+    def handle_diff(commit_uuid: str) -> OutCanError[DiffOutput]:
+        db = get_db()
+
+        yaml_str, error = db.specials.get_yaml_representation(commit_uuid)
+
+        if error:
+            return ErrorResponse(error)
+        return DiffOutput(
+            status="success",
+            message="Successfully generated YAML representations",
+            data=yaml_str,
         )
 
 
