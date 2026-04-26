@@ -192,7 +192,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                                 <Paper elevation={1} sx={{ p: 2, height: '100%' }}>
                                     <Box sx={{ fontWeight: 'bold', mb: 1 }}>Available Fields</Box>
                                     <TableContainer>
-                                        <Table size="small">
+                                        <Table size="small" sx={{ '& .MuiTableCell-root': { fontFamily: 'monospace' } }}>
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>Field</TableCell>
@@ -245,7 +245,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                                 <Paper elevation={1} sx={{ p: 2, height: '100%' }}>
                                     <Box sx={{ fontWeight: 'bold', mb: 1 }}>Available Functions</Box>
                                     <TableContainer>
-                                        <Table size="small">
+                                        <Table size="small" sx={{ '& .MuiTableCell-root': { fontFamily: 'monospace' } }}>
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>Function</TableCell>
@@ -271,7 +271,7 @@ export const ListHeader = (props: ListHeaderProps) => {
                                 <Paper elevation={1} sx={{ p: 2, mt: 2 }}>
                                     <Box sx={{ fontWeight: 'bold', mb: 1 }}>Examples</Box>
                                     <TableContainer>
-                                        <Table size="small">
+                                        <Table size="small" sx={{ '& .MuiTableCell-root': { fontFamily: 'monospace' } }}>
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>Example</TableCell>

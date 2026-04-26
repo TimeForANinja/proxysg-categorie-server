@@ -37,8 +37,8 @@ const SettingsPage: React.FC = () => {
         try {
             const data = await getMetrics(authMgmt.token);
             setMetrics(data);
-        } catch (e) {
-            console.error("Failed to fetch metrics", e);
+        } catch (e: any) {
+            notification.showError(e.message || "Failed to fetch metrics");
         }
     };
 
@@ -91,7 +91,7 @@ const SettingsPage: React.FC = () => {
                                 </AccordionSummary>
                                 <AccordionDetails>
                                     <TableContainer component={Paper} variant="outlined">
-                                        <Table size="small">
+                                        <Table size="small" sx={{ '& .MuiTableCell-root': { fontFamily: 'monospace' } }}>
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell sx={{ fontWeight: 'bold' }}>Metric</TableCell>

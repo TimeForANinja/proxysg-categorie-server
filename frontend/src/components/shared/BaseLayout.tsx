@@ -42,7 +42,7 @@ const BaseLayout = () => {
                         noWrap
                         component="div"
                         sx={{ display: { xs: 'none', sm: 'block' }, cursor: 'pointer' }}
-                        onClick={() => navigate("/")}
+                        onClick={() => navigate("/test")}
                     >
                         CatTracker
                     </Typography>

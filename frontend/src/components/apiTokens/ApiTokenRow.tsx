@@ -20,6 +20,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 
 import { addTokenCategory, deleteTokenCategory } from "../../api/mapping";
 import { getHistory } from "../../api/history";
+import { useNotification } from "../../hooks/useNotification";
 import { CategoryPicker } from "../shared/CategoryPicker";
 import { IApiToken, IRestTokenDetail } from '../../types/apiToken';
 import { ICategory } from "../../types/category";
@@ -55,6 +56,7 @@ export const ApiTokenRow = React.memo(function ApiTokenRow(props: ApiTokenRowPro
         branch,
     } = props;
     const authMgmt = useAuth();
+    const { showError, showSuccess } = useNotification();
 
     const token = tokenDetail.token;
 
@@ -74,19 +76,29 @@ export const ApiTokenRow = React.memo(function ApiTokenRow(props: ApiTokenRowPro
         if (!open && history.length === 0) {
             getHistory(authMgmt.token, branch, [token.id])
                 .then(setHistory)
-                .catch(err => console.error('Failed to load history:', err));
+                .catch(err => showError(err.message || 'Failed to load history'));
         }
         setOpen(prev => !prev);
     };
 
     const handleAddCategory = async (cat: ICategory) => {
-        await addTokenCategory(authMgmt.token, token.id, cat.id);
-        onRefresh();
+        try {
+            await addTokenCategory(authMgmt.token, token.id, cat.id);
+            showSuccess(`Category "${cat.name}" added to token`);
+            onRefresh();
+        } catch (e: any) {
+            showError(e.message);
+        }
     };
 
     const handleDeleteCategory = async (cat: ICategory) => {
-        await deleteTokenCategory(authMgmt.token, token.id, cat.id);
-        onRefresh();
+        try {
+            await deleteTokenCategory(authMgmt.token, token.id, cat.id);
+            showSuccess(`Category "${cat.name}" removed from token`);
+            onRefresh();
+        } catch (e: any) {
+            showError(e.message);
+        }
     };
 
     return (

@@ -25,6 +25,7 @@ import { SearchParser } from "../../searchParser";
 import {CategoryFieldsRaw, CategoryToKV, ICategory, IRestCategoryDetail} from "../../types/category";
 import { KVaddRAW } from "../../types/stringKV";
 import { useBranch } from "../../hooks/useBranch";
+import { useNotification } from "../../hooks/useNotification";
 import { useAuth } from "../../hooks/useLogin";
 
 import { CategoryRow } from "./CategoryRow";
@@ -32,6 +33,7 @@ import { CategoryEditDialog } from "./CategoryEditDialog";
 
 export default function CategoryListPage() {
     const authMgmt = useAuth();
+    const { showError, showSuccess } = useNotification();
     const { currentBranch, isLocked } = useBranch();
 
     // State info for the Page
@@ -62,8 +64,8 @@ export default function CategoryListPage() {
             .then((categoriesData) => {
                 setCategories(buildLUTFromGetter(categoriesData, (c) => c.category.id));
             })
-            .catch((error) => console.error("Error:", error));
-    }, [authMgmt.token, currentBranch]);
+            .catch((error) => showError(error.message));
+    }, [authMgmt.token, currentBranch, showError]);
 
     React.useEffect(() => {
         fetchData();
@@ -84,20 +86,31 @@ export default function CategoryListPage() {
 
     const handleDeleteConfirmation = async (del: boolean) => {
         if (del && isDeleteDialogOpen != null) {
-            await deleteCategory(authMgmt.token, isDeleteDialogOpen.id);
-            fetchData();
+            try {
+                await deleteCategory(authMgmt.token, isDeleteDialogOpen.id);
+                showSuccess("Category deleted successfully");
+                fetchData();
+            } catch (e: any) {
+                showError(e.message);
+            }
         }
         setDeleteDialogOpen(null);
     };
 
     const handleSave = async (id: string | null, name: string, description: string, color: number) => {
-        if (id == null) {
-            await createCategory(authMgmt.token, { name, description, color });
-        } else {
-            await updateCategory(authMgmt.token, id, { name, description, color });
+        try {
+            if (id == null) {
+                await createCategory(authMgmt.token, { name, description, color });
+                showSuccess("Category created successfully");
+            } else {
+                await updateCategory(authMgmt.token, id, { name, description, color });
+                showSuccess("Category updated successfully");
+            }
+            fetchData();
+            handleEditDialogClose();
+        } catch (e: any) {
+            showError(e.message);
         }
-        fetchData();
-        handleEditDialogClose();
     };
 
     return (
@@ -116,7 +129,7 @@ export default function CategoryListPage() {
                 <Grid size={12}>
                     <Paper>
                         <TableContainer component={Paper} style={{ maxHeight: 'calc(100vh - 190px)', overflow: 'auto' }}>
-                            <Table sx={{ minWidth: 650 }} size="small" stickyHeader>
+                            <Table sx={{ minWidth: 650, '& .MuiTableCell-root': { fontFamily: 'monospace' } }} size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell style={{ width: 40 }} />

@@ -5,7 +5,6 @@ import MatchingListPage from "./components/urls";
 import ApiTokenPage from "./components/apiTokens";
 import CategoriesPage from "./components/categories";
 import HistoryPage from "./components/history";
-import HomePage from "./components/home";
 import BaseLayout from "./components/shared/BaseLayout";
 import {RedirectToHome} from "./RedirectToHome";
 import {BranchProvider} from "./hooks/useBranch";
@@ -47,7 +46,7 @@ function App() {
                 },
                 {
                     path: "/",
-                    element: <HomePage/>,
+                    element: <TestPage/>,
                 },
             ],
         },

@@ -11,7 +11,7 @@ import {useNotification} from "../../hooks/useNotification";
 function HistoryPage() {
     const authMgmt = useAuth();
     const { currentBranch, isLocked } = useBranch();
-    const { showError } = useNotification();
+    const { showError, showSuccess } = useNotification();
 
     const [commits, setCommits] = React.useState<IRestCommit[]>([]);
 
@@ -24,8 +24,8 @@ function HistoryPage() {
                 // save history to state
                 setCommits(commitData);
             })
-            .catch((error) => console.error("Error:", error));
-    }, [currentBranch]);
+            .catch((error) => showError(error.message));
+    }, [currentBranch, authMgmt.token, showError]);
 
     React.useEffect(() => {
         fetchData();
@@ -36,10 +36,16 @@ function HistoryPage() {
             showError("Please enter a commit message");
             return;
         }
-        await doCommit(authMgmt.token, commitMessage);
-        setCommitMessage(""); // Clear the commit message after submission
-        fetchData();
+        try {
+            await doCommit(authMgmt.token, commitMessage);
+            showSuccess("Changes committed successfully");
+            setCommitMessage(""); // Clear the commit message after submission
+            fetchData();
+        } catch (e: any) {
+            showError(e.message);
+        }
     };
+
 
     return (
         <Stack spacing={4} sx={{ maxWidth: '1200px', margin: '0 auto', p: 2 }}>

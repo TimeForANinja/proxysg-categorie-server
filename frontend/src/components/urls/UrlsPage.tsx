@@ -16,6 +16,7 @@ import { MyPaginator } from "../shared/MyPaginator";
 import { SearchParser } from "../../searchParser";
 import { KVaddRAW } from "../../types/stringKV";
 import { useBranch } from "../../hooks/useBranch";
+import { useNotification } from "../../hooks/useNotification";
 import { IRestURLDetail, UrlMappingFieldsRaw, URLMappingToKV } from "../../types/url";
 import { TriState } from "../../types/EditDialogState";
 import { ConfirmDeletionDialog } from "../shared/ConfirmDeletionDialog";
@@ -29,6 +30,7 @@ import { UrlEditDialog } from "./UrlEditDialog";
 
 export default function MatchingListPage() {
     const authMgmt = useAuth();
+    const { showError, showSuccess } = useNotification();
     const { currentBranch, isLocked } = useBranch();
 
     // State info for the Page
@@ -61,8 +63,8 @@ export default function MatchingListPage() {
                 setURLs(urlsData);
                 setCategories(buildLUTFromID(categoriesData.map(x => x.category)));
             })
-            .catch((error) => console.error("Error:", error));
-    }, [authMgmt.token, currentBranch]);
+            .catch((error) => showError(error.message));
+    }, [authMgmt.token, currentBranch, showError]);
 
     React.useEffect(() => {
         fetchData();
@@ -83,20 +85,31 @@ export default function MatchingListPage() {
 
     const handleDeleteConfirmation = async (del: boolean) => {
         if (del && isDeleteDialogOpen != null) {
-            await deleteURL(authMgmt.token, isDeleteDialogOpen.url.id);
-            fetchData();
+            try {
+                await deleteURL(authMgmt.token, isDeleteDialogOpen.url.id);
+                showSuccess("URL deleted successfully");
+                fetchData();
+            } catch (e: any) {
+                showError(e.message);
+            }
         }
         setDeleteDialogOpen(null);
     };
 
     const handleSave = async (id: string | null, urlValue: string, description: string) => {
-        if (id == null) {
-            await createURL(authMgmt.token, { url: urlValue, description });
-        } else {
-            await updateURL(authMgmt.token, id, { url: urlValue, description });
+        try {
+            if (id == null) {
+                await createURL(authMgmt.token, { url: urlValue, description });
+                showSuccess("URL created successfully");
+            } else {
+                await updateURL(authMgmt.token, id, { url: urlValue, description });
+                showSuccess("URL updated successfully");
+            }
+            fetchData();
+            handleEditDialogClose();
+        } catch (e: any) {
+            showError(e.message);
         }
-        fetchData();
-        handleEditDialogClose();
     };
 
     return (
@@ -115,7 +128,7 @@ export default function MatchingListPage() {
                 <Grid size={12}>
                     <Paper>
                         <TableContainer component={Paper} style={{ maxHeight: 'calc(100vh - 190px)', overflow: 'auto' }}>
-                            <Table sx={{ minWidth: 650 }} size="small" stickyHeader>
+                            <Table sx={{ minWidth: 650, '& .MuiTableCell-root': { fontFamily: 'monospace' } }} size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell style={{ width: 40 }} />

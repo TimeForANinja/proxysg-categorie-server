@@ -27,6 +27,7 @@ import {
 import { ICategory } from "../../types/category";
 import { KVaddRAW } from "../../types/stringKV";
 import { useBranch } from "../../hooks/useBranch";
+import { useNotification } from "../../hooks/useNotification";
 import { useAuth } from "../../hooks/useLogin";
 
 import { ApiTokenRow } from "./ApiTokenRow";
@@ -34,6 +35,7 @@ import { ApiTokenEditDialog } from "./ApiTokenEditDialog";
 
 export default function ApiTokensPage() {
     const authMgmt = useAuth();
+    const { showError, showSuccess } = useNotification();
     const { currentBranch, isLocked } = useBranch();
 
     const [tokens, setTokens] = React.useState<IRestTokenDetail[]>([]);
@@ -61,8 +63,8 @@ export default function ApiTokensPage() {
                 setTokens(tokensData);
                 setCategories(buildLUTFromID(categoriesData.map(x => x.category)));
             })
-            .catch((error) => console.error("Error:", error));
-    }, [authMgmt.token, currentBranch]);
+            .catch((error) => showError(error.message));
+    }, [authMgmt.token, currentBranch, showError]);
 
     React.useEffect(() => {
         fetchData();
@@ -83,25 +85,41 @@ export default function ApiTokensPage() {
 
     const handleDeleteConfirmation = async (del: boolean) => {
         if (del && isDeleteDialogOpen != null) {
-            await deleteToken(authMgmt.token, isDeleteDialogOpen.id);
-            fetchData();
+            try {
+                await deleteToken(authMgmt.token, isDeleteDialogOpen.id);
+                showSuccess("API Token deleted successfully");
+                fetchData();
+            } catch (e: any) {
+                showError(e.message);
+            }
         }
         setDeleteDialogOpen(null);
     };
 
     const handleRoll = React.useCallback(async (token: IApiToken) => {
-        await rollToken(authMgmt.token, token.id);
-        fetchData();
-    }, [authMgmt.token, fetchData]);
+        try {
+            await rollToken(authMgmt.token, token.id);
+            showSuccess("API Token rolled successfully");
+            fetchData();
+        } catch (e: any) {
+            showError(e.message);
+        }
+    }, [authMgmt.token, fetchData, showError, showSuccess]);
 
     const handleSave = async (id: string | null, description: string) => {
-        if (id == null) {
-            await createToken(authMgmt.token, { description });
-        } else {
-            await updateToken(authMgmt.token, id, { description });
+        try {
+            if (id == null) {
+                await createToken(authMgmt.token, { description });
+                showSuccess("API Token created successfully");
+            } else {
+                await updateToken(authMgmt.token, id, { description });
+                showSuccess("API Token updated successfully");
+            }
+            fetchData();
+            handleEditDialogClose();
+        } catch (e: any) {
+            showError(e.message);
         }
-        fetchData();
-        handleEditDialogClose();
     };
 
     return (
@@ -120,7 +138,7 @@ export default function ApiTokensPage() {
                 <Grid size={12}>
                     <Paper>
                         <TableContainer component={Paper} style={{ maxHeight: 'calc(100vh - 190px)', overflow: 'auto' }}>
-                            <Table sx={{ minWidth: 650 }} size="small" stickyHeader>
+                            <Table sx={{ minWidth: 650, '& .MuiTableCell-root': { fontFamily: 'monospace' } }} size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell style={{ width: 40 }} />

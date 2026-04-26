@@ -3,6 +3,7 @@ import { FormControl, Select, MenuItem, Box, Divider, Typography } from '@mui/ma
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import {DEFAULT_BRANCH, useBranch} from '../../hooks/useBranch';
+import { useNotification } from '../../hooks/useNotification';
 import { getBranches } from '../../api/branch';
 import { IRestBranchInfo } from '../../types/branch';
 import {useAuth} from "../../hooks/useLogin";
@@ -30,6 +31,7 @@ const sort_branches = (list: IRestBranchInfo[]): IRestBranchInfo[] => {
 
 const BranchSelector = () => {
     const authMgmt = useAuth();
+    const { showError } = useNotification();
     const { currentBranch, setCurrentBranch, isLocked, setIsLocked } = useBranch();
 
     const [branches, setBranches] = React.useState<IRestBranchInfo[]>([]);
@@ -43,8 +45,8 @@ const BranchSelector = () => {
                     setCurrentBranch(data[0].name);
                 }
             }
-        }).catch(err => console.error("Failed to load branches", err));
-    }, [authMgmt.token, currentBranch, setCurrentBranch]);
+        }).catch(err => showError(err.message || "Failed to load branches"));
+    }, [authMgmt.token, currentBranch, setCurrentBranch, showError]);
 
     React.useEffect(() => {
         const branchInfo = branches.find(b => b.name === currentBranch);

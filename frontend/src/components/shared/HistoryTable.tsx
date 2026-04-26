@@ -19,7 +19,7 @@ function HistoryTable({ commits, small }: HistoryTableProps) {
     return (
         <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 160px)' }}>
             <Table
-                sx={{ minWidth: small ? 300 : 650 }}
+                sx={{ minWidth: small ? 300 : 650, '& .MuiTableCell-root': { fontFamily: 'monospace' } }}
                 size="small"
                 stickyHeader
             >

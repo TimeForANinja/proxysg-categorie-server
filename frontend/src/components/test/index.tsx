@@ -33,6 +33,7 @@ import {
 } from "@mui/icons-material";
 import { CSVLink } from "react-csv";
 import {useAuth} from "../../hooks/useLogin";
+import {useNotification} from "../../hooks/useNotification";
 import {testApi} from "../../api/core";
 import {RestTestResult} from "../../types/core";
 import {ICategory} from "../../types/category";
@@ -41,12 +42,12 @@ import {colorLUT, hexToColor} from "../../util/colormixer";
 
 function TestPage() {
     const authMgmt = useAuth();
+    const { showError } = useNotification();
 
     // State info for the Page
     const [results, setResults] = React.useState<RestTestResult[]>([]);
     const [value, setValue] = React.useState<string>("");
     const [submitting, setSubmitting] = React.useState<boolean>(false);
-    const [error, setError] = React.useState<string>("");
 
     const onSubmit = async () => {
         if (!value) return;
@@ -55,14 +56,13 @@ function TestPage() {
         if (urls.length === 0) return;
 
         setSubmitting(true);
-        setError("");
         setResults([]);
 
         try {
             const res = await testApi(authMgmt.token, urls);
             setResults(res);
         } catch (e: any) {
-            setError(e?.message ?? "Failed to run test");
+            showError(e?.message ?? "Failed to run test");
         } finally {
             setSubmitting(false);
         }
@@ -71,7 +71,6 @@ function TestPage() {
     const onClear = () => {
         setValue("");
         setResults([]);
-        setError("");
     };
 
     const csvData = React.useMemo(() => {
@@ -153,12 +152,6 @@ function TestPage() {
                             </Button>
                         </CardContent>
                     </Card>
-
-                    {error && (
-                        <Alert severity="error" variant="filled" sx={{ mt: 2, borderRadius: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
                 </Grid>
 
                 {/* Right Side: Results */}
@@ -215,7 +208,7 @@ function TestPage() {
                             />
                             <Divider />
                             <TableContainer sx={{ maxHeight: 'calc(100vh - 350px)' }}>
-                                <Table stickyHeader size="medium">
+                                <Table stickyHeader size="medium" sx={{ '& .MuiTableCell-root': { fontFamily: 'monospace' } }}>
                                     <TableHead>
                                         <TableRow>
                                             <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Input</TableCell>

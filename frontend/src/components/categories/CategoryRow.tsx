@@ -12,6 +12,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from "react-router-dom";
 
 import { getHistory } from "../../api/history";
+import { useNotification } from "../../hooks/useNotification";
 import {ICategory, IRestCategoryDetail} from "../../types/category";
 import { IRestCommit } from "../../types/history";
 import { useAuth } from "../../hooks/useLogin";
@@ -44,6 +45,7 @@ export const CategoryRow = React.memo(function CategoryRow(props: CategoryRowPro
         branch,
     } = props;
     const authMgmt = useAuth();
+    const { showError, showSuccess } = useNotification();
     const navigate = useNavigate();
 
     const [open, setOpen] = React.useState(false);
@@ -60,19 +62,29 @@ export const CategoryRow = React.memo(function CategoryRow(props: CategoryRowPro
         if (!open && history.length === 0) {
             getHistory(authMgmt.token, branch, [category.category.id])
                 .then(setHistory)
-                .catch(err => console.error('Failed to load history:', err));
+                .catch(err => showError(err.message || 'Failed to load history'));
         }
         setOpen(prev => !prev);
     };
 
     const handleAddCategory = async (childCat: ICategory) => {
-        await addCategoryChild(authMgmt.token, category.category.id, childCat.id);
-        onRefresh();
+        try {
+            await addCategoryChild(authMgmt.token, category.category.id, childCat.id);
+            showSuccess(`Child category "${childCat.name}" added`);
+            onRefresh();
+        } catch (e: any) {
+            showError(e.message);
+        }
     };
 
     const handleDeleteCategory = async (childCat: ICategory) => {
-        await deleteCategoryChild(authMgmt.token, category.category.id, childCat.id);
-        onRefresh();
+        try {
+            await deleteCategoryChild(authMgmt.token, category.category.id, childCat.id);
+            showSuccess(`Child category "${childCat.name}" removed`);
+            onRefresh();
+        } catch (e: any) {
+            showError(e.message);
+        }
     };
 
     return (

@@ -22,12 +22,14 @@ import CloseIcon from '@mui/icons-material/Close';
 import {formatDateString} from "../../util/DateString";
 import {loadExisting} from "../../api/branch";
 import {useAuth} from "../../hooks/useLogin";
+import {useNotification} from "../../hooks/useNotification";
 import {useBranch} from "../../hooks/useBranch";
 
 
 const UploadPage = () => {
     const navigate = useNavigate();
     const { token } = useAuth();
+    const { showError, showSuccess } = useNotification();
     const { isLocked } = useBranch();
 
     const [files, setFiles] = React.useState<File[]>([]);
@@ -78,13 +80,14 @@ const UploadPage = () => {
             }
 
             await loadExisting(token, content, prefix);
+            showSuccess("Database uploaded successfully");
 
             // Reset form
             setFiles([]);
             setText('');
             setPrefix(`IMPORTED_${formatDateString()}_`);
-        } catch (err) {
-            console.error("Error uploading:", err);
+        } catch (err: any) {
+            showError(err.message || "Failed to upload database");
         } finally {
             setIsLoading(false);
         }

@@ -20,6 +20,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { addURLCategory, deleteURLCategory } from "../../api/mapping";
 import { useAuth } from "../../hooks/useLogin";
+import { useNotification } from "../../hooks/useNotification";
 import { IRestURLDetail } from "../../types/url";
 import { ICategory } from "../../types/category";
 import { CategoryChip } from "./CategoryChip";
@@ -40,6 +41,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
     onRefresh,
 }) => {
     const authMgmt = useAuth();
+    const { showError, showSuccess } = useNotification();
     const [categorySearch, setCategorySearch] = React.useState('');
 
     // State for the "Add Mapping" row
@@ -72,23 +74,25 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
                 url_id: urlDetail.url.id,
                 constraint: (start || end || newComment) ? { comment: newComment, start, end } : undefined
             });
+            showSuccess("Mapping added successfully");
             setNewCategoryId(null);
             setNewStartDate('');
             setNewEndDate('');
             setNewComment('');
             setIsAddExpanded(false);
             onRefresh();
-        } catch (e) {
-            console.error('Failed to add mapping:', e);
+        } catch (e: any) {
+            showError(e.message);
         }
     };
 
     const handleDeleteMapping = async (categoryId: string) => {
         try {
             await deleteURLCategory(authMgmt.token, categoryId, urlDetail.url.id);
+            showSuccess("Mapping removed successfully");
             onRefresh();
-        } catch (e) {
-            console.error('Failed to delete mapping:', e);
+        } catch (e: any) {
+            showError(e.message);
         }
     };
 
@@ -197,7 +201,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
                 sx={{ mb: 1, width: '100%' }}
             />
             <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 350 }}>
-                <Table size="small" stickyHeader>
+                <Table sx={{ '& .MuiTableCell-root': { fontFamily: 'monospace' } }} size="small" stickyHeader>
                     <TableHead>
                         <TableRow>
                             <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
@@ -215,7 +219,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
                             </TableRow>
                         ) : (
                             filteredMappings.map((m) => {
-                                const timeRange = m.constraint ? (
+                                const timeRange = m.constraint && (m.constraint.start || m.constraint.end) ? (
                                     `${m.constraint.start ? new Date(m.constraint.start * 1000).toISOString().split('T')[0] : '...'} - ${m.constraint.end ? new Date(m.constraint.end * 1000).toISOString().split('T')[0] : '...'}`
                                 ) : '-';
                                 return (

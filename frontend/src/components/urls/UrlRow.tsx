@@ -28,6 +28,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 import { getHistory } from "../../api/history";
+import { useNotification } from "../../hooks/useNotification";
 import {IBCCategory, IRestURLDetail} from "../../types/url";
 import { IRestCommit } from "../../types/history";
 import { ICategory } from "../../types/category";
@@ -51,6 +52,7 @@ export interface UrlRowProps {
 export const UrlRow = React.memo(function UrlRow(props: UrlRowProps) {
     const { urlDetail, branch, isLocked, onEdit, onDelete, categories, onRefresh } = props;
     const authMgmt = useAuth();
+    const { showError } = useNotification();
 
     const [open, setOpen] = React.useState(false);
     const [history, setHistory] = React.useState<IRestCommit[]>([]);
@@ -60,7 +62,7 @@ export const UrlRow = React.memo(function UrlRow(props: UrlRowProps) {
         if (!open && history.length === 0) {
             getHistory(authMgmt.token, branch, [urlDetail.url.id])
                 .then(setHistory)
-                .catch(err => console.error('Failed to load history:', err));
+                .catch(err => showError(err.message || 'Failed to load history'));
         }
         setOpen(prev => !prev);
     };
