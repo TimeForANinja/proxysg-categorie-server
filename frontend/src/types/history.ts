@@ -8,4 +8,10 @@ export interface IRestCommit {
     parent_commit?: string;
 }
 
+export interface IDiffOutput {
+    status: 'success' | 'failed';
+    message: string;
+    data: string;
+}
+
 export type IListHistoryOutput = DataOutput<IRestCommit[]>;

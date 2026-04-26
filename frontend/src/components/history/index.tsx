@@ -4,9 +4,10 @@ import HistoryTable from "../shared/HistoryTable";
 import {useBranch} from "../../hooks/useBranch";
 import {IRestCommit} from "../../types/history";
 import {useAuth} from "../../hooks/useLogin";
-import {Box, Button, TextField, Card, CardContent, Typography, Divider, Stack} from "@mui/material";
-import {doCommit} from "../../api/branch";
+import {Box, Button, TextField, Card, CardContent, Typography, Divider, Stack, Dialog, DialogTitle, DialogContent, DialogActions} from "@mui/material";
+import {doCommit, revertBranch} from "../../api/branch";
 import {useNotification} from "../../hooks/useNotification";
+import CommitCompareModal from "./CommitCompareModal";
 
 function HistoryPage() {
     const authMgmt = useAuth();
@@ -14,6 +15,10 @@ function HistoryPage() {
     const { showError, showSuccess } = useNotification();
 
     const [commits, setCommits] = React.useState<IRestCommit[]>([]);
+    const [selectedCommits, setSelectedCommits] = React.useState<string[]>([]);
+    const [isCompareOpen, setIsCompareOpen] = React.useState(false);
+
+    const [revertTarget, setRevertTarget] = React.useState<IRestCommit | null>(null);
 
     // State for the commit message
     const [commitMessage, setCommitMessage] = React.useState<string>("");
@@ -46,6 +51,27 @@ function HistoryPage() {
         }
     };
 
+    const handleRevert = async () => {
+        if (!revertTarget) return;
+        try {
+            await revertBranch(authMgmt.token, revertTarget.uuid);
+            showSuccess(`Successfully reverted to commit ${revertTarget.uuid.substring(0, 8)}`);
+            setRevertTarget(null);
+            fetchData();
+        } catch (e: any) {
+            showError(e.message);
+        }
+    };
+
+    const onSelectCommit = (uuid: string) => {
+        setSelectedCommits(prev => {
+            if (prev.includes(uuid)) {
+                return prev.filter(id => id !== uuid);
+            }
+            if (prev.length >= 2) return prev;
+            return [...prev, uuid];
+        });
+    };
 
     return (
         <Stack spacing={4} sx={{ maxWidth: '1200px', margin: '0 auto', p: 2 }}>
@@ -93,17 +119,59 @@ function HistoryPage() {
 
             { /* History Section */ }
             <Box>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    Recent Commits
-                    <Typography variant="body2" component="span" color="text.secondary">
-                        ({commits.length})
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        Recent Commits
+                        <Typography variant="body2" component="span" color="text.secondary">
+                            ({commits.length})
+                        </Typography>
                     </Typography>
-                </Typography>
+                    <Button
+                        variant="outlined"
+                        disabled={selectedCommits.length !== 2}
+                        onClick={() => setIsCompareOpen(true)}
+                    >
+                        Compare Selected ({selectedCommits.length}/2)
+                    </Button>
+                </Box>
                 <Divider sx={{ mb: 2 }} />
                 <Card variant="outlined">
-                    <HistoryTable commits={commits} />
+                    <HistoryTable
+                        commits={commits}
+                        onRevert={setRevertTarget}
+                        selectedCommits={selectedCommits}
+                        onSelectCommit={onSelectCommit}
+                        isLocked={isLocked}
+                    />
                 </Card>
             </Box>
+
+            {/* Revert Confirmation Dialog */}
+            <Dialog open={!!revertTarget} onClose={() => setRevertTarget(null)}>
+                <DialogTitle>Confirm Revert</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to revert the current branch to the state of commit <b>{revertTarget?.uuid.substring(0, 8)}</b>?
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        This will overwrite any uncommitted changes in your branch.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setRevertTarget(null)}>Cancel</Button>
+                    <Button onClick={handleRevert} color="error" variant="contained">Revert</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Compare Modal */}
+            {isCompareOpen && (
+                <CommitCompareModal
+                    open={isCompareOpen}
+                    onClose={() => setIsCompareOpen(false)}
+                    commitUuids={selectedCommits}
+                    allCommits={commits}
+                />
+            )}
         </Stack>
     );
 }

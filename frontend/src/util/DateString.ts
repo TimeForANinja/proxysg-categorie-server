@@ -70,6 +70,18 @@ export interface IConstraint {
     end: number;
 }
 
+export const formatConstraintTime = (constraint?: IConstraint, fallback: string = ''): string => {
+    if (!constraint) {
+        return fallback;
+    }
+    if ((constraint.start ?? -1) < 0 && (constraint.end ?? -1) < 0) {
+        return fallback;
+    }
+    const startDate = (constraint.start ?? -1) ? new Date(constraint.start * 1000).toISOString().split('T')[0] : '...';
+    const endDate = (constraint.end ?? -1) ? new Date(constraint.end * 1000).toISOString().split('T')[0] : '...';
+    return `${startDate} - ${endDate}`;
+}
+
 export const formatConstraint = (constraint?: IConstraint): string => {
     if (!constraint) {
         return '';
@@ -77,8 +89,6 @@ export const formatConstraint = (constraint?: IConstraint): string => {
     if (!constraint.start && !constraint.end) {
         return constraint.comment;
     }
-    const startDate = constraint.start ? new Date(constraint.start * 1000).toISOString().split('T')[0] : '...';
-    const endDate = constraint.end ? new Date(constraint.end * 1000).toISOString().split('T')[0] : '...';
     const comment = constraint.comment ? ` (${constraint.comment})` : '';
-    return `${startDate} - ${endDate}${comment}`;
+    return `${formatConstraintTime(constraint)}${comment}`;
 };

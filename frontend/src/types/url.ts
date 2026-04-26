@@ -2,6 +2,7 @@ import {StringKV} from "./stringKV";
 import {FieldDefinition, SHARED_DEFINITIONS} from "../searchParser/fieldDefinition";
 import {ICategory} from "./category";
 import {DataOutput} from "./api";
+import {formatConstraint} from "../util/DateString";
 
 export interface IURL {
     id: string;
@@ -64,6 +65,7 @@ export const URLMappingToKV = (x: IRestURLDetail): StringKV => {
         cats: x.categories.map(x => x.category.name).join(', '),
         categories: x.categories.map(c => c.category.name).join(', '),
         has_constraints: x.categories.find(x => x.constraint) ? 'true' : 'false',
+        constraints: x.categories.filter(x => x.constraint).map(x => formatConstraint(x.constraint)).join(', '),
         bc_cats: x.bc_category?.categories.join(', ') || '',
     };
 }
@@ -76,6 +78,7 @@ export const URLMappingFields: FieldDefinition[] = [
     SHARED_DEFINITIONS.categories,
     { field: "bc_cats", description: "Bluecoat Categories" },
     { field: "has_constraints", description: "\True\" if any mapped category is constrained" },
+    { field: "constraints", description: "List of all constraints" },
 ]
 
 export const UrlMappingFieldsRaw: FieldDefinition[] = [

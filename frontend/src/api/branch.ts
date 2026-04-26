@@ -116,3 +116,27 @@ export const cleanupBranch = async (userToken: string): Promise<GenericOutput> =
 
     return data;
 }
+
+export const revertBranch = async (userToken: string, commitUuid: string): Promise<GenericOutput> => {
+    const response = await fetch('/api/branch/@me/revert', {
+        method: 'POST',
+        headers: {
+            'jwt-token': userToken,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ commit_uuid: commitUuid }),
+    });
+
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to revert branch`);
+    }
+
+    const data: GenericOutput = await response.json();
+
+    if (data.status === "failed") {
+        throw new Error(data.message || `Failed to revert branch`);
+    }
+
+    return data;
+}

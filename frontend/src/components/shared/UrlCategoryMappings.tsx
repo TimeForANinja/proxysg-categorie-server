@@ -25,7 +25,7 @@ import { IRestURLDetail } from "../../types/url";
 import { ICategory } from "../../types/category";
 import { CategoryChip } from "./CategoryChip";
 import { LUT, getLUTValues } from "../../types/LookUpTable";
-import { formatConstraint } from "../../util/DateString";
+import {formatConstraintTime} from "../../util/DateString";
 
 interface UrlCategoryMappingsProps {
     urlDetail: IRestURLDetail;
@@ -66,8 +66,8 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
     const handleAddMapping = async () => {
         if (!newCategoryId) return;
 
-        const start = newStartDate ? Math.floor(new Date(newStartDate).getTime() / 1000) : 0;
-        const end = newEndDate ? Math.floor(new Date(newEndDate).getTime() / 1000) : 0;
+        const start = newStartDate ? Math.floor(new Date(newStartDate).getTime() / 1000) : -1;
+        const end = newEndDate ? Math.floor(new Date(newEndDate).getTime() / 1000) : -1;
 
         try {
             await addURLCategory(authMgmt.token, newCategoryId, {
@@ -219,9 +219,7 @@ export const UrlCategoryMappings: React.FC<UrlCategoryMappingsProps> = ({
                             </TableRow>
                         ) : (
                             filteredMappings.map((m) => {
-                                const timeRange = m.constraint && (m.constraint.start || m.constraint.end) ? (
-                                    `${m.constraint.start ? new Date(m.constraint.start * 1000).toISOString().split('T')[0] : '...'} - ${m.constraint.end ? new Date(m.constraint.end * 1000).toISOString().split('T')[0] : '...'}`
-                                ) : '-';
+                                const timeRange = formatConstraintTime(m.constraint, "-");
                                 return (
                                     <TableRow key={m.category.id} hover>
                                         <TableCell>
