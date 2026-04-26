@@ -34,6 +34,10 @@ class MappingModel:
 
     def add_url_category(self, branch: str, category_id: str, url_id: str, constraint: Optional[Constraint]) -> Optional[ModelError]:
         """Add a new url <-> category mapping"""
+        if constraint is not None:
+            if constraint.start > constraint.end:
+                return ModelError("Constraint start must be before end")
+
         commit = Commit.read_branch(self.backend, branch)
 
         # verify that url and category exist

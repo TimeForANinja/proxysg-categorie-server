@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from db.abc.constants import TYPE_KEY, TypeIDs
 from db.abc.db import DBInterface
-from model.types.category import Category
+from model.types.category import Category, PREDEFINED_CATEGORIES
 from model.types.mappings import TokenCategoryMapping, URLCategoryMapping, ChildCategoryMapping
 from model.types.token import Token
 from model.types.url import URL
@@ -249,7 +249,8 @@ class StateTreeRootNode:
         changed_uuid.update(list_obj_diff(
             backend,
             self.categories, comp.head.categories if comp else None,
-            Category, ["id"]
+            Category, ["id"],
+            exclude=[x.id for x in PREDEFINED_CATEGORIES],
         ))
         # compare mappings
         changed_uuid.update(list_obj_diff(

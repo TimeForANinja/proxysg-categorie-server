@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from apiflask.fields import List, Nested, String, Dict
+from apiflask.fields import List, Nested, String
 from typing import List as tList, Optional
 from marshmallow_dataclass import class_schema
 

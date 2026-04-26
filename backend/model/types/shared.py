@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, Any
 from marshmallow.fields import String, Integer
 from marshmallow_dataclass import class_schema
@@ -26,6 +27,20 @@ class Constraint:
             end=data["end"],
             comment=data["comment"],
         )
+
+    def parse_range(self) -> str:
+        if self.start < 0 and self.end < 0:
+            return "N/A"
+
+        start_date_str = "..."
+        if self.start >= 0:
+            start_date_str = datetime.fromtimestamp(self.start).strftime("%Y-%m-%d")
+
+        end_date_str = "..."
+        if self.end >= 0:
+            end_date_str = datetime.fromtimestamp(self.end).strftime("%Y-%m-%d")
+
+        return f"{start_date_str} - {end_date_str}"
 
 
 constraint_schema = class_schema(Constraint)()

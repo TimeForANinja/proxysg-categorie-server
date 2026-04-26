@@ -239,7 +239,16 @@ class SpecialModel:
             token_cat_mappings[x.token_id].append(f"{x.category_id} ({categories[x.category_id].name})")
         url_cat_mappings = defaultdict(list)
         for x in URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings):
-            url_cat_mappings[x.url_id].append(f"{x.category_id} ({categories[x.category_id].name})")
+            attributes: List[str] = [categories[x.category_id].name]
+            # add attributes depending on our constraint
+            if x.constraint is not None:
+                if x.constraint.comment:
+                    attributes.append(x.constraint.comment)
+                if x.constraint.start >= 0 or x.constraint.end >= 0:
+                    attributes.append(x.constraint.parse_range())
+            url_cat_mappings[x.url_id].append(
+                f"{x.category_id} ({', '.join(attributes)})"
+            )
         child_cat_mappings = defaultdict(list)
         for x in ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings):
             child_cat_mappings[x.category_id].append(f"{x.child_category_id} ({categories[x.child_category_id].name})")
