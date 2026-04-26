@@ -236,19 +236,19 @@ class SpecialModel:
 
         token_cat_mappings = defaultdict(list)
         for x in TokenCategoryMapping.batch_read(self.backend, commit.head.token_category_mappings):
-            token_cat_mappings[x.token_id].append(x.category_id)
+            token_cat_mappings[x.token_id].append(f"{x.category_id} ({categories[x.category_id].name})")
         url_cat_mappings = defaultdict(list)
         for x in URLCategoryMapping.batch_read(self.backend, commit.head.url_category_mappings):
-            url_cat_mappings[x.url_id].append(x.category_id)
+            url_cat_mappings[x.url_id].append(f"{x.category_id} ({categories[x.category_id].name})")
         child_cat_mappings = defaultdict(list)
         for x in ChildCategoryMapping.batch_read(self.backend, commit.head.child_category_mappings):
-            child_cat_mappings[x.category_id].append(x.child_category_id)
+            child_cat_mappings[x.category_id].append(f"{x.child_category_id} ({categories[x.child_category_id].name})")
 
         # Build a serializable structure
         state = {
             "categories": [
                 {
-                    "uuid": c.id,
+                    "id": c.id,
                     "name": c.name,
                     "description": c.description,
                     "color": c.color,
@@ -273,4 +273,5 @@ class SpecialModel:
             ],
         }
 
-        return yaml.dump(state, sort_keys=True), None
+        # conver to yaml, and do not reorder keys
+        return yaml.dump(state, sort_keys=False), None

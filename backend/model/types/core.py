@@ -147,8 +147,8 @@ class Commit:
                     return c
 
                 # prepare for next iteration
-                uut = c.parent_commit_hash
                 visited_hashes.add(uut)
+                uut = c.parent_commit_hash
         return None
 
     @staticmethod
