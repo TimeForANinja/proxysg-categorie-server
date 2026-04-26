@@ -6,9 +6,15 @@ export const getURLs = async (userToken: string, branch: string, addMappings: bo
     const response = await fetch(`/api/branch/${branch}/url?add_mappings=${addMappings}&add_bc_cat=${addBCCat}`, {
         headers: { 'jwt-token': userToken },
     });
+
+    if (!response.ok) {
+        const data: IListURLOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to get URLs`);
+    }
+
     const data: IListURLOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to get URLs`);
     }
 
@@ -25,9 +31,14 @@ export const createURL = async (userToken: string, input: IURLCreateInput): Prom
         body: JSON.stringify(input),
     });
 
+    if (!response.ok) {
+        const data: IURLOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to create URL ${input.url}`);
+    }
+
     const data: IURLOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to create URL ${input.url}`);
     }
 
@@ -44,9 +55,14 @@ export const updateURL = async (userToken: string, urlId: string, input: IURLUpd
         body: JSON.stringify(input),
     });
 
+    if (!response.ok) {
+        const data: IURLOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to update URL ${urlId}`);
+    }
+
     const data: IURLOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to update URL ${urlId}`);
     }
 
@@ -59,9 +75,14 @@ export const deleteURL = async (userToken: string, urlId: string): Promise<Gener
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to delete URL ${urlId}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to delete URL ${urlId}`);
     }
 

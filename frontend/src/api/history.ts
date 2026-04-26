@@ -18,9 +18,15 @@ export const getHistory = async (userToken: string, branch: string, filter_uuid?
         },
         body: JSON.stringify(body),
     });
+
+    if (!response.ok) {
+        const data: IListHistoryOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to get history`);
+    }
+
     const data: IListHistoryOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to get history`);
     }
 

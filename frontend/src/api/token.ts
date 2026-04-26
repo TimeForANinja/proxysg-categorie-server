@@ -6,9 +6,15 @@ export const getTokens = async (userToken: string, branch: string, addMappings: 
     const response = await fetch(`/api/branch/${branch}/token?add_mappings=${addMappings}&add_last_used=${addLastUsed}`, {
         headers: { 'jwt-token': userToken },
     });
+
+    if (!response.ok) {
+        const data: IListTokenOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to get tokens`);
+    }
+
     const data: IListTokenOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to get tokens`);
     }
 
@@ -25,9 +31,14 @@ export const createToken = async (userToken: string, token: IApiTokenCreateInput
         body: JSON.stringify(token),
     });
 
+    if (!response.ok) {
+        const data: IApiTokenOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to create token.`);
+    }
+
     const data: IApiTokenOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to create token.`);
     }
 
@@ -44,9 +55,14 @@ export const updateToken = async (userToken: string, id: string, token: IApiToke
         body: JSON.stringify(token),
     });
 
+    if (!response.ok) {
+        const data: IApiTokenOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to update token.`);
+    }
+
     const data: IApiTokenOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to update token.`);
     }
 
@@ -62,9 +78,14 @@ export const rollToken = async (userToken: string, id: string): Promise<IApiToke
         },
     });
 
+    if (!response.ok) {
+        const data: IApiTokenOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to roll token with id: ${id}`);
+    }
+
     const data: IApiTokenOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to roll token with id: ${id}`);
     }
 
@@ -77,9 +98,14 @@ export const deleteToken = async (userToken: string, id: string): Promise<Generi
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to delete token.`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to delete token.`);
     }
 

@@ -7,9 +7,15 @@ export const getMetrics = async (userToken: string): Promise<IMetricsData> => {
     const response = await fetch('/api/metrics', {
         headers: { 'jwt-token': userToken },
     });
+
+    if (!response.ok) {
+        const data: DataOutput<IMetricsData> = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to get metrics`);
+    }
+
     const data: DataOutput<IMetricsData> = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to get metrics`);
     }
 
@@ -22,9 +28,14 @@ export const cleanupCore = async (userToken: string): Promise<GenericOutput> => 
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to cleanup core`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to cleanup core`);
     }
 
@@ -37,9 +48,14 @@ export const compileToken = async (userToken: string, tokenUuid: string): Promis
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to compile token ${tokenUuid}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to compile token ${tokenUuid}`);
     }
 
@@ -56,9 +72,14 @@ export const testApi = async (userToken: string, urls: string[]): Promise<RestTe
         body: JSON.stringify({ urls }),
     });
 
+    if (!response.ok) {
+        const data: DataOutput<RestTestResult[]> = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to test api`);
+    }
+
     const data: DataOutput<RestTestResult[]> = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to test api`);
     }
 

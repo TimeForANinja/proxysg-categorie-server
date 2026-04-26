@@ -6,9 +6,15 @@ export const getBranches = async (userToken: string): Promise<IRestBranchInfo[]>
     const response = await fetch('/api/branch', {
         headers: { 'jwt-token': userToken },
     });
+
+    if (!response.ok) {
+        const data: IListBranchesOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to get branch list`);
+    }
+
     const data: IListBranchesOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to get branch list`);
     }
 
@@ -21,9 +27,14 @@ export const resetBranches = async (userToken: string): Promise<GenericOutput> =
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to reset branches`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to reset branches`);
     }
 
@@ -40,9 +51,14 @@ export const doCommit = async (userToken: string, message: string): Promise<Gene
         body: JSON.stringify({ message }),
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to commit changes`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to commit changes`);
     }
 
@@ -66,9 +82,14 @@ export const loadExisting = async (
         }),
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to import category database`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to import category database`);
     }
 
@@ -82,9 +103,14 @@ export const cleanupBranch = async (userToken: string): Promise<GenericOutput> =
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to cleanup branch`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to cleanup branch`);
     }
 

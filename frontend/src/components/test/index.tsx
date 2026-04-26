@@ -10,7 +10,6 @@ import {
     CardHeader,
     Stack,
     Box,
-    Alert,
     Table,
     TableBody,
     TableCell,
@@ -36,9 +35,7 @@ import {useAuth} from "../../hooks/useLogin";
 import {useNotification} from "../../hooks/useNotification";
 import {testApi} from "../../api/core";
 import {RestTestResult} from "../../types/core";
-import {ICategory} from "../../types/category";
 import {CategoryChip} from "../shared/CategoryChip";
-import {colorLUT, hexToColor} from "../../util/colormixer";
 
 function TestPage() {
     const authMgmt = useAuth();

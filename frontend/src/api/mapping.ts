@@ -11,9 +11,14 @@ export const addURLCategory = async (userToken: string, categoryId: string, mapp
         body: JSON.stringify(mapping),
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to add url ${mapping.url_id} to category ${categoryId}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to add url ${mapping.url_id} to category ${categoryId}`);
     }
 
@@ -26,9 +31,14 @@ export const deleteURLCategory = async (userToken: string, categoryId: string, u
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to remove url ${url} from category ${categoryId}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to remove url ${url} from category ${categoryId}`);
     }
 
@@ -47,9 +57,14 @@ export const addTokenCategory = async (userToken: string, id: string, categoryId
         }),
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to add category ${categoryId} to token with id: ${id}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to add category ${categoryId} to token with id: ${id}`);
     }
 
@@ -62,9 +77,14 @@ export const deleteTokenCategory = async (userToken: string, id: string, categor
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to remove category ${categoryId} from token with id: ${id}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to remove category ${categoryId} from token with id: ${id}`);
     }
 
@@ -83,9 +103,14 @@ export const addCategoryChild = async (userToken: string, categoryId: string, ch
         }),
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to add child category ${childCategoryId} to category ${categoryId}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to add child category ${childCategoryId} to category ${categoryId}`);
     }
 
@@ -98,9 +123,14 @@ export const deleteCategoryChild = async (userToken: string, categoryId: string,
         headers: { 'jwt-token': userToken },
     });
 
+    if (!response.ok) {
+        const data: GenericOutput = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Failed to remove child category ${childCategoryId} from category ${categoryId}`);
+    }
+
     const data: GenericOutput = await response.json();
 
-    if (!response.ok || data.status === "failed") {
+    if (data.status === "failed") {
         throw new Error(data.message || `Failed to remove child category ${childCategoryId} from category ${categoryId}`);
     }
 

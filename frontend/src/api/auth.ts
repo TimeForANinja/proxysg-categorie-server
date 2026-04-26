@@ -28,14 +28,14 @@ export const doLogin = async (username: string, password: string): Promise<IUser
     })
 
     if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data.status === "failed") {
+            throw new Error('Invalid username or password');
+        }
         throw new Error(`Failed to login`);
     }
 
     const data = await response.json();
-
-    if (data.status === "failed") {
-        throw new Error('Invalid username or password');
-    }
 
     return {
         username,
