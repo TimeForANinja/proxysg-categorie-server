@@ -13,7 +13,9 @@ def get_jwt_handler(app: APIFlask) -> JWTHandler:
 
         if jwt_handler is None:
             lifetime = int(app.config.get("JWT", {}).get("LIFETIME", "21600"))
-            secret_key = app.config.get("JWT", {}).get("SECRET")
+            secret_key = app.config.get("JWT", {}).get("SECRET", None)
+            if not secret_key:
+                raise ValueError("JWT secret key is required")
 
             jwt_handler = JWTHandler(lifetime, secret_key)
             app.config.setdefault("SINGLETONS", {})
