@@ -107,10 +107,6 @@ def add_special_bp(app: APIFlask):
         db = get_db()
         content, last_modified, error = db.specials.compile_localdb(token_uuid, last_access_ts)
 
-        # convert last_modified to required UTC string (would default to local-timezone and not UTC)
-        last_modified_dt = dt.datetime.fromtimestamp(last_modified, dt.timezone.utc)
-        last_modified = last_modified_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-
         # catch various "error" states
         if error == ERROR_NOT_FOUND:
             return (
@@ -140,6 +136,11 @@ def add_special_bp(app: APIFlask):
                     "Cache-Control": "no-cache, no-store",
                 },
             )
+
+        # convert last_modified to required UTC string (would default to local-timezone and not UTC)
+        # done after the error-check, since last_modified can be "None"
+        last_modified_dt = dt.datetime.fromtimestamp(last_modified, dt.timezone.utc)
+        last_modified = last_modified_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
         return (
             content,
