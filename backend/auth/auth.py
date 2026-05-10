@@ -1,7 +1,8 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, Any
 from apiflask import HTTPTokenAuth
 
 from auth.auth_realm import AuthRealmInterface
+from auth.auth_schema import AuthMechanism
 from auth.auth_user import AuthUser
 
 
@@ -20,6 +21,12 @@ class AuthHandler:
     def __init__(self, realms: List[AuthRealmInterface]):
         self.realms = realms
 
+    def get_supported_auth_formats(self) -> List[AuthMechanism]:
+        """
+        Return a list of all supported auth mechanisms with UI details across all configured realms.
+        """
+        return [realm.get_login_params() for realm in self.realms]
+
     def verify_token(self, token: str) -> Optional[AuthUser]:
         """
         Validate if the provided token is valid by checking it against all configured realms.
@@ -33,17 +40,16 @@ class AuthHandler:
                 return user
         return None
 
-    def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
+    def perform_login(self, data: Dict[str, Any]) -> Optional[Tuple[str, AuthUser]]:
         """
         Check a login attempt against all configured realms.
         Returns the first successful match.
 
-        :param username: Username.
-        :param password: Password.
+        :param data: Generic login data dictionary.
         :return: A tuple of (token, AuthUser) if successful, else None.
         """
         for realm in self.realms:
-            result = realm.check_login(username, password)
+            result = realm.perform_login(data)
             if result is not None:
                 return result
         return None

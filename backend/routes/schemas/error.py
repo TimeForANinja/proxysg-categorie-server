@@ -10,5 +10,5 @@ type OutCanError[T] = T | ErrorResponse
 @dataclass
 class ErrorResponse(GenericOutput):
     def __init__(self, error: ModelError):
-        self.message = error.message
         self.status = "failed"
+        self.message = error.message

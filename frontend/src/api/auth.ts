@@ -1,4 +1,4 @@
-import {IUser} from "../types/auth";
+import {IAuthMechanism, IAuthMechanismsOutput, ILoginOutput, ILoginOutputData, IUser} from "../types/auth";
 
 
 export const checkLogin = async (userToken: string): Promise<boolean> => {
@@ -18,27 +18,36 @@ export const checkLogin = async (userToken: string): Promise<boolean> => {
     return data.status === "success";
 };
 
-export const doLogin = async (username: string, password: string): Promise<IUser> => {
+export const getAuthMechanisms = async (): Promise<IAuthMechanism[]> => {
+    const response = await fetch('/api/auth/mechanisms');
+    if (!response.ok) {
+        throw new Error('Failed to fetch auth mechanisms');
+    }
+    const data: IAuthMechanismsOutput = await response.json();
+    if (data.status === "failed") {
+        throw new Error(data.message || 'Failed to fetch auth mechanisms');
+    }
+    return data.data;
+}
+
+export const doLogin = async (loginData: Record<string, string>): Promise<ILoginOutputData> => {
     const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({username, password}),
+        body: JSON.stringify({data: loginData}),
     })
 
     if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         if (data.status === "failed") {
-            throw new Error('Invalid username or password');
+            throw new Error(data.message || 'Invalid login details');
         }
         throw new Error(`Failed to login`);
     }
 
-    const data = await response.json();
+    const data: ILoginOutput = await response.json();
 
-    return {
-        username,
-        token: data.data.token,
-    }
+    return data.data;
 }

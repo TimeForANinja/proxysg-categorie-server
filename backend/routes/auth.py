@@ -5,7 +5,7 @@ from db.db_singleton import get_db
 from util.log import log_debug
 from model.util.error import ModelError
 from routes.schemas.auth import jwt_header_schema, JWTHeaderInput, VerifyOutput, verify_output_schema, LoginOutput, \
-    login_output_schema, LoginInput, login_input_schema, LoginOutputData
+    login_output_schema, LoginInput, login_input_schema, LoginOutputData, AuthMechanismsOutput, auth_mechanisms_output_schema
 from routes.schemas.error import ErrorResponse, OutCanError
 
 
@@ -30,11 +30,11 @@ def add_auth_bp(app):
             )
 
     @auth_bp.post("/api/auth/login")
-    @auth_bp.doc(summary="Login", description="Login to the API", tags=["Auth"])
+    @auth_bp.doc(summary="Login", description="Login to the APP", tags=["Auth"])
     @auth_bp.input(login_input_schema, location="json", arg_name="login_input")
     @auth_bp.output(login_output_schema)
     def handle_auth(login_input: LoginInput) -> OutCanError[LoginOutput]:
-        result = auth_if.check_login(login_input.username, login_input.password)
+        result = auth_if.perform_login(login_input.data)
         if result is None:
             return ErrorResponse(ModelError("Invalid credentials"))
         else:
@@ -51,5 +51,16 @@ def add_auth_bp(app):
                     user=result[1],
                 )
             )
+
+    @auth_bp.get("/api/auth/mechanisms")
+    @auth_bp.doc(summary="List Auth Mechanisms", description="Get the supported authentication mechanisms and their UI details", tags=["Auth"])
+    @auth_bp.output(auth_mechanisms_output_schema)
+    def handle_mechanisms() -> OutCanError[AuthMechanismsOutput]:
+        mechanisms = auth_if.get_supported_auth_formats()
+        return AuthMechanismsOutput(
+            status="success",
+            message="Supported auth mechanisms retrieved successfully",
+            data=mechanisms,
+        )
 
     app.register_blueprint(auth_bp)

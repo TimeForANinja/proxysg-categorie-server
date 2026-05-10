@@ -1,7 +1,7 @@
 import React, {createContext, useContext} from "react";
 import {CircularProgress} from "@mui/material";
 import {OptBoolean} from "../types/OptionalBool";
-import {IUser} from "../types/auth";
+import {ILoginOutputData} from "../types/auth";
 import {checkLogin, doLogin} from "../api/auth";
 
 
@@ -17,7 +17,7 @@ class GenericContextClass<T> {
 
 interface AuthState {
     loggedIn: OptBoolean;
-    user: IUser | null;
+    loginData: ILoginOutputData | null;
 }
 
 class AuthManager extends GenericContextClass<AuthState> {
@@ -28,24 +28,24 @@ class AuthManager extends GenericContextClass<AuthState> {
 
     // Method to get current username
     get username(): string {
-        return this._state.user?.username ?? 'Unknown';
+        return this._state.loginData?.user?.username ?? 'Unknown';
     }
 
     get token(): string {
-        return this._state.user?.token ?? '';
+        return this._state.loginData?.token ?? '';
     }
 
     // Method to log in a user (updates login state and username)
-    async login(username: string, password: string): Promise<IUser> {
-        const user = await doLogin(username, password)
+    async login(loginData: Record<string, string>): Promise<ILoginOutputData> {
+        const data = await doLogin(loginData)
 
-        saveLoginToken(user)
+        saveLoginToken(data)
         this._setState({
             loggedIn: OptBoolean.Yes,
-            user: user,
+            loginData: data,
         })
 
-        return user;
+        return data;
     }
 
     // Method to log out a user
@@ -53,7 +53,7 @@ class AuthManager extends GenericContextClass<AuthState> {
         removeLoginToken();
         this._setState({
             loggedIn: OptBoolean.No,
-            user: null,
+            loginData: null,
         })
     }
 
@@ -66,14 +66,14 @@ class AuthManager extends GenericContextClass<AuthState> {
         if (!user || !user.token) {
             return {
                 loggedIn: OptBoolean.No,
-                user: null,
+                loginData: null,
             }
         }
 
         const valid = await checkLogin(user.token);
 
         return {
-            user: valid ? user : null,
+            loginData: valid ? user : null,
             loggedIn: valid ? OptBoolean.Yes : OptBoolean.No,
         }
     }
@@ -86,7 +86,7 @@ const AuthContext = createContext<AuthManager | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isState, setState] = React.useState<AuthState>({
         loggedIn: OptBoolean.Unknown,
-        user: null,
+        loginData: null,
     });
 
     const authManager = React.useMemo(() => {
@@ -132,7 +132,7 @@ export const useAuth = (): AuthManager => {
 
 const LOCAL_STORAGE_KEY_USER = 'app_user';
 
-export const readLoginToken = (): IUser => {
+export const readLoginToken = (): ILoginOutputData => {
     return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_USER) ?? '{}');
 }
 
@@ -140,6 +140,6 @@ export const removeLoginToken = () => {
     localStorage.removeItem(LOCAL_STORAGE_KEY_USER)
 }
 
-export const saveLoginToken = (user: IUser) => {
+export const saveLoginToken = (user: ILoginOutputData) => {
     localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(user));
 }

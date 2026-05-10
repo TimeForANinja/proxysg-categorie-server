@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional
-from apiflask.fields import String, Nested
+from typing import Optional, List as tList, Dict as tDict
+from apiflask.fields import String, Nested, List, Dict
 from marshmallow_dataclass import class_schema
 
 from auth.auth import AUTH_TOKEN_KEY
+from auth.auth_schema import AuthMechanism, auth_mechanism_schema
 from auth.auth_user import AuthUser, auth_user_schema
 from routes.schemas.generic_output import GenericOutput
 from util.schema import to_field, desc
@@ -20,13 +21,9 @@ class JWTHeaderInput:
 
 @dataclass
 class LoginInput:
-    username: str = to_field(String(
+    data: tDict = to_field(Dict(
         required=True,
-        metadata=desc("Username")
-    ))
-    password: str = to_field(String(
-        required=True,
-        metadata=desc("Password or Token")
+        metadata=desc("Generic login data dictionary")
     ))
 
 
@@ -64,3 +61,15 @@ jwt_header_schema = class_schema(JWTHeaderInput)()
 login_input_schema = class_schema(LoginInput)()
 verify_output_schema = class_schema(VerifyOutput)()
 login_output_schema = class_schema(LoginOutput)()
+
+
+@dataclass
+class AuthMechanismsOutput(GenericOutput):
+    data: tList[AuthMechanism] = to_field(List(
+        Nested(auth_mechanism_schema),
+        required=True,
+        metadata=desc("List of supported auth mechanisms with UI details"),
+    ))
+
+
+auth_mechanisms_output_schema = class_schema(AuthMechanismsOutput)()

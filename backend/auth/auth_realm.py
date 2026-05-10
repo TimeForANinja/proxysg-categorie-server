@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any, Dict
 from apiflask import APIFlask
 
+from auth.auth_schema import AuthMechanism
 from auth.auth_user import AuthUser
 from auth.jwt.jwt_handler import JWTHandler
 
@@ -11,6 +12,13 @@ class AuthRealmInterface(ABC):
     Interface for authentication providers (realms).
     Every authentication module must implement this interface.
     """
+
+    @abstractmethod
+    def get_login_params(self) -> AuthMechanism:
+        """
+        Return the login parameters for this realm (UI components).
+        """
+        pass
 
     @abstractmethod
     def verify_token(self, token: str) -> Optional[AuthUser]:
@@ -23,12 +31,11 @@ class AuthRealmInterface(ABC):
         pass
 
     @abstractmethod
-    def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
+    def perform_login(self, data: Dict[str, Any]) -> Optional[Tuple[str, AuthUser]]:
         """
         Validate credentials and return a session token and the user object.
 
-        :param username: Username.
-        :param password: Password.
+        :param data: Generic login data dictionary.
         :return: A tuple of (token, AuthUser) if valid, else None.
         """
         pass

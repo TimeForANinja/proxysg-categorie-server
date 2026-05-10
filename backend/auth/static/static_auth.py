@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any
 from flask import request
 from apiflask import APIFlask
 
-from auth.auth_roles import AuthRoles
+from auth.auth_schema import AuthMechanism, AuthUIComponent
 from util.log import log_error, log_info
-
+from auth.auth_roles import AuthRoles
 from auth.auth_user import AuthUser
 from auth.auth_realm import AuthRealmInterface, AuthProviderInterface
 from auth.jwt.jwt_data import TokenData
@@ -22,6 +22,24 @@ class StaticAuthRealm(AuthRealmInterface):
         self.auth_user = user
         self.auth_password = password
 
+    def get_login_params(self) -> AuthMechanism:
+        return AuthMechanism(
+            type="local",
+            label="Local Login",
+            ui=[
+                AuthUIComponent(
+                    type="input-text",
+                    label="Username",
+                    key="username",
+                ),
+                AuthUIComponent(
+                    type="input-password",
+                    label="Password",
+                    key="password",
+                ),
+            ]
+        )
+
     def verify_token(self, token: str) -> Optional[AuthUser]:
         """
         Validate the provided JWT token.
@@ -36,10 +54,13 @@ class StaticAuthRealm(AuthRealmInterface):
         log_info("AUTH", f"Authentication successful: User {token_data.user.username} from SRC_IP:{request.remote_addr}", auth_user)
         return auth_user
 
-    def check_login(self, username: str, password: str) -> Optional[Tuple[str, AuthUser]]:
+    def perform_login(self, data: Dict[str, Any]) -> Optional[Tuple[str, AuthUser]]:
         """
         Check credentials against the static configuration.
         """
+        username = data.get("username", "")
+        password = data.get("password", "")
+
         if self.auth_user != username or self.auth_password != password:
             log_error("AUTH", f"Login failed: Invalid credentials for user {username} from SRC_IP:{request.remote_addr}")
             return None
